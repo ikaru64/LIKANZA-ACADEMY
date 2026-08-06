@@ -135,6 +135,21 @@ function initFavButtons(){
 function getLevel(){ return safeGet('fzr-level') || 'debutant'; }
 function setLevelStorage(lvl){ safeSet('fzr-level', lvl); }
 
+// ---------- Verrouillage des parcours (formation progressive) ----------
+// Un niveau se débloque uniquement quand toutes les missions du niveau
+// précédent ont été validées (question résolue, pas juste consultées).
+const LEVEL_ORDER = ['debutant','intermediaire','avance','expert'];
+function isLevelUnlocked(level){
+  const idx = LEVEL_ORDER.indexOf(level);
+  if(idx <= 0) return true;
+  const prev = LEVEL_ORDER[idx-1];
+  const progress = safeGetJSON('fzr-progress', {});
+  return COURSES[prev].every((c,i)=>progress[prev+'-'+i]);
+}
+function firstUnlockedLevel(){
+  return LEVEL_ORDER.find(l=>isLevelUnlocked(l)) || 'debutant';
+}
+
 // ---------- Ticker de marché ----------
 function renderTicker(elId){
   const el = document.getElementById(elId);

@@ -73,18 +73,12 @@ function renderMissionsList(){
   el.innerHTML = mods.map((m,i)=>`
     <div class="course-item">
       <div class="field"><label>Titre</label><input type="text" class="mission-title" data-idx="${i}" value="${m.title.replace(/"/g,'&quot;')}"></div>
-      <div class="field"><label>Contenu</label><textarea class="mission-body" data-idx="${i}">${m.body}</textarea></div>
+      <p style="font-size:12px;color:var(--text-dim);margin:6px 0 10px;">Mission scénarisée (${(m.story||[]).length} chapitre${(m.story||[]).length>1?'s':''} + question) — l'édition du scénario complet depuis cet outil n'est pas encore disponible, modifie <code>scripts/app.js</code> directement pour l'instant.</p>
       <button class="del-btn" data-idx="${i}">Supprimer cette mission</button>
     </div>`).join('') || '<p class="empty-note" style="padding:16px;">Aucune mission pour ce niveau.</p>';
   el.querySelectorAll('.mission-title').forEach(input=>{
     input.addEventListener('input', ()=>{
       draftCourses[currentEditLevel][+input.dataset.idx].title = input.value;
-      saveDraftCourses(draftCourses);
-    });
-  });
-  el.querySelectorAll('.mission-body').forEach(ta=>{
-    ta.addEventListener('input', ()=>{
-      draftCourses[currentEditLevel][+ta.dataset.idx].body = ta.value;
       saveDraftCourses(draftCourses);
     });
   });

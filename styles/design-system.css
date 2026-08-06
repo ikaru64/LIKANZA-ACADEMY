@@ -246,8 +246,24 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .course-body, .glossary-body{display:none;color:var(--text-dim);font-size:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hairline);}
 .course-body.open, .glossary-body.open{display:block;}
 
+/* ---------- Missions scénarisées (chapitres + question) ---------- */
+.mission-chapter{margin-bottom:14px;}
+.mission-chapter h5{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;}
+.mission-chapter p{font-size:13.5px;line-height:1.6;}
+.mission-question{margin-top:16px;padding-top:16px;border-top:1px dashed var(--hairline);}
+.mission-q-prompt{font-size:14px;color:var(--text);font-weight:500;margin-bottom:10px;}
+.mission-feedback{font-size:12.5px;margin-top:8px;min-height:16px;}
+.mission-solved{font-size:13px;color:var(--emerald);}
+.mission-choices .pill[disabled]{opacity:0.5;cursor:default;}
+
 .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
 .mode-toggle{display:flex;gap:6px;margin:10px 0;}
+
+/* ---------- Lexique A-Z ---------- */
+.az-strip{display:flex;flex-wrap:wrap;gap:4px;margin:14px 0;padding:10px 12px;background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);}
+.az-strip a{width:22px;height:22px;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold-bright);border-radius:2px;transition:background .15s, color .15s;}
+.az-strip a:hover{background:rgba(184,151,78,0.14);}
+.az-strip a.disabled{color:var(--text-dim);opacity:0.35;pointer-events:none;}
 
 /* ---------- Gamification ---------- */
 .gami-widget{background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);padding:20px 24px;box-shadow:0 20px 40px -28px rgba(0,0,0,0.7);}

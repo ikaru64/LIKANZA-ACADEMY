@@ -1,5 +1,18 @@
+// Profil de risque + conseils adaptés au niveau
+const outilsProfile = getProfile();
+const outilsHasProfile = !!safeGetJSON('fzr-profile', null);
+if(document.getElementById('outilsRiskGauge')) renderRiskGauge('outilsRiskGauge', outilsProfile.risque);
+const outilsRiskNote = document.getElementById('outilsRiskNote');
+if(outilsRiskNote){
+  outilsRiskNote.innerHTML = outilsHasProfile
+    ? "Basé sur ton profil enregistré dans Mon compte."
+    : "Profil par défaut (équilibré) — <a href=\"compte.html\" style=\"color:var(--gold-bright);\">renseigne le tien dans Mon compte</a> pour une jauge personnalisée.";
+}
+if(document.getElementById('coachWidget')) renderCoach('coachWidget');
+
 // Intérêts composés
 const capitalEl = document.getElementById('capital'), monthlyEl = document.getElementById('monthly'), rateEl = document.getElementById('rate'), yearsEl = document.getElementById('years');
+let simUsed = false;
 function updateSim(){
   const P=+capitalEl.value, PMT=+monthlyEl.value, rate=+rateEl.value, years=+yearsEl.value;
   document.getElementById('valCapital').textContent = fmtEUR(P);
@@ -14,11 +27,16 @@ function updateSim(){
   document.getElementById('simGains').textContent = fmtEUR(total-invested);
   renderBarChart('simChart','simChartLabels', series, years);
 }
-[capitalEl, monthlyEl, rateEl, yearsEl].forEach(el=>el.addEventListener('input', updateSim));
+[capitalEl, monthlyEl, rateEl, yearsEl].forEach(el=>el.addEventListener('input', ()=>{
+  updateSim();
+  if(!simUsed){ simUsed = true; awardXP(5, {usedSimulator:true}); }
+}));
 updateSim();
 
 // DCA — prix moyen d'achat
 let dcaCount = 0;
+let dcaUsed = false;
+function markDcaUsed(){ if(!dcaUsed){ dcaUsed = true; awardXP(5, {usedDCA:true}); } }
 function addDcaRow(qty=10, price=100){
   dcaCount++;
   const row = document.createElement('div');
@@ -30,9 +48,9 @@ function addDcaRow(qty=10, price=100){
     <input type="number" class="dca-price" placeholder="Prix unitaire (€)" value="${price}" style="background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:8px 10px;border-radius:2px;width:45%;">
   `;
   document.getElementById('dcaRows').appendChild(row);
-  row.querySelectorAll('input').forEach(i=>i.addEventListener('input', updateDca));
+  row.querySelectorAll('input').forEach(i=>i.addEventListener('input', ()=>{ updateDca(); markDcaUsed(); }));
 }
-document.getElementById('dcaAdd').addEventListener('click', ()=>addDcaRow());
+document.getElementById('dcaAdd').addEventListener('click', ()=>{ addDcaRow(); markDcaUsed(); });
 function updateDca(){
   const qtys = Array.from(document.querySelectorAll('.dca-qty')).map(i=>+i.value||0);
   const prices = Array.from(document.querySelectorAll('.dca-price')).map(i=>+i.value||0);

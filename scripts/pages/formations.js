@@ -1,34 +1,45 @@
 const LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
 let level = getLevel();
 if(!COURSES[level]) level = 'debutant';
+if(!isLevelUnlocked(level)) level = firstUnlockedLevel();
 
 function refreshLevelUI(){
-  document.querySelectorAll('.level-pills .pill').forEach(p=>p.classList.toggle('active', p.dataset.lvl===level));
+  document.querySelectorAll('.level-pills .pill').forEach(p=>{
+    const lvl = p.dataset.lvl;
+    const unlocked = isLevelUnlocked(lvl);
+    p.classList.toggle('active', lvl===level);
+    p.disabled = !unlocked;
+    p.title = unlocked ? '' : 'Débloqué une fois le niveau précédent terminé à 100%';
+    p.textContent = LEVEL_LABELS[lvl] + (unlocked ? '' : ' 🔒');
+  });
   document.getElementById('levelLabel').textContent = LEVEL_LABELS[level];
   renderModules();
 }
 document.querySelectorAll('.level-pills .pill').forEach(btn=>{
   btn.addEventListener('click', ()=>{
-    level = btn.dataset.lvl;
+    const lvl = btn.dataset.lvl;
+    if(!isLevelUnlocked(lvl)) return;
+    level = lvl;
     setLevelStorage(level);
     refreshLevelUI();
   });
 });
 
 function getProgress(){ return safeGetJSON('fzr-progress', {}); }
-function toggleModuleDone(key){
+
+// Appelé uniquement quand la question de fin de mission a été résolue
+// correctement — c'est la seule façon de valider une mission désormais.
+function completeMission(key){
   const progress = getProgress();
-  const wasDone = !!progress[key];
-  progress[key] = !wasDone;
+  if(progress[key]) return;
+  progress[key] = true;
   safeSetJSON('fzr-progress', progress);
-  if(!wasDone){
-    const mods = COURSES[level];
-    const doneCount = mods.filter((c,i)=>progress[level+'-'+i]).length;
-    const levelJustCompleted = doneCount === mods.length;
-    awardXP(30, {moduleCompleted:true, levelJustCompleted});
-    if(document.getElementById('gamiWidget')) renderGamificationWidget('gamiWidget', true);
-  }
-  renderModules();
+  const mods = COURSES[level];
+  const doneCount = mods.filter((c,i)=>progress[level+'-'+i]).length;
+  const levelJustCompleted = doneCount === mods.length;
+  awardXP(30, {moduleCompleted:true, levelJustCompleted});
+  if(document.getElementById('gamiWidget')) renderGamificationWidget('gamiWidget', true);
+  refreshLevelUI();
 }
 
 function renderModules(){
@@ -36,9 +47,41 @@ function renderModules(){
   const mods = COURSES[level];
   const doneCount = mods.filter((c,i)=>progress[level+'-'+i]).length;
   document.getElementById('progressLabel').textContent = `${doneCount} / ${mods.length} missions accomplies`;
+
   document.getElementById('courseList').innerHTML = mods.map((c,i)=>{
     const key = level+'-'+i;
     const done = !!progress[key];
+    const q = c.question;
+    const storyHtml = c.story.map(ch=>`<div class="mission-chapter"><h5>${ch.heading}</h5><p>${ch.text}</p></div>`).join('');
+
+    let questionHtml;
+    if(done){
+      questionHtml = `
+        <div class="mission-question">
+          <p class="mission-q-prompt">${q.prompt}</p>
+          <p class="mission-solved">✓ Mission validée — ${q.explication}</p>
+        </div>`;
+    } else if(q.type === 'calcul'){
+      questionHtml = `
+        <div class="mission-question">
+          <p class="mission-q-prompt">${q.prompt}</p>
+          <div class="field" style="max-width:260px;">
+            <input type="number" step="any" id="mq-input-${key}" placeholder="Ta réponse${q.unit ? ' ('+q.unit+')' : ''}">
+          </div>
+          <button class="btn btn-sm btn-gold" data-check="${key}">Vérifier</button>
+          <p class="mission-feedback" id="mq-feedback-${key}"></p>
+        </div>`;
+    } else {
+      questionHtml = `
+        <div class="mission-question">
+          <p class="mission-q-prompt">${q.prompt}</p>
+          <div class="mission-choices" id="mq-choices-${key}">
+            ${q.choix.map((opt,oi)=>`<button class="pill" style="text-align:left;display:block;width:100%;margin-bottom:6px;" data-choice="${oi}">${opt}</button>`).join('')}
+          </div>
+          <p class="mission-feedback" id="mq-feedback-${key}"></p>
+        </div>`;
+    }
+
     return `
     <div class="course-item">
       <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
@@ -46,12 +89,53 @@ function renderModules(){
         <span class="idx">${String(i+1).padStart(2,'0')}</span>
       </div>
       <div class="course-body">
-        <p style="margin-bottom:12px;">${c.body}</p>
-        <button class="btn btn-sm" onclick="toggleModuleDone('${key}')">${done ? 'Marquer comme non faite' : 'Valider cette mission'}</button>
+        ${storyHtml}
+        ${questionHtml}
       </div>
     </div>`;
   }).join('');
+
+  // Branche les interactions (calcul / QCM) pour les missions pas encore validées.
+  mods.forEach((c,i)=>{
+    const key = level+'-'+i;
+    if(progress[key]) return;
+    const q = c.question;
+    const feedback = document.getElementById(`mq-feedback-${key}`);
+
+    if(q.type === 'calcul'){
+      const btn = document.querySelector(`[data-check="${key}"]`);
+      const input = document.getElementById(`mq-input-${key}`);
+      if(!btn || !input) return;
+      const check = ()=>{
+        const val = parseFloat(input.value);
+        if(isNaN(val)){ feedback.textContent = "Entre un nombre avant de vérifier."; feedback.style.color = 'var(--text-dim)'; return; }
+        if(Math.abs(val - q.reponse) <= q.tolerance){
+          completeMission(key);
+        } else {
+          feedback.textContent = `Pas tout à fait — ${q.explication}`;
+          feedback.style.color = 'var(--bordeaux)';
+        }
+      };
+      btn.addEventListener('click', check);
+      input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') check(); });
+    } else {
+      const choicesEl = document.getElementById(`mq-choices-${key}`);
+      if(!choicesEl) return;
+      Array.from(choicesEl.children).forEach((btn, oi)=>{
+        btn.addEventListener('click', ()=>{
+          if(oi === q.bonneReponse){
+            completeMission(key);
+          } else {
+            btn.style.borderColor = 'var(--bordeaux)';
+            feedback.textContent = q.explication;
+            feedback.style.color = 'var(--bordeaux)';
+          }
+        });
+      });
+    }
+  });
 }
+
 refreshLevelUI();
 renderQuizSetup('quizContainer');
 renderGamificationWidget('gamiWidget', true);

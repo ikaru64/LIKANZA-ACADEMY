@@ -5,6 +5,21 @@ let currentCat = 'Toutes';
 const cats = ['Toutes', ...new Set(LIBRARY.map(l=>l.categorie))];
 document.getElementById('libFilters').innerHTML = cats.map((c,i)=>`<button class="pill ${i===0?'active':''}" data-cat="${c}">${c}</button>`).join('');
 
+// ---------- Lexique A-Z : saute jusqu'à la première notion commençant par la lettre ----------
+const AZ_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+const availableLetters = new Set(LIBRARY.map(l=>l.terme[0].toUpperCase()));
+document.getElementById('azStrip').innerHTML = AZ_LETTERS.map(letter=>{
+  const has = availableLetters.has(letter);
+  return `<a href="#" class="${has?'':'disabled'}" data-letter="${letter}">${letter}</a>`;
+}).join('');
+document.getElementById('azStrip').addEventListener('click', e=>{
+  const a = e.target.closest('a');
+  if(!a || a.classList.contains('disabled')) return;
+  e.preventDefault();
+  const target = document.querySelector(`#libList [data-letter="${a.dataset.letter}"]`);
+  if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+});
+
 function renderLib(){
   const searchInputEl = document.getElementById('libSearch');
   const query = searchInputEl ? searchInputEl.value.trim().toLowerCase() : '';
@@ -13,7 +28,7 @@ function renderLib(){
   items = [...items].sort((a,b)=>a.terme.localeCompare(b.terme));
   const bodyKey = {simple:'simple', detail:'detail', avance:'avance'}[currentMode] === 'detail' ? 'detail' : (currentMode==='avance' ? 'avance' : 'simple');
   document.getElementById('libList').innerHTML = items.map(l=>`
-    <div class="glossary-item" id="${l.terme.replace(/\s+/g,'-')}">
+    <div class="glossary-item" id="${l.terme.replace(/\s+/g,'-')}" data-letter="${l.terme[0].toUpperCase()}">
       <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
         <h4>${l.terme}</h4>
         <span class="idx">${l.niveau} · ${l.lecture}</span>

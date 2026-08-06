@@ -135,29 +135,148 @@ const NEWS_DATA = [
 // ===EXPORT:COURSES:START===
 const COURSES = {
   debutant:[
-    {title:"Action, obligation, ETF : le b.a.-ba", body:"Une action est une part de propriété d'une entreprise. Une obligation est un prêt fait à une entreprise ou un État, remboursé avec des intérêts. Un ETF regroupe des dizaines d'actions en un seul produit, ce qui permet de miser sur un marché entier plutôt que sur une seule entreprise."},
-    {title:"PEA, CTO, livret : où loger son argent", body:"Le Livret A garantit le capital mais rapporte peu. Le PEA permet d'investir en actions européennes avec une fiscalité allégée après 5 ans, sans garantie de capital. Le compte-titres (CTO) est plus flexible mais moins avantageux fiscalement."},
-    {title:"Le risque, concrètement", body:"Investir en bourse, c'est accepter que la valeur de son placement puisse baisser, parfois fortement, avant de remonter — ou pas. Plus l'horizon de temps est long, plus on peut généralement se permettre de prendre du risque."},
-    {title:"Construire son premier plan financier", body:"Avant d'investir, mieux vaut avoir une épargne de sécurité (3 à 6 mois de dépenses) et des objectifs clairs : horizon, montant, tolérance au risque. Un plan simple évite les décisions prises dans l'urgence ou l'émotion."}
+    {
+      title:"Action, obligation, ETF : le b.a.-ba",
+      story:[
+        {heading:"L'héritage de Léa", text:"Léa, 23 ans, vient de recevoir 3000€ de sa grand-mère. Elle ne veut pas les laisser dormir sur son compte courant, mais ne sait pas par où commencer."},
+        {heading:"Trois avis différents", text:"Un ami lui parle d'\"acheter des actions\", un cousin lui vante les obligations d'État \"sans risque\", et son conseiller bancaire évoque un produit qui \"regroupe plein d'entreprises en une fois\". Léa veut miser sur un grand nombre d'entreprises sans avoir à les choisir une par une ni passer son temps à suivre chaque titre."}
+      ],
+      question:{type:"qcm", prompt:"Vers quel type de produit Léa devrait-elle se tourner pour répondre à son besoin (miser sur beaucoup d'entreprises en une seule fois, sans les sélectionner à la main) ?", choix:["Une obligation d'État","Un ETF diversifié","Un unique titre bien choisi","Un compte à terme"], bonneReponse:1, explication:"Un ETF regroupe des dizaines ou des centaines d'entreprises dans un seul produit, ce qui répond exactement au besoin de Léa : miser sur un marché entier sans sélectionner les titres un par un."}
+    },
+    {
+      title:"PEA, CTO, livret : où loger son argent",
+      story:[
+        {heading:"Le choix de Tom", text:"Tom a 2000€ de côté. Il hésite entre les laisser sur son Livret A, dont le taux est actuellement de 3% par an, ou ouvrir un PEA pour investir en actions européennes."},
+        {heading:"Une première estimation", text:"Avant de se décider, Tom veut d'abord comprendre concrètement ce que lui rapporterait le Livret A s'il y laissait son argent une année entière, sans rien y toucher."}
+      ],
+      question:{type:"calcul", prompt:"Avec 2000€ placés sur un Livret A à 3% par an, combien d'intérêts Tom touche-t-il après 1 an (arrondis à l'euro) ?", unit:"€", reponse:60, tolerance:2, explication:"2000 × 3% = 60€. Le Livret A garantit le capital, mais son rendement reste modéré comparé à un placement en actions — en échange d'une sécurité totale et d'une disponibilité immédiate."}
+    },
+    {
+      title:"Le risque, concrètement",
+      story:[
+        {heading:"Le premier investissement de Marc", text:"Marc place 2000€ en actions pour la première fois, convaincu que la bourse ne fait que monter sur le long terme."},
+        {heading:"La première année difficile", text:"Dès sa première année, un choc économique fait chuter son placement de 18%. Marc panique un peu en consultant son compte, mais se souvient que son horizon de placement est de 15 ans."}
+      ],
+      question:{type:"calcul", prompt:"Après cette baisse de 18%, combien vaut approximativement le placement de Marc ?", unit:"€", reponse:1640, tolerance:15, explication:"2000 × (1 − 0,18) = 1640€. Une baisse, même marquée, ne signifie pas une perte définitive : c'est le risque normal d'un placement en actions, que le temps peut permettre de compenser — sans aucune garantie."}
+    },
+    {
+      title:"Construire son premier plan financier",
+      story:[
+        {heading:"Le budget de Nora", text:"Nora gagne 1800€ par mois et dépense en moyenne 1600€. Avant d'investir quoi que ce soit, elle a lu qu'il valait mieux constituer une épargne de précaution."},
+        {heading:"Un objectif chiffré", text:"Nora vise une épargne de précaution équivalente à 4 mois de ses dépenses courantes, pour pouvoir faire face à un imprévu sans avoir à revendre un futur placement en catastrophe."}
+      ],
+      question:{type:"calcul", prompt:"Quel montant total Nora doit-elle réunir pour atteindre une épargne de précaution de 4 mois de dépenses ?", unit:"€", reponse:6400, tolerance:100, explication:"1600 × 4 = 6400€. Une fois ce coussin de sécurité constitué, Nora pourra investir le reste de son épargne avec plus de sérénité, sans craindre de devoir tout retirer au premier imprévu."}
+    }
   ],
   intermediaire:[
-    {title:"Lire les ratios de base : P/E et dividende", body:"Le ratio cours/bénéfice (P/E) compare le prix d'une action à ses bénéfices. Le rendement du dividende indique la part des bénéfices reversée aux actionnaires chaque année."},
-    {title:"Diversifier par secteur et zone géographique", body:"Concentrer son épargne sur un seul secteur ou pays expose à ses aléas spécifiques. Répartir entre zones et secteurs réduit l'impact d'un choc localisé, sans éliminer le risque de marché global."},
-    {title:"Cycles économiques et taux d'intérêt", body:"Quand les banques centrales relèvent leurs taux, le crédit coûte plus cher, ce qui peut ralentir l'économie et peser sur les marchés actions ; des taux bas tendent à soutenir les valorisations."},
-    {title:"Comparer des ETF entre eux", body:"Deux ETF qui suivent le même indice peuvent différer par leurs frais de gestion, leur méthode de réplication (physique ou synthétique) et leur liquidité. Ces détails comptent sur le long terme."},
-    {title:"SCPI : investir dans l'immobilier sans gérer de bien", body:"Une SCPI collecte l'épargne de nombreux investisseurs pour acheter et louer un parc immobilier, et leur reverse les loyers au prorata de leurs parts. Elle permet d'accéder à l'immobilier locatif sans avoir à gérer soi-même locataires, travaux ou impayés — en échange de frais de gestion et d'une liquidité plus limitée que la bourse."}
+    {
+      title:"Lire les ratios de base : P/E et dividende",
+      story:[
+        {heading:"Deux actions, un choix", text:"Yanis compare deux entreprises du même secteur avant d'investir. La première se négocie à 80€ et a généré un bénéfice de 4€ par action l'an dernier."},
+        {heading:"Un premier repère", text:"Yanis a entendu parler du PER (Price Earning Ratio) comme premier indicateur pour juger si le prix d'une action est \"cher\" ou non par rapport à ses bénéfices."}
+      ],
+      question:{type:"calcul", prompt:"Quel est le PER de cette action (cours de 80€ pour un bénéfice par action de 4€) ?", unit:"", reponse:20, tolerance:0.5, explication:"PER = cours / bénéfice par action = 80 / 4 = 20. Un PER de 20 signifie qu'il faudrait 20 années de bénéfices actuels pour \"rembourser\" le prix payé — à comparer à d'autres entreprises du même secteur pour juger si c'est élevé ou raisonnable."}
+    },
+    {
+      title:"Diversifier par secteur et zone géographique",
+      story:[
+        {heading:"Le portefeuille de Chloé", text:"Chloé a placé 90% de son épargne dans l'action d'une seule entreprise technologique française, convaincue de son potentiel."},
+        {heading:"Une annonce inattendue", text:"Un concurrent annonce un produit révolutionnaire qui menace directement l'activité de cette entreprise. Le cours plonge en quelques jours."}
+      ],
+      question:{type:"qcm", prompt:"Qu'est-ce que cette mésaventure illustre principalement sur la stratégie de Chloé ?", choix:["Elle n'aurait jamais dû investir en actions","En concentrant son épargne sur une seule entreprise, elle s'expose fortement à un choc qui lui est spécifique","Les actions technologiques sont interdites aux particuliers","Diversifier n'aurait rien changé au résultat"], bonneReponse:1, explication:"En ne détenant qu'un seul titre, Chloé subit de plein fouet tout événement propre à cette entreprise. Répartir son épargne entre plusieurs entreprises, secteurs et zones géographiques aurait limité l'impact de ce choc isolé sur l'ensemble de son portefeuille."}
+    },
+    {
+      title:"Cycles économiques et taux d'intérêt",
+      story:[
+        {heading:"Le projet immobilier d'Hugo", text:"Hugo prépare un emprunt de 200 000€ sur 20 ans pour un achat immobilier. Au moment où il commence ses démarches, les taux sont à 3%."},
+        {heading:"La banque centrale relève ses taux", text:"Le temps qu'Hugo finalise son dossier, la banque centrale relève ses taux directeurs pour lutter contre l'inflation. Sa banque lui propose désormais un taux de 4% sur le même prêt."}
+      ],
+      question:{type:"calcul", prompt:"À 4% sur 20 ans pour 200 000€ empruntés, quelle est la nouvelle mensualité approximative d'Hugo (arrondie à l'euro) ?", unit:"€/mois", reponse:1212, tolerance:20, explication:"Avec la formule de mensualité de crédit (capital × taux mensuel ⁄ (1 − (1+taux mensuel)⁻ⁿ)), la mensualité passe à environ 1212€/mois. Une hausse des taux directeurs se répercute directement sur le coût du crédit pour les ménages et les entreprises, ce qui peut freiner l'économie."}
+    },
+    {
+      title:"Comparer des ETF entre eux",
+      story:[
+        {heading:"Deux trackers, un même indice", text:"Nina hésite entre deux ETF qui suivent exactement le même indice mondial. Le premier facture 0,07% de frais de gestion annuels, le second 0,45%."},
+        {heading:"Un même capital, deux avenirs", text:"Elle prévoit d'investir 10 000€ dans l'un des deux ETF, sans tenir compte pour l'instant de la performance du marché — seulement de l'écart de frais entre les deux produits."}
+      ],
+      question:{type:"calcul", prompt:"Sur 10 000€ investis pendant 1 an, quelle est la différence de frais payés entre l'ETF à 0,45% et celui à 0,07% (hors performance de marché) ?", unit:"€", reponse:38, tolerance:2, explication:"10 000 × (0,45% − 0,07%) = 10 000 × 0,38% = 38€. Un écart qui paraît minime en un an, mais qui se cumule chaque année sur toute la durée de détention — un critère de comparaison à ne pas négliger entre deux ETF qui suivent le même indice."}
+    },
+    {
+      title:"SCPI : investir dans l'immobilier sans gérer de bien",
+      story:[
+        {heading:"Le choix de Sofia", text:"Sofia n'a ni le temps ni l'envie de gérer elle-même un bien locatif (recherche de locataires, travaux, impayés). Elle se tourne vers une SCPI qui affiche un taux de distribution de 4,5% pour l'année passée."},
+        {heading:"Un premier placement", text:"Elle investit 10 000€ dans cette SCPI, en gardant à l'esprit que ce taux de distribution passé ne garantit en rien les revenus futurs."}
+      ],
+      question:{type:"calcul", prompt:"Sur la base de ce taux de distribution de 4,5%, quel revenu annuel brut Sofia peut-elle espérer sur ses 10 000€ investis (avant fiscalité) ?", unit:"€", reponse:450, tolerance:15, explication:"10 000 × 4,5% = 450€ par an, avant fiscalité et hors frais éventuels. Ce chiffre reste une estimation basée sur une performance passée, jamais une garantie contractuelle — le capital et les revenus futurs d'une SCPI ne sont jamais garantis."}
+    }
   ],
   avance:[
-    {title:"Analyse fondamentale vs technique", body:"L'analyse fondamentale évalue une entreprise à partir de ses résultats, sa dette et ses perspectives. L'analyse technique étudie les courbes de prix et volumes passés. Aucune ne prédit l'avenir avec certitude."},
-    {title:"Volatilité, corrélation, allocation d'actifs", body:"La volatilité mesure l'ampleur des variations d'un actif. La corrélation indique si deux actifs évoluent dans le même sens. Une allocation efficace combine des actifs peu corrélés."},
-    {title:"Lire les flux de trésorerie", body:"Le résultat net peut être maquillé par des éléments comptables ; le flux de trésorerie disponible (free cash-flow) montre l'argent réellement généré par l'activité, souvent plus révélateur de la santé financière."},
-    {title:"Produits dérivés : ce qu'il faut comprendre avant tout", body:"Options, futures et produits à effet de levier amplifient gains et pertes, parfois au-delà du capital investi. Ils exigent une compréhension technique solide et une gestion du risque rigoureuse."},
-    {title:"Retraite et PER : préparer le long terme", body:"Le Plan d'Épargne Retraite permet, sous conditions, de déduire ses versements volontaires du revenu imposable — en échange d'un blocage des fonds jusqu'à la retraite (sauf exceptions) et d'une imposition différée à la sortie. L'arbitrage dépend surtout de la tranche marginale d'imposition actuelle et anticipée à la retraite."}
+    {
+      title:"Analyse fondamentale vs technique",
+      story:[
+        {heading:"Deux méthodes, une même action", text:"Avant d'investir dans une entreprise, Karim épluche ses derniers résultats annuels, sa dette et ses perspectives de croissance sur plusieurs années."},
+        {heading:"Un collègue, une autre approche", text:"Son collègue, lui, ne regarde que les courbes de prix et de volumes des dernières semaines pour repérer des tendances à court terme, sans jamais ouvrir un rapport annuel."}
+      ],
+      question:{type:"qcm", prompt:"La méthode de Karim (résultats, dette, perspectives de l'entreprise) relève de quelle approche ?", choix:["L'analyse technique","L'analyse fondamentale","Le trading haute fréquence","L'arbitrage statistique"], bonneReponse:1, explication:"Karim pratique l'analyse fondamentale : il évalue l'entreprise elle-même (résultats, dette, perspectives). Son collègue pratique l'analyse technique, centrée sur les courbes de prix et volumes passés. Aucune des deux ne prédit l'avenir avec certitude."}
+    },
+    {
+      title:"Volatilité, corrélation, allocation d'actifs",
+      story:[
+        {heading:"Un portefeuille très tech", text:"Élise détient déjà deux actions technologiques américaines, qui montent et descendent quasiment ensemble à chaque annonce du secteur."},
+        {heading:"Une troisième idée", text:"Elle hésite entre ajouter une troisième action technologique similaire, ou plutôt un peu d'or, un actif dont l'évolution suit rarement celle des actions technologiques."}
+      ],
+      question:{type:"qcm", prompt:"Pourquoi ajouter l'or (peu corrélé aux actions technologiques déjà détenues) réduit-il davantage le risque global du portefeuille qu'une troisième action tech ?", choix:["Parce que l'or ne peut jamais perdre de valeur","Parce qu'un actif peu corrélé ne réagit pas de la même façon aux mêmes chocs de marché, ce qui amortit les variations globales du portefeuille","Parce que l'or est interdit en PEA, ce qui le rend plus sûr","Parce qu'une troisième action tech doublerait automatiquement le risque"], bonneReponse:1, explication:"Deux actifs fortement corrélés réagissent de façon similaire aux mêmes événements, ce qui n'apporte que peu de diversification. Un actif peu corrélé, comme l'or ici, réagit différemment, ce qui réduit l'amplitude globale des variations du portefeuille — sans pour autant éliminer tout risque."}
+    },
+    {
+      title:"Lire les flux de trésorerie",
+      story:[
+        {heading:"Un résultat net flatteur", text:"Une entreprise affiche un résultat net de 5 M€ sur son dernier exercice, un chiffre qui impressionne à première vue."},
+        {heading:"Un investissement massif", text:"En creusant les comptes, un analyste découvre que l'entreprise a aussi investi 4 M€ en capex (dépenses d'investissement) cette année-là, financés par son activité courante."}
+      ],
+      question:{type:"calcul", prompt:"En simplifiant (résultat net − capex), quel est le flux de trésorerie disponible approximatif de cette entreprise, en M€ ?", unit:"M€", reponse:1, tolerance:0.3, explication:"5 − 4 = 1 M€. Le résultat net peut être flatté par des éléments comptables ; le flux de trésorerie disponible montre l'argent réellement généré par l'activité une fois les investissements déduits — souvent plus révélateur de la santé financière réelle d'une entreprise."}
+    },
+    {
+      title:"Produits dérivés : ce qu'il faut comprendre avant tout",
+      story:[
+        {heading:"Un pari à effet de levier", text:"Amine ouvre une position à effet de levier x5 sur un actif, avec une mise de 1000€, séduit par la perspective de gains amplifiés."},
+        {heading:"Le marché tourne mal", text:"Quelques jours plus tard, l'actif sous-jacent baisse de 8%. Amine découvre à quel point l'effet de levier amplifie aussi les pertes, pas seulement les gains."}
+      ],
+      question:{type:"calcul", prompt:"Avec un effet de levier x5 sur une mise de 1000€, si l'actif sous-jacent baisse de 8%, quelle est la perte sur la mise engagée ?", unit:"€", reponse:400, tolerance:20, explication:"1000 × 8% × 5 = 400€ de perte, soit 40% de la mise initiale pour une baisse de \"seulement\" 8% de l'actif sous-jacent. C'est tout le principe (et le danger) de l'effet de levier : il amplifie symétriquement gains et pertes, parfois au-delà du capital engagé selon les produits."}
+    },
+    {
+      title:"Retraite et PER : préparer le long terme",
+      story:[
+        {heading:"Une tranche d'imposition élevée", text:"Camille est imposée à une tranche marginale de 30%. Son conseiller lui suggère de verser sur un PER pour réduire son impôt de l'année."},
+        {heading:"Un versement réfléchi", text:"Camille décide de verser 3000€ sur son PER cette année, sachant que ce montant sera déductible de son revenu imposable — mais imposé à la sortie, à la retraite."}
+      ],
+      question:{type:"calcul", prompt:"Avec une tranche marginale d'imposition de 30% et un versement déductible de 3000€, quelle économie d'impôt immédiate Camille obtient-elle ?", unit:"€", reponse:900, tolerance:30, explication:"3000 × 30% = 900€ d'économie d'impôt immédiate. En contrepartie, les sommes correspondantes seront en principe réintégrées à l'impôt sur le revenu à la sortie, à la retraite — l'intérêt de l'opération dépend surtout de l'écart entre la tranche d'imposition actuelle et celle anticipée au moment de la retraite."}
+    }
   ],
   expert:[
-    {title:"Introduction à la valorisation par DCF", body:"La méthode des flux de trésorerie actualisés (DCF) estime la valeur d'une entreprise en projetant ses flux futurs et en les ramenant à leur valeur actuelle. Très sensible aux hypothèses de croissance et de taux d'actualisation retenues."},
-    {title:"Analyse de sensibilité", body:"Faire varier une hypothèse clé (croissance, marge, taux) pour observer l'impact sur une valorisation permet de mesurer la robustesse d'un scénario et d'identifier les paramètres les plus déterminants."},
-    {title:"Construction de portefeuille", body:"Au-delà de la diversification simple, la construction de portefeuille cherche un équilibre entre rendement attendu, risque toléré et corrélations entre actifs, souvent formalisé par des cadres comme la frontière efficiente."}
+    {
+      title:"Introduction à la valorisation par DCF",
+      story:[
+        {heading:"Un flux unique à valoriser", text:"Un analyste doit estimer la valeur actuelle d'une entreprise qui, selon ses projections, générera un flux de trésorerie de 1 000 000€ dans 5 ans, et rien d'autre entre-temps pour simplifier l'exercice."},
+        {heading:"Le choix du taux d'actualisation", text:"Il retient un taux d'actualisation de 8% par an, reflétant le risque et le coût du capital associés à cette entreprise."}
+      ],
+      question:{type:"calcul", prompt:"Avec un flux de 1 000 000€ dans 5 ans et un taux d'actualisation de 8% par an, quelle est la valeur actuelle approximative de ce flux (arrondie au millier d'euros le plus proche) ?", unit:"€", reponse:680583, tolerance:5000, explication:"Valeur actuelle = 1 000 000 / (1,08)⁵ ≈ 680 583€. Plus le taux d'actualisation retenu est élevé, plus la valeur actuelle d'un flux futur est faible — la méthode DCF est donc très sensible aux hypothèses de taux et de croissance retenues."}
+    },
+    {
+      title:"Analyse de sensibilité",
+      story:[
+        {heading:"Une valorisation, plusieurs scénarios", text:"Après avoir construit un premier modèle DCF, une analyste financière fait varier son hypothèse de croissance annuelle : 2%, 4%, puis 6%, en gardant tout le reste identique."},
+        {heading:"Des résultats très différents", text:"Les trois scénarios donnent des valorisations sensiblement différentes pour la même entreprise, alors qu'un seul paramètre a changé à chaque fois."}
+      ],
+      question:{type:"qcm", prompt:"Quel est l'intérêt principal de faire varier ainsi une hypothèse clé (comme la croissance) dans une analyse de sensibilité ?", choix:["Choisir artificiellement le scénario qui donne la valorisation la plus haute pour vendre plus cher","Mesurer la robustesse d'une valorisation et identifier les paramètres qui l'influencent le plus","Remplacer complètement le besoin de connaître les comptes de l'entreprise","Garantir que la valorisation obtenue sera exacte"], bonneReponse:1, explication:"Faire varier une hypothèse clé permet de mesurer à quel point la valorisation finale en dépend, et donc d'identifier les paramètres les plus déterminants — pas de garantir un résultat, ni de le manipuler pour arriver à une conclusion prédéfinie."}
+    },
+    {
+      title:"Construction de portefeuille",
+      story:[
+        {heading:"Au-delà de la simple diversification", text:"Un gérant de portefeuille ne se contente pas de multiplier le nombre de lignes détenues : il cherche un équilibre précis entre rendement attendu, risque toléré et corrélations entre les actifs choisis."},
+        {heading:"Un repère théorique", text:"Il utilise le concept de frontière efficiente pour situer différentes combinaisons possibles d'actifs, et choisir celle qui correspond le mieux à ses objectifs."}
+      ],
+      question:{type:"qcm", prompt:"Qu'offre, en théorie, un portefeuille situé sur la frontière efficiente ?", choix:["Une garantie de gain quel que soit le contexte de marché","Le meilleur rendement attendu possible pour un niveau de risque donné (ou le risque le plus faible pour un rendement donné)","L'absence totale de frais de gestion","Un accès automatique à tous les marchés mondiaux"], bonneReponse:1, explication:"La frontière efficiente représente, pour chaque niveau de risque, la combinaison d'actifs offrant le meilleur rendement attendu possible (ou inversement, le risque le plus faible pour un rendement donné) — un repère théorique, pas une garantie de résultat futur."}
+    }
   ]
 };
 // ===EXPORT:COURSES:END===
