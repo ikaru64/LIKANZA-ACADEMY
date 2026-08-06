@@ -232,7 +232,13 @@ function renderCourseList(elId, level){
 }
 
 // ---------- Gamification (XP, niveaux, séries, badges) ----------
-const LEVEL_TITLES = ["🌱 Épargnant","📚 Curieux","📈 Investisseur","💼 Analyste","🏦 Stratège","🦅 Visionnaire","👑 Architecte du Patrimoine"];
+const LEVEL_TITLES = [
+  "🌱 Épargnant","📚 Curieux","🔍 Apprenti Analyste","📈 Investisseur","💼 Analyste",
+  "🎯 Stratège Débutant","🏦 Stratège","🦅 Visionnaire","🛡️ Gestionnaire de Risque",
+  "💎 Investisseur Chevronné","🏛️ Architecte du Patrimoine","👑 Maître Likanza"
+];
+// Niveau à partir duquel le niveau de quiz "Avancé" se débloque.
+const ADVANCED_QUIZ_UNLOCK_LEVEL = 4;
 const BADGES = [
   {id:'first_module', name:'Première mission', desc:"Terminer ta première mission.", check:(g,ctx)=> !!(ctx && ctx.moduleCompleted)},
   {id:'level_complete', name:'Parcours terminé', desc:"Terminer toutes les missions d'un niveau.", check:(g,ctx)=> !!(ctx && ctx.levelJustCompleted)},
@@ -240,6 +246,11 @@ const BADGES = [
   {id:'streak_7', name:'Une semaine de suite', desc:"Revenir 7 jours d'affilée.", check:(g)=> g.streak >= 7},
   {id:'streak_30', name:'30 jours de série', desc:"Revenir 30 jours d'affilée.", check:(g)=> g.streak >= 30},
   {id:'quiz_perfect', name:'Champion des quiz', desc:"Réussir une épreuve sans erreur.", check:(g,ctx)=> !!(ctx && ctx.quizPerfect)},
+  {id:'combo_5', name:'Combo x5', desc:"Enchaîner 5 bonnes réponses d'affilée dans un défi.", check:(g,ctx)=> !!(ctx && ctx.combo >= 5)},
+  {id:'combo_10', name:'Combo parfait', desc:"Enchaîner 10 bonnes réponses d'affilée dans un défi.", check:(g,ctx)=> !!(ctx && ctx.combo >= 10)},
+  {id:'explorer', name:'Explorateur', desc:"Répondre à des questions dans au moins 10 thèmes différents.", check:()=> Object.keys(getQuizStats().categoryStats).length >= 10},
+  {id:'level_5', name:'Niveau 5 atteint', desc:"Atteindre le niveau 5.", check:(g)=> levelFromXP(g.xp).level >= 5},
+  {id:'level_10', name:'Niveau 10 atteint', desc:"Atteindre le niveau 10.", check:(g)=> levelFromXP(g.xp).level >= 10},
   {id:'fp_500', name:'500 Finance Points', desc:"Accumuler 500 Finance Points.", check:(g)=> g.financePoints >= 500},
   {id:'fp_1000', name:'1000 Finance Points', desc:"Accumuler 1000 Finance Points.", check:(g)=> g.financePoints >= 1000},
   {id:'first_dca', name:'Premier DCA', desc:"Utiliser le comparateur DCA vs investissement unique.", check:(g,ctx)=> !!(ctx && ctx.usedDCA)},
@@ -300,6 +311,15 @@ function levelFromXP(xp){
   return {level, title, xpInLevel};
 }
 
+// ---------- Multiplicateur de série : plus la série de connexion quotidienne
+// est longue, plus les gains (quiz, bonus de connexion) sont bonifiés. ----------
+function streakMultiplier(streak){
+  if(streak >= 30) return 1.5;
+  if(streak >= 14) return 1.3;
+  if(streak >= 7) return 1.15;
+  return 1;
+}
+
 function checkDailyStreak(){
   const g = getGamification();
   const today = new Date().toDateString();
@@ -307,8 +327,9 @@ function checkDailyStreak(){
   const yesterday = new Date(Date.now() - 86400000).toDateString();
   g.streak = (g.lastVisit === yesterday) ? g.streak + 1 : 1;
   g.lastVisit = today;
-  g.xp += 15;
-  g.financePoints += 15;
+  const bonus = Math.round(15 * streakMultiplier(g.streak));
+  g.xp += bonus;
+  g.financePoints += bonus;
   saveGamification(g);
   checkBadges(g, {});
   logActivity();
@@ -338,8 +359,9 @@ function getWeeklyActivityDays(){
 // pour l'instant, mais sont stockés et affichés séparément.
 function awardXP(amount, ctx){
   const g = getGamification();
-  g.xp += amount;
-  g.financePoints += amount;
+  const finalAmount = Math.round(amount * streakMultiplier(g.streak));
+  g.xp += finalAmount;
+  g.financePoints += finalAmount;
   logActivity();
   saveGamification(g);
   checkBadges(g, ctx || {});
@@ -373,13 +395,14 @@ function renderGamificationWidget(elId, full){
   const g = getGamification();
   const lvl = levelFromXP(g.xp);
   const earnedCount = g.badges.length;
+  const mult = streakMultiplier(g.streak);
   el.innerHTML = `
     <div class="gami-widget">
       <div class="gami-top">
         <div style="flex:1;">
           <span class="smallcaps">Niveau ${lvl.level} — ${lvl.title}</span>
           <div class="gami-xpbar"><div class="gami-xpfill" style="width:${lvl.xpInLevel}%;"></div></div>
-          <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">${lvl.xpInLevel} / 100 XP · ${g.xp} XP au total</p>
+          <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">${lvl.xpInLevel} / 100 XP · ${g.xp} XP au total${mult>1?` · bonus série x${mult}`:''}</p>
         </div>
         <div class="gami-streak">🔥 <strong>${g.streak}</strong><span>jour${g.streak>1?'s':''}</span></div>
       </div>
@@ -455,13 +478,22 @@ function getQuizPointsLedger(){
   if(ledger.date !== today) return {date:today, ids:[]};
   return ledger;
 }
-function tryAwardQuizPoints(questionId, amount){
+function tryAwardQuizPoints(questionId, amount, ctx){
   const ledger = getQuizPointsLedger();
   if(ledger.ids.includes(questionId)) return false;
   ledger.ids.push(questionId);
   safeSetJSON('fzr-quiz-points-ledger', ledger);
-  awardXP(amount);
+  awardXP(amount, ctx);
   return true;
+}
+
+// ---------- Bonus de combo : plus on enchaîne de bonnes réponses d'affilée
+// dans un même défi, plus chaque question suivante rapporte de points. ----------
+function comboBonusAmount(combo){
+  if(combo >= 8) return 20;
+  if(combo >= 5) return 15;
+  if(combo >= 3) return 12;
+  return 10;
 }
 
 // ---------- Statistiques de quiz (par catégorie, historique) ----------
@@ -542,14 +574,17 @@ function renderQuizSetup(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const categories = [...new Set(QUIZ_BANK_FULL.map(q=>q.categorie))].sort();
+  const userLevel = levelFromXP(getGamification().xp).level;
+  const advancedUnlocked = userLevel >= ADVANCED_QUIZ_UNLOCK_LEVEL;
   el.innerHTML = `
     <div class="field"><label>Niveau</label>
       <select id="${elId}-level">
         <option value="tous">Tous niveaux</option>
         <option value="debutant">Débutant</option>
         <option value="intermediaire">Intermédiaire</option>
-        <option value="avance">Avancé</option>
+        <option value="avance" ${advancedUnlocked?'':'disabled'}>Avancé${advancedUnlocked?'':` 🔒 (débloqué au niveau ${ADVANCED_QUIZ_UNLOCK_LEVEL})`}</option>
       </select>
+      ${advancedUnlocked?'':`<p style="font-size:11px;color:var(--text-dim);margin-top:4px;">Le niveau Avancé se débloque au niveau ${ADVANCED_QUIZ_UNLOCK_LEVEL} (tu es niveau ${userLevel}).</p>`}
     </div>
     <div class="field"><label>Thème</label>
       <select id="${elId}-cat">
@@ -583,7 +618,7 @@ function startQuizSession(elId, questions, level){
     el.innerHTML = `<p class="empty-note">Pas assez de questions disponibles pour cette combinaison — essaie un autre thème.</p>`;
     return;
   }
-  let qIndex = 0, score = 0;
+  let qIndex = 0, score = 0, combo = 0, maxCombo = 0;
   const wrong = [];
   const startTime = Date.now();
 
@@ -596,7 +631,7 @@ function startQuizSession(elId, questions, level){
     const pct = Math.round((qIndex/questions.length)*100);
     el.innerHTML = `
       <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span>Question ${qIndex+1} / ${questions.length}</span><span>${item.categorie} · ${item.niveau}</span>
+        <span>Question ${qIndex+1} / ${questions.length}</span><span>${item.categorie} · ${item.niveau}${combo>=3?` · 🔥 combo x${combo}`:''}</span>
       </div>
       <div class="dash-weekbar" style="width:100%;margin-bottom:14px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
       <div style="font-size:15px;margin-bottom:12px;font-weight:500;">${item.question}</div>
@@ -616,9 +651,19 @@ function startQuizSession(elId, questions, level){
         });
         const correct = i===item.bonneReponse;
         recordAnswer(item.categorie, correct);
-        if(correct){ score++; tryAwardQuizPoints(item.id, 10); }
-        else wrong.push(item);
-        document.getElementById(`${elId}-feedback`).textContent = item.explication;
+        let feedback = item.explication;
+        if(correct){
+          score++;
+          combo++;
+          maxCombo = Math.max(maxCombo, combo);
+          const amount = comboBonusAmount(combo);
+          const got = tryAwardQuizPoints(item.id, amount, {combo: maxCombo});
+          if(got) feedback += ` (+${amount} XP · +${amount} Finance Points${combo>=3?` · combo x${combo}`:''})`;
+        } else {
+          combo = 0;
+          wrong.push(item);
+        }
+        document.getElementById(`${elId}-feedback`).textContent = feedback;
         setTimeout(()=>{ qIndex++; renderQuestion(); }, 1400);
       });
       opts.appendChild(btn);
@@ -634,11 +679,11 @@ function startQuizSession(elId, questions, level){
     if(level) recordQuizCompletion(level, 'mélange', questions.length, pct);
     const seconds = Math.round((Date.now()-startTime)/1000);
     const {mastered, toReview} = getMasteredAndToReview();
-    if(pct === 100) awardXP(25, {quizPerfect:true});
+    if(pct === 100) awardXP(25, {quizPerfect:true, combo: maxCombo});
     el.innerHTML = `
       <div class="result-big">${score} / ${questions.length} <span style="font-size:16px;color:var(--text-dim);">(${pct}%)</span></div>
       <p style="color:var(--text-dim);font-size:14px;margin:8px 0;">${msg}</p>
-      <p style="font-size:11.5px;color:var(--text-dim);">Temps passé : ${seconds}s · +${score*10}${pct===100?' + 25 bonus':''} XP · +${score*10}${pct===100?' + 25 bonus':''} Finance Points (limité à un gain par question et par jour)</p>
+      <p style="font-size:11.5px;color:var(--text-dim);">Temps passé : ${seconds}s · meilleur combo : x${maxCombo}${pct===100?' · + 25 XP bonus (sans-faute)':''} (points par question limités à un gain par jour, bonifiés par combo et série de connexion)</p>
       ${mastered.length ? `<p style="font-size:12.5px;color:var(--emerald);margin-top:10px;">Maîtrisé : ${mastered.join(', ')}</p>` : ''}
       ${toReview.length ? `<p style="font-size:12.5px;color:var(--gold-bright);">À revoir : ${toReview.join(', ')}</p>` : ''}
       ${wrong.length ? `<div style="margin-top:14px;"><p style="font-size:12.5px;font-weight:600;margin-bottom:6px;">Réponses à revoir :</p>${wrong.map(w=>`<p style="font-size:12px;color:var(--text-dim);margin-bottom:6px;">• ${w.question} — ${w.explication}</p>`).join('')}</div>` : ''}
