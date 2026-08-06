@@ -35,6 +35,55 @@ const MARKET_HOURS = {
   tokyo:   {label:'Tokyo Stock Exchange', tz:'Asia/Tokyo', open:9, close:15},
 };
 
+// ---------- Fiches pédagogiques des valeurs du bandeau (page marche.html) ----------
+const MARKET_INFO = {
+  '^FCHI': {
+    resume:"Le CAC 40 regroupe les 40 plus grandes capitalisations françaises cotées sur Euronext Paris (LVMH, TotalEnergies, Sanofi, Airbus...). Il est pondéré par la capitalisation flottante : plus une entreprise pèse en bourse, plus elle influence l'indice.",
+    aRetenir:"Suivre le CAC 40, c'est prendre le pouls des grandes entreprises françaises. Attention toutefois : 40 valeurs ne représentent pas toute l'économie du pays.",
+    lien:'bourse.html', lienLabel:'Explorer la bourse'
+  },
+  '^GSPC': {
+    resume:"Le S&P 500 suit 500 grandes entreprises américaines, tous secteurs confondus. C'est l'indice de référence mondial : la majorité des ETF « monde » ou « USA » y sont fortement exposés.",
+    aRetenir:"Quand on parle de « la performance du marché américain », on parle presque toujours du S&P 500.",
+    lien:'bourse.html', lienLabel:'Explorer la bourse'
+  },
+  '^IXIC': {
+    resume:"Le Nasdaq Composite regroupe l'ensemble des valeurs cotées au Nasdaq, avec une très forte pondération technologique (Apple, Microsoft, Nvidia...). Il est plus volatil que le S&P 500.",
+    aRetenir:"Indice très sensible aux taux d'intérêt et aux perspectives de croissance : ses hausses comme ses baisses sont souvent amplifiées.",
+    lien:'bourse.html', lienLabel:'Explorer la bourse'
+  },
+  '^DJI': {
+    resume:"Le Dow Jones Industrial Average suit 30 grandes entreprises américaines. C'est le plus ancien indice au monde (1896), pondéré par les prix des actions et non par la capitalisation, une méthode aujourd'hui contestée.",
+    aRetenir:"Célèbre mais peu représentatif : 30 valeurs pondérées par le prix, les professionnels lui préfèrent le S&P 500.",
+    lien:'bourse.html', lienLabel:'Explorer la bourse'
+  },
+  '^STOXX50E': {
+    resume:"L'Euro Stoxx 50 regroupe 50 très grandes capitalisations de la zone euro (ASML, LVMH, SAP, TotalEnergies...). C'est la référence pour suivre les grandes valeurs européennes en une seule mesure.",
+    aRetenir:"Une exposition « zone euro » en un seul indice, mais concentrée sur les très grandes entreprises, sans les moyennes capitalisations.",
+    lien:'bourse.html', lienLabel:'Explorer la bourse'
+  },
+  'BTC-USD': {
+    resume:"Le Bitcoin est la première cryptomonnaie, créée en 2009. Son offre est plafonnée à 21 millions d'unités, ce qui alimente la thèse de « l'or numérique », sans garantie qu'elle se vérifie.",
+    aRetenir:"Actif extrêmement volatil : des variations de ±10 % en une journée ne sont pas rares. N'y investir que ce qu'on peut se permettre de perdre.",
+    lien:'crypto.html', lienLabel:'Explorer la crypto'
+  },
+  'ETH-USD': {
+    resume:"L'ether est la monnaie du réseau Ethereum, plateforme de « contrats intelligents » sur laquelle reposent la majorité des applications décentralisées (DeFi, NFT...). Deuxième capitalisation crypto derrière le Bitcoin.",
+    aRetenir:"Sa valeur dépend de l'usage réel du réseau Ethereum : un pari technologique, pas seulement monétaire, et tout aussi volatil que le Bitcoin.",
+    lien:'crypto.html', lienLabel:'Explorer la crypto'
+  },
+  'XAU': {
+    resume:"L'or est coté à l'once (environ 31,1 grammes), en dollars. Actif « refuge » historique : il ne verse aucun revenu, mais sert de protection perçue contre l'inflation et les crises.",
+    aRetenir:"L'or ne produit ni dividende ni intérêt : sa performance repose uniquement sur l'évolution de son prix.",
+    lien:'bibliotheque.html', lienLabel:'Voir la bibliothèque'
+  },
+  'BRENT': {
+    resume:"Le Brent est le pétrole de référence en Europe, coté en dollars par baril (159 litres). Son prix reflète l'équilibre entre l'offre (OPEP+, production américaine) et la demande mondiale, et influence directement l'inflation.",
+    aRetenir:"Quand le Brent monte durablement, le plein d'essence et les coûts de production suivent : c'est l'une des matières premières les plus surveillées au monde.",
+    lien:'bibliotheque.html', lienLabel:'Voir la bibliothèque'
+  }
+};
+
 // ---------- Actualités du jour (résumées, sources citées) ----------
 // ===EXPORT:NEWS_DATA:START===
 const NEWS_DATA = [
@@ -501,6 +550,7 @@ const SEARCH_INDEX = [
   {title:"À venir", url:"avenir.html", type:"Page"},
   ...NEWS_DATA.map(n=>({title:n.titre, url:`actualites.html#${n.id}`, type:"Actualité"})),
   ...LIBRARY.map(l=>({title:l.terme, url:`bibliotheque.html#${l.terme.replace(/\s+/g,'-')}`, type:"Définition"})),
-  ...STOCKS_DEMO.map(s=>({title:s.nom+" ("+s.ticker+")", url:`bourse.html#${s.ticker}`, type:"Action"}))
+  ...STOCKS_DEMO.map(s=>({title:s.nom+" ("+s.ticker+")", url:`bourse.html#${s.ticker}`, type:"Action"})),
+  ...MARKET_DATA.map(m=>({title:m.nom, url:`marche.html#${encodeURIComponent(m.symbol)}`, type:"Marché"}))
 ];
 

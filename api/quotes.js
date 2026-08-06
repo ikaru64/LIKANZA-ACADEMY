@@ -42,12 +42,18 @@ async function fetchYahooQuote(entry){
   const result = json.chart && json.chart.result && json.chart.result[0];
   if(!result || !result.meta) throw new Error(`Yahoo ${entry.yahoo} : réponse sans résultat`);
   const meta = result.meta;
-  const closes = (((result.indicators || {}).quote || [{}])[0].close || []).filter(c => typeof c === 'number');
-  const price = typeof meta.regularMarketPrice === 'number' ? meta.regularMarketPrice : closes[closes.length - 1];
+  const timestamps = result.timestamp || [];
+  const closes = ((result.indicators || {}).quote || [{}])[0].close || [];
+  // Paires (date, clôture) alignées, sans les trous (séances sans donnée).
+  const sessions = timestamps
+    .map((t, i) => ({date: new Date(t * 1000).toISOString(), close: closes[i]}))
+    .filter(s => typeof s.close === 'number');
+  const price = typeof meta.regularMarketPrice === 'number' ? meta.regularMarketPrice
+    : (sessions.length ? sessions[sessions.length - 1].close : undefined);
   // La dernière clôture de la série correspond à la séance en cours (ou à la
   // dernière séance si le marché est fermé) : la clôture de référence pour la
   // variation quotidienne est donc l'avant-dernière valeur valide.
-  const prevClose = closes.length >= 2 ? closes[closes.length - 2]
+  const prevClose = sessions.length >= 2 ? sessions[sessions.length - 2].close
     : (typeof meta.previousClose === 'number' ? meta.previousClose : meta.chartPreviousClose);
   if(typeof price !== 'number' || typeof prevClose !== 'number' || prevClose === 0){
     throw new Error(`Yahoo ${entry.yahoo} : cotation inexploitable`);
@@ -63,8 +69,24 @@ async function fetchYahooQuote(entry){
     timestamp: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : null,
     source: 'Yahoo Finance',
     status: 'DELAYED',
-    delayMinutes: 15
+    delayMinutes: 15,
+    history: sessions
   };
+}
+
+// Historique quotidien sur 7 jours (facultatif : une panne ici ne bloque pas la cotation).
+async function fetchCoinGeckoHistory(id){
+  try{
+    const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=7&interval=daily`;
+    const resp = await fetch(url, {headers: FETCH_HEADERS});
+    if(!resp.ok) return [];
+    const json = await resp.json();
+    return (json.prices || [])
+      .filter(p => Array.isArray(p) && typeof p[1] === 'number')
+      .map(p => ({date: new Date(p[0]).toISOString(), close: p[1]}));
+  }catch(err){
+    return [];
+  }
 }
 
 async function fetchCoinGeckoQuotes(){
@@ -73,7 +95,8 @@ async function fetchCoinGeckoQuotes(){
   const resp = await fetch(url, {headers: FETCH_HEADERS});
   if(!resp.ok) throw new Error(`CoinGecko : HTTP ${resp.status}`);
   const json = await resp.json();
-  return COINGECKO_QUOTES.map(entry => {
+  const histories = await Promise.all(COINGECKO_QUOTES.map(entry => fetchCoinGeckoHistory(entry.id)));
+  return COINGECKO_QUOTES.map((entry, i) => {
     const data = json[entry.id];
     if(!data || typeof data.usd !== 'number') return null;
     const changePercent = typeof data.usd_24h_change === 'number' ? data.usd_24h_change : null;
@@ -88,7 +111,8 @@ async function fetchCoinGeckoQuotes(){
       timestamp: data.last_updated_at ? new Date(data.last_updated_at * 1000).toISOString() : null,
       source: 'CoinGecko',
       status: 'DELAYED',
-      delayMinutes: 5
+      delayMinutes: 5,
+      history: histories[i]
     };
   }).filter(Boolean);
 }
