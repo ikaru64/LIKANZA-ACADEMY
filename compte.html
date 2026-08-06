@@ -69,19 +69,18 @@
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Mon compte</div>
 
 <section class="section">
-  <span class="demo-flag">Démonstration — aucune authentification réelle</span>
-  <div class="section-head"><h2>Mon compte</h2><span class="meta-line">données stockées sur cet appareil uniquement</span></div>
+  <div class="section-head"><h2>Mon compte</h2><span class="meta-line" id="authStatusLine">vérification de la connexion…</span></div>
   <div class="card-grid">
-    <div class="card">
-      <h3>Profil</h3>
-      <p>Utilisateur démo — Likanza Academy</p>
-      <p>Niveau actuel : <strong id="profLevel"></strong></p>
-      <p style="font-size:12px;">Aucun compte réel n'est créé dans cette version : la connexion, l'e-mail et le mot de passe seront ajoutés lors du passage à un vrai back-end.</p>
+    <div class="card" id="authCard">
+      <h3>Connexion</h3>
+      <div id="authCardBody"><p style="font-size:13px;color:var(--text-dim);">Chargement…</p></div>
     </div>
     <div class="card">
       <h3>Progression Academy</h3>
+      <p>Niveau actuel : <strong id="profLevel"></strong></p>
       <div id="profProgress"></div>
       <a href="formations.html" class="btn btn-sm" style="margin-top:12px;">Continuer la formation</a>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">La progression ci-dessous reste locale à cet appareil pour l'instant ; seule la connexion (compte, e-mail) est désormais réelle.</p>
     </div>
   </div>
 </section>
@@ -137,6 +136,7 @@
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/pages/compte.js"></script>
+<script src="scripts/auth-bridge.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon">🏠</span>Accueil</a>
