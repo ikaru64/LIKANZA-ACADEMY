@@ -160,7 +160,7 @@ function renderTicker(elId){
       if(it.sens === 'na') return;
       const maj = it.maj !== '—' ? ` · ${it.maj}${it.heure !== '—' ? ' ' + it.heure : ''}` : '';
       const valeur = it.valeur !== '—' ? `<span class="mono" style="color:var(--text-dim);">${it.valeur}${it.unite ? ' ' + it.unite : ''}</span> ` : '';
-      html += `<span class="ticker-item" title="Source : ${it.source} · ${it.statusLabel}${maj}">${it.nom} ${valeur}<span class="${it.sens}">${it.variation}</span></span>`;
+      html += `<a class="ticker-item" href="marche.html#${encodeURIComponent(it.symbol)}" title="Source : ${it.source} · ${it.statusLabel}${maj} · Voir la fiche">${it.nom} ${valeur}<span class="${it.sens}">${it.variation}</span></a>`;
     });
   }
   el.innerHTML = html;
@@ -199,6 +199,7 @@ function applyLiveQuotes(quotes){
       it.maj = when.toLocaleDateString('fr-FR');
       it.heure = when.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
     }
+    if(Array.isArray(q.history) && q.history.length >= 2) it.history = q.history;
     applied++;
   });
   return applied;
@@ -209,7 +210,11 @@ function initLiveMarketData(){
     .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(payload=>{
       if(!payload || !Array.isArray(payload.quotes)) return;
-      if(applyLiveQuotes(payload.quotes) > 0) renderTicker('tickerTrack');
+      if(applyLiveQuotes(payload.quotes) > 0){
+        renderTicker('tickerTrack');
+        // Prévient les pages qui affichent ces données (ex. marche.html)
+        document.dispatchEvent(new CustomEvent('fzr:quotes-updated'));
+      }
     })
     .catch(err=>{
       console.info('Likanza Academy — cotations en direct indisponibles, valeurs de repli affichées :', err.message);

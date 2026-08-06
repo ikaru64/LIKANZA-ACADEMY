@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Marché — Likanza Academy</title>
+<meta name="description" content="Fiche détaillée des valeurs du bandeau de marché : cotation, historique des dernières séances et repères pédagogiques.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles/design-system.css">
+</head>
+<body class="has-bottom-nav">
+<aside class="app-sidebar" aria-label="Navigation principale">
+  <a href="index.html" class="sidebar-brand"><span class="logo-mark"><span>LKA</span></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
+  <a href="index.html"><span class="icon">🏠</span><span>Tableau de bord</span></a>
+  <a href="index.html#tab-entrainer"><span class="icon">🎯</span><span>Défis</span></a>
+  <a href="formations.html"><span class="icon">📚</span><span>Academy</span></a>
+  <a href="avenir.html#play"><span class="icon">🎮</span><span>Play</span></a>
+  <a href="actualites.html"><span class="icon">📰</span><span>Actualités</span></a>
+  <a href="bibliotheque.html"><span class="icon">📖</span><span>Bibliothèque</span></a>
+  <a href="outils.html"><span class="icon">🧮</span><span>Simulateurs</span></a>
+  <a href="bourse.html"><span class="icon">📈</span><span>Bourse</span></a>
+  <a href="crypto.html"><span class="icon">🪙</span><span>Crypto</span></a>
+  <a href="immobilier.html"><span class="icon">🏘</span><span>Immobilier</span></a>
+  <a href="finances-personnelles.html"><span class="icon">💶</span><span>Finances perso</span></a>
+  <a href="compte.html"><span class="icon">🏆</span><span>Mon compte</span></a>
+</aside>
+
+
+<header class="site-header">
+  <div class="utility-bar"><div class="ticker-track" id="tickerTrack"></div></div>
+  <div class="nav-row">
+    <button class="mobile-toggle" id="mobileToggle" aria-label="Menu" aria-expanded="false">☰</button>
+    <a href="index.html" class="logo-row"><span class="logo-mark"><span>LKA</span></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
+        <nav class="main-nav" id="mainNav">
+      <a href="index.html">Accueil</a>
+      <a href="actualites.html">Actualités</a>
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false">Explorer ▾</button>
+        <div class="nav-dropdown-panel">
+          <div class="nav-dropdown-col">
+            <h5>Marchés</h5>
+            <a href="bourse.html">Bourse &amp; comparateur</a>
+            <a href="crypto.html">Crypto</a>
+            <a href="immobilier.html">Immobilier</a>
+            <a href="finances-personnelles.html">Finances personnelles</a>
+          </div>
+          <div class="nav-dropdown-col">
+            <h5>Apprendre</h5>
+            <a href="bibliotheque.html">Bibliothèque</a>
+            <a href="formations.html">Formations</a>
+            <a href="outils.html">Outils</a>
+          </div>
+          <div class="nav-dropdown-col">
+            <h5>Compte</h5>
+            <a href="compte.html">Mon compte</a>
+            <a href="avenir.html">À venir</a>
+            <a href="apropos.html">À propos</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="nav-tools">
+      <div class="search-box"><input type="text" class="search-input" id="searchInput" placeholder="Rechercher..." aria-label="Recherche"><div class="search-results" id="searchResults"></div></div>
+      <button class="icon-btn" id="themeToggle" aria-label="Changer de thème">☾</button>
+    </div>
+  </div>
+</header>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / Marché / <span id="crumbName"></span></div>
+
+<section class="section">
+  <div class="section-head"><h2 id="marcheTitle">Fiche marché</h2><span class="meta-line">cotations différées, jamais temps réel</span></div>
+  <div id="marketDetail"></div>
+</section>
+
+<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);">
+  <div class="wrap">
+    <div class="section-head" style="margin-bottom:16px;"><h2>Les autres valeurs du bandeau</h2><span class="meta-line" id="siblingsCount"></span></div>
+    <div class="card-grid" id="marketSiblings"></div>
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><span>LKA</span></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
+    <div><h4>Explorer</h4><ul><li><a href="bourse.html">Bourse</a></li><li><a href="crypto.html">Crypto</a></li></ul></div>
+    <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
+    <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
+  </div>
+  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Investir comporte un risque de perte en capital.</span></div>
+</footer>
+
+<script src="scripts/app.js"></script>
+<script src="scripts/data.js"></script>
+<script src="scripts/pages/marche.js"></script>
+
+<nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
+  <a href="index.html"><span class="icon">🏠</span>Accueil</a>
+  <a href="formations.html"><span class="icon">🎓</span>Apprendre</a>
+  <a href="index.html#tab-entrainer"><span class="icon">⚔️</span>Défis</a>
+  <a href="outils.html"><span class="icon">🧮</span>Simuler</a>
+  <a href="compte.html"><span class="icon">👤</span>Profil</a>
+</nav>
+</body>
+</html>
