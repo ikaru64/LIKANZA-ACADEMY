@@ -7,12 +7,14 @@
    l'interface) ou "manuel" (saisie éditoriale).
    ============================================================ */
 
-// ---------- Marché : dernière clôture recherchée le 29/07/2026 ----------
-// ---------- Marché : schéma normalisé ----------
+// ---------- Marché : valeurs de repli (dernière clôture recherchée le 29/07/2026) ----------
+// Au chargement, data.js tente de rafraîchir ces valeurs via /api/quotes
+// (fonction serverless Vercel, voir api/quotes.js et ARCHITECTURE.md) : elles
+// passent alors en statut DIFFÉRÉ avec la date et l'heure réelles. Si le
+// backend est injoignable (aperçu local, GitHub Pages, panne fournisseur),
+// ces valeurs de repli restent affichées avec leur statut d'origine.
 // statut possibles : "reel" (recherché sur le web à une date donnée, affiché comme LAST CLOSE),
 // "demo" (données fictives), "indisponible" (UNAVAILABLE).
-// Aucune donnée ici n'est LIVE ou REAL-TIME : ce site est statique et ne peut pas
-// afficher de flux réellement en direct sans un vrai backend (voir ARCHITECTURE.md).
 const MARKET_DATA = [
   {symbol:'^FCHI', nom:'CAC 40', assetType:'index', exchange:'paris', valeur:'8 408', unite:'pts', devise:'EUR', variation:'−0.6%', sens:'down', source:'Yahoo Finance', statut:'reel', statusLabel:'LAST CLOSE', maj:'29/07/2026', heure:'17:35 CEST'},
   {symbol:'^GSPC', nom:'S&P 500', assetType:'index', exchange:'newyork', valeur:'7 316', unite:'pts', devise:'USD', variation:'−1.5%', sens:'down', source:'Yahoo Finance', statut:'reel', statusLabel:'LAST CLOSE', maj:'29/07/2026', heure:'16:00 EDT'},
