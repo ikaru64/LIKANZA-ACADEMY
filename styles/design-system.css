@@ -93,8 +93,8 @@ button{cursor:pointer;}
 header.site-header{position:sticky;top:0;z-index:50;background:var(--bg);border-bottom:1px solid var(--hairline);box-shadow:0 10px 26px -18px rgba(0,0,0,0.65);}
 .nav-row{max-width:var(--max);margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:22px;}
 .logo-row{display:flex;align-items:center;gap:10px;flex-shrink:0;}
-.logo-mark{width:36px;height:36px;border:1px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;transition:transform .4s ease, box-shadow .3s ease;}
-.logo-mark span{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;color:var(--gold-bright);letter-spacing:0.02em;}
+.logo-mark{width:40px;height:36px;border:1px solid var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;transition:transform .4s ease, box-shadow .3s ease;background:linear-gradient(160deg, rgba(184,151,78,0.16), rgba(184,151,78,0.02));}
+.logo-mark span{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:0.04em;background:linear-gradient(135deg, var(--gold-bright), var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
 .logo-row:hover .logo-mark{transform:rotate(10deg) scale(1.05);box-shadow:0 0 18px rgba(184,151,78,0.45);}
 .logo-text{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;letter-spacing:0.01em;}
 .logo-text .zr{background:linear-gradient(135deg, var(--gold-bright), var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -302,8 +302,8 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
     z-index:90; overflow-y:auto;
   }
   .app-sidebar .sidebar-brand{display:flex;align-items:center;gap:10px;padding:6px 10px 22px;}
-  .app-sidebar .sidebar-brand .logo-mark{width:30px;height:30px;}
-  .app-sidebar .sidebar-brand .logo-mark span{font-size:12px;}
+  .app-sidebar .sidebar-brand .logo-mark{width:34px;height:30px;}
+  .app-sidebar .sidebar-brand .logo-mark span{font-size:11px;}
   .app-sidebar .sidebar-brand .logo-text{font-size:17px;}
   .app-sidebar a{
     display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:2px;
