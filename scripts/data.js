@@ -143,10 +143,62 @@ function renderTicker(elId){
   for(let i=0;i<2;i++){
     MARKET_DATA.forEach(it=>{
       if(it.sens === 'na') return;
-      html += `<span class="ticker-item" title="Source : ${it.source} · ${it.statusLabel}">${it.nom} <span class="${it.sens}">${it.variation}</span></span>`;
+      const maj = it.maj !== '—' ? ` · ${it.maj}${it.heure !== '—' ? ' ' + it.heure : ''}` : '';
+      const valeur = it.valeur !== '—' ? `<span class="mono" style="color:var(--text-dim);">${it.valeur}${it.unite ? ' ' + it.unite : ''}</span> ` : '';
+      html += `<span class="ticker-item" title="Source : ${it.source} · ${it.statusLabel}${maj}">${it.nom} ${valeur}<span class="${it.sens}">${it.variation}</span></span>`;
     });
   }
   el.innerHTML = html;
+}
+
+// ---------- Cotations réelles (/api/quotes, fonction serverless Vercel) ----------
+// Conformément à ARCHITECTURE.md, le navigateur n'appelle jamais un fournisseur
+// de données directement : il interroge le backend Likanza Academy (api/quotes.js),
+// mis en cache côté CDN. Si le backend est injoignable (aperçu local, GitHub
+// Pages, panne ou quota fournisseur), les valeurs de repli de MARKET_DATA
+// restent affichées avec leur statut d'origine — jamais une ancienne valeur
+// présentée comme fraîche.
+const LIVE_STATUS_LABELS = {
+  'LIVE':'LIVE', 'REAL-TIME':'TEMPS RÉEL', 'DELAYED':'DIFFÉRÉ', 'LAST_CLOSE':'LAST CLOSE',
+  'MANUAL':'MANUEL', 'DEMO':'DEMO', 'UNAVAILABLE':'UNAVAILABLE'
+};
+function currencySymbol(code){
+  return {USD:'$', EUR:'€', GBP:'£'}[code] || code || '';
+}
+function applyLiveQuotes(quotes){
+  let applied = 0;
+  quotes.forEach(q=>{
+    const it = MARKET_DATA.find(m=>m.symbol===q.symbol);
+    if(!it || typeof q.price !== 'number' || typeof q.changePercent !== 'number') return;
+    it.valeur = q.price.toLocaleString('fr-FR', q.price >= 1000
+      ? {maximumFractionDigits:0}
+      : {minimumFractionDigits:2, maximumFractionDigits:2});
+    if(!it.unite) it.unite = currencySymbol(q.currency);
+    it.variation = (q.changePercent >= 0 ? '+' : '−') + Math.abs(q.changePercent).toFixed(1) + '%';
+    it.sens = q.changePercent >= 0 ? 'up' : 'down';
+    if(q.source) it.source = q.source;
+    it.statut = 'reel';
+    it.statusLabel = LIVE_STATUS_LABELS[q.status] || q.status || 'DIFFÉRÉ';
+    const when = q.timestamp ? new Date(q.timestamp) : null;
+    if(when && !isNaN(when)){
+      it.maj = when.toLocaleDateString('fr-FR');
+      it.heure = when.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+    }
+    applied++;
+  });
+  return applied;
+}
+function initLiveMarketData(){
+  if(location.protocol === 'file:') return; // aperçu local sans backend
+  fetch('/api/quotes')
+    .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(payload=>{
+      if(!payload || !Array.isArray(payload.quotes)) return;
+      if(applyLiveQuotes(payload.quotes) > 0) renderTicker('tickerTrack');
+    })
+    .catch(err=>{
+      console.info('Likanza Academy — cotations en direct indisponibles, valeurs de repli affichées :', err.message);
+    });
 }
 
 // ---------- Ouverture / fermeture des places boursières (calcul local, sans API) ----------
@@ -172,7 +224,7 @@ function getMarketStatus(exchangeKey){
 function renderDemoBanner(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  el.innerHTML = `<div class="demo-banner">Mode démonstration — aucune donnée de marché en direct n'est actuellement connectée. Valeurs de dernière clôture recherchées manuellement, jamais des flux temps réel.</div>`;
+  el.innerHTML = `<div class="demo-banner">Mode démonstration — les fiches et simulateurs de cette page utilisent des données de démonstration. Seul le bandeau de marché est alimenté automatiquement en données différées (Yahoo Finance · CoinGecko), avec repli sur la dernière clôture connue.</div>`;
 }
 
 // ---------- Panneau de marché ----------
@@ -876,6 +928,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   safeRun('navigation', initNav);
   safeRun('recherche', initSearch);
   safeRun('ticker', ()=>renderTicker('tickerTrack'));
+  safeRun('cotations réelles', initLiveMarketData);
   safeRun('série quotidienne', checkDailyStreak);
   // Laisse le temps aux scripts de page de peupler les cartes avant d'observer
   setTimeout(()=>safeRun('animations au scroll', initReveal), 60);

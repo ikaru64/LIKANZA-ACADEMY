@@ -131,6 +131,14 @@ backend Likanza Academy, seul dépositaire des clés (en variables d'environneme
 Navigateur (Likanza Academy) → Backend Likanza Academy → Fournisseurs de données
 ```
 
+Une première implémentation minimale de ce principe existe : la fonction
+serverless Vercel `api/quotes.js` alimente le bandeau de marché (indices,
+matières premières, crypto) en données différées, avec cache CDN de 5 minutes
+et repli automatique sur les valeurs `LAST_CLOSE` de `scripts/app.js` si un
+fournisseur est injoignable. Elle n'utilise aucune clé API (endpoints publics
+gratuits uniquement) — brancher un fournisseur sous contrat (Twelve Data, etc.)
+se fera dans cette même fonction, avec la clé en variable d'environnement.
+
 Voir `DATA_PROVIDERS.md` pour la liste des fournisseurs envisagés (actions,
 indices, crypto, devises, matières premières, actualités) avec leurs
 contraintes de licence, de délai et de coût.

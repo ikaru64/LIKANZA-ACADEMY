@@ -3,10 +3,21 @@
 Ce document liste les fournisseurs de données à évaluer pour faire passer Likanza Academy
 du mode démonstration à un mode connecté (`MARKET_DATA_MODE = "live"`).
 
-**Aucun de ces fournisseurs n'est connecté actuellement.** Toutes les valeurs
-affichées sur le site sont soit des données de démonstration, soit des dernières
-clôtures recherchées manuellement à une date donnée (voir le statut affiché sur
-chaque donnée : `DEMO`, `LAST CLOSE`, ou `UNAVAILABLE`).
+**État actuel (août 2026) : deux sources sont connectées, pour le bandeau de
+marché uniquement**, via la fonction serverless `api/quotes.js` (le navigateur
+n'appelle jamais un fournisseur directement, voir `ARCHITECTURE.md`) :
+
+- **Yahoo Finance** (endpoint public non contractuel) pour les indices et
+  matières premières — données différées, affichées `DIFFÉRÉ`. Cet endpoint
+  n'offre aucune garantie et peut cesser de fonctionner sans préavis : le site
+  retombe alors automatiquement sur les valeurs de repli `LAST CLOSE` de
+  `scripts/app.js`.
+- **CoinGecko** (offre gratuite, source affichée dans l'info-bulle) pour
+  Bitcoin et Ethereum — variation sur 24 h, affichée `DIFFÉRÉ`.
+
+Tout le reste du site (fiches actions, page crypto, simulateurs) reste en mode
+démonstration : valeurs `DEMO`, `LAST CLOSE` ou `UNAVAILABLE` recherchées
+manuellement à une date donnée.
 
 Avant d'intégrer un fournisseur, vérifier systématiquement :
 - les droits de redistribution et d'affichage public ;
