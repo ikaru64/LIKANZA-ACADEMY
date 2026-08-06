@@ -15,6 +15,8 @@
    Réponse : { updatedAt, quotes: [schéma normalisé ARCHITECTURE.md] }
    ============================================================ */
 
+const { fetchYahooQuote, FETCH_HEADERS } = require('../lib/yahoo');
+
 // Le champ "symbol" renvoyé est celui utilisé par MARKET_DATA côté site,
 // pas forcément celui du fournisseur (ex. XAU ↔ GC=F chez Yahoo).
 const YAHOO_QUOTES = [
@@ -31,48 +33,6 @@ const COINGECKO_QUOTES = [
   {symbol:'BTC-USD', id:'bitcoin',  name:'Bitcoin'},
   {symbol:'ETH-USD', id:'ethereum', name:'Ethereum'}
 ];
-
-const FETCH_HEADERS = {'User-Agent':'Mozilla/5.0 (compatible; LikanzaAcademy/1.0)'};
-
-async function fetchYahooQuote(entry){
-  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(entry.yahoo)}?interval=1d&range=5d`;
-  const resp = await fetch(url, {headers: FETCH_HEADERS});
-  if(!resp.ok) throw new Error(`Yahoo ${entry.yahoo} : HTTP ${resp.status}`);
-  const json = await resp.json();
-  const result = json.chart && json.chart.result && json.chart.result[0];
-  if(!result || !result.meta) throw new Error(`Yahoo ${entry.yahoo} : réponse sans résultat`);
-  const meta = result.meta;
-  const timestamps = result.timestamp || [];
-  const closes = ((result.indicators || {}).quote || [{}])[0].close || [];
-  // Paires (date, clôture) alignées, sans les trous (séances sans donnée).
-  const sessions = timestamps
-    .map((t, i) => ({date: new Date(t * 1000).toISOString(), close: closes[i]}))
-    .filter(s => typeof s.close === 'number');
-  const price = typeof meta.regularMarketPrice === 'number' ? meta.regularMarketPrice
-    : (sessions.length ? sessions[sessions.length - 1].close : undefined);
-  // La dernière clôture de la série correspond à la séance en cours (ou à la
-  // dernière séance si le marché est fermé) : la clôture de référence pour la
-  // variation quotidienne est donc l'avant-dernière valeur valide.
-  const prevClose = sessions.length >= 2 ? sessions[sessions.length - 2].close
-    : (typeof meta.previousClose === 'number' ? meta.previousClose : meta.chartPreviousClose);
-  if(typeof price !== 'number' || typeof prevClose !== 'number' || prevClose === 0){
-    throw new Error(`Yahoo ${entry.yahoo} : cotation inexploitable`);
-  }
-  return {
-    symbol: entry.symbol,
-    name: entry.name,
-    assetType: entry.assetType,
-    price,
-    currency: meta.currency || 'USD',
-    change: price - prevClose,
-    changePercent: (price - prevClose) / prevClose * 100,
-    timestamp: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : null,
-    source: 'Yahoo Finance',
-    status: 'DELAYED',
-    delayMinutes: 15,
-    history: sessions
-  };
-}
 
 // Historique quotidien sur 7 jours (facultatif : une panne ici ne bloque pas la cotation).
 async function fetchCoinGeckoHistory(id){

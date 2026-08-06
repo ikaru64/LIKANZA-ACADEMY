@@ -68,15 +68,27 @@
 </header>
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Bourse</div>
 
-<section class="section">
-  <div class="section-head"><h2>Actions (démonstration)</h2><span class="meta-line">8 valeurs éligibles PEA</span></div>
-  <span class="demo-flag">Données fictives de démonstration</span>
-  <div class="card-grid" id="stockGrid"></div>
-</section>
+<section class="section" style="padding-bottom:0;">
+  <div class="quick-access-grid" id="bourseTabsGrid"></div>
 
-<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);">
-  <div class="wrap">
-    <div class="section-head" style="margin-bottom:16px;"><h2>Comparateur d'actions</h2><span class="meta-line">2 à 5 titres</span></div>
+  <div class="home-tab-panel" id="tab-marche-jour">
+    <div class="section-head"><h2>Marché du jour</h2><span class="meta-line">cotations différées, Yahoo Finance</span></div>
+    <div class="mode-toggle">
+      <button class="pill active" data-mjtab="hausses">🔥 Hausses du jour</button>
+      <button class="pill" data-mjtab="baisses">📉 Baisses du jour</button>
+      <button class="pill" data-mjtab="selection">⭐ Sélection du jour</button>
+    </div>
+    <div id="marketOfDayBody" style="margin-top:16px;"></div>
+    <div id="marketLevelTip" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="home-tab-panel" id="tab-fiches">
+    <div class="section-head"><h2>Actions</h2><span class="meta-line">8 valeurs éligibles PEA</span></div>
+    <div class="card-grid" id="stockGrid"></div>
+  </div>
+
+  <div class="home-tab-panel" id="tab-comparateur">
+    <div class="section-head"><h2>Comparateur d'actions</h2><span class="meta-line">2 à 5 titres</span></div>
     <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Sélectionne entre 2 et 5 actions à comparer.</p>
     <div id="compareChecks" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;"></div>
     <div class="mode-toggle">
@@ -91,32 +103,30 @@
     </div>
     <p class="disclaimer-box">Le comparateur ne désigne pas une "meilleure action" : il met en évidence, ligne par ligne, quelle valeur est la mieux placée sur chaque critère (solidité, valorisation, croissance, rendement...). À toi d'en tirer tes propres conclusions.</p>
   </div>
-</section>
 
-<section class="section">
-  <div class="section-head"><h2>Analyse & scénarios</h2><span class="meta-line">estimation, pas une prédiction</span></div>
-  <div class="card-grid" style="grid-template-columns:1fr 1fr;">
-    <div class="card">
-      <h3>Paramètres</h3>
-      <div class="field"><label>Action de référence</label>
-        <select id="scenStock"></select>
+  <div class="home-tab-panel" id="tab-scenarios">
+    <div class="section-head"><h2>Analyse & scénarios</h2><span class="meta-line">estimation, pas une prédiction</span></div>
+    <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card">
+        <h3>Paramètres</h3>
+        <div class="field"><label>Action de référence</label>
+          <select id="scenStock"></select>
+        </div>
+        <div class="slider-row field"><label>Croissance annuelle du bénéfice <span class="v mono" id="valGrowth">6 %</span></label><input type="range" id="scenGrowth" min="-10" max="25" step="1" value="6"></div>
+        <div class="slider-row field"><label>PER cible dans le scénario central <span class="v mono" id="valPer">18×</span></label><input type="range" id="scenPer" min="5" max="40" step="1" value="18"></div>
+        <div class="slider-row field"><label>Horizon <span class="v mono" id="valHorizon">5 ans</span></label><input type="range" id="scenHorizon" min="1" max="15" step="1" value="5"></div>
       </div>
-      <div class="slider-row field"><label>Croissance annuelle du bénéfice <span class="v mono" id="valGrowth">6 %</span></label><input type="range" id="scenGrowth" min="-10" max="25" step="1" value="6"></div>
-      <div class="slider-row field"><label>PER cible dans le scénario central <span class="v mono" id="valPer">18×</span></label><input type="range" id="scenPer" min="5" max="40" step="1" value="18"></div>
-      <div class="slider-row field"><label>Horizon <span class="v mono" id="valHorizon">5 ans</span></label><input type="range" id="scenHorizon" min="1" max="15" step="1" value="5"></div>
-    </div>
-    <div class="card">
-      <h3>Résultats estimés</h3>
-      <div id="scenResults"></div>
-      <div class="bar-chart" id="scenChart"></div>
-      <div class="bar-labels" id="scenChartLabels"></div>
-      <p class="disclaimer-box">Simulation basée uniquement sur les hypothèses saisies ci-contre. Les marchés financiers sont imprévisibles : cette estimation ne constitue pas une recommandation d'achat ou de vente.</p>
+      <div class="card">
+        <h3>Résultats estimés</h3>
+        <div id="scenResults"></div>
+        <div class="bar-chart" id="scenChart"></div>
+        <div class="bar-labels" id="scenChartLabels"></div>
+        <p class="disclaimer-box">Simulation basée uniquement sur les hypothèses saisies ci-contre. Les marchés financiers sont imprévisibles : cette estimation ne constitue pas une recommandation d'achat ou de vente.</p>
+      </div>
     </div>
   </div>
-</section>
 
-<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);">
-  <div class="wrap">
+  <div class="home-tab-panel" id="tab-dca">
     <div class="section-head"><h2>DCA vs investissement en une fois</h2><span class="meta-line">impact du timing</span></div>
     <div class="card-grid" style="grid-template-columns:1fr 1fr;">
       <div class="card">
@@ -131,23 +141,23 @@
       </div>
     </div>
   </div>
-</section>
 
-<section class="section">
-  <div class="section-head"><h2>Simulateur de dividendes</h2><span class="meta-line">rendement + réinvestissement</span></div>
-  <div class="card-grid" style="grid-template-columns:1fr 1fr;">
-    <div class="card">
-      <div class="field"><label>Action de référence</label><select id="divStock"></select></div>
-      <div class="slider-row field"><label>Croissance annuelle du dividende <span class="v mono" id="valDivGrowth">3 %</span></label><input type="range" id="divGrowth" min="-5" max="15" step="0.5" value="3"></div>
-      <div class="slider-row field"><label>Durée <span class="v mono" id="valDivYears">10 ans</span></label><input type="range" id="divYears" min="1" max="30" step="1" value="10"></div>
-      <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--text-dim);margin-top:10px;"><input type="checkbox" id="divReinvest" checked style="accent-color:var(--gold);"> Réinvestir les dividendes chaque année</label>
-    </div>
-    <div class="card">
-      <h3>Résultat</h3>
-      <div id="divResult"></div>
-      <div class="bar-chart" id="divChart"></div>
-      <div class="bar-labels" id="divChartLabels"></div>
-      <p class="disclaimer-box">Simulation basée sur un taux de croissance du dividende constant, hypothèse simplificatrice qui ne reflète pas la réalité d'une entreprise sur la durée.</p>
+  <div class="home-tab-panel" id="tab-dividendes">
+    <div class="section-head"><h2>Simulateur de dividendes</h2><span class="meta-line">rendement + réinvestissement</span></div>
+    <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card">
+        <div class="field"><label>Action de référence</label><select id="divStock"></select></div>
+        <div class="slider-row field"><label>Croissance annuelle du dividende <span class="v mono" id="valDivGrowth">3 %</span></label><input type="range" id="divGrowth" min="-5" max="15" step="0.5" value="3"></div>
+        <div class="slider-row field"><label>Durée <span class="v mono" id="valDivYears">10 ans</span></label><input type="range" id="divYears" min="1" max="30" step="1" value="10"></div>
+        <label style="display:flex;gap:8px;align-items:center;font-size:13px;color:var(--text-dim);margin-top:10px;"><input type="checkbox" id="divReinvest" checked style="accent-color:var(--gold);"> Réinvestir les dividendes chaque année</label>
+      </div>
+      <div class="card">
+        <h3>Résultat</h3>
+        <div id="divResult"></div>
+        <div class="bar-chart" id="divChart"></div>
+        <div class="bar-labels" id="divChartLabels"></div>
+        <p class="disclaimer-box">Simulation basée sur un taux de croissance du dividende constant, hypothèse simplificatrice qui ne reflète pas la réalité d'une entreprise sur la durée.</p>
+      </div>
     </div>
   </div>
 </section>

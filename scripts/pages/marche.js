@@ -15,29 +15,10 @@ function marcheCurrentSymbol(){
   return MARKET_DATA.some(m=>m.symbol===sym) ? sym : MARKET_DATA[0].symbol;
 }
 
-function marcheFmtDate(iso){
-  const d = new Date(iso);
-  return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'});
-}
-
-function marcheFmtClose(n){
-  return n.toLocaleString('fr-FR', n >= 1000 ? {maximumFractionDigits:0} : {minimumFractionDigits:2, maximumFractionDigits:2});
-}
-
+// Sparkline factorisée dans scripts/data.js (renderSparklineHTML), réutilisée
+// aussi par les lignes hausses/baisses de la page Bourse.
 function renderMarcheChart(it){
-  if(!Array.isArray(it.history) || it.history.length < 2){
-    return `<p style="font-size:12.5px;color:var(--text-dim);">L'historique des dernières séances s'affiche dès que les cotations automatiques sont disponibles (connexion au backend requise).</p>`;
-  }
-  const closes = it.history.map(h=>h.close);
-  const min = Math.min(...closes), max = Math.max(...closes);
-  const spread = (max - min) || 1;
-  const bars = it.history.map(h=>{
-    const pct = 12 + Math.round(((h.close - min) / spread) * 88);
-    return `<div class="bar" style="height:${pct}%;" title="${marcheFmtDate(h.date)} : ${marcheFmtClose(h.close)}${it.unite ? ' ' + it.unite : ''}"></div>`;
-  }).join('');
-  const labels = it.history.map(h=>`<span>${marcheFmtDate(h.date)}</span>`).join('');
-  return `<div class="bar-chart">${bars}</div><div class="bar-labels">${labels}</div>
-    <p style="font-size:11px;color:var(--text-dim);margin-top:10px;">Clôtures des dernières séances (source : ${it.source}). Échelle resserrée entre ${marcheFmtClose(min)} et ${marcheFmtClose(max)} pour rendre les variations lisibles.</p>`;
+  return renderSparklineHTML(it.history, {unite: it.unite, source: it.source});
 }
 
 function renderMarcheSiblings(current){

@@ -223,6 +223,15 @@ table.compare-table tr:hover td{background:var(--bg-alt);}
 .bar-chart .bar{flex:1;background:linear-gradient(to top,var(--gold),var(--emerald));border-radius:1px;min-height:2px;}
 .bar-labels{display:flex;gap:6px;margin-top:6px;}
 .bar-labels span{flex:1;text-align:center;font-family:'IBM Plex Mono',monospace;font-size:9.5px;color:var(--text-dim);}
+.bar-chart-sm{height:34px;margin-top:0;gap:2px;}
+.bar-chart-empty{height:34px;background:var(--hairline);border-radius:2px;opacity:.4;}
+
+/* ---------- Marché du jour : lignes hausses/baisses/sélection ---------- */
+.market-row-list{display:flex;flex-direction:column;gap:2px;}
+.market-row{display:grid;grid-template-columns:1fr 90px auto;align-items:center;gap:14px;padding:12px 14px;border-radius:var(--radius);transition:background .15s ease, transform .15s ease;}
+.market-row:hover{background:var(--bg-alt);transform:translateX(4px);}
+.market-row-value{text-align:right;font-size:13px;}
+@media (max-width:600px){.market-row{grid-template-columns:1fr auto;}.market-row-spark{display:none;}}
 
 /* ---------- Skeleton loaders ---------- */
 .skeleton{background:linear-gradient(90deg,var(--bg-alt) 25%,var(--bg-alt-2) 37%,var(--bg-alt) 63%);background-size:400% 100%;animation:sk 1.4s ease infinite;border-radius:2px;}
@@ -305,7 +314,7 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .quick-access-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:20px 0;}
 @media (max-width:760px){.quick-access-grid{grid-template-columns:1fr 1fr;}}
 .quick-access-card{background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);padding:18px;text-align:left;cursor:pointer;transition:transform .2s ease, border-color .2s;}
-.quick-access-card:hover{transform:translateY(-3px);border-color:var(--gold);}
+.quick-access-card:hover{transform:translateY(-3px);border-color:var(--gold);box-shadow:0 14px 30px -20px rgba(184,151,78,0.4);}
 .quick-access-card.active{border-color:var(--gold);background:rgba(184,151,78,0.08);}
 .quick-access-card .icon{font-size:20px;margin-bottom:8px;}
 .quick-access-card h3{font-size:15px;font-family:'Cormorant Garamond',serif;font-weight:600;}
@@ -313,7 +322,9 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 /* ---------- Onglets de contenu ---------- */
 .home-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:18px;}
 .home-tab-panel{display:none;}
-.home-tab-panel.active{display:block;}
+.home-tab-panel.active{display:block;animation:tabFadeIn .35s ease;}
+@keyframes tabFadeIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+@media (prefers-reduced-motion:reduce){.home-tab-panel.active{animation:none;}}
 
 /* ---------- Sidebar persistante (façon Chess.com, écrans larges) ---------- */
 .app-sidebar{display:none;}

@@ -225,6 +225,46 @@ function initLiveMarketData(){
   setInterval(refresh, 5*60*1000);
 }
 
+// ---------- Sparkline partagée (graphique en barres CSS à partir d'un historique) ----------
+// Utilisée par la fiche marché (marche.html) et par les lignes hausses/baisses
+// de la page Bourse. mode "compact" : juste les barres, sans dates ni légende
+// (pour une petite ligne de liste) ; mode complet : barres + dates + légende.
+function sparklineFmtDate(iso){
+  const d = new Date(iso);
+  return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'});
+}
+function sparklineFmtClose(n){
+  return n.toLocaleString('fr-FR', n >= 1000 ? {maximumFractionDigits:0} : {minimumFractionDigits:2, maximumFractionDigits:2});
+}
+function renderSparklineHTML(history, opts){
+  opts = opts || {};
+  if(!Array.isArray(history) || history.length < 2){
+    return opts.compact
+      ? `<div class="bar-chart bar-chart-empty"></div>`
+      : `<p style="font-size:12.5px;color:var(--text-dim);">L'historique des dernières séances s'affiche dès que les cotations automatiques sont disponibles (connexion au backend requise).</p>`;
+  }
+  const closes = history.map(h=>h.close);
+  const min = Math.min(...closes), max = Math.max(...closes);
+  const spread = (max - min) || 1;
+  const bars = history.map(h=>{
+    const pct = 12 + Math.round(((h.close - min) / spread) * 88);
+    return `<div class="bar" style="height:${pct}%;" title="${sparklineFmtDate(h.date)} : ${sparklineFmtClose(h.close)}${opts.unite ? ' ' + opts.unite : ''}"></div>`;
+  }).join('');
+  const chartClass = opts.compact ? 'bar-chart bar-chart-sm' : 'bar-chart';
+  if(opts.compact) return `<div class="${chartClass}">${bars}</div>`;
+  const labels = history.map(h=>`<span>${sparklineFmtDate(h.date)}</span>`).join('');
+  return `<div class="${chartClass}">${bars}</div><div class="bar-labels">${labels}</div>
+    <p style="font-size:11px;color:var(--text-dim);margin-top:10px;">Clôtures des dernières séances (source : ${opts.source || 'n.d.'}). Échelle resserrée entre ${sparklineFmtClose(min)} et ${sparklineFmtClose(max)} pour rendre les variations lisibles.</p>`;
+}
+
+// ---------- Conseils adaptés au niveau (contexte marché) ----------
+const MARKET_TIPS = {
+  debutant: "Les hausses et baisses du jour ne veulent pas dire grand-chose isolément — ce sont les tendances sur plusieurs années qui comptent le plus pour un premier investissement.",
+  intermediaire: "Compare toujours une variation quotidienne au contexte : un secteur entier qui bouge n'a pas la même signification qu'un mouvement isolé sur une seule entreprise.",
+  avance: "Regarde si la variation du jour s'accompagne d'une actualité précise (résultats, annonce) avant d'en tirer une conclusion — le \"bruit\" quotidien est souvent sans lien avec les fondamentaux.",
+  expert: "Une variation de PER à bénéfice constant reflète un changement d'anticipations du marché, pas un changement de la valeur intrinsèque de l'entreprise — utile à distinguer avant d'interpréter un mouvement de cours."
+};
+
 // ---------- Ouverture / fermeture des places boursières (calcul local, sans API) ----------
 function getMarketStatus(exchangeKey){
   const conf = MARKET_HOURS[exchangeKey];
