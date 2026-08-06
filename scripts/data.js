@@ -190,7 +190,7 @@ function applyLiveQuotes(quotes){
 }
 function initLiveMarketData(){
   if(location.protocol === 'file:') return; // aperçu local sans backend
-  fetch('/api/quotes')
+  const refresh = ()=>fetch('/api/quotes')
     .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(payload=>{
       if(!payload || !Array.isArray(payload.quotes)) return;
@@ -199,6 +199,10 @@ function initLiveMarketData(){
     .catch(err=>{
       console.info('Likanza Academy — cotations en direct indisponibles, valeurs de repli affichées :', err.message);
     });
+  refresh();
+  // Rafraîchit tant que la page reste ouverte, au rythme du cache CDN (5 min) :
+  // inutile d'interroger plus souvent, le CDN servirait la même réponse.
+  setInterval(refresh, 5*60*1000);
 }
 
 // ---------- Ouverture / fermeture des places boursières (calcul local, sans API) ----------
