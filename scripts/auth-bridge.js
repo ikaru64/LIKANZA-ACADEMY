@@ -22,7 +22,7 @@
           <p style="font-size:12px;color:var(--text-dim);">${user.email}</p>
         </div>
       </div>
-      <a class="btn btn-sm" href="${AUTH_BASE}/api/auth/signout?callbackUrl=${encodeURIComponent(location.href)}">Se déconnecter</a>
+      <a class="btn btn-sm" href="${AUTH_BASE}/?callbackUrl=${encodeURIComponent(location.href)}">Se déconnecter</a>
     `;
   }
 
@@ -33,7 +33,7 @@
     if (!body) return;
     body.innerHTML = `
       <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Connecte-toi pour créer ton compte réel Likanza Academy.</p>
-      <a class="btn btn-gold btn-sm" href="${AUTH_BASE}/api/auth/signin/google?callbackUrl=${encodeURIComponent(location.href)}">Se connecter avec Google</a>
+      <a class="btn btn-gold btn-sm" href="${AUTH_BASE}/?callbackUrl=${encodeURIComponent(location.href)}">Se connecter avec Google</a>
     `;
   }
 
