@@ -44,6 +44,7 @@ body{
   line-height:1.55;
   -webkit-font-smoothing:antialiased;
   transition:background .2s, color .2s;
+  animation:pageFadeIn .45s ease;
   background-image:
     radial-gradient(circle at 12% 6%, rgba(184,151,78,0.13), transparent 38%),
     radial-gradient(circle at 90% 94%, rgba(62,124,104,0.11), transparent 38%),
@@ -88,6 +89,8 @@ a.ticker-item:hover{color:var(--gold-bright);}
 .ticker-item .up{color:var(--emerald);}
 .ticker-item .down{color:var(--bordeaux);}
 @keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+@keyframes pageFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+@media (prefers-reduced-motion:reduce){body{animation:none;}}
 @media (prefers-reduced-motion:reduce){.ticker-track{animation:none;}}
 
 /* ---------- Nav ---------- */
@@ -149,6 +152,7 @@ nav.main-nav a:hover::after, nav.main-nav a.active::after{transform:scaleX(1);}
 .btn::after{content:'';position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(120deg, transparent, rgba(255,255,255,0.22), transparent);transform:skewX(-20deg);transition:left .55s ease;}
 .btn:hover::after{left:130%;}
 .btn:hover{border-color:var(--gold);color:var(--gold-bright);transform:translateY(-2px);box-shadow:0 10px 22px -10px rgba(184,151,78,0.4);}
+.btn:active{transform:translateY(0) scale(.97);transition:transform .1s ease;}
 .btn-gold{background:linear-gradient(135deg, var(--gold), var(--gold-bright));border-color:var(--gold);color:var(--onyx);}
 .btn-gold:hover{background:linear-gradient(135deg, var(--gold-bright), var(--gold));color:var(--onyx);box-shadow:0 12px 26px -8px rgba(184,151,78,0.55);}
 .btn-sm{padding:7px 14px;font-size:11px;}
@@ -259,8 +263,17 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .course-item .head, .glossary-item .head{display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:16px;}
 .course-item h4, .glossary-item h4{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;}
 .course-item .idx{font-family:'IBM Plex Mono',monospace;color:var(--gold);font-size:12px;}
-.course-body, .glossary-body{display:none;color:var(--text-dim);font-size:14px;margin-top:12px;padding-top:12px;border-top:1px solid var(--hairline);}
-.course-body.open, .glossary-body.open{display:block;}
+.course-body, .glossary-body{
+  color:var(--text-dim);font-size:14px;overflow:hidden;
+  max-height:0;opacity:0;margin-top:0;padding-top:0;border-top:0px solid var(--hairline);
+  transition:max-height .4s ease, opacity .3s ease, margin-top .4s ease, padding-top .4s ease, border-top-width .4s ease;
+}
+.course-body.open, .glossary-body.open{
+  max-height:3000px;opacity:1;margin-top:12px;padding-top:12px;border-top-width:1px;
+}
+@media (prefers-reduced-motion:reduce){
+  .course-body, .glossary-body{transition:none;}
+}
 
 /* ---------- Missions scénarisées (chapitres + question) ---------- */
 .mission-chapter{margin-bottom:14px;}
@@ -310,7 +323,7 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .dash-stat .num{font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:600;color:var(--gold-bright);}
 .dash-stat .lab{font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--text-dim);margin-top:2px;}
 .dash-weekbar{height:4px;background:var(--hairline);border-radius:2px;overflow:hidden;margin-top:5px;width:90px;}
-.dash-weekfill{height:100%;background:linear-gradient(90deg,var(--gold),var(--emerald));}
+.dash-weekfill{height:100%;background:linear-gradient(90deg,var(--gold),var(--emerald));transition:width .7s ease;}
 
 /* ---------- Carte "Pour toi aujourd'hui" ---------- */
 .today-card{background:linear-gradient(120deg, var(--bg-alt), var(--bg));border:1px solid var(--hairline);border-left:3px solid var(--gold);border-radius:var(--radius);padding:26px;box-shadow:0 24px 48px -28px rgba(0,0,0,0.7);}

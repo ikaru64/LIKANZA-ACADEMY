@@ -596,7 +596,7 @@ function renderGamificationWidget(elId, full){
       <div class="gami-top">
         <div style="flex:1;">
           <span class="smallcaps">Niveau ${lvl.level} — ${lvl.title}</span>
-          <div class="gami-xpbar"><div class="gami-xpfill" style="width:${lvl.xpInLevel}%;"></div></div>
+          <div class="gami-xpbar"><div class="gami-xpfill" id="gamiXpFill-${elId}" style="width:0%;"></div></div>
           <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">${lvl.xpInLevel} / 100 XP · ${g.xp} XP au total${mult>1?` · bonus série x${mult}`:''}</p>
         </div>
         <div class="gami-streak">🔥 <strong>${g.streak}</strong><span>jour${g.streak>1?'s':''}</span></div>
@@ -610,6 +610,7 @@ function renderGamificationWidget(elId, full){
           return `<div class="gami-badge ${earned?'earned':''}" title="${b.desc}"><span>${earned?'🏅':'🔒'}</span>${b.name}</div>`;
         }).join('')}</div>` : `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">${earnedCount} badge${earnedCount>1?'s':''} débloqué${earnedCount>1?'s':''} sur ${BADGES.length}</p>`}
     </div>`;
+  animateWidthIn(document.getElementById('gamiXpFill-'+elId), lvl.xpInLevel);
 }
 
 // ---------- Quiz réutilisable ----------
@@ -634,6 +635,32 @@ function getNotionOfDay(){
 }
 
 // ---------- En-tête de tableau de bord (salutation, rang, FinPoints, série, activité hebdo) ----------
+// ---------- Petites animations : barres qui se remplissent, compteurs qui montent ----------
+function prefersReducedMotion(){
+  return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+function animateWidthIn(el, targetPct){
+  if(!el) return;
+  if(prefersReducedMotion()){ el.style.width = targetPct + '%'; return; }
+  el.style.width = '0%';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.style.width = targetPct + '%'; }));
+}
+function animateNumber(el, target, opts){
+  if(!el) return;
+  const prefix = (opts && opts.prefix) || '';
+  const suffix = (opts && opts.suffix) || '';
+  if(prefersReducedMotion()){ el.textContent = prefix + target + suffix; return; }
+  const duration = (opts && opts.duration) || 700;
+  const start = performance.now();
+  function tick(now){
+    const p = Math.min(1, (now-start)/duration);
+    const eased = 1 - Math.pow(1-p, 3);
+    el.textContent = prefix + Math.round(target*eased) + suffix;
+    if(p < 1) requestAnimationFrame(tick);
+  }
+  requestAnimationFrame(tick);
+}
+
 function renderDashboardHeader(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -650,15 +677,18 @@ function renderDashboardHeader(elId){
         <h1 class="display" style="font-size:26px;font-weight:600;margin-top:4px;">${lvl.title}</h1>
       </div>
       <div class="dash-stats">
-        <div class="dash-stat"><span class="num">${g.xp} XP</span><span class="lab">niveau ${lvl.level}</span></div>
-        <div class="dash-stat"><span class="num">💰 ${g.financePoints}</span><span class="lab">Finance Points</span></div>
+        <div class="dash-stat"><span class="num" id="dashNumXP">0 XP</span><span class="lab">niveau ${lvl.level}</span></div>
+        <div class="dash-stat"><span class="num" id="dashNumFP">💰 0</span><span class="lab">Finance Points</span></div>
         <div class="dash-stat"><span class="num">🔥 ${g.streak}</span><span class="lab">série</span></div>
         <div class="dash-stat">
           <span class="num">${weekDays}/${WEEKLY_GOAL_DAYS}</span><span class="lab">jours actifs</span>
-          <div class="dash-weekbar"><div class="dash-weekfill" style="width:${weekPct}%;"></div></div>
+          <div class="dash-weekbar"><div class="dash-weekfill" id="dashWeekFill" style="width:0%;"></div></div>
         </div>
       </div>
     </div>`;
+  animateNumber(document.getElementById('dashNumXP'), g.xp, {suffix:' XP'});
+  animateNumber(document.getElementById('dashNumFP'), g.financePoints, {prefix:'💰 '});
+  animateWidthIn(document.getElementById('dashWeekFill'), weekPct);
 }
 
 // ================================================================
@@ -1093,10 +1123,11 @@ function renderCoach(elId){
   el.innerHTML = `
     <div class="coach-panel">
       <span class="smallcaps">Ton coach Likanza Academy</span>
-      <div class="coach-progress" style="margin-top:10px;"><div class="coach-bar" style="width:${pct}%;"></div></div>
+      <div class="coach-progress" style="margin-top:10px;"><div class="coach-bar" id="coachBar-${elId}" style="width:0%;"></div></div>
       <p style="font-size:12px;color:var(--text-dim);margin:8px 0 14px;">${done}/${mods.length} missions accomplies · niveau ${labels[level]}</p>
       ${messages.map(m=>`<p class="coach-msg">→ ${m}</p>`).join('')}
     </div>`;
+  animateWidthIn(document.getElementById('coachBar-'+elId), pct);
 }
 
 // ---------- Comparateur "Et si...?" générique ----------
