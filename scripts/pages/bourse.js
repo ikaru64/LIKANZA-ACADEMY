@@ -1,11 +1,11 @@
 // ================= Navigation par onglets (même pattern que index.html) =================
 const BOURSE_TABS = [
-  {id:'tab-marche-jour', title:'Marché du jour', desc:'Hausses, baisses, sélection', icon:'⭐'},
-  {id:'tab-fiches', title:'Fiches actions', desc:'8 valeurs suivies', icon:'📇'},
-  {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'⚖️'},
-  {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'🎯'},
-  {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'💵'},
-  {id:'tab-dividendes', title:'Dividendes', desc:'Rendement + réinvestissement', icon:'💰'}
+  {id:'tab-marche-jour', title:'Marché du jour', desc:'Hausses, baisses, sélection', icon:'star'},
+  {id:'tab-fiches', title:'Fiches actions', desc:'8 valeurs suivies', icon:'list'},
+  {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale'},
+  {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
+  {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
+  {id:'tab-dividendes', title:'Dividendes', desc:'Rendement + réinvestissement', icon:'coins'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
@@ -13,7 +13,7 @@ function renderBourseTabs(){
   if(!el) return;
   el.innerHTML = BOURSE_TABS.map(t=>`
     <button class="quick-access-card ${t.id===bourseActiveTab?'active':''}" data-tab="${t.id}">
-      <div class="icon">${t.icon}</div>
+      <div class="icon">${ICONS[t.icon] || ''}</div>
       <h3>${t.title}</h3>
       <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${t.desc}</p>
     </button>`).join('');
@@ -42,7 +42,7 @@ function renderStockGrid(){
       <p>PER ${s.per} · Rendement ${s.dividende}% · Cap. ${s.cap} ${s.pea ? '· <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
       ${s._live ? `<span class="badge status-reel" style="margin-top:6px;">Cotation différée (Yahoo Finance)</span>` : `<span class="demo-flag" style="margin-top:6px;">Donnée de démonstration</span>`}
       <div class="card-footer">
-        <button class="fav-btn" data-fav-id="stock-${s.ticker}" data-fav-title="${s.nom}" data-fav-url="bourse.html#${s.ticker}" data-fav-type="Action">★ Favoris</button>
+        <button class="fav-btn" data-fav-id="stock-${s.ticker}" data-fav-title="${s.nom}" data-fav-url="bourse.html#${s.ticker}" data-fav-type="Action">${ICONS.star} Favoris</button>
       </div>
     </div>`).join('');
   initFavButtons();
@@ -169,7 +169,7 @@ const dcaPricesRowsEl = document.getElementById('dcaPriceRows');
 const dcaPeriods = ['Aujourd\'hui', 'Dans 3 mois', 'Dans 6 mois', 'Dans 9 mois'];
 const defaultPrices = [100, 92, 108, 97];
 dcaPricesRowsEl.innerHTML = dcaPeriods.map((p,i)=>`
-  <div class="field"><label>${p} — prix (€)</label><input type="number" class="dcaPrice" data-idx="${i}" value="${defaultPrices[i]}"></div>`).join('');
+  <div class="field"><label>${p} : prix (€)</label><input type="number" class="dcaPrice" data-idx="${i}" value="${defaultPrices[i]}"></div>`).join('');
 
 let dcaUsed = false;
 function updateDcaVsLump(){
@@ -188,7 +188,7 @@ function updateDcaVsLump(){
       <div class="whatif-col"><div class="lab">DCA (réparti)</div><div class="val" style="color:${best==='dca'?'var(--emerald)':'var(--text)'}">${fmtEUR(dcaValue)}</div></div>
       <div class="whatif-col"><div class="lab">Tout en une fois</div><div class="val" style="color:${best==='lump'?'var(--emerald)':'var(--text)'}">${fmtEUR(lumpValue)}</div></div>
     </div>
-    <p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">Avec ces prix, la stratégie ${best==='dca'?'DCA':'investissement unique'} aurait donné le meilleur résultat sur cette période précise — un résultat qui dépend entièrement des prix saisis, pas d'une règle générale.</p>`;
+    <p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">Avec ces prix, la stratégie ${best==='dca'?'DCA':'investissement unique'} aurait donné le meilleur résultat sur cette période précise, un résultat qui dépend entièrement des prix saisis, pas d'une règle générale.</p>`;
   if(!dcaUsed){ dcaUsed = true; awardXP(5, {usedDCA:true}); }
 }
 [dcaTotalEl].forEach(el=>el.addEventListener('input', updateDcaVsLump));
@@ -266,7 +266,7 @@ function renderMarketOfDay(){
     const idx = dayOfYear() % STOCKS_DEMO.length;
     const idx2 = (idx + 4) % STOCKS_DEMO.length;
     const picks = idx === idx2 ? [STOCKS_DEMO[idx]] : [STOCKS_DEMO[idx], STOCKS_DEMO[idx2]];
-    const labels = {defavorable:'🔴 Défavorable', central:'⚪ Central', favorable:'🟢 Favorable'};
+    const labels = {defavorable:'Défavorable', central:'Central', favorable:'Favorable'};
     body.innerHTML = picks.map(s=>{
       const scenarios = computeScenarios(s, 6, 18, 5);
       const rows = ['defavorable','central','favorable'].map(key=>{
@@ -278,7 +278,7 @@ function renderMarketOfDay(){
         <h3>${s.nom} <span class="mono" style="font-size:13px;color:var(--text-dim);">${s.ticker}</span></h3>
         <div class="result-row" style="margin:8px 0;"><span class="mono" style="font-size:16px;">${s.prix.toFixed(1)} €</span><span class="mono" style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span></div>
         ${rows}
-        <p class="disclaimer-box" style="margin-top:10px;">Scénarios pédagogiques basés sur des hypothèses génériques (croissance 6 %, PER cible 18×, horizon 5 ans) — pas une recommandation d'achat ou de vente.</p>
+        <p class="disclaimer-box" style="margin-top:10px;">Scénarios pédagogiques basés sur des hypothèses génériques (croissance 6 %, PER cible 18×, horizon 5 ans) : pas une recommandation d'achat ou de vente.</p>
       </div>`;
     }).join('');
   }

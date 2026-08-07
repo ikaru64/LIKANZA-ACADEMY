@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Espace éditorial — Likanza Academy</title>
+<title>Espace éditorial · Likanza Academy</title>
 <meta name="description" content="Maquette d'espace d'administration éditoriale pour Likanza Academy.">
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,26 +13,26 @@
 <body class="has-bottom-nav">
 <aside class="app-sidebar" aria-label="Navigation principale">
   <a href="index.html" class="sidebar-brand"><span class="logo-mark"><span>LKA</span></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
-  <a href="index.html"><span class="icon">🏠</span><span>Tableau de bord</span></a>
-  <a href="index.html#tab-entrainer"><span class="icon">🎯</span><span>Défis</span></a>
-  <a href="formations.html"><span class="icon">📚</span><span>Academy</span></a>
-  <a href="parcours.html"><span class="icon">🧭</span><span>Mon parcours</span></a>
-  <a href="avenir.html#play"><span class="icon">🎮</span><span>Play</span></a>
-  <a href="actualites.html"><span class="icon">📰</span><span>Actualités</span></a>
-  <a href="bibliotheque.html"><span class="icon">📖</span><span>Bibliothèque</span></a>
-  <a href="outils.html"><span class="icon">🧮</span><span>Simulateurs</span></a>
-  <a href="bourse.html"><span class="icon">📈</span><span>Bourse</span></a>
-  <a href="crypto.html"><span class="icon">🪙</span><span>Crypto</span></a>
-  <a href="immobilier.html"><span class="icon">🏘</span><span>Immobilier</span></a>
-  <a href="finances-personnelles.html"><span class="icon">💶</span><span>Finances perso</span></a>
-  <a href="compte.html"><span class="icon">🏆</span><span>Mon compte</span></a>
+  <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
+  <a href="index.html#tab-entrainer"><span class="icon" data-icon="target"></span><span>Défis</span></a>
+  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
+  <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
+  <a href="avenir.html#play"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
+  <a href="actualites.html"><span class="icon" data-icon="newspaper"></span><span>Actualités</span></a>
+  <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
+  <a href="outils.html"><span class="icon" data-icon="calculator"></span><span>Simulateurs</span></a>
+  <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
+  <a href="crypto.html"><span class="icon" data-icon="bitcoin"></span><span>Crypto</span></a>
+  <a href="immobilier.html"><span class="icon" data-icon="building-2"></span><span>Immobilier</span></a>
+  <a href="finances-personnelles.html"><span class="icon" data-icon="wallet"></span><span>Finances perso</span></a>
+  <a href="compte.html"><span class="icon" data-icon="trophy"></span><span>Mon compte</span></a>
 </aside>
 
 
 <header class="site-header">
   <div class="utility-bar"><div class="ticker-track" id="tickerTrack"></div></div>
   <div class="nav-row">
-    <button class="mobile-toggle" id="mobileToggle" aria-label="Menu" aria-expanded="false">☰</button>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="Menu" aria-expanded="false"><span data-icon="menu"></span></button>
     <a href="index.html" class="logo-row"><span class="logo-mark"><span>LKA</span></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
         <nav class="main-nav" id="mainNav">
       <a href="index.html">Accueil</a>
@@ -66,7 +66,7 @@
     </nav>
     <div class="nav-tools">
       <div class="search-box"><input type="text" class="search-input" id="searchInput" placeholder="Rechercher..." aria-label="Recherche"><div class="search-results" id="searchResults"></div></div>
-      <button class="icon-btn" id="themeToggle" aria-label="Changer de thème">☾</button>
+      <button class="icon-btn" id="themeToggle" aria-label="Changer de thème"><span data-icon="moon"></span></button>
     </div>
   </div>
 </header>
@@ -75,20 +75,20 @@
 <section class="section" id="adminLoginScreen" style="max-width:440px;">
   <div class="section-head"><h2>Connexion</h2></div>
   <div class="disclaimer-box" style="margin-bottom:20px;">
-    Cette connexion est une protection locale de démonstration, pas une vraie sécurité : le mot de passe est lisible dans le code de cette page par quiconque sait l'inspecter. Une vraie protection nécessiterait un backend, un mot de passe haché côté serveur et une session sécurisée — voir <code>ARCHITECTURE.md</code>.
+    Cette connexion est une protection locale de démonstration, pas une vraie sécurité : le mot de passe est lisible dans le code de cette page par quiconque sait l'inspecter. Une vraie protection nécessiterait un backend, un mot de passe haché côté serveur et une session sécurisée (voir <code>ARCHITECTURE.md</code>).
   </div>
   <div class="card">
     <div class="field"><label>Identifiant</label><input type="text" id="adminUser" value="admin"></div>
     <div class="field"><label>Mot de passe</label><input type="password" id="adminPass" placeholder="Mot de passe de démonstration"></div>
     <button class="btn btn-gold" id="adminLoginBtn">Se connecter</button>
     <p id="adminLoginMsg" style="font-size:12px;color:var(--bordeaux);margin-top:10px;"></p>
-    <p style="font-size:11.5px;color:var(--text-dim);margin-top:14px;">Mot de passe de démonstration : <code>likanza2026</code> (à changer dans le code avant de partager ce lien — voir README.md).</p>
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:14px;">Mot de passe de démonstration : <code>likanza2026</code> (à changer dans le code avant de partager ce lien, voir README.md).</p>
   </div>
 </section>
 
 <div id="adminContent" style="display:none;">
 <section class="section">
-  <span class="demo-flag">Édition locale — exporte le fichier pour publier tes changements pour de vrai</span>
+  <span class="demo-flag">Édition locale : exporte le fichier pour publier tes changements pour de vrai</span>
   <div class="section-head"><h2>Espace éditorial</h2><span class="meta-line">missions & actualités</span></div>
   <div class="disclaimer-box" style="margin-bottom:24px;">
     Ce que tu modifies ici est sauvegardé sur cet appareil, pour préparer tes changements tranquillement. Ça ne change rien pour tes visiteurs tant que tu n'as pas téléchargé le fichier <code>data.js</code> ci-dessous et republié le site (envoie-le-moi, ou remplace-le toi-même sur ton hébergement). Ce lien ne doit pas être exposé publiquement dans une version en ligne réelle.
@@ -142,16 +142,17 @@
   <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Espace éditorial de démonstration.</span></div>
 </footer>
 
+<script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/pages/admin.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
-  <a href="index.html"><span class="icon">🏠</span>Accueil</a>
-  <a href="formations.html"><span class="icon">🎓</span>Apprendre</a>
-  <a href="index.html#tab-entrainer"><span class="icon">⚔️</span>Défis</a>
-  <a href="outils.html"><span class="icon">🧮</span>Simuler</a>
-  <a href="compte.html"><span class="icon">👤</span>Profil</a>
+  <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
+  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
+  <a href="index.html#tab-entrainer"><span class="icon" data-icon="swords"></span>Défis</a>
+  <a href="outils.html"><span class="icon" data-icon="calculator"></span>Simuler</a>
+  <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>
 </nav>
 </body>
 </html>

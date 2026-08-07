@@ -20,12 +20,12 @@ function initTheme(){
   if(saved) document.documentElement.setAttribute('data-theme', saved);
   const btn = document.getElementById('themeToggle');
   if(btn){
-    btn.textContent = document.documentElement.getAttribute('data-theme') === 'light' ? '☾' : '☀';
+    btn.innerHTML = document.documentElement.getAttribute('data-theme') === 'light' ? ICONS.moon : ICONS.sun;
     btn.addEventListener('click', ()=>{
       const isLight = document.documentElement.getAttribute('data-theme') === 'light';
       document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
       safeSet('fzr-theme', isLight ? 'dark' : 'light');
-      btn.textContent = isLight ? '☀' : '☾';
+      btn.innerHTML = isLight ? ICONS.sun : ICONS.moon;
       forceRepaint();
     });
   }
@@ -225,10 +225,11 @@ function initLiveMarketData(){
   setInterval(refresh, 5*60*1000);
 }
 
-// ---------- Sparkline partagée (graphique en barres CSS à partir d'un historique) ----------
+// ---------- Sparkline partagée (courbe SVG à partir d'un historique) ----------
 // Utilisée par la fiche marché (marche.html) et par les lignes hausses/baisses
-// de la page Bourse. mode "compact" : juste les barres, sans dates ni légende
-// (pour une petite ligne de liste) ; mode complet : barres + dates + légende.
+// de la page Bourse. mode "compact" : petite courbe seule (ligne de liste) ;
+// mode complet : courbe avec dégradé, pointillé de référence, repères et dates.
+// Couleur : émeraude si la période est haussière, bordeaux sinon.
 function sparklineFmtDate(iso){
   const d = new Date(iso);
   return isNaN(d) ? '' : d.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'});
@@ -236,33 +237,72 @@ function sparklineFmtDate(iso){
 function sparklineFmtClose(n){
   return n.toLocaleString('fr-FR', n >= 1000 ? {maximumFractionDigits:0} : {minimumFractionDigits:2, maximumFractionDigits:2});
 }
+let sparklineSeq = 0; // ids de dégradés uniques quand plusieurs courbes coexistent sur une page
 function renderSparklineHTML(history, opts){
   opts = opts || {};
   if(!Array.isArray(history) || history.length < 2){
     return opts.compact
-      ? `<div class="bar-chart bar-chart-empty"></div>`
+      ? `<svg class="sparkline-sm" viewBox="0 0 120 34" aria-hidden="true"></svg>`
       : `<p style="font-size:12.5px;color:var(--text-dim);">L'historique des dernières séances s'affiche dès que les cotations automatiques sont disponibles (connexion au backend requise).</p>`;
   }
   const closes = history.map(h=>h.close);
   const min = Math.min(...closes), max = Math.max(...closes);
-  const spread = (max - min) || 1;
-  const bars = history.map(h=>{
-    const pct = 12 + Math.round(((h.close - min) / spread) * 88);
-    return `<div class="bar" style="height:${pct}%;" title="${sparklineFmtDate(h.date)} : ${sparklineFmtClose(h.close)}${opts.unite ? ' ' + opts.unite : ''}"></div>`;
-  }).join('');
-  const chartClass = opts.compact ? 'bar-chart bar-chart-sm' : 'bar-chart';
-  if(opts.compact) return `<div class="${chartClass}">${bars}</div>`;
-  const labels = history.map(h=>`<span>${sparklineFmtDate(h.date)}</span>`).join('');
-  return `<div class="${chartClass}">${bars}</div><div class="bar-labels">${labels}</div>
-    <p style="font-size:11px;color:var(--text-dim);margin-top:10px;">Clôtures des dernières séances (source : ${opts.source || 'n.d.'}). Échelle resserrée entre ${sparklineFmtClose(min)} et ${sparklineFmtClose(max)} pour rendre les variations lisibles.</p>`;
+  const spread = (max - min) || Math.abs(max) * 0.01 || 1;
+  const up = closes[closes.length - 1] >= closes[0];
+  const color = up ? 'var(--emerald)' : 'var(--bordeaux)';
+  const gid = 'sparkGrad' + (++sparklineSeq);
+  const gradient = `<defs><linearGradient id="${gid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color}" stop-opacity="0.28"/><stop offset="100%" stop-color="${color}" stop-opacity="0"/></linearGradient></defs>`;
+
+  if(opts.compact){
+    const W = 120, H = 34, pad = 3;
+    const X = i => pad + i * (W - 2 * pad) / (closes.length - 1);
+    const Y = v => pad + (1 - (v - min) / spread) * (H - 2 * pad);
+    const line = 'M' + closes.map((c, i) => `${X(i).toFixed(1)} ${Y(c).toFixed(1)}`).join(' L');
+    const area = `${line} L${X(closes.length - 1).toFixed(1)} ${H - pad} L${X(0).toFixed(1)} ${H - pad} Z`;
+    return `<svg class="sparkline-sm" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" aria-hidden="true">
+      ${gradient}
+      <path d="${area}" fill="url(#${gid})"/>
+      <path d="${line}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>`;
+  }
+
+  const W = 600, H = 220, padL = 10, padR = 66, padT = 16, padB = 28;
+  const X = i => padL + i * (W - padL - padR) / (closes.length - 1);
+  const Y = v => padT + (1 - (v - min) / spread) * (H - padT - padB);
+  const linePath = 'M' + closes.map((c, i) => `${X(i).toFixed(1)} ${Y(c).toFixed(1)}`).join(' L');
+  const areaPath = `${linePath} L${X(closes.length - 1).toFixed(1)} ${H - padB} L${X(0).toFixed(1)} ${H - padB} Z`;
+  const refY = Y(closes[0]).toFixed(1);
+  // Libellés de dates : premier, milieu, dernier (évite le chevauchement)
+  const labelIdx = [...new Set([0, Math.floor((closes.length - 1) / 2), closes.length - 1])];
+  const xLabels = labelIdx.map(i =>
+    `<text x="${X(i).toFixed(1)}" y="${H - 8}" text-anchor="${i === 0 ? 'start' : i === closes.length - 1 ? 'end' : 'middle'}">${sparklineFmtDate(history[i].date)}</text>`).join('');
+  const yLabels = `
+      <text x="${W - padR + 10}" y="${(Y(max) + 4).toFixed(1)}">${sparklineFmtClose(max)}</text>
+      <text x="${W - padR + 10}" y="${(Y(min) + 4).toFixed(1)}">${sparklineFmtClose(min)}</text>`;
+  const hoverPoints = history.map((h, i) =>
+    `<circle cx="${X(i).toFixed(1)}" cy="${Y(h.close).toFixed(1)}" r="10" fill="transparent"><title>${sparklineFmtDate(h.date)} : ${sparklineFmtClose(h.close)}${opts.unite ? ' ' + opts.unite : ''}</title></circle>`).join('');
+  return `
+    <svg class="market-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="Évolution sur les dernières séances">
+      ${gradient}
+      <line x1="${padL}" y1="${Y(max).toFixed(1)}" x2="${W - padR}" y2="${Y(max).toFixed(1)}" class="grid"/>
+      <line x1="${padL}" y1="${Y(min).toFixed(1)}" x2="${W - padR}" y2="${Y(min).toFixed(1)}" class="grid"/>
+      <line x1="${padL}" y1="${refY}" x2="${W - padR}" y2="${refY}" class="refline"/>
+      <path d="${areaPath}" fill="url(#${gid})"/>
+      <path d="${linePath}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${X(closes.length - 1).toFixed(1)}" cy="${Y(closes[closes.length - 1]).toFixed(1)}" r="4" fill="${color}"/>
+      ${yLabels}
+      ${xLabels}
+      ${hoverPoints}
+    </svg>
+    <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">Clôtures des dernières séances (source : ${opts.source || 'n.d.'}). La ligne pointillée marque la première clôture de la période ; échelle resserrée entre ${sparklineFmtClose(min)} et ${sparklineFmtClose(max)}.</p>`;
 }
 
 // ---------- Conseils adaptés au niveau (contexte marché) ----------
 const MARKET_TIPS = {
-  debutant: "Les hausses et baisses du jour ne veulent pas dire grand-chose isolément — ce sont les tendances sur plusieurs années qui comptent le plus pour un premier investissement.",
+  debutant: "Les hausses et baisses du jour ne veulent pas dire grand-chose isolément : ce sont les tendances sur plusieurs années qui comptent le plus pour un premier investissement.",
   intermediaire: "Compare toujours une variation quotidienne au contexte : un secteur entier qui bouge n'a pas la même signification qu'un mouvement isolé sur une seule entreprise.",
-  avance: "Regarde si la variation du jour s'accompagne d'une actualité précise (résultats, annonce) avant d'en tirer une conclusion — le \"bruit\" quotidien est souvent sans lien avec les fondamentaux.",
-  expert: "Une variation de PER à bénéfice constant reflète un changement d'anticipations du marché, pas un changement de la valeur intrinsèque de l'entreprise — utile à distinguer avant d'interpréter un mouvement de cours."
+  avance: "Regarde si la variation du jour s'accompagne d'une actualité précise (résultats, annonce) avant d'en tirer une conclusion : le \"bruit\" quotidien est souvent sans lien avec les fondamentaux.",
+  expert: "Une variation de PER à bénéfice constant reflète un changement d'anticipations du marché, pas un changement de la valeur intrinsèque de l'entreprise, utile à distinguer avant d'interpréter un mouvement de cours."
 };
 
 // ---------- Conseil Likanza : recommandations adaptées au niveau (composant réutilisable) ----------
@@ -290,9 +330,9 @@ function pickConseilMessage(itemNiveau, opts){
 
   if(opts.weakCategory){
     const pool = [
-      `Ton test de positionnement montre que "${opts.weakCategory}" mérite d'être renforcé — cette notion peut t'y aider.`,
+      `Ton test de positionnement montre que "${opts.weakCategory}" mérite d'être renforcé : cette notion peut t'y aider.`,
       `Notion liée à une faiblesse détectée dans ton test (${opts.weakCategory}) : à ne pas sauter.`,
-      `Ton bilan indique une marge de progression en ${opts.weakCategory} — utile de s'y arrêter maintenant.`
+      `Ton bilan indique une marge de progression en ${opts.weakCategory} : utile de s'y arrêter maintenant.`
     ];
     return {text: pool[Math.floor(Math.random()*pool.length)], tone:'warn'};
   }
@@ -301,14 +341,14 @@ function pickConseilMessage(itemNiveau, opts){
   let pool, tone;
   if(diff <= -2){
     pool = [
-      "Tu maîtrises probablement déjà cette notion — une révision rapide peut suffire.",
+      "Tu maîtrises probablement déjà cette notion : une révision rapide peut suffire.",
       "Plutôt destiné aux débutants ; à ton niveau, ça peut surtout servir de rappel.",
-      "Tu connais sans doute déjà l'essentiel ici — libre à toi de passer directement plus loin."
+      "Tu connais sans doute déjà l'essentiel ici : libre à toi de passer directement plus loin."
     ];
     tone = 'muted';
   } else if(diff === -1){
     pool = [
-      "Tu as probablement déjà vu l'essentiel de cette notion — une relecture rapide ne fait pas de mal.",
+      "Tu as probablement déjà vu l'essentiel de cette notion : une relecture rapide ne fait pas de mal.",
       "Un peu en-dessous de ton niveau actuel, utile comme piqûre de rappel."
     ];
     tone = 'muted';
@@ -316,19 +356,19 @@ function pickConseilMessage(itemNiveau, opts){
     pool = [
       "Recommandé pour ton niveau actuel.",
       "Ce contenu correspond bien à ton niveau du moment.",
-      "Pile ton niveau — une bonne notion à consolider maintenant."
+      "Pile ton niveau : une bonne notion à consolider maintenant."
     ];
     tone = 'good';
   } else if(diff === 1){
     pool = [
       "Un peu plus avancé que ton niveau actuel, mais accessible si les bases sont solides.",
-      "Cette notion va un peu plus loin — tu peux t'y risquer si tu es à l'aise avec les fondamentaux."
+      "Cette notion va un peu plus loin : tu peux t'y risquer si tu es à l'aise avec les fondamentaux."
     ];
     tone = 'neutral';
   } else {
     pool = [
       "Cette notion est plus avancée que ton niveau actuel. Tu peux tout de même l'ouvrir.",
-      "Contenu avancé — rien ne t'empêche de le consulter, mais les bases restent utiles avant.",
+      "Contenu avancé : rien ne t'empêche de le consulter, mais les bases restent utiles avant.",
       "Plus technique que ton niveau du moment ; à garder de côté pour plus tard si besoin."
     ];
     tone = 'warn';
@@ -340,7 +380,7 @@ function renderConseilBadge(elId, conseil){
   if(!el) return;
   if(!conseil){ el.innerHTML = ''; return; }
   const colors = {good:'var(--emerald)', warn:'var(--gold-bright)', muted:'var(--text-dim)', neutral:'var(--hairline)'};
-  el.innerHTML = `<p class="conseil-likanza" style="border-left:2px solid ${colors[conseil.tone]||'var(--gold)'};padding-left:10px;font-size:12px;color:var(--text-dim);margin-top:8px;">💡 ${conseil.text}</p>`;
+  el.innerHTML = `<p class="conseil-likanza" style="border-left:2px solid ${colors[conseil.tone]||'var(--gold)'};padding-left:10px;font-size:12px;color:var(--text-dim);margin-top:8px;">${ICONS.lightbulb} ${conseil.text}</p>`;
 }
 
 // ---------- Ouverture / fermeture des places boursières (calcul local, sans API) ----------
@@ -366,7 +406,7 @@ function getMarketStatus(exchangeKey){
 function renderDemoBanner(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  el.innerHTML = `<div class="demo-banner">Mode démonstration — les fiches et simulateurs de cette page utilisent des données de démonstration. Seul le bandeau de marché est alimenté automatiquement en données différées (Yahoo Finance · CoinGecko), avec repli sur la dernière clôture connue.</div>`;
+  el.innerHTML = `<div class="demo-banner">Mode démonstration : les fiches et simulateurs de cette page utilisent des données de démonstration. Seul le bandeau de marché est alimenté automatiquement en données différées (Yahoo Finance · CoinGecko), avec repli sur la dernière clôture connue.</div>`;
 }
 
 // ---------- Panneau de marché ----------
@@ -405,7 +445,7 @@ function renderNewsCards(elId, filter){
       </div>
       <div class="card-footer" style="margin-top:8px;">
         <a href="${a.lien}" target="_blank" rel="noopener" class="btn btn-sm">Lire l'article original ↗</a>
-        <button class="fav-btn" data-fav-id="news-${a.id}" data-fav-title="${a.titre}" data-fav-url="actualites.html#${a.id}" data-fav-type="Actualité">★</button>
+        <button class="fav-btn" data-fav-id="news-${a.id}" data-fav-title="${a.titre}" data-fav-url="actualites.html#${a.id}" data-fav-type="Actualité">${ICONS.star}</button>
       </div>
     </div>`).join('');
   initFavButtons();
@@ -426,10 +466,12 @@ function renderCourseList(elId, level){
 }
 
 // ---------- Gamification (XP, niveaux, séries, badges) ----------
+// Chaque titre embarque son icône SVG (rendu via innerHTML uniquement).
 const LEVEL_TITLES = [
-  "🌱 Épargnant","📚 Curieux","🔍 Apprenti Analyste","📈 Investisseur","💼 Analyste",
-  "🎯 Stratège Débutant","🏦 Stratège","🦅 Visionnaire","🛡️ Gestionnaire de Risque",
-  "💎 Investisseur Chevronné","🏛️ Architecte du Patrimoine","👑 Maître Likanza"
+  `${ICONS.sprout} Épargnant`, `${ICONS['book-open']} Curieux`, `${ICONS.search} Apprenti Analyste`,
+  `${ICONS['trending-up']} Investisseur`, `${ICONS.briefcase} Analyste`, `${ICONS.target} Stratège Débutant`,
+  `${ICONS.landmark} Stratège`, `${ICONS.telescope} Visionnaire`, `${ICONS.shield} Gestionnaire de Risque`,
+  `${ICONS.gem} Investisseur Chevronné`, `${ICONS.castle} Architecte du Patrimoine`, `${ICONS.crown} Maître Likanza`
 ];
 // Niveau à partir duquel le niveau de quiz "Avancé" se débloque.
 const ADVANCED_QUIZ_UNLOCK_LEVEL = 4;
@@ -485,7 +527,7 @@ function renderLeagueBoard(elId){
         <span class="smallcaps">Ligue ${league.name}</span>
         <span class="demo-flag" style="margin:0;">Classement de démo</span>
       </div>
-      <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;">Classement basé sur l'XP, comparé à des profils fictifs — le vrai classement entre joueurs nécessite un compte et un serveur, pas encore disponible.</p>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;">Classement basé sur l'XP, comparé à des profils fictifs : le vrai classement entre joueurs nécessite un compte et un serveur, pas encore disponible.</p>
       <div class="league-list">
         ${board.map((p,i)=>`<div class="league-row ${p.isUser?'is-user':''}"><span>${i+1}. ${p.name}</span><span class="mono">${p.fp} XP</span></div>`).join('')}
       </div>
@@ -578,7 +620,7 @@ function checkBadges(g, ctx){
 function showBadgeToast(badge){
   const toast = document.createElement('div');
   toast.className = 'badge-toast';
-  toast.innerHTML = `<strong>🏅 ${badge.name}</strong><br><span>${badge.desc}</span>`;
+  toast.innerHTML = `<strong>${ICONS.medal} ${badge.name}</strong><br><span>${badge.desc}</span>`;
   document.body.appendChild(toast);
   requestAnimationFrame(()=>toast.classList.add('show'));
   setTimeout(()=>{ toast.classList.remove('show'); setTimeout(()=>toast.remove(), 400); }, 3600);
@@ -595,19 +637,19 @@ function renderGamificationWidget(elId, full){
     <div class="gami-widget">
       <div class="gami-top">
         <div style="flex:1;">
-          <span class="smallcaps">Niveau ${lvl.level} — ${lvl.title}</span>
+          <span class="smallcaps">Niveau ${lvl.level} · ${lvl.title}</span>
           <div class="gami-xpbar"><div class="gami-xpfill" id="gamiXpFill-${elId}" style="width:0%;"></div></div>
           <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">${lvl.xpInLevel} / 100 XP · ${g.xp} XP au total${mult>1?` · bonus série x${mult}`:''}</p>
         </div>
-        <div class="gami-streak">🔥 <strong>${g.streak}</strong><span>jour${g.streak>1?'s':''}</span></div>
+        <div class="gami-streak">${ICONS.flame} <strong>${g.streak}</strong><span>jour${g.streak>1?'s':''}</span></div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--hairline);">
-        <span style="font-size:12.5px;color:var(--text-dim);">💰 Finance Points (à dépenser)</span>
+        <span style="font-size:12.5px;color:var(--text-dim);">${ICONS.coins} Finance Points (à dépenser)</span>
         <span class="mono" style="font-size:15px;color:var(--gold-bright);font-weight:600;">${g.financePoints}</span>
       </div>
       ${full ? `<div class="gami-badges">${BADGES.map(b=>{
           const earned = g.badges.includes(b.id);
-          return `<div class="gami-badge ${earned?'earned':''}" title="${b.desc}"><span>${earned?'🏅':'🔒'}</span>${b.name}</div>`;
+          return `<div class="gami-badge ${earned?'earned':''}" title="${b.desc}"><span>${earned?ICONS.medal:ICONS.lock}</span>${b.name}</div>`;
         }).join('')}</div>` : `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">${earnedCount} badge${earnedCount>1?'s':''} débloqué${earnedCount>1?'s':''} sur ${BADGES.length}</p>`}
     </div>`;
   animateWidthIn(document.getElementById('gamiXpFill-'+elId), lvl.xpInLevel);
@@ -634,7 +676,6 @@ function getNotionOfDay(){
   return LIBRARY[dayOfYear() % LIBRARY.length];
 }
 
-// ---------- En-tête de tableau de bord (salutation, rang, FinPoints, série, activité hebdo) ----------
 // ---------- Petites animations : barres qui se remplissent, compteurs qui montent ----------
 function prefersReducedMotion(){
   return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -661,6 +702,7 @@ function animateNumber(el, target, opts){
   requestAnimationFrame(tick);
 }
 
+// ---------- En-tête de tableau de bord (salutation, rang, FinPoints, série, activité hebdo) ----------
 function renderDashboardHeader(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -678,8 +720,8 @@ function renderDashboardHeader(elId){
       </div>
       <div class="dash-stats">
         <div class="dash-stat"><span class="num" id="dashNumXP">0 XP</span><span class="lab">niveau ${lvl.level}</span></div>
-        <div class="dash-stat"><span class="num" id="dashNumFP">💰 0</span><span class="lab">Finance Points</span></div>
-        <div class="dash-stat"><span class="num">🔥 ${g.streak}</span><span class="lab">série</span></div>
+        <div class="dash-stat"><span class="num" id="dashNumFP">${ICONS.coins} 0</span><span class="lab">Finance Points</span></div>
+        <div class="dash-stat"><span class="num">${ICONS.flame} ${g.streak}</span><span class="lab">série</span></div>
         <div class="dash-stat">
           <span class="num">${weekDays}/${WEEKLY_GOAL_DAYS}</span><span class="lab">jours actifs</span>
           <div class="dash-weekbar"><div class="dash-weekfill" id="dashWeekFill" style="width:0%;"></div></div>
@@ -687,7 +729,7 @@ function renderDashboardHeader(elId){
       </div>
     </div>`;
   animateNumber(document.getElementById('dashNumXP'), g.xp, {suffix:' XP'});
-  animateNumber(document.getElementById('dashNumFP'), g.financePoints, {prefix:'💰 '});
+  animateNumber(document.getElementById('dashNumFP'), g.financePoints, {prefix:ICONS.coins + ' '});
   animateWidthIn(document.getElementById('dashWeekFill'), weekPct);
 }
 
@@ -807,7 +849,7 @@ function renderQuizSetup(elId){
         <option value="tous">Tous niveaux</option>
         <option value="debutant">Débutant</option>
         <option value="intermediaire">Intermédiaire</option>
-        <option value="avance" ${advancedUnlocked?'':'disabled'}>Avancé${advancedUnlocked?'':` 🔒 (débloqué au niveau ${ADVANCED_QUIZ_UNLOCK_LEVEL})`}</option>
+        <option value="avance" ${advancedUnlocked?'':'disabled'}>Avancé${advancedUnlocked?'':` (débloqué au niveau ${ADVANCED_QUIZ_UNLOCK_LEVEL})`}</option>
       </select>
       ${advancedUnlocked?'':`<p style="font-size:11px;color:var(--text-dim);margin-top:4px;">Le niveau Avancé se débloque au niveau ${ADVANCED_QUIZ_UNLOCK_LEVEL} (tu es niveau ${userLevel}).</p>`}
     </div>
@@ -840,7 +882,7 @@ function startQuizSession(elId, questions, level){
   const el = document.getElementById(elId);
   if(!el) return;
   if(questions.length === 0){
-    el.innerHTML = `<p class="empty-note">Pas assez de questions disponibles pour cette combinaison — essaie un autre thème.</p>`;
+    el.innerHTML = `<p class="empty-note">Pas assez de questions disponibles pour cette combinaison : essaie un autre thème.</p>`;
     return;
   }
   let qIndex = 0, score = 0, combo = 0, maxCombo = 0;
@@ -856,7 +898,7 @@ function startQuizSession(elId, questions, level){
     const pct = Math.round((qIndex/questions.length)*100);
     el.innerHTML = `
       <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span>Question ${qIndex+1} / ${questions.length}</span><span>${item.categorie} · ${item.niveau}${combo>=3?` · 🔥 combo x${combo}`:''}</span>
+        <span>Question ${qIndex+1} / ${questions.length}</span><span>${item.categorie} · ${item.niveau}${combo>=3?` · ${ICONS.flame} combo x${combo}`:''}</span>
       </div>
       <div class="dash-weekbar" style="width:100%;margin-bottom:14px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
       <div style="font-size:15px;margin-bottom:12px;font-weight:500;">${item.question}</div>
@@ -911,7 +953,7 @@ function startQuizSession(elId, questions, level){
       <p style="font-size:11.5px;color:var(--text-dim);">Temps passé : ${seconds}s · meilleur combo : x${maxCombo}${pct===100?' · + 25 XP bonus (sans-faute)':''} (points par question limités à un gain par jour, bonifiés par combo et série de connexion)</p>
       ${mastered.length ? `<p style="font-size:12.5px;color:var(--emerald);margin-top:10px;">Maîtrisé : ${mastered.join(', ')}</p>` : ''}
       ${toReview.length ? `<p style="font-size:12.5px;color:var(--gold-bright);">À revoir : ${toReview.join(', ')}</p>` : ''}
-      ${wrong.length ? `<div style="margin-top:14px;"><p style="font-size:12.5px;font-weight:600;margin-bottom:6px;">Réponses à revoir :</p>${wrong.map(w=>`<p style="font-size:12px;color:var(--text-dim);margin-bottom:6px;">• ${w.question} — ${w.explication}</p>`).join('')}</div>` : ''}
+      ${wrong.length ? `<div style="margin-top:14px;"><p style="font-size:12.5px;font-weight:600;margin-bottom:6px;">Réponses à revoir :</p>${wrong.map(w=>`<p style="font-size:12px;color:var(--text-dim);margin-bottom:6px;">• ${w.question} · ${w.explication}</p>`).join('')}</div>` : ''}
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
         ${wrong.length ? `<button class="btn btn-sm" id="${elId}-retry-wrong">Revoir uniquement mes erreurs</button>` : ''}
         <button class="btn btn-sm btn-gold" id="${elId}-retry-fresh">Nouveau défi</button>
@@ -1104,17 +1146,17 @@ function renderCoach(elId){
   const messages = [];
   if(done === 0) messages.push(`Tu n'as pas encore commencé les missions du niveau ${labels[level]}.`);
   else if(pct < 100) messages.push(`Tu as terminé ${pct}% du parcours ${labels[level]}.`);
-  else messages.push(`Parcours ${labels[level]} terminé — tente le niveau supérieur dans Formations.`);
+  else messages.push(`Parcours ${labels[level]} terminé : tente le niveau supérieur dans Formations.`);
 
   const favTypes = favs.map(f=>f.type);
   if(favTypes.includes('Action')) messages.push("Tu sembles t'intéresser à la bourse : le comparateur d'actions peut t'aider à aller plus loin.");
-  if(favs.length === 0) messages.push("Astuce : clique sur ★ sur une actualité ou une action pour la retrouver dans ton compte.");
+  if(favs.length === 0) messages.push("Astuce : clique sur l'étoile Favoris sur une actualité ou une action pour la retrouver dans ton compte.");
   if(!safeGetJSON('fzr-profile', null)) messages.push("Renseigne ton profil (âge, épargne, horizon) dans Mon compte pour des simulations personnalisées.");
 
   const positioning = getPositioningResult();
   if(positioning && positioning.categoryScores){
     const weakest = Object.values(positioning.categoryScores).sort((a,b)=>a.pct-b.pct)[0];
-    if(weakest && weakest.pct < 60) messages.push(`Ton test de positionnement indique une marge de progression en ${weakest.label} (${weakest.pct}%) — un bon point de départ.`);
+    if(weakest && weakest.pct < 60) messages.push(`Ton test de positionnement indique une marge de progression en ${weakest.label} (${weakest.pct}%) : un bon point de départ.`);
     messages.push(`Ton parcours personnalisé t'attend dans <a href="parcours.html" style="color:var(--gold-bright);">Mon parcours</a>.`);
   } else {
     messages.push(`Envie d'un parcours vraiment adapté à ton niveau ? <a href="test-positionnement.html" style="color:var(--gold-bright);">Fais le test de positionnement</a> (facultatif, environ 5 minutes).`);
@@ -1161,7 +1203,7 @@ function renderPieChart(elId, segments){
   }).join(', ');
   el.innerHTML = `
     <div class="pie" style="background:conic-gradient(${stops});"></div>
-    <div class="pie-legend">${segments.map(s=>`<span><i style="background:${s.color}"></i>${s.label} — ${Math.round(s.value/total*100)}%</span>`).join('')}</div>`;
+    <div class="pie-legend">${segments.map(s=>`<span><i style="background:${s.color}"></i>${s.label} · ${Math.round(s.value/total*100)}%</span>`).join('')}</div>`;
 }
 
 // Petit utilitaire : exécute une fonction sans jamais laisser une erreur

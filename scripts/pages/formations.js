@@ -10,7 +10,7 @@ function refreshLevelUI(){
     p.classList.toggle('active', lvl===level);
     p.disabled = !unlocked;
     p.title = unlocked ? '' : 'Débloqué une fois le niveau précédent terminé à 100%';
-    p.textContent = LEVEL_LABELS[lvl] + (unlocked ? '' : ' 🔒');
+    p.textContent = LEVEL_LABELS[lvl] + (unlocked ? '' : ' (verrouillé)');
   });
   document.getElementById('levelLabel').textContent = LEVEL_LABELS[level];
   renderModules();
@@ -59,7 +59,7 @@ function renderModules(){
       questionHtml = `
         <div class="mission-question">
           <p class="mission-q-prompt">${q.prompt}</p>
-          <p class="mission-solved">✓ Mission validée — ${q.explication}</p>
+          <p class="mission-solved">${ICONS.check} Mission validée : ${q.explication}</p>
         </div>`;
     } else if(q.type === 'calcul'){
       questionHtml = `
@@ -85,7 +85,7 @@ function renderModules(){
     return `
     <div class="course-item">
       <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
-        <h4>${done ? '✓ ' : ''}${c.title}</h4>
+        <h4>${done ? ICONS.check + ' ' : ''}${c.title}</h4>
         <span class="idx">${String(i+1).padStart(2,'0')}</span>
       </div>
       <div class="course-body">
@@ -112,7 +112,7 @@ function renderModules(){
         if(Math.abs(val - q.reponse) <= q.tolerance){
           completeMission(key);
         } else {
-          feedback.textContent = `Pas tout à fait — ${q.explication}`;
+          feedback.textContent = `Pas tout à fait : ${q.explication}`;
           feedback.style.color = 'var(--bordeaux)';
         }
       };
@@ -141,11 +141,11 @@ function renderFormationsConseil(){
   if(result && result.categoryScores){
     const weakest = Object.values(result.categoryScores).sort((a,b)=>a.pct-b.pct)[0];
     if(weakest && weakest.pct < 60){
-      renderConseilBadge('formationsConseil', {text:`Ton test de positionnement indique une marge de progression en ${weakest.label} (${weakest.pct}%) — une bonne piste pour la suite.`, tone:'warn'});
+      renderConseilBadge('formationsConseil', {text:`Ton test de positionnement indique une marge de progression en ${weakest.label} (${weakest.pct}%) : une bonne piste pour la suite.`, tone:'warn'});
       return;
     }
   }
-  renderConseilBadge('formationsConseil', {text:"Explore les missions ci-dessous à ton rythme, dans l'ordre que tu veux — rien n'est obligatoire.", tone:'neutral'});
+  renderConseilBadge('formationsConseil', {text:"Explore les missions ci-dessous à ton rythme, dans l'ordre que tu veux : rien n'est obligatoire.", tone:'neutral'});
 }
 
 refreshLevelUI();
