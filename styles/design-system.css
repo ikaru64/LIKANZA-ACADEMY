@@ -44,7 +44,7 @@ body{
   line-height:1.55;
   -webkit-font-smoothing:antialiased;
   transition:background .2s, color .2s;
-  animation:pageFadeIn .45s ease;
+  animation:pageFadeIn .3s ease;
   background-image:
     radial-gradient(circle at 12% 6%, rgba(184,151,78,0.13), transparent 38%),
     radial-gradient(circle at 90% 94%, rgba(62,124,104,0.11), transparent 38%),
@@ -89,7 +89,7 @@ a.ticker-item:hover{color:var(--gold-bright);}
 .ticker-item .up{color:var(--emerald);}
 .ticker-item .down{color:var(--bordeaux);}
 @keyframes scroll{from{transform:translateX(0);}to{transform:translateX(-50%);}}
-@keyframes pageFadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+@keyframes pageFadeIn{from{opacity:0;}to{opacity:1;}}
 @media (prefers-reduced-motion:reduce){body{animation:none;}}
 @media (prefers-reduced-motion:reduce){.ticker-track{animation:none;}}
 
@@ -98,8 +98,8 @@ header.site-header{position:sticky;top:0;z-index:50;background:var(--bg);border-
 .nav-row{max-width:var(--max);margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:22px;}
 .logo-row{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .logo-mark{width:40px;height:36px;border:1px solid var(--gold);border-radius:9px;display:flex;align-items:center;justify-content:center;transition:transform .4s ease, box-shadow .3s ease;background:linear-gradient(160deg, rgba(184,151,78,0.16), rgba(184,151,78,0.02));}
-.logo-mark span{font-family:'IBM Plex Mono',monospace;font-size:13px;font-weight:600;letter-spacing:0.04em;background:linear-gradient(135deg, var(--gold-bright), var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
-.logo-row:hover .logo-mark{transform:rotate(10deg) scale(1.05);box-shadow:0 0 18px rgba(184,151,78,0.45);}
+.logo-mark svg{display:block;width:19px;height:19px;}
+.logo-row:hover .logo-mark{transform:rotate(-6deg) scale(1.08);box-shadow:0 0 18px rgba(184,151,78,0.45);}
 .logo-text{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;letter-spacing:0.01em;}
 .logo-text .zr{background:linear-gradient(135deg, var(--gold-bright), var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
 
@@ -279,12 +279,16 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .course-item h4, .glossary-item h4{font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;}
 .course-item .idx{font-family:'IBM Plex Mono',monospace;color:var(--gold);font-size:12px;}
 .course-body, .glossary-body{
-  color:var(--text-dim);font-size:14px;overflow:hidden;
-  max-height:0;opacity:0;margin-top:0;padding-top:0;border-top:0px solid var(--hairline);
-  transition:max-height .4s ease, opacity .3s ease, margin-top .4s ease, padding-top .4s ease, border-top-width .4s ease;
+  display:grid;grid-template-rows:0fr;opacity:0;
+  transition:grid-template-rows .4s cubic-bezier(.4,0,.2,1), opacity .3s ease;
 }
 .course-body.open, .glossary-body.open{
-  max-height:3000px;opacity:1;margin-top:12px;padding-top:12px;border-top-width:1px;
+  grid-template-rows:1fr;opacity:1;
+}
+.course-body-inner, .glossary-body-inner{
+  overflow:hidden;min-height:0;
+  color:var(--text-dim);font-size:14px;
+  margin-top:12px;padding-top:12px;border-top:1px solid var(--hairline);
 }
 @media (prefers-reduced-motion:reduce){
   .course-body, .glossary-body{transition:none;}
@@ -372,9 +376,10 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
     background:var(--bg-alt); border-right:1px solid var(--hairline); padding:22px 12px; gap:2px;
     z-index:90; overflow-y:auto;
   }
+  .sidebar-group-label{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--text-dim);opacity:.65;padding:14px 10px 4px;}
   .app-sidebar .sidebar-brand{display:flex;align-items:center;gap:10px;padding:6px 10px 22px;}
   .app-sidebar .sidebar-brand .logo-mark{width:34px;height:30px;}
-  .app-sidebar .sidebar-brand .logo-mark span{font-size:11px;}
+  .app-sidebar .sidebar-brand .logo-mark svg{width:16px;height:16px;}
   .app-sidebar .sidebar-brand .logo-text{font-size:17px;}
   .app-sidebar a{
     display:flex; align-items:center; gap:10px; padding:9px 10px; border-radius:2px;
@@ -392,6 +397,7 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
   .app-sidebar{width:56px;}
   body{padding-left:56px;}
   .app-sidebar .sidebar-brand .logo-text{display:none;}
+  .sidebar-group-label{display:none;}
 }
 
 /* ---------- Barre de navigation mobile fixe ---------- */

@@ -185,6 +185,16 @@ function setActiveTab(tabId){
 if(location.hash && document.getElementById(location.hash.slice(1))){
   activeTab = location.hash.slice(1);
 }
+// Un clic sur un lien "index.html#tab-..." depuis l'accueil lui-même ne
+// recharge pas la page : sans ce listener, ça ne faisait que scroller vers
+// un panneau caché (display:none), sans jamais changer d'onglet.
+window.addEventListener('hashchange', ()=>{
+  const tab = location.hash.slice(1);
+  const target = document.getElementById(tab);
+  if(target && target.classList.contains('home-tab-panel')){
+    safeRun('changement d\'onglet (ancre)', ()=>setActiveTab(tab));
+  }
+});
 
 // ================= Onglet Apprendre =================
 function renderLearnTab(){

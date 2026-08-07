@@ -28,6 +28,11 @@ function setBourseTab(tabId){
 }
 renderBourseTabs();
 setBourseTab(bourseActiveTab);
+window.addEventListener('hashchange', ()=>{
+  const tab = location.hash.slice(1);
+  const target = document.getElementById(tab);
+  if(target && target.classList.contains('home-tab-panel')) setBourseTab(tab);
+});
 
 // ---------- Fiches actions ----------
 function renderStockGrid(){

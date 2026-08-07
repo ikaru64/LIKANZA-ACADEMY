@@ -461,7 +461,7 @@ function renderCourseList(elId, level){
         <h4>${c.title}</h4>
         <span class="idx">${String(i+1).padStart(2,'0')}</span>
       </div>
-      <div class="course-body">${c.body}</div>
+      <div class="course-body"><div class="course-body-inner">${c.body || ''}</div></div>
     </div>`).join('');
 }
 
@@ -720,7 +720,7 @@ function renderDashboardHeader(elId){
       </div>
       <div class="dash-stats">
         <div class="dash-stat"><span class="num" id="dashNumXP">0 XP</span><span class="lab">niveau ${lvl.level}</span></div>
-        <div class="dash-stat"><span class="num" id="dashNumFP">${ICONS.coins} 0</span><span class="lab">Finance Points</span></div>
+        <div class="dash-stat"><span class="num">${ICONS.coins} <span id="dashNumFP">0</span></span><span class="lab">Finance Points</span></div>
         <div class="dash-stat"><span class="num">${ICONS.flame} ${g.streak}</span><span class="lab">série</span></div>
         <div class="dash-stat">
           <span class="num">${weekDays}/${WEEKLY_GOAL_DAYS}</span><span class="lab">jours actifs</span>
@@ -729,7 +729,7 @@ function renderDashboardHeader(elId){
       </div>
     </div>`;
   animateNumber(document.getElementById('dashNumXP'), g.xp, {suffix:' XP'});
-  animateNumber(document.getElementById('dashNumFP'), g.financePoints, {prefix:ICONS.coins + ' '});
+  animateNumber(document.getElementById('dashNumFP'), g.financePoints);
   animateWidthIn(document.getElementById('dashWeekFill'), weekPct);
 }
 

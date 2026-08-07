@@ -89,8 +89,10 @@ function renderModules(){
         <span class="idx">${String(i+1).padStart(2,'0')}</span>
       </div>
       <div class="course-body">
-        ${storyHtml}
-        ${questionHtml}
+        <div class="course-body-inner">
+          ${storyHtml}
+          ${questionHtml}
+        </div>
       </div>
     </div>`;
   }).join('');
