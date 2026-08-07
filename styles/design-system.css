@@ -272,6 +272,15 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .mission-solved{font-size:13px;color:var(--emerald);}
 .mission-choices .pill[disabled]{opacity:0.5;cursor:default;}
 
+/* ---------- Mon parcours : chemin visuel ---------- */
+.parcours-path{display:flex;flex-direction:column;}
+.parcours-step{display:flex;gap:18px;padding:14px 0;position:relative;}
+.parcours-step:not(:last-child)::before{content:'';position:absolute;left:19px;top:50px;bottom:-4px;width:2px;background:var(--hairline);}
+.parcours-step-idx{flex-shrink:0;width:40px;height:40px;border-radius:50%;background:var(--bg-alt);border:1px solid var(--gold);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--gold-bright);z-index:1;}
+.parcours-step.is-upcoming .parcours-step-idx{border-color:var(--hairline);color:var(--text-dim);}
+.parcours-step-body{flex:1;background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);padding:18px 20px;min-width:0;}
+.parcours-step.is-upcoming .parcours-step-body{opacity:0.8;}
+
 .tabs{display:flex;gap:6px;margin-bottom:20px;flex-wrap:wrap;}
 .mode-toggle{display:flex;gap:6px;margin:10px 0;}
 

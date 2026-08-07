@@ -1,5 +1,20 @@
 const LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
-document.getElementById('profLevel').textContent = LEVEL_LABELS[getLevel()] || 'Débutant';
+function refreshProgressCard(){
+  const level = getLevel();
+  document.getElementById('profLevel').textContent = LEVEL_LABELS[level] || 'Débutant';
+  const progress = safeGetJSON('fzr-progress', {});
+  const mods = COURSES[level] || COURSES.debutant;
+  const done = mods.filter((c,i)=>progress[level+'-'+i]).length;
+  document.getElementById('profProgress').innerHTML = `<div class="result-big" style="font-size:26px;">${done} / ${mods.length}</div><p style="font-size:12.5px;color:var(--text-dim);">missions accomplies au niveau ${LEVEL_LABELS[level]}</p>`;
+  const select = document.getElementById('manualLevelSelect');
+  if(select) select.value = level;
+}
+refreshProgressCard();
+const manualLevelSelect = document.getElementById('manualLevelSelect');
+if(manualLevelSelect) manualLevelSelect.addEventListener('change', ()=>{
+  setLevelStorage(manualLevelSelect.value);
+  refreshProgressCard();
+});
 renderProfileWidget('profileWidget');
 
 // ================= Watchlist =================
@@ -78,12 +93,6 @@ if(wlAddBtn) wlAddBtn.addEventListener('click', ()=>{
 safeRun('watchlist (init)', renderWatchlist);
 renderGamificationWidget('gamiWidget', true);
 renderLeagueBoard('leagueWidget');
-
-const progress = safeGetJSON('fzr-progress', {});
-const level = getLevel();
-const mods = COURSES[level] || COURSES.debutant;
-const done = mods.filter((c,i)=>progress[level+'-'+i]).length;
-document.getElementById('profProgress').innerHTML = `<div class="result-big" style="font-size:26px;">${done} / ${mods.length}</div><p style="font-size:12.5px;color:var(--text-dim);">missions accomplies au niveau ${LEVEL_LABELS[level]}</p>`;
 
 const favs = getFavorites();
 document.getElementById('favCount').textContent = favs.length + ' élément(s)';

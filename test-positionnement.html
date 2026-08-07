@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mon compte — Likanza Academy</title>
-<meta name="description" content="Espace utilisateur de démonstration : niveau, progression et favoris enregistrés sur cet appareil.">
+<title>Test de positionnement — Likanza Academy</title>
+<meta name="description" content="Découvre ton niveau financier en quelques minutes. Facultatif pour explorer le site, recommandé pour un parcours personnalisé.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles/design-system.css">
@@ -24,7 +24,7 @@
   <a href="crypto.html"><span class="icon">🪙</span><span>Crypto</span></a>
   <a href="immobilier.html"><span class="icon">🏘</span><span>Immobilier</span></a>
   <a href="finances-personnelles.html"><span class="icon">💶</span><span>Finances perso</span></a>
-  <a href="compte.html" class="active"><span class="icon">🏆</span><span>Mon compte</span></a>
+  <a href="compte.html"><span class="icon">🏆</span><span>Mon compte</span></a>
 </aside>
 
 
@@ -69,93 +69,45 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Mon compte</div>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / Test de positionnement</div>
 
 <section class="section">
-  <div class="section-head"><h2>Mon compte</h2><span class="meta-line" id="authStatusLine">vérification de la connexion…</span></div>
-  <div class="card-grid">
-    <div class="card" id="authCard">
-      <h3>Connexion</h3>
-      <div id="authCardBody"><p style="font-size:13px;color:var(--text-dim);">Chargement…</p></div>
-    </div>
-    <div class="card">
-      <h3>Progression Academy</h3>
-      <p>Niveau actuel : <strong id="profLevel"></strong></p>
-      <div id="profProgress"></div>
-      <div class="field" style="margin-top:12px;max-width:280px;"><label>Quel niveau te correspond le mieux ?</label>
-        <select id="manualLevelSelect">
-          <option value="debutant">Je découvre complètement la finance</option>
-          <option value="intermediaire">Je connais quelques bases</option>
-          <option value="avance">J'ai déjà commencé à investir</option>
-          <option value="expert">Je maîtrise déjà plusieurs notions</option>
-        </select>
-      </div>
-      <p style="font-size:11px;color:var(--text-dim);margin-top:6px;">Ce choix adapte les conseils du site, mais ne remplace pas le <a href="test-positionnement.html" style="color:var(--gold-bright);">test de positionnement</a>, nécessaire pour générer un parcours personnalisé complet.</p>
-      <a href="formations.html" class="btn btn-sm" style="margin-top:12px;">Continuer la formation</a>
-      <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">La progression ci-dessous reste locale à cet appareil pour l'instant ; seule la connexion (compte, e-mail) est désormais réelle.</p>
+  <div id="posIntro" class="card" style="max-width:640px;margin:0 auto;">
+    <span class="smallcaps">Facultatif · environ 5 minutes</span>
+    <h2 class="display" style="font-size:26px;font-weight:600;margin:10px 0;">Découvre ton niveau financier en quelques minutes</h2>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:8px;">20 questions réparties sur 13 thèmes (budget, épargne, crédit, investissement, immobilier, fiscalité, crypto, arnaques...). À la fin, tu obtiens un bilan détaillé par thème et un niveau estimé.</p>
+    <p class="disclaimer-box">Le test est facultatif pour explorer Likanza Academy — tu peux utiliser librement tout le site sans le faire. Il devient nécessaire uniquement si tu souhaites générer un parcours réellement personnalisé.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+      <button class="btn btn-gold" id="posStartBtn">Faire le test</button>
+      <a href="index.html" class="btn">Explorer sans test</a>
     </div>
   </div>
-</section>
 
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Progression & récompenses</h2><span class="meta-line">XP, Finance Points, série, badges</span></div>
-  <div class="dual-grid">
-    <div id="gamiWidget"></div>
-    <div id="leagueWidget"></div>
-  </div>
-</section>
+  <div id="posQuiz" class="card" style="max-width:640px;margin:0 auto;display:none;"></div>
 
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Mon profil de simulation</h2><span class="meta-line">pré-remplit les outils du site</span></div>
-  <div id="profileWidget" style="max-width:520px;"></div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Ma watchlist</h2><span class="meta-line">seuils d'alerte, en local</span></div>
-  <div id="watchlistDemoBanner"></div>
-  <div class="card" style="max-width:640px;margin-bottom:20px;">
-    <div class="field"><label>Actif à suivre</label>
-      <select id="wlAsset"></select>
-    </div>
-    <div class="field"><label>Seuil d'alerte (optionnel — te prévient visuellement si la valeur le franchit)</label>
-      <input type="number" id="wlThreshold" placeholder="Ex : 8000">
-    </div>
-    <div class="field"><label>Note personnelle (optionnel)</label>
-      <input type="text" id="wlNote" placeholder="Pourquoi tu suis cet actif...">
-    </div>
-    <button class="btn btn-gold btn-sm" id="wlAddBtn">Ajouter à la watchlist</button>
-  </div>
-  <div class="card-grid" id="watchlistGrid" style="display:none;"></div>
-  <p class="empty-note" id="watchlistEmpty">Ta watchlist est vide pour l'instant.</p>
-</section>
-
-<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
-  <div class="section-head"><h2>Mes favoris</h2><span class="meta-line" id="favCount"></span></div>
-  <div class="card-grid" id="favGrid"></div>
-  <p class="empty-note" id="favEmpty">Aucun favori pour l'instant. Clique sur ★ sur une actualité ou une action pour l'ajouter ici.</p>
+  <div id="posResults" style="display:none;"></div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><span>LKA</span></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
-    <div><h4>Explorer</h4><ul><li><a href="bourse.html">Bourse</a></li><li><a href="crypto.html">Crypto</a></li></ul></div>
     <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
-    <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#confidentialite">Confidentialité</a></li></ul></div>
+    <div><h4>Compte</h4><ul><li><a href="parcours.html">Mon parcours</a></li><li><a href="compte.html">Mon compte</a></li></ul></div>
+    <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
-  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Investir comporte un risque de perte en capital.</span></div>
+  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
 </footer>
 
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
-<script src="scripts/pages/compte.js"></script>
-<script src="scripts/auth-bridge.js"></script>
+<script src="scripts/pages/test-positionnement.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon">🏠</span>Accueil</a>
   <a href="formations.html"><span class="icon">🎓</span>Apprendre</a>
   <a href="index.html#tab-entrainer"><span class="icon">⚔️</span>Défis</a>
   <a href="outils.html"><span class="icon">🧮</span>Simuler</a>
-  <a href="compte.html" class="active"><span class="icon">👤</span>Profil</a>
+  <a href="compte.html"><span class="icon">👤</span>Profil</a>
 </nav>
 </body>
 </html>

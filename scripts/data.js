@@ -265,6 +265,84 @@ const MARKET_TIPS = {
   expert: "Une variation de PER à bénéfice constant reflète un changement d'anticipations du marché, pas un changement de la valeur intrinsèque de l'entreprise — utile à distinguer avant d'interpréter un mouvement de cours."
 };
 
+// ---------- Conseil Likanza : recommandations adaptées au niveau (composant réutilisable) ----------
+const NIVEAU_RANK = {debutant:0, 'débutant':0, intermediaire:1, 'intermédiaire':1, avance:2, 'avancé':2, expert:3};
+function normalizeNiveau(v){
+  if(!v) return null;
+  const key = String(v).toLowerCase();
+  return key in NIVEAU_RANK ? NIVEAU_RANK[key] : null;
+}
+function getPositioningResult(){ return safeGetJSON('fzr-positioning-result', null); }
+function getWeakCategoryLabel(categorieOuTerme){
+  const result = getPositioningResult();
+  if(!result || !result.categoryScores || !categorieOuTerme) return null;
+  const weak = Object.values(result.categoryScores).find(c =>
+    c.pct < 50 && c.label.toLowerCase() === String(categorieOuTerme).toLowerCase());
+  return weak ? weak.label : null;
+}
+// Renvoie {text, tone} ou null si le niveau de l'item/utilisateur est inconnu.
+// `opts.weakCategory` (optionnel) priorise un message lié à une faiblesse détectée.
+function pickConseilMessage(itemNiveau, opts){
+  opts = opts || {};
+  const itemRank = normalizeNiveau(itemNiveau);
+  const userRank = normalizeNiveau(getLevel());
+  if(itemRank === null || userRank === null) return null;
+
+  if(opts.weakCategory){
+    const pool = [
+      `Ton test de positionnement montre que "${opts.weakCategory}" mérite d'être renforcé — cette notion peut t'y aider.`,
+      `Notion liée à une faiblesse détectée dans ton test (${opts.weakCategory}) : à ne pas sauter.`,
+      `Ton bilan indique une marge de progression en ${opts.weakCategory} — utile de s'y arrêter maintenant.`
+    ];
+    return {text: pool[Math.floor(Math.random()*pool.length)], tone:'warn'};
+  }
+
+  const diff = itemRank - userRank;
+  let pool, tone;
+  if(diff <= -2){
+    pool = [
+      "Tu maîtrises probablement déjà cette notion — une révision rapide peut suffire.",
+      "Plutôt destiné aux débutants ; à ton niveau, ça peut surtout servir de rappel.",
+      "Tu connais sans doute déjà l'essentiel ici — libre à toi de passer directement plus loin."
+    ];
+    tone = 'muted';
+  } else if(diff === -1){
+    pool = [
+      "Tu as probablement déjà vu l'essentiel de cette notion — une relecture rapide ne fait pas de mal.",
+      "Un peu en-dessous de ton niveau actuel, utile comme piqûre de rappel."
+    ];
+    tone = 'muted';
+  } else if(diff === 0){
+    pool = [
+      "Recommandé pour ton niveau actuel.",
+      "Ce contenu correspond bien à ton niveau du moment.",
+      "Pile ton niveau — une bonne notion à consolider maintenant."
+    ];
+    tone = 'good';
+  } else if(diff === 1){
+    pool = [
+      "Un peu plus avancé que ton niveau actuel, mais accessible si les bases sont solides.",
+      "Cette notion va un peu plus loin — tu peux t'y risquer si tu es à l'aise avec les fondamentaux."
+    ];
+    tone = 'neutral';
+  } else {
+    pool = [
+      "Cette notion est plus avancée que ton niveau actuel. Tu peux tout de même l'ouvrir.",
+      "Contenu avancé — rien ne t'empêche de le consulter, mais les bases restent utiles avant.",
+      "Plus technique que ton niveau du moment ; à garder de côté pour plus tard si besoin."
+    ];
+    tone = 'warn';
+  }
+  return {text: pool[Math.floor(Math.random()*pool.length)], tone};
+}
+function renderConseilBadge(elId, conseil){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(!conseil){ el.innerHTML = ''; return; }
+  const colors = {good:'var(--emerald)', warn:'var(--gold-bright)', muted:'var(--text-dim)', neutral:'var(--hairline)'};
+  el.innerHTML = `<p class="conseil-likanza" style="border-left:2px solid ${colors[conseil.tone]||'var(--gold)'};padding-left:10px;font-size:12px;color:var(--text-dim);margin-top:8px;">💡 ${conseil.text}</p>`;
+}
+
 // ---------- Ouverture / fermeture des places boursières (calcul local, sans API) ----------
 function getMarketStatus(exchangeKey){
   const conf = MARKET_HOURS[exchangeKey];
@@ -370,7 +448,8 @@ const BADGES = [
   {id:'fp_500', name:'500 Finance Points', desc:"Accumuler 500 Finance Points.", check:(g)=> g.financePoints >= 500},
   {id:'fp_1000', name:'1000 Finance Points', desc:"Accumuler 1000 Finance Points.", check:(g)=> g.financePoints >= 1000},
   {id:'first_dca', name:'Premier DCA', desc:"Utiliser le comparateur DCA vs investissement unique.", check:(g,ctx)=> !!(ctx && ctx.usedDCA)},
-  {id:'first_sim', name:'Premier laboratoire', desc:"Lancer une simulation financière.", check:(g,ctx)=> !!(ctx && ctx.usedSimulator)}
+  {id:'first_sim', name:'Premier laboratoire', desc:"Lancer une simulation financière.", check:(g,ctx)=> !!(ctx && ctx.usedSimulator)},
+  {id:'positioning_test', name:'Bilan effectué', desc:"Terminer le test de positionnement.", check:(g,ctx)=> !!(ctx && ctx.positioningTestDone)}
 ];
 
 // ---------- Ligues (classement de démonstration, pas de vrais autres joueurs) ----------
@@ -912,9 +991,22 @@ function parseNumericValue(str){
 
 // ---------- Profil personnel (pré-remplit les simulateurs du site) ----------
 function getProfile(){
-  return safeGetJSON('fzr-profile', {age:25, epargne:150, horizon:15, risque:'equilibre'});
+  return safeGetJSON('fzr-profile', {age:25, epargne:150, horizon:15, risque:'equilibre', objectif:''});
 }
 function saveProfile(p){ safeSetJSON('fzr-profile', p); }
+
+const PROFILE_OBJECTIFS = [
+  {value:'gerer', label:'Mieux gérer mon argent'},
+  {value:'decouvert', label:'Sortir du découvert'},
+  {value:'economiser', label:'Économiser chaque mois'},
+  {value:'securite', label:"Créer une épargne de sécurité"},
+  {value:'comprendre', label:'Comprendre la finance'},
+  {value:'investir', label:'Commencer à investir'},
+  {value:'immobilier', label:'Préparer un achat immobilier'},
+  {value:'bourse', label:'Mieux comprendre la bourse'},
+  {value:'crypto', label:'Comprendre la crypto et ses risques'},
+  {value:'arnaques', label:'Éviter les erreurs et les arnaques'}
+];
 
 function renderRiskGauge(elId, risque){
   const el = document.getElementById(elId);
@@ -941,10 +1033,16 @@ function renderProfileWidget(elId){
             <option value="dynamique" ${p.risque==='dynamique'?'selected':''}>Dynamique</option>
           </select>
         </div>
+        <div class="field" style="grid-column:1/-1;"><label>Quel est ton objectif principal ?</label>
+          <select id="profObjectif">
+            <option value="">— À définir —</option>
+            ${PROFILE_OBJECTIFS.map(o=>`<option value="${o.value}" ${p.objectif===o.value?'selected':''}>${o.label}</option>`).join('')}
+          </select>
+        </div>
       </div>
       <div id="riskGauge"></div>
       <button class="btn btn-sm btn-gold" id="profSaveBtn">Enregistrer mon profil</button>
-      <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">Ce profil pré-remplit les simulateurs du site. Stocké sur cet appareil uniquement.</p>
+      <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">Ce profil pré-remplit les simulateurs et adapte les conseils du site. Stocké sur cet appareil uniquement. Tu peux le modifier à tout moment.</p>
     </div>`;
   renderRiskGauge('riskGauge', p.risque);
   document.getElementById('profSaveBtn').addEventListener('click', ()=>{
@@ -952,7 +1050,8 @@ function renderProfileWidget(elId){
       age: Number(document.getElementById('profAge').value) || 0,
       epargne: Number(document.getElementById('profEpargne').value) || 0,
       horizon: Number(document.getElementById('profHorizon').value) || 1,
-      risque: document.getElementById('profRisque').value
+      risque: document.getElementById('profRisque').value,
+      objectif: document.getElementById('profObjectif').value
     };
     saveProfile(newP);
     renderRiskGauge('riskGauge', newP.risque);
@@ -981,6 +1080,15 @@ function renderCoach(elId){
   if(favTypes.includes('Action')) messages.push("Tu sembles t'intéresser à la bourse : le comparateur d'actions peut t'aider à aller plus loin.");
   if(favs.length === 0) messages.push("Astuce : clique sur ★ sur une actualité ou une action pour la retrouver dans ton compte.");
   if(!safeGetJSON('fzr-profile', null)) messages.push("Renseigne ton profil (âge, épargne, horizon) dans Mon compte pour des simulations personnalisées.");
+
+  const positioning = getPositioningResult();
+  if(positioning && positioning.categoryScores){
+    const weakest = Object.values(positioning.categoryScores).sort((a,b)=>a.pct-b.pct)[0];
+    if(weakest && weakest.pct < 60) messages.push(`Ton test de positionnement indique une marge de progression en ${weakest.label} (${weakest.pct}%) — un bon point de départ.`);
+    messages.push(`Ton parcours personnalisé t'attend dans <a href="parcours.html" style="color:var(--gold-bright);">Mon parcours</a>.`);
+  } else {
+    messages.push(`Envie d'un parcours vraiment adapté à ton niveau ? <a href="test-positionnement.html" style="color:var(--gold-bright);">Fais le test de positionnement</a> (facultatif, environ 5 minutes).`);
+  }
 
   el.innerHTML = `
     <div class="coach-panel">

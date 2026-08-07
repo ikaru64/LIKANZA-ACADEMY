@@ -453,6 +453,25 @@ const QUIZ_BANK_FULL = [
 ];
 // ===EXPORT:QUIZ_BANK:END===
 
+// ---------- Test de positionnement ----------
+// Réutilise des questions déjà existantes dans QUIZ_BANK_FULL (aucun contenu
+// dupliqué) — juste une sélection groupée par grande catégorie pédagogique.
+const POSITIONING_CATEGORIES = [
+  {key:'budget', label:'Budget', ids:['q-budget-001','q-budget-003']},
+  {key:'epargne', label:'Épargne', ids:['q-epargne-001','q-epargne-003']},
+  {key:'banque', label:'Banque & livrets', ids:['q-livreta-001']},
+  {key:'credit', label:'Crédit', ids:['q-credit-001','q-credit-002']},
+  {key:'interets', label:'Intérêts composés', ids:['q-intcomposes-001','q-intcomposes-003']},
+  {key:'investissement', label:'Risque & rendement', ids:['q-risque-001','q-risque-002']},
+  {key:'bourse', label:'Bourse', ids:['q-bourse-001','q-bourse-003']},
+  {key:'etf', label:'ETF', ids:['q-etf-001']},
+  {key:'diversification', label:'Diversification', ids:['q-diversification-001','q-diversification-002']},
+  {key:'immobilier', label:'Immobilier', ids:['q-immobilier-001']},
+  {key:'fiscalite', label:'Fiscalité', ids:['q-fiscalite-001']},
+  {key:'crypto', label:'Crypto & risques', ids:['q-crypto-001']},
+  {key:'arnaques', label:'Prévention des arnaques', ids:['q-arnaques-001']}
+];
+
 // ---------- Actions de démonstration (bourse / comparateur) ----------
 // Toutes les données ci-dessous sont FICTIVES, à but pédagogique uniquement.
 const STOCKS_DEMO = [

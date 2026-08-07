@@ -136,6 +136,19 @@ function renderModules(){
   });
 }
 
+function renderFormationsConseil(){
+  const result = getPositioningResult();
+  if(result && result.categoryScores){
+    const weakest = Object.values(result.categoryScores).sort((a,b)=>a.pct-b.pct)[0];
+    if(weakest && weakest.pct < 60){
+      renderConseilBadge('formationsConseil', {text:`Ton test de positionnement indique une marge de progression en ${weakest.label} (${weakest.pct}%) — une bonne piste pour la suite.`, tone:'warn'});
+      return;
+    }
+  }
+  renderConseilBadge('formationsConseil', {text:"Explore les missions ci-dessous à ton rythme, dans l'ordre que tu veux — rien n'est obligatoire.", tone:'neutral'});
+}
+
 refreshLevelUI();
+renderFormationsConseil();
 renderQuizSetup('quizContainer');
 renderGamificationWidget('gamiWidget', true);
