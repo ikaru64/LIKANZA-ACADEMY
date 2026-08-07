@@ -74,7 +74,7 @@ function renderMarcheDetail(){
         <p style="font-size:12px;color:var(--text-dim);">${majLine}</p>
         ${unavailable ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Valeur indisponible tant que les cotations automatiques ne sont pas connectées.</p>` : ''}
         <div style="margin-top:16px;">
-          <button class="fav-btn" data-fav-id="market-${it.symbol}" data-fav-title="${it.nom}" data-fav-url="marche.html#${encodeURIComponent(it.symbol)}" data-fav-type="Marché">★ Favoris</button>
+          <button class="fav-btn" data-fav-id="market-${it.symbol}" data-fav-title="${it.nom}" data-fav-url="marche.html#${encodeURIComponent(it.symbol)}" data-fav-type="Marché">${ICONS.star} Favoris</button>
         </div>
       </div>
       <div class="card">

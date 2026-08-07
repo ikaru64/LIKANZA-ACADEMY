@@ -58,7 +58,7 @@ function renderWatchlist(){
       <h3 style="font-size:19px;">${item.nom} <span class="mono" style="font-size:12px;color:var(--text-dim);">${item.symbol}</span></h3>
       <p>Valeur actuelle (démo) : <strong>${value !== null ? value : 'non disponible'}</strong>${item.threshold ? ` · seuil : ${item.threshold}` : ''}</p>
       ${item.note ? `<p style="font-size:12.5px;color:var(--text-dim);">${item.note}</p>` : ''}
-      ${crossed ? `<p style="font-size:12.5px;color:var(--gold-bright);">⚠ Seuil franchi (donnée de démonstration, pas une alerte réelle en direct)</p>` : ''}
+      ${crossed ? `<p style="font-size:12.5px;color:var(--gold-bright);">${ICONS['triangle-alert']} Seuil franchi (donnée de démonstration, pas une alerte réelle en direct)</p>` : ''}
       <div class="card-footer"><span>Ajouté le ${item.date}</span><button class="del-btn" data-symbol="${item.symbol}">Retirer</button></div>
     </div>`;
   }).join('');

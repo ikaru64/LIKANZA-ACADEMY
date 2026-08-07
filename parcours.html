@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mon parcours — Likanza Academy</title>
+<title>Mon parcours · Likanza Academy</title>
 <meta name="description" content="Ton chemin personnalisé : Maîtriser ses finances personnelles, en 6 niveaux progressifs.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -12,26 +12,26 @@
 <body class="has-bottom-nav">
 <aside class="app-sidebar" aria-label="Navigation principale">
   <a href="index.html" class="sidebar-brand"><span class="logo-mark"><span>LKA</span></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
-  <a href="index.html"><span class="icon">🏠</span><span>Tableau de bord</span></a>
-  <a href="index.html#tab-entrainer"><span class="icon">🎯</span><span>Défis</span></a>
-  <a href="formations.html"><span class="icon">📚</span><span>Academy</span></a>
-  <a href="parcours.html" class="active"><span class="icon">🧭</span><span>Mon parcours</span></a>
-  <a href="avenir.html#play"><span class="icon">🎮</span><span>Play</span></a>
-  <a href="actualites.html"><span class="icon">📰</span><span>Actualités</span></a>
-  <a href="bibliotheque.html"><span class="icon">📖</span><span>Bibliothèque</span></a>
-  <a href="outils.html"><span class="icon">🧮</span><span>Simulateurs</span></a>
-  <a href="bourse.html"><span class="icon">📈</span><span>Bourse</span></a>
-  <a href="crypto.html"><span class="icon">🪙</span><span>Crypto</span></a>
-  <a href="immobilier.html"><span class="icon">🏘</span><span>Immobilier</span></a>
-  <a href="finances-personnelles.html"><span class="icon">💶</span><span>Finances perso</span></a>
-  <a href="compte.html"><span class="icon">🏆</span><span>Mon compte</span></a>
+  <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
+  <a href="index.html#tab-entrainer"><span class="icon" data-icon="target"></span><span>Défis</span></a>
+  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
+  <a href="parcours.html" class="active"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
+  <a href="avenir.html#play"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
+  <a href="actualites.html"><span class="icon" data-icon="newspaper"></span><span>Actualités</span></a>
+  <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
+  <a href="outils.html"><span class="icon" data-icon="calculator"></span><span>Simulateurs</span></a>
+  <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
+  <a href="crypto.html"><span class="icon" data-icon="bitcoin"></span><span>Crypto</span></a>
+  <a href="immobilier.html"><span class="icon" data-icon="building-2"></span><span>Immobilier</span></a>
+  <a href="finances-personnelles.html"><span class="icon" data-icon="wallet"></span><span>Finances perso</span></a>
+  <a href="compte.html"><span class="icon" data-icon="trophy"></span><span>Mon compte</span></a>
 </aside>
 
 
 <header class="site-header">
   <div class="utility-bar"><div class="ticker-track" id="tickerTrack"></div></div>
   <div class="nav-row">
-    <button class="mobile-toggle" id="mobileToggle" aria-label="Menu" aria-expanded="false">☰</button>
+    <button class="mobile-toggle" id="mobileToggle" aria-label="Menu" aria-expanded="false"><span data-icon="menu"></span></button>
     <a href="index.html" class="logo-row"><span class="logo-mark"><span>LKA</span></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
         <nav class="main-nav" id="mainNav">
       <a href="index.html">Accueil</a>
@@ -65,7 +65,7 @@
     </nav>
     <div class="nav-tools">
       <div class="search-box"><input type="text" class="search-input" id="searchInput" placeholder="Rechercher..." aria-label="Recherche"><div class="search-results" id="searchResults"></div></div>
-      <button class="icon-btn" id="themeToggle" aria-label="Changer de thème">☾</button>
+      <button class="icon-btn" id="themeToggle" aria-label="Changer de thème"><span data-icon="moon"></span></button>
     </div>
   </div>
 </header>
@@ -76,7 +76,7 @@
     <span class="smallcaps">Parcours personnalisé</span>
     <h2 class="display" style="font-size:24px;font-weight:600;margin:10px 0;">Un parcours réellement adapté à tes connaissances</h2>
     <p style="color:var(--text-dim);font-size:14px;line-height:1.6;">Pour créer un parcours basé sur ce que tu sais déjà (et pas seulement sur ce que tu déclares), nous devons d'abord évaluer ton niveau avec le test de positionnement.</p>
-    <p class="disclaimer-box">Tu peux toujours utiliser librement le reste du site sans faire ce test — bibliothèque, formations, simulateurs, quiz libres restent ouverts à tous.</p>
+    <p class="disclaimer-box">Tu peux toujours utiliser librement le reste du site sans faire ce test : bibliothèque, formations, simulateurs, quiz libres restent ouverts à tous.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
       <a href="test-positionnement.html" class="btn btn-gold">Faire le test de positionnement</a>
       <a href="index.html" class="btn btn-sm">Retour à l'accueil</a>
@@ -101,16 +101,17 @@
   <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
 </footer>
 
+<script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/pages/parcours.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
-  <a href="index.html"><span class="icon">🏠</span>Accueil</a>
-  <a href="formations.html"><span class="icon">🎓</span>Apprendre</a>
-  <a href="index.html#tab-entrainer"><span class="icon">⚔️</span>Défis</a>
-  <a href="outils.html"><span class="icon">🧮</span>Simuler</a>
-  <a href="compte.html"><span class="icon">👤</span>Profil</a>
+  <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
+  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
+  <a href="index.html#tab-entrainer"><span class="icon" data-icon="swords"></span>Défis</a>
+  <a href="outils.html"><span class="icon" data-icon="calculator"></span>Simuler</a>
+  <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>
 </nav>
 </body>
 </html>

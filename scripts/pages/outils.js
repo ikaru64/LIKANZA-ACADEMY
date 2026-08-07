@@ -6,7 +6,7 @@ const outilsRiskNote = document.getElementById('outilsRiskNote');
 if(outilsRiskNote){
   outilsRiskNote.innerHTML = outilsHasProfile
     ? "Basé sur ton profil enregistré dans Mon compte."
-    : "Profil par défaut (équilibré) — <a href=\"compte.html\" style=\"color:var(--gold-bright);\">renseigne le tien dans Mon compte</a> pour une jauge personnalisée.";
+    : "Profil par défaut (équilibré) : <a href=\"compte.html\" style=\"color:var(--gold-bright);\">renseigne le tien dans Mon compte</a> pour une jauge personnalisée.";
 }
 if(document.getElementById('coachWidget')) renderCoach('coachWidget');
 

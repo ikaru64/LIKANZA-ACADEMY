@@ -13,11 +13,11 @@ const I18N = {
     teacherDemoFlag: "Local demo",
     teacherTopicLabel: "Pick a topic",
     teacherAskCta: "Explain simply",
-    teacherNote: "Local demonstration — the full AI teacher will need a future connection to a real API.",
+    teacherNote: "Local demonstration: the full AI teacher will need a future connection to a real API.",
     challengeTitle: "Interactive challenge",
-    arenaTitle: "Arena — coming soon",
+    arenaTitle: "Arena: coming soon",
     leaguePreviewTitle: "See your league",
-    arenaDesc: "Leagues already rank your XP against demo profiles on your account page. A real multiplayer Arena is planned but needs user accounts and a server — not yet available.",
+    arenaDesc: "Leagues already rank your XP against demo profiles on your account page. A real multiplayer Arena is planned but needs user accounts and a server, not yet available.",
     arenaCta: "See my league",
     labToolEyebrow: "SIMULATE",
     labToolTitle: "Compound interest lab",
@@ -26,21 +26,21 @@ const I18N = {
     simRateLabel: "Annual return",
     simYearsLabel: "Years",
     labToolCta: "Open all simulators",
-    simLabNote: "This is a teaching lab with hypothetical numbers, not a real wealth sync or investment advice. Below: quick links to the other simulators — wealth projection, savings goal, budget, credit and scenario comparison — all kept fully working on their own pages.",
+    simLabNote: "This is a teaching lab with hypothetical numbers, not a real wealth sync or investment advice. Below: quick links to the other simulators (wealth projection, savings goal, budget, credit and scenario comparison), all kept fully working on their own pages.",
     seeAllLink: "see all →",
     freeLabel: "FREE, FOREVER",
     premiumTeaserTitle: "Premium (planned)",
-    premiumTeaserDesc: "A more advanced AI Teacher, an ultra-personalised path and detailed statistics — Premium will add comfort, never lock the essentials. Not billed yet.",
+    premiumTeaserDesc: "A more advanced AI Teacher, an ultra-personalised path and detailed statistics: Premium will add comfort, never lock the essentials. Not billed yet.",
     premiumTeaserCta: "Learn more",
     newsletterEyebrow: "Newsletter",
     newsletterTitle: "Finance, explained simply, every week.",
     newsletterCta: "Subscribe",
     langButtonLabel: "FR",
     quickAccess: [
-      {tab:"tab-apprendre", title:"Learn", desc:"Missions & library", icon:"🎓"},
-      {tab:"tab-entrainer", title:"Train", desc:"Challenges & leagues", icon:"⚔️"},
-      {tab:"tab-simuler", title:"Simulate", desc:"Labs & tools", icon:"🧮"},
-      {tab:"tab-actualites", title:"Understand the news", desc:"Summarised daily", icon:"📰"}
+      {tab:"tab-apprendre", title:"Learn", desc:"Missions & library", icon:"graduation-cap"},
+      {tab:"tab-entrainer", title:"Train", desc:"Challenges & leagues", icon:"swords"},
+      {tab:"tab-simuler", title:"Simulate", desc:"Labs & tools", icon:"calculator"},
+      {tab:"tab-actualites", title:"Understand the news", desc:"Summarised daily", icon:"newspaper"}
     ],
     simPreviews: [
       {title:"Wealth projection", desc:"Project your net worth over time.", url:"finances-personnelles.html"},
@@ -63,11 +63,11 @@ const I18N = {
     teacherDemoFlag: "Démonstration locale",
     teacherTopicLabel: "Choisis une notion",
     teacherAskCta: "Explique-moi simplement",
-    teacherNote: "Démonstration locale — la version IA complète nécessitera une future connexion à une API.",
+    teacherNote: "Démonstration locale : la version IA complète nécessitera une future connexion à une API.",
     challengeTitle: "Défi interactif",
-    arenaTitle: "Arène — bientôt disponible",
+    arenaTitle: "Arène : bientôt disponible",
     leaguePreviewTitle: "Voir ma ligue",
-    arenaDesc: "Les ligues classent déjà ton XP face à des profils de démonstration, sur ta page compte. Une vraie Arène multijoueur est prévue, mais nécessite des comptes utilisateurs et un serveur — pas encore disponible.",
+    arenaDesc: "Les ligues classent déjà ton XP face à des profils de démonstration, sur ta page compte. Une vraie Arène multijoueur est prévue, mais nécessite des comptes utilisateurs et un serveur : pas encore disponible.",
     arenaCta: "Voir ma ligue",
     labToolEyebrow: "SIMULER",
     labToolTitle: "Laboratoire d'intérêts composés",
@@ -76,21 +76,21 @@ const I18N = {
     simRateLabel: "Rendement annuel",
     simYearsLabel: "Durée",
     labToolCta: "Ouvrir tous les simulateurs",
-    simLabNote: "Ceci est un laboratoire pédagogique avec des chiffres hypothétiques, pas une synchronisation réelle de patrimoine ni un conseil en investissement. Ci-dessous : accès rapide aux autres simulateurs — projection de patrimoine, objectif d'épargne, budget, crédit et comparaison de scénarios — tous pleinement fonctionnels sur leur page dédiée.",
+    simLabNote: "Ceci est un laboratoire pédagogique avec des chiffres hypothétiques, pas une synchronisation réelle de patrimoine ni un conseil en investissement. Ci-dessous : accès rapide aux autres simulateurs (projection de patrimoine, objectif d'épargne, budget, crédit et comparaison de scénarios), tous pleinement fonctionnels sur leur page dédiée.",
     seeAllLink: "tout voir →",
     freeLabel: "GRATUIT, TOUJOURS",
     premiumTeaserTitle: "Premium (à venir)",
-    premiumTeaserDesc: "Un professeur IA plus avancé, un parcours ultra-personnalisé et des statistiques détaillées — le Premium ajoutera du confort, sans jamais bloquer l'essentiel. Rien n'est facturé pour l'instant.",
+    premiumTeaserDesc: "Un professeur IA plus avancé, un parcours ultra-personnalisé et des statistiques détaillées : le Premium ajoutera du confort, sans jamais bloquer l'essentiel. Rien n'est facturé pour l'instant.",
     premiumTeaserCta: "En savoir plus",
     newsletterEyebrow: "Newsletter",
     newsletterTitle: "L'essentiel de la finance, expliqué simplement, chaque semaine.",
     newsletterCta: "S'inscrire",
     langButtonLabel: "EN",
     quickAccess: [
-      {tab:"tab-apprendre", title:"Apprendre", desc:"Missions & bibliothèque", icon:"🎓"},
-      {tab:"tab-entrainer", title:"S'entraîner", desc:"Défis & ligues", icon:"⚔️"},
-      {tab:"tab-simuler", title:"Simuler", desc:"Laboratoires & outils", icon:"🧮"},
-      {tab:"tab-actualites", title:"Comprendre l'actualité", desc:"Résumée chaque jour", icon:"📰"}
+      {tab:"tab-apprendre", title:"Apprendre", desc:"Missions & bibliothèque", icon:"graduation-cap"},
+      {tab:"tab-entrainer", title:"S'entraîner", desc:"Défis & ligues", icon:"swords"},
+      {tab:"tab-simuler", title:"Simuler", desc:"Laboratoires & outils", icon:"calculator"},
+      {tab:"tab-actualites", title:"Comprendre l'actualité", desc:"Résumée chaque jour", icon:"newspaper"}
     ],
     simPreviews: [
       {title:"Projection de patrimoine", desc:"Projette ton patrimoine net dans le temps.", url:"finances-personnelles.html"},
@@ -153,7 +153,7 @@ function renderTodayCard(){
     const notion = getNotionOfDay();
     notionEl.innerHTML = `
       <h4>${LANG==='en'?'Notion to review':'Notion à revoir'}</h4>
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;">${notion.terme} — ${notion.simple}</p>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;">${notion.terme} · ${notion.simple}</p>
       <a href="bibliotheque.html#${notion.terme.replace(/\s+/g,'-')}" class="btn btn-sm">${LANG==='en'?'Read more':'En savoir plus'}</a>`;
   }
   if(challengeEl){
@@ -169,7 +169,7 @@ function renderQuickAccess(){
   if(!el) return;
   el.innerHTML = I18N[LANG].quickAccess.map(q=>`
     <button class="quick-access-card ${q.tab===activeTab?'active':''}" data-tab="${q.tab}">
-      <div class="icon">${q.icon}</div>
+      <div class="icon">${ICONS[q.icon] || ''}</div>
       <h3>${q.title}</h3>
       <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${q.desc}</p>
     </button>`).join('');
@@ -198,7 +198,7 @@ function renderLearnTab(){
   if(listEl){
     listEl.innerHTML = mods.slice(0,4).map((c,i)=>{
       const done = !!progress[level+'-'+i];
-      return `<p style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">${done?'✓':'○'} ${c.title}</p>`;
+      return `<p style="font-size:13px;color:var(--text-dim);margin-bottom:4px;">${done?ICONS.check:ICONS.circle} ${c.title}</p>`;
     }).join('');
   }
 }
@@ -284,7 +284,7 @@ function renderNewsTab(){
 const premiumBtn = document.getElementById('premiumTeaserBtn');
 if(premiumBtn) premiumBtn.addEventListener('click', (e)=>{
   e.preventDefault();
-  alert(LANG==='en' ? "Premium is a planned evolution — nothing to buy yet." : "Le Premium est une évolution prévue — rien à acheter pour l'instant.");
+  alert(LANG==='en' ? "Premium is a planned evolution: nothing to buy yet." : "Le Premium est une évolution prévue : rien à acheter pour l'instant.");
 });
 
 // ================= Newsletter =================

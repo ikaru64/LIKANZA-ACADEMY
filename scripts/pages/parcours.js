@@ -47,16 +47,16 @@ const PARCOURS_PRINCIPAL = [
     competence:"Formaliser un plan sur 12 mois",
     notions:["Objectifs SMART","Priorités","Calendrier","Automatisation","Bilan annuel"],
     lien:null, statut:"a_venir",
-    note:"Projet final du parcours — en cours de rédaction, pas encore disponible."
+    note:"Projet final du parcours : en cours de rédaction, pas encore disponible."
   }
 ];
 
 function renderParcoursConseil(result){
   const weakest = Object.values(result.categoryScores || {}).sort((a,b)=>a.pct-b.pct)[0];
   if(weakest && weakest.pct < 60){
-    renderConseilBadge('parcoursConseil', {text:`Priorise d'abord les niveaux liés à "${weakest.label}" (${weakest.pct}% au test) — c'est là que tu progresseras le plus vite.`, tone:'warn'});
+    renderConseilBadge('parcoursConseil', {text:`Priorise d'abord les niveaux liés à "${weakest.label}" (${weakest.pct}% au test) : c'est là que tu progresseras le plus vite.`, tone:'warn'});
   } else {
-    renderConseilBadge('parcoursConseil', {text:"Bon niveau général au test — suis le parcours dans l'ordre ou pioche directement dans les niveaux qui t'intéressent.", tone:'good'});
+    renderConseilBadge('parcoursConseil', {text:"Bon niveau général au test : suis le parcours dans l'ordre ou pioche directement dans les niveaux qui t'intéressent.", tone:'good'});
   }
 }
 

@@ -198,7 +198,7 @@ const COURSES = {
         {heading:"Le choix de Tom", text:"Tom a 2000€ de côté. Il hésite entre les laisser sur son Livret A, dont le taux est actuellement de 3% par an, ou ouvrir un PEA pour investir en actions européennes."},
         {heading:"Une première estimation", text:"Avant de se décider, Tom veut d'abord comprendre concrètement ce que lui rapporterait le Livret A s'il y laissait son argent une année entière, sans rien y toucher."}
       ],
-      question:{type:"calcul", prompt:"Avec 2000€ placés sur un Livret A à 3% par an, combien d'intérêts Tom touche-t-il après 1 an (arrondis à l'euro) ?", unit:"€", reponse:60, tolerance:2, explication:"2000 × 3% = 60€. Le Livret A garantit le capital, mais son rendement reste modéré comparé à un placement en actions — en échange d'une sécurité totale et d'une disponibilité immédiate."}
+      question:{type:"calcul", prompt:"Avec 2000€ placés sur un Livret A à 3% par an, combien d'intérêts Tom touche-t-il après 1 an (arrondis à l'euro) ?", unit:"€", reponse:60, tolerance:2, explication:"2000 × 3% = 60€. Le Livret A garantit le capital, mais son rendement reste modéré comparé à un placement en actions, en échange d'une sécurité totale et d'une disponibilité immédiate."}
     },
     {
       title:"Le risque, concrètement",
@@ -206,7 +206,7 @@ const COURSES = {
         {heading:"Le premier investissement de Marc", text:"Marc place 2000€ en actions pour la première fois, convaincu que la bourse ne fait que monter sur le long terme."},
         {heading:"La première année difficile", text:"Dès sa première année, un choc économique fait chuter son placement de 18%. Marc panique un peu en consultant son compte, mais se souvient que son horizon de placement est de 15 ans."}
       ],
-      question:{type:"calcul", prompt:"Après cette baisse de 18%, combien vaut approximativement le placement de Marc ?", unit:"€", reponse:1640, tolerance:15, explication:"2000 × (1 − 0,18) = 1640€. Une baisse, même marquée, ne signifie pas une perte définitive : c'est le risque normal d'un placement en actions, que le temps peut permettre de compenser — sans aucune garantie."}
+      question:{type:"calcul", prompt:"Après cette baisse de 18%, combien vaut approximativement le placement de Marc ?", unit:"€", reponse:1640, tolerance:15, explication:"2000 × (1 − 0,18) = 1640€. Une baisse, même marquée, ne signifie pas une perte définitive : c'est le risque normal d'un placement en actions, que le temps peut permettre de compenser, sans aucune garantie."}
     },
     {
       title:"Construire son premier plan financier",
@@ -224,7 +224,7 @@ const COURSES = {
         {heading:"Deux actions, un choix", text:"Yanis compare deux entreprises du même secteur avant d'investir. La première se négocie à 80€ et a généré un bénéfice de 4€ par action l'an dernier."},
         {heading:"Un premier repère", text:"Yanis a entendu parler du PER (Price Earning Ratio) comme premier indicateur pour juger si le prix d'une action est \"cher\" ou non par rapport à ses bénéfices."}
       ],
-      question:{type:"calcul", prompt:"Quel est le PER de cette action (cours de 80€ pour un bénéfice par action de 4€) ?", unit:"", reponse:20, tolerance:0.5, explication:"PER = cours / bénéfice par action = 80 / 4 = 20. Un PER de 20 signifie qu'il faudrait 20 années de bénéfices actuels pour \"rembourser\" le prix payé — à comparer à d'autres entreprises du même secteur pour juger si c'est élevé ou raisonnable."}
+      question:{type:"calcul", prompt:"Quel est le PER de cette action (cours de 80€ pour un bénéfice par action de 4€) ?", unit:"", reponse:20, tolerance:0.5, explication:"PER = cours / bénéfice par action = 80 / 4 = 20. Un PER de 20 signifie qu'il faudrait 20 années de bénéfices actuels pour \"rembourser\" le prix payé, à comparer à d'autres entreprises du même secteur pour juger si c'est élevé ou raisonnable."}
     },
     {
       title:"Diversifier par secteur et zone géographique",
@@ -246,9 +246,9 @@ const COURSES = {
       title:"Comparer des ETF entre eux",
       story:[
         {heading:"Deux trackers, un même indice", text:"Nina hésite entre deux ETF qui suivent exactement le même indice mondial. Le premier facture 0,07% de frais de gestion annuels, le second 0,45%."},
-        {heading:"Un même capital, deux avenirs", text:"Elle prévoit d'investir 10 000€ dans l'un des deux ETF, sans tenir compte pour l'instant de la performance du marché — seulement de l'écart de frais entre les deux produits."}
+        {heading:"Un même capital, deux avenirs", text:"Elle prévoit d'investir 10 000€ dans l'un des deux ETF, sans tenir compte pour l'instant de la performance du marché, seulement de l'écart de frais entre les deux produits."}
       ],
-      question:{type:"calcul", prompt:"Sur 10 000€ investis pendant 1 an, quelle est la différence de frais payés entre l'ETF à 0,45% et celui à 0,07% (hors performance de marché) ?", unit:"€", reponse:38, tolerance:2, explication:"10 000 × (0,45% − 0,07%) = 10 000 × 0,38% = 38€. Un écart qui paraît minime en un an, mais qui se cumule chaque année sur toute la durée de détention — un critère de comparaison à ne pas négliger entre deux ETF qui suivent le même indice."}
+      question:{type:"calcul", prompt:"Sur 10 000€ investis pendant 1 an, quelle est la différence de frais payés entre l'ETF à 0,45% et celui à 0,07% (hors performance de marché) ?", unit:"€", reponse:38, tolerance:2, explication:"10 000 × (0,45% − 0,07%) = 10 000 × 0,38% = 38€. Un écart qui paraît minime en un an, mais qui se cumule chaque année sur toute la durée de détention : un critère de comparaison à ne pas négliger entre deux ETF qui suivent le même indice."}
     },
     {
       title:"SCPI : investir dans l'immobilier sans gérer de bien",
@@ -256,7 +256,7 @@ const COURSES = {
         {heading:"Le choix de Sofia", text:"Sofia n'a ni le temps ni l'envie de gérer elle-même un bien locatif (recherche de locataires, travaux, impayés). Elle se tourne vers une SCPI qui affiche un taux de distribution de 4,5% pour l'année passée."},
         {heading:"Un premier placement", text:"Elle investit 10 000€ dans cette SCPI, en gardant à l'esprit que ce taux de distribution passé ne garantit en rien les revenus futurs."}
       ],
-      question:{type:"calcul", prompt:"Sur la base de ce taux de distribution de 4,5%, quel revenu annuel brut Sofia peut-elle espérer sur ses 10 000€ investis (avant fiscalité) ?", unit:"€", reponse:450, tolerance:15, explication:"10 000 × 4,5% = 450€ par an, avant fiscalité et hors frais éventuels. Ce chiffre reste une estimation basée sur une performance passée, jamais une garantie contractuelle — le capital et les revenus futurs d'une SCPI ne sont jamais garantis."}
+      question:{type:"calcul", prompt:"Sur la base de ce taux de distribution de 4,5%, quel revenu annuel brut Sofia peut-elle espérer sur ses 10 000€ investis (avant fiscalité) ?", unit:"€", reponse:450, tolerance:15, explication:"10 000 × 4,5% = 450€ par an, avant fiscalité et hors frais éventuels. Ce chiffre reste une estimation basée sur une performance passée, jamais une garantie contractuelle : le capital et les revenus futurs d'une SCPI ne sont jamais garantis."}
     }
   ],
   avance:[
@@ -274,7 +274,7 @@ const COURSES = {
         {heading:"Un portefeuille très tech", text:"Élise détient déjà deux actions technologiques américaines, qui montent et descendent quasiment ensemble à chaque annonce du secteur."},
         {heading:"Une troisième idée", text:"Elle hésite entre ajouter une troisième action technologique similaire, ou plutôt un peu d'or, un actif dont l'évolution suit rarement celle des actions technologiques."}
       ],
-      question:{type:"qcm", prompt:"Pourquoi ajouter l'or (peu corrélé aux actions technologiques déjà détenues) réduit-il davantage le risque global du portefeuille qu'une troisième action tech ?", choix:["Parce que l'or ne peut jamais perdre de valeur","Parce qu'un actif peu corrélé ne réagit pas de la même façon aux mêmes chocs de marché, ce qui amortit les variations globales du portefeuille","Parce que l'or est interdit en PEA, ce qui le rend plus sûr","Parce qu'une troisième action tech doublerait automatiquement le risque"], bonneReponse:1, explication:"Deux actifs fortement corrélés réagissent de façon similaire aux mêmes événements, ce qui n'apporte que peu de diversification. Un actif peu corrélé, comme l'or ici, réagit différemment, ce qui réduit l'amplitude globale des variations du portefeuille — sans pour autant éliminer tout risque."}
+      question:{type:"qcm", prompt:"Pourquoi ajouter l'or (peu corrélé aux actions technologiques déjà détenues) réduit-il davantage le risque global du portefeuille qu'une troisième action tech ?", choix:["Parce que l'or ne peut jamais perdre de valeur","Parce qu'un actif peu corrélé ne réagit pas de la même façon aux mêmes chocs de marché, ce qui amortit les variations globales du portefeuille","Parce que l'or est interdit en PEA, ce qui le rend plus sûr","Parce qu'une troisième action tech doublerait automatiquement le risque"], bonneReponse:1, explication:"Deux actifs fortement corrélés réagissent de façon similaire aux mêmes événements, ce qui n'apporte que peu de diversification. Un actif peu corrélé, comme l'or ici, réagit différemment, ce qui réduit l'amplitude globale des variations du portefeuille, sans pour autant éliminer tout risque."}
     },
     {
       title:"Lire les flux de trésorerie",
@@ -282,7 +282,7 @@ const COURSES = {
         {heading:"Un résultat net flatteur", text:"Une entreprise affiche un résultat net de 5 M€ sur son dernier exercice, un chiffre qui impressionne à première vue."},
         {heading:"Un investissement massif", text:"En creusant les comptes, un analyste découvre que l'entreprise a aussi investi 4 M€ en capex (dépenses d'investissement) cette année-là, financés par son activité courante."}
       ],
-      question:{type:"calcul", prompt:"En simplifiant (résultat net − capex), quel est le flux de trésorerie disponible approximatif de cette entreprise, en M€ ?", unit:"M€", reponse:1, tolerance:0.3, explication:"5 − 4 = 1 M€. Le résultat net peut être flatté par des éléments comptables ; le flux de trésorerie disponible montre l'argent réellement généré par l'activité une fois les investissements déduits — souvent plus révélateur de la santé financière réelle d'une entreprise."}
+      question:{type:"calcul", prompt:"En simplifiant (résultat net − capex), quel est le flux de trésorerie disponible approximatif de cette entreprise, en M€ ?", unit:"M€", reponse:1, tolerance:0.3, explication:"5 − 4 = 1 M€. Le résultat net peut être flatté par des éléments comptables ; le flux de trésorerie disponible montre l'argent réellement généré par l'activité une fois les investissements déduits, souvent plus révélateur de la santé financière réelle d'une entreprise."}
     },
     {
       title:"Produits dérivés : ce qu'il faut comprendre avant tout",
@@ -296,9 +296,9 @@ const COURSES = {
       title:"Retraite et PER : préparer le long terme",
       story:[
         {heading:"Une tranche d'imposition élevée", text:"Camille est imposée à une tranche marginale de 30%. Son conseiller lui suggère de verser sur un PER pour réduire son impôt de l'année."},
-        {heading:"Un versement réfléchi", text:"Camille décide de verser 3000€ sur son PER cette année, sachant que ce montant sera déductible de son revenu imposable — mais imposé à la sortie, à la retraite."}
+        {heading:"Un versement réfléchi", text:"Camille décide de verser 3000€ sur son PER cette année, sachant que ce montant sera déductible de son revenu imposable, mais imposé à la sortie, à la retraite."}
       ],
-      question:{type:"calcul", prompt:"Avec une tranche marginale d'imposition de 30% et un versement déductible de 3000€, quelle économie d'impôt immédiate Camille obtient-elle ?", unit:"€", reponse:900, tolerance:30, explication:"3000 × 30% = 900€ d'économie d'impôt immédiate. En contrepartie, les sommes correspondantes seront en principe réintégrées à l'impôt sur le revenu à la sortie, à la retraite — l'intérêt de l'opération dépend surtout de l'écart entre la tranche d'imposition actuelle et celle anticipée au moment de la retraite."}
+      question:{type:"calcul", prompt:"Avec une tranche marginale d'imposition de 30% et un versement déductible de 3000€, quelle économie d'impôt immédiate Camille obtient-elle ?", unit:"€", reponse:900, tolerance:30, explication:"3000 × 30% = 900€ d'économie d'impôt immédiate. En contrepartie, les sommes correspondantes seront en principe réintégrées à l'impôt sur le revenu à la sortie, à la retraite : l'intérêt de l'opération dépend surtout de l'écart entre la tranche d'imposition actuelle et celle anticipée au moment de la retraite."}
     }
   ],
   expert:[
@@ -308,7 +308,7 @@ const COURSES = {
         {heading:"Un flux unique à valoriser", text:"Un analyste doit estimer la valeur actuelle d'une entreprise qui, selon ses projections, générera un flux de trésorerie de 1 000 000€ dans 5 ans, et rien d'autre entre-temps pour simplifier l'exercice."},
         {heading:"Le choix du taux d'actualisation", text:"Il retient un taux d'actualisation de 8% par an, reflétant le risque et le coût du capital associés à cette entreprise."}
       ],
-      question:{type:"calcul", prompt:"Avec un flux de 1 000 000€ dans 5 ans et un taux d'actualisation de 8% par an, quelle est la valeur actuelle approximative de ce flux (arrondie au millier d'euros le plus proche) ?", unit:"€", reponse:680583, tolerance:5000, explication:"Valeur actuelle = 1 000 000 / (1,08)⁵ ≈ 680 583€. Plus le taux d'actualisation retenu est élevé, plus la valeur actuelle d'un flux futur est faible — la méthode DCF est donc très sensible aux hypothèses de taux et de croissance retenues."}
+      question:{type:"calcul", prompt:"Avec un flux de 1 000 000€ dans 5 ans et un taux d'actualisation de 8% par an, quelle est la valeur actuelle approximative de ce flux (arrondie au millier d'euros le plus proche) ?", unit:"€", reponse:680583, tolerance:5000, explication:"Valeur actuelle = 1 000 000 / (1,08)⁵ ≈ 680 583€. Plus le taux d'actualisation retenu est élevé, plus la valeur actuelle d'un flux futur est faible : la méthode DCF est donc très sensible aux hypothèses de taux et de croissance retenues."}
     },
     {
       title:"Analyse de sensibilité",
@@ -316,7 +316,7 @@ const COURSES = {
         {heading:"Une valorisation, plusieurs scénarios", text:"Après avoir construit un premier modèle DCF, une analyste financière fait varier son hypothèse de croissance annuelle : 2%, 4%, puis 6%, en gardant tout le reste identique."},
         {heading:"Des résultats très différents", text:"Les trois scénarios donnent des valorisations sensiblement différentes pour la même entreprise, alors qu'un seul paramètre a changé à chaque fois."}
       ],
-      question:{type:"qcm", prompt:"Quel est l'intérêt principal de faire varier ainsi une hypothèse clé (comme la croissance) dans une analyse de sensibilité ?", choix:["Choisir artificiellement le scénario qui donne la valorisation la plus haute pour vendre plus cher","Mesurer la robustesse d'une valorisation et identifier les paramètres qui l'influencent le plus","Remplacer complètement le besoin de connaître les comptes de l'entreprise","Garantir que la valorisation obtenue sera exacte"], bonneReponse:1, explication:"Faire varier une hypothèse clé permet de mesurer à quel point la valorisation finale en dépend, et donc d'identifier les paramètres les plus déterminants — pas de garantir un résultat, ni de le manipuler pour arriver à une conclusion prédéfinie."}
+      question:{type:"qcm", prompt:"Quel est l'intérêt principal de faire varier ainsi une hypothèse clé (comme la croissance) dans une analyse de sensibilité ?", choix:["Choisir artificiellement le scénario qui donne la valorisation la plus haute pour vendre plus cher","Mesurer la robustesse d'une valorisation et identifier les paramètres qui l'influencent le plus","Remplacer complètement le besoin de connaître les comptes de l'entreprise","Garantir que la valorisation obtenue sera exacte"], bonneReponse:1, explication:"Faire varier une hypothèse clé permet de mesurer à quel point la valorisation finale en dépend, et donc d'identifier les paramètres les plus déterminants, pas de garantir un résultat, ni de le manipuler pour arriver à une conclusion prédéfinie."}
     },
     {
       title:"Construction de portefeuille",
@@ -324,7 +324,7 @@ const COURSES = {
         {heading:"Au-delà de la simple diversification", text:"Un gérant de portefeuille ne se contente pas de multiplier le nombre de lignes détenues : il cherche un équilibre précis entre rendement attendu, risque toléré et corrélations entre les actifs choisis."},
         {heading:"Un repère théorique", text:"Il utilise le concept de frontière efficiente pour situer différentes combinaisons possibles d'actifs, et choisir celle qui correspond le mieux à ses objectifs."}
       ],
-      question:{type:"qcm", prompt:"Qu'offre, en théorie, un portefeuille situé sur la frontière efficiente ?", choix:["Une garantie de gain quel que soit le contexte de marché","Le meilleur rendement attendu possible pour un niveau de risque donné (ou le risque le plus faible pour un rendement donné)","L'absence totale de frais de gestion","Un accès automatique à tous les marchés mondiaux"], bonneReponse:1, explication:"La frontière efficiente représente, pour chaque niveau de risque, la combinaison d'actifs offrant le meilleur rendement attendu possible (ou inversement, le risque le plus faible pour un rendement donné) — un repère théorique, pas une garantie de résultat futur."}
+      question:{type:"qcm", prompt:"Qu'offre, en théorie, un portefeuille situé sur la frontière efficiente ?", choix:["Une garantie de gain quel que soit le contexte de marché","Le meilleur rendement attendu possible pour un niveau de risque donné (ou le risque le plus faible pour un rendement donné)","L'absence totale de frais de gestion","Un accès automatique à tous les marchés mondiaux"], bonneReponse:1, explication:"La frontière efficiente représente, pour chaque niveau de risque, la combinaison d'actifs offrant le meilleur rendement attendu possible (ou inversement, le risque le plus faible pour un rendement donné) : un repère théorique, pas une garantie de résultat futur."}
     }
   ]
 };
@@ -405,7 +405,7 @@ const QUIZ_BANK_FULL = [
   // ---- Immobilier ----
   {id:"q-immobilier-001", niveau:"intermediaire", categorie:"Immobilier", type:"qcm", question:"Que mesure le rendement locatif brut d'un bien immobilier ?", choix:["Les loyers annuels divisés par le prix d'achat","Le prix du bien divisé par sa surface","La plus-value réalisée à la revente","Le taux d'intérêt du crédit associé"], bonneReponse:0, explication:"Le rendement locatif brut rapporte les loyers annuels perçus au prix d'achat du bien, sans tenir compte des charges ni de la fiscalité."},
   {id:"q-immobilier-002", niveau:"intermediaire", categorie:"Immobilier", type:"qcm", question:"Pourquoi le rendement locatif net est-il souvent plus pertinent que le rendement brut ?", choix:["Parce qu'il est toujours plus élevé","Parce qu'il déduit les charges, la taxe foncière et parfois la fiscalité, donnant une image plus réaliste","Parce qu'il ignore le prix d'achat","Parce que la loi impose de ne communiquer que ce chiffre"], bonneReponse:1, explication:"Le rendement net tient compte des charges réelles (copropriété, taxe foncière, gestion...), offrant une vision plus fidèle de la rentabilité réelle."},
-  {id:"q-immobilier-003", niveau:"avance", categorie:"Immobilier", type:"qcm", question:"Qu'est-ce que le cash-flow d'un investissement locatif financé à crédit ?", choix:["Le prix d'achat du bien","La différence entre les loyers encaissés et l'ensemble des charges, crédit inclus","Le montant de l'apport initial","La plus-value latente du bien"], bonneReponse:1, explication:"Le cash-flow mesure ce qu'il reste (ou manque) chaque mois une fois toutes les charges payées, crédit compris — un indicateur clé de la viabilité réelle d'un projet à effet de levier."},
+  {id:"q-immobilier-003", niveau:"avance", categorie:"Immobilier", type:"qcm", question:"Qu'est-ce que le cash-flow d'un investissement locatif financé à crédit ?", choix:["Le prix d'achat du bien","La différence entre les loyers encaissés et l'ensemble des charges, crédit inclus","Le montant de l'apport initial","La plus-value latente du bien"], bonneReponse:1, explication:"Le cash-flow mesure ce qu'il reste (ou manque) chaque mois une fois toutes les charges payées, crédit compris : un indicateur clé de la viabilité réelle d'un projet à effet de levier."},
 
   // ---- Crédit ----
   {id:"q-credit-001", niveau:"debutant", categorie:"Crédit", type:"qcm", question:"Qu'est-ce que le taux d'intérêt d'un crédit représente concrètement ?", choix:["Une pénalité en cas de retard uniquement","Le coût de l'emprunt payé au prêteur, en plus du capital remboursé","Un impôt prélevé par l'État","Une assurance obligatoire"], bonneReponse:1, explication:"Le taux d'intérêt rémunère le prêteur pour le risque pris et l'argent avancé ; il s'ajoute au remboursement du capital emprunté."},
@@ -441,7 +441,7 @@ const QUIZ_BANK_FULL = [
   {id:"q-scpi-001", niveau:"intermediaire", categorie:"SCPI", type:"qcm", question:"Qu'est-ce qu'une SCPI, dans les grandes lignes ?", choix:["Un livret d'épargne réglementé","Une société qui collecte de l'argent auprès d'épargnants pour investir dans l'immobilier locatif","Une action cotée en bourse","Un type de crédit immobilier"], bonneReponse:1, explication:"Une SCPI (société civile de placement immobilier) mutualise l'argent de nombreux épargnants pour acheter et gérer un parc immobilier locatif, et leur reverse les loyers au prorata de leurs parts."},
   {id:"q-scpi-002", niveau:"intermediaire", categorie:"SCPI", type:"qcm", question:"Quel est l'un des principaux avantages d'une SCPI par rapport à l'achat direct d'un bien locatif ?", choix:["Un capital totalement garanti","Pas de gestion locative à assurer soi-même (locataires, travaux, impayés)","Un rendement garanti par l'État","L'absence totale de frais"], bonneReponse:1, explication:"La société de gestion s'occupe de la sélection des biens, de la location et de l'entretien : l'épargnant perçoit des revenus sans gérer lui-même le bien."},
   {id:"q-scpi-003", niveau:"intermediaire", categorie:"SCPI", type:"vraifaux", question:"Le capital investi dans une SCPI est garanti, comme sur un livret réglementé.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Comme tout placement immobilier ou financier, la valeur des parts de SCPI peut baisser : il n'y a aucune garantie de capital."},
-  {id:"q-scpi-004", niveau:"avance", categorie:"SCPI", type:"qcm", question:"Qu'est-ce que le taux de distribution d'une SCPI ?", choix:["Le pourcentage de parts détenues par l'État","Le rapport entre les revenus versés sur l'année et le prix de la part en début d'année","Le taux d'intérêt du crédit utilisé pour l'acheter","Le taux de vacance locative du parc immobilier"], bonneReponse:1, explication:"Le taux de distribution rapporte les dividendes versés au cours de l'année au prix de la part, un indicateur de rendement à comparer d'une SCPI à l'autre — sans garantir sa reconduction future."},
+  {id:"q-scpi-004", niveau:"avance", categorie:"SCPI", type:"qcm", question:"Qu'est-ce que le taux de distribution d'une SCPI ?", choix:["Le pourcentage de parts détenues par l'État","Le rapport entre les revenus versés sur l'année et le prix de la part en début d'année","Le taux d'intérêt du crédit utilisé pour l'acheter","Le taux de vacance locative du parc immobilier"], bonneReponse:1, explication:"Le taux de distribution rapporte les dividendes versés au cours de l'année au prix de la part, un indicateur de rendement à comparer d'une SCPI à l'autre, sans garantir sa reconduction future."},
   {id:"q-scpi-005", niveau:"avance", categorie:"SCPI", type:"qcm", question:"Pourquoi les parts de SCPI sont-elles généralement considérées comme peu liquides ?", choix:["Parce qu'elles sont cotées en continu comme une action","Parce que leur revente peut prendre du temps, faute d'acheteur immédiat en face","Parce que la loi interdit de les revendre avant 20 ans","Parce qu'elles ne peuvent être détenues que par des professionnels"], bonneReponse:1, explication:"Contrairement à une action cotée, la revente de parts de SCPI dépend de la présence d'un acheteur (marché secondaire) ou du bon vouloir de la société de gestion, ce qui peut prendre du temps."},
 
   // ---- Retraite et PER ----
@@ -534,7 +534,7 @@ const LIBRARY = [
     simple:"Les intérêts composés, c'est gagner des intérêts sur les intérêts déjà accumulés.",
     detail:"Chaque année, les gains produits par un placement s'ajoutent au capital et génèrent eux-mêmes des gains l'année suivante. Plus la durée est longue, plus cet effet cumulatif devient important.",
     avance:"Mathématiquement, la valeur future suit une croissance exponentielle plutôt que linéaire : de petites différences de rendement ou de durée produisent des écarts considérables sur plusieurs décennies.",
-    exemple:"100 € placés à 6% par an valent environ 179 € après 10 ans, mais plus de 320 € après 20 ans — le gain ne double pas, il plus que triple.",
+    exemple:"100 € placés à 6% par an valent environ 179 € après 10 ans, mais plus de 320 € après 20 ans : le gain ne double pas, il plus que triple.",
     avantages:["Effet puissant sur le très long terme"],
     inconvenients:["Nécessite de la patience, peu visible à court terme"],
     erreurs:["Sous-estimer l'intérêt de commencer tôt, même avec de petites sommes"]
@@ -559,7 +559,7 @@ const LIBRARY = [
     lecture:"1 min",
     simple:"La capitalisation, c'est la valeur totale d'une entreprise en bourse.",
     detail:"Elle se calcule en multipliant le cours de l'action par le nombre total d'actions en circulation. Elle permet de classer les entreprises en grandes, moyennes ou petites capitalisations (large cap, mid cap, small cap).",
-    avance:"La capitalisation ne reflète pas la valeur d'entreprise totale (Enterprise Value), qui intègre aussi la dette nette — un indicateur souvent plus pertinent pour comparer des sociétés à structures financières différentes.",
+    avance:"La capitalisation ne reflète pas la valeur d'entreprise totale (Enterprise Value), qui intègre aussi la dette nette, un indicateur souvent plus pertinent pour comparer des sociétés à structures financières différentes.",
     exemple:"Une entreprise avec 100 millions d'actions à 50 € chacune a une capitalisation de 5 milliards d'euros.",
     avantages:[],
     inconvenients:["Ne reflète pas la dette de l'entreprise"],
@@ -598,7 +598,7 @@ const LIBRARY = [
     lecture:"2 min",
     simple:"La volatilité mesure à quel point le prix d'un actif bouge, dans un sens ou dans l'autre.",
     detail:"Statistiquement, elle correspond à l'écart-type des rendements d'un actif sur une période donnée. Une volatilité élevée signifie des variations plus amples, à la hausse comme à la baisse.",
-    avance:"La volatilité implicite (déduite des prix d'options) reflète les anticipations du marché sur l'ampleur des mouvements futurs, tandis que la volatilité historique se base sur les données passées — les deux peuvent diverger fortement.",
+    avance:"La volatilité implicite (déduite des prix d'options) reflète les anticipations du marché sur l'ampleur des mouvements futurs, tandis que la volatilité historique se base sur les données passées ; les deux peuvent diverger fortement.",
     exemple:"Le Bitcoin affiche historiquement une volatilité bien plus élevée que le CAC 40.",
     avantages:[],
     inconvenients:["Une volatilité élevée augmente le risque de perte à court terme"],
@@ -663,7 +663,7 @@ const LIBRARY = [
     lecture:"2 min",
     simple:"L'inflation, c'est la hausse générale des prix, qui réduit le pouvoir d'achat de l'argent non placé.",
     detail:"Si les prix augmentent de 3% par an et qu'une épargne rapporte 1%, son pouvoir d'achat réel diminue, même si le montant affiché sur le compte augmente.",
-    avance:"Les banques centrales ciblent généralement une inflation autour de 2% par an, en ajustant leurs taux directeurs pour la contenir sans provoquer de récession — un exercice d'équilibre délicat.",
+    avance:"Les banques centrales ciblent généralement une inflation autour de 2% par an, en ajustant leurs taux directeurs pour la contenir sans provoquer de récession, un exercice d'équilibre délicat.",
     exemple:"Une inflation de 2,1% signifie qu'un panier de biens à 100 € coûtera environ 102,10 € un an plus tard.",
     avantages:[],
     inconvenients:["Érode le pouvoir d'achat de l'épargne non rémunérée"],
