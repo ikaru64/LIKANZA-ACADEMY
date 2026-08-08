@@ -98,7 +98,7 @@ header.site-header{position:sticky;top:0;z-index:50;background:var(--bg);border-
 .nav-row{max-width:var(--max);margin:0 auto;padding:14px 24px;display:flex;align-items:center;gap:22px;}
 .logo-row{display:flex;align-items:center;gap:10px;flex-shrink:0;}
 .logo-mark{display:flex;align-items:center;justify-content:center;padding:8px 10px;border:1px solid var(--gold);border-radius:9px;background:linear-gradient(160deg, rgba(184,151,78,0.16), rgba(184,151,78,0.02));transition:transform .4s ease, box-shadow .3s ease;}
-.logo-mark svg{display:block;width:46px;height:19px;}
+.logo-mark svg{display:block;width:34px;height:19px;}
 .logo-row:hover .logo-mark{transform:rotate(-6deg) scale(1.08);box-shadow:0 0 18px rgba(184,151,78,0.45);}
 .logo-text{font-family:'Cormorant Garamond',serif;font-size:21px;font-weight:600;letter-spacing:0.01em;}
 .logo-text .zr{background:linear-gradient(135deg, var(--gold-bright), var(--gold));-webkit-background-clip:text;background-clip:text;color:transparent;}
@@ -390,7 +390,7 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
   .sidebar-group-label{font-size:9.5px;text-transform:uppercase;letter-spacing:.11em;color:var(--text-dim);opacity:.65;padding:11px 9px 3px;}
   .app-sidebar .sidebar-brand{display:flex;align-items:center;gap:8px;padding:4px 9px 18px;}
   .app-sidebar .sidebar-brand .logo-mark{padding:5px 7px;}
-  .app-sidebar .sidebar-brand .logo-mark svg{width:34px;height:14px;}
+  .app-sidebar .sidebar-brand .logo-mark svg{width:25px;height:14px;}
   .app-sidebar .sidebar-brand .logo-text{font-size:15.5px;}
   .app-sidebar a{
     display:flex; align-items:center; gap:9px; padding:7px 9px; border-radius:2px;
