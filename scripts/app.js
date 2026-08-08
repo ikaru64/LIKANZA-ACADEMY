@@ -484,6 +484,20 @@ const POSITIONING_CATEGORIES = [
   {key:'arnaques', label:'Prévention des arnaques', ids:['q-arnaques-001']}
 ];
 
+// ---------- Cours (lecture + quiz de validation) ----------
+// Chaque cours regroupe des notions déjà présentes dans LIBRARY (aucun contenu
+// dupliqué) et un quiz de validation puisé dans QUIZ_BANK_FULL par thème.
+// Les points ne sont attribués qu'une fois le quiz de validation réussi.
+const COURS_CATALOG = [
+  {id:'bourse-actions', titre:'Comprendre la Bourse et les actions', niveau:'Débutant', libraryTermes:['Action','ETF','Capitalisation boursière','Obligation','PER (Price Earning Ratio)'], quizCategories:['Bourse','Actions','ETF','Obligations']},
+  {id:'epargne-interets', titre:"Épargne et intérêts composés", niveau:'Débutant', libraryTermes:['Intérêts composés','Assurance-vie'], quizCategories:['Épargne','Intérêts composés','Intérêts simples','Livret A','Assurance-vie']},
+  {id:'fiscalite-pea', titre:'Fiscalité et enveloppes fiscales', niveau:'Intermédiaire', libraryTermes:['PEA'], quizCategories:['PEA','Fiscalité de base','Retraite et PER']},
+  {id:'risque-diversification', titre:'Risque, volatilité et diversification', niveau:'Intermédiaire', libraryTermes:['Diversification','Volatilité'], quizCategories:['Diversification','Risque et volatilité',"Psychologie de l'investisseur"]},
+  {id:'crypto-blockchain', titre:'Crypto et blockchain', niveau:'Avancé', libraryTermes:['Blockchain'], quizCategories:['Cryptoactifs']},
+  {id:'immobilier-locatif', titre:'Immobilier locatif', niveau:'Avancé', libraryTermes:['Rendement locatif'], quizCategories:['Immobilier','SCPI']},
+  {id:'budget-securite', titre:'Budget et sécurité financière', niveau:'Débutant', libraryTermes:["Fonds d'urgence",'Inflation'], quizCategories:['Budget','Inflation','Arnaques financières','Crédit',"Constitution d'un patrimoine"]}
+];
+
 // ---------- Actions de démonstration (bourse / comparateur) ----------
 // Toutes les données ci-dessous sont FICTIVES, à but pédagogique uniquement.
 const STOCKS_DEMO = [

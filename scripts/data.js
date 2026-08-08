@@ -491,7 +491,8 @@ const BADGES = [
   {id:'fp_1000', name:'1000 Finance Points', desc:"Accumuler 1000 Finance Points.", check:(g)=> g.financePoints >= 1000},
   {id:'first_dca', name:'Premier DCA', desc:"Utiliser le comparateur DCA vs investissement unique.", check:(g,ctx)=> !!(ctx && ctx.usedDCA)},
   {id:'first_sim', name:'Premier laboratoire', desc:"Lancer une simulation financière.", check:(g,ctx)=> !!(ctx && ctx.usedSimulator)},
-  {id:'positioning_test', name:'Bilan effectué', desc:"Terminer le test de positionnement.", check:(g,ctx)=> !!(ctx && ctx.positioningTestDone)}
+  {id:'positioning_test', name:'Bilan effectué', desc:"Terminer le test de positionnement.", check:(g,ctx)=> !!(ctx && ctx.positioningTestDone)},
+  {id:'first_cours', name:'Premier cours', desc:"Réussir le quiz de validation d'un cours.", check:(g,ctx)=> !!(ctx && ctx.coursCompleted)}
 ];
 
 // ---------- Ligues (classement de démonstration, pas de vrais autres joueurs) ----------
@@ -1025,6 +1026,125 @@ function renderVraiFaux(elId){
       <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${pct}% de bonnes réponses.</p>
       <button class="btn btn-sm btn-gold" id="${elId}-restart">Recommencer</button>`;
     document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderVraiFaux(elId));
+  }
+
+  renderQuestion();
+}
+
+// ---------- Cours : lecture puis quiz de validation ----------
+// Contenu de lecture puisé dans LIBRARY, quiz puisé dans QUIZ_BANK_FULL — voir
+// COURS_CATALOG (app.js). Les points ne sont accordés qu'à la réussite du quiz,
+// une seule fois par cours (pas de gain répété en retentant un cours déjà validé).
+const COURS_PASS_THRESHOLD = 0.6;
+function getCoursProgress(){ return safeGetJSON('fzr-cours-progress', {}); }
+
+function renderCoursList(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const progress = getCoursProgress();
+  el.innerHTML = COURS_CATALOG.map(cours=>{
+    const done = !!progress[cours.id];
+    const readingHtml = cours.libraryTermes.map(terme=>{
+      const item = LIBRARY.find(l=>l.terme===terme);
+      if(!item) return '';
+      return `<div class="mission-chapter"><h5>${item.terme}</h5><p>${item.simple}</p><p>${item.detail}</p></div>`;
+    }).join('');
+    return `
+    <div class="course-item">
+      <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
+        <h4>${done ? ICONS.check + ' ' : ''}${cours.titre}</h4>
+        <span class="idx">${cours.niveau}</span>
+      </div>
+      <div class="course-body">
+        <div class="course-body-inner">
+          ${readingHtml}
+          <div class="mission-question">
+            <p class="mission-q-prompt">${done ? "Cours validé — retente le quiz quand tu veux, en révision." : "Une fois la lecture terminée, valide le quiz pour gagner des points."}</p>
+            <div id="cours-quiz-${cours.id}"></div>
+            <button class="btn btn-sm btn-gold" id="cours-start-${cours.id}">${done ? 'Revoir le quiz' : 'Commencer le quiz'}</button>
+          </div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  COURS_CATALOG.forEach(cours=>{
+    const btn = document.getElementById(`cours-start-${cours.id}`);
+    if(!btn) return;
+    btn.addEventListener('click', ()=>{
+      btn.style.display = 'none';
+      renderCoursQuiz(`cours-quiz-${cours.id}`, cours);
+    });
+  });
+}
+
+function renderCoursQuiz(elId, cours){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  let pool = QUIZ_BANK_FULL.filter(q=>cours.quizCategories.includes(q.categorie));
+  for(let i=pool.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const questions = pool.slice(0, Math.min(5, pool.length));
+  let qIndex = 0, score = 0;
+
+  function renderQuestion(){
+    if(qIndex >= questions.length){ renderResults(); return; }
+    const item = questions[qIndex];
+    const pct = Math.round((qIndex/questions.length)*100);
+    el.innerHTML = `
+      <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span>Question ${qIndex+1} / ${questions.length}</span><span>${item.categorie}</span>
+      </div>
+      <div class="dash-weekbar" style="width:100%;margin-bottom:14px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+      <div style="font-size:15px;margin-bottom:12px;font-weight:500;">${item.question}</div>
+      <div id="${elId}-opts" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+      <div id="${elId}-feedback" style="font-size:13.5px;color:var(--text-dim);min-height:20px;"></div>`;
+    const opts = document.getElementById(`${elId}-opts`);
+    item.choix.forEach((opt,i)=>{
+      const optBtn = document.createElement('button');
+      optBtn.className = 'pill';
+      optBtn.style.textAlign = 'left';
+      optBtn.textContent = opt;
+      optBtn.addEventListener('click', ()=>{
+        Array.from(opts.children).forEach((c,ci)=>{
+          c.disabled = true;
+          if(ci===item.bonneReponse) c.style.borderColor = 'var(--emerald)';
+          else if(ci===i) c.style.borderColor = 'var(--bordeaux)';
+        });
+        if(i===item.bonneReponse) score++;
+        document.getElementById(`${elId}-feedback`).textContent = item.explication;
+        setTimeout(()=>{ qIndex++; renderQuestion(); }, 1400);
+      }, {once:true});
+      opts.appendChild(optBtn);
+    });
+  }
+
+  function renderResults(){
+    const pct = questions.length ? score/questions.length : 0;
+    const passed = pct >= COURS_PASS_THRESHOLD;
+    const progress = getCoursProgress();
+    const alreadyDone = !!progress[cours.id];
+    let rewardMsg = '';
+    if(passed && !alreadyDone){
+      progress[cours.id] = true;
+      safeSetJSON('fzr-cours-progress', progress);
+      awardXP(50, {coursCompleted:true});
+      rewardMsg = ' · +50 XP · +50 Finance Points';
+      const courseItem = el.closest('.course-item');
+      const h4 = courseItem && courseItem.querySelector('.head h4');
+      if(h4 && !h4.dataset.marked){ h4.innerHTML = ICONS.check + ' ' + h4.innerHTML; h4.dataset.marked = '1'; }
+    } else if(passed && alreadyDone){
+      rewardMsg = ' · déjà validé, pas de nouveaux points';
+    }
+    el.innerHTML = `
+      <div class="result-big">${score} / ${questions.length}</div>
+      <p style="color:${passed?'var(--emerald)':'var(--bordeaux)'};font-size:13.5px;margin:8px 0 16px;">
+        ${passed ? `Cours validé (${Math.round(pct*100)}%)${rewardMsg}` : `Pas encore validé (${Math.round(pct*100)}%, ${Math.round(COURS_PASS_THRESHOLD*100)}% requis) — relis le cours et réessaie.`}
+      </p>
+      <button class="btn btn-sm btn-gold" id="${elId}-retry">${passed ? 'Repasser le quiz' : 'Réessayer'}</button>`;
+    document.getElementById(`${elId}-retry`).addEventListener('click', ()=>renderCoursQuiz(elId, cours));
   }
 
   renderQuestion();

@@ -38,8 +38,20 @@ function completeMission(key){
   const doneCount = mods.filter((c,i)=>progress[level+'-'+i]).length;
   const levelJustCompleted = doneCount === mods.length;
   awardXP(30, {moduleCompleted:true, levelJustCompleted});
-  if(document.getElementById('gamiWidget')) renderGamificationWidget('gamiWidget', true);
   refreshLevelUI();
+
+  if(levelJustCompleted){
+    const nextLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(level)+1];
+    if(nextLevel && COURSES[nextLevel]){
+      const label = document.getElementById('progressLabel');
+      if(label) label.textContent = `Niveau ${LEVEL_LABELS[level]} terminé ! ${COURSES[nextLevel].length} nouvelles missions arrivent...`;
+      setTimeout(()=>{
+        level = nextLevel;
+        setLevelStorage(level);
+        refreshLevelUI();
+      }, 1600);
+    }
+  }
 }
 
 function renderModules(){
@@ -152,4 +164,4 @@ function renderFormationsConseil(){
 
 refreshLevelUI();
 renderFormationsConseil();
-renderGamificationWidget('gamiWidget', true);
+renderCoursList('coursList');
