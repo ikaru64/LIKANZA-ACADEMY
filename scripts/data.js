@@ -473,6 +473,22 @@ const LEVEL_TITLES = [
   `${ICONS.landmark} Stratège`, `${ICONS.telescope} Visionnaire`, `${ICONS.shield} Gestionnaire de Risque`,
   `${ICONS.gem} Investisseur Chevronné`, `${ICONS.castle} Architecte du Patrimoine`, `${ICONS.crown} Maître Likanza`
 ];
+// Phrases d'accueil du tableau de bord : une piochée au hasard à chaque
+// ouverture (plus de logique liée à l'heure de la journée), + un slogan fixe.
+const WELCOME_PHRASES = [
+  "Bienvenue dans ton aventure",
+  "Prêt à progresser aujourd'hui ?",
+  "Ravi de te revoir",
+  "Ton argent, tes règles",
+  "La finance, enfin claire",
+  "Chaque jour compte",
+  "De retour pour apprendre",
+  "Construisons ton avenir",
+  "Bienvenue chez toi",
+  "En route vers l'indépendance"
+];
+const BRAND_SLOGAN = "Apprends la finance. À ton rythme.";
+
 // Niveau à partir duquel le niveau de quiz "Avancé" se débloque.
 const ADVANCED_QUIZ_UNLOCK_LEVEL = 4;
 const BADGES = [
@@ -709,8 +725,7 @@ function renderDashboardHeader(elId){
   if(!el) return;
   const g = getGamification();
   const lvl = levelFromXP(g.xp);
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Bonjour' : hour < 18 ? 'Bon après-midi' : 'Bonsoir';
+  const greeting = WELCOME_PHRASES[Math.floor(Math.random() * WELCOME_PHRASES.length)];
   const weekDays = getWeeklyActivityDays();
   const weekPct = Math.min(100, Math.round((weekDays/WEEKLY_GOAL_DAYS)*100));
   el.innerHTML = `
@@ -718,6 +733,7 @@ function renderDashboardHeader(elId){
       <div class="dash-greeting">
         <span class="smallcaps" id="dashGreeting">${greeting}</span>
         <h1 class="display" style="font-size:26px;font-weight:600;margin-top:4px;">${lvl.title}</h1>
+        <p style="font-size:12px;color:var(--text-dim);font-style:italic;margin-top:2px;">${BRAND_SLOGAN}</p>
       </div>
       <div class="dash-stats">
         <div class="dash-stat"><span class="num" id="dashNumXP">0 XP</span><span class="lab">niveau ${lvl.level}</span></div>

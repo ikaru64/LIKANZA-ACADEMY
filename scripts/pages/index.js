@@ -135,7 +135,6 @@ if(langToggleBtn) langToggleBtn.addEventListener('click', ()=>{
 function renderTodayCard(){
   const missionEl = document.getElementById('todayMission');
   const notionEl = document.getElementById('todayNotion');
-  const challengeEl = document.getElementById('todayChallenge');
   if(missionEl){
     const level = getLevel();
     const mods = COURSES[level] || COURSES.debutant;
@@ -155,10 +154,6 @@ function renderTodayCard(){
       <h4>${LANG==='en'?'Notion to review':'Notion à revoir'}</h4>
       <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;">${notion.terme} · ${notion.simple}</p>
       <a href="bibliotheque.html#${notion.terme.replace(/\s+/g,'-')}" class="btn btn-sm">${LANG==='en'?'Read more':'En savoir plus'}</a>`;
-  }
-  if(challengeEl){
-    challengeEl.innerHTML = `<h4>${LANG==='en'?'Quick challenge':'Défi rapide'}</h4><div id="quickChallengeBox"></div>`;
-    safeRun('défi rapide', ()=>renderQuickChallenge('quickChallengeBox'));
   }
 }
 
