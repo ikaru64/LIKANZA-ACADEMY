@@ -1,3 +1,44 @@
+// ---------- Récap du jour (généré automatiquement, voir /api/generate-daily-news) ----------
+async function renderDailyRecap(){
+  const el = document.getElementById('dailyRecapCard');
+  if(!el) return;
+  el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Chargement du récap du jour…</p>`;
+  try {
+    const resp = await fetch('/api/daily-news');
+    if(resp.status === 404){
+      el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Le récap du jour n'est pas encore disponible : il est généré automatiquement chaque matin entre 8h et 10h.</p>`;
+      return;
+    }
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const dateLabel = new Date(data.date).toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+    const sourcesHtml = (data.sources || []).map(s =>
+      `<li style="margin-bottom:5px;"><a href="${s.link}" target="_blank" rel="noopener" style="color:var(--gold-bright);">${s.title}</a> <span style="color:var(--text-dim);">— ${s.source}</span></li>`
+    ).join('');
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:10px;margin-bottom:6px;">
+        <span class="smallcaps" style="text-transform:capitalize;">${dateLabel}</span>
+        <span class="badge status-reel">Généré par IA · sources réelles</span>
+      </div>
+      <h3 style="font-size:22px;margin-bottom:10px;">${data.title}</h3>
+      <p style="color:var(--text-dim);">${data.summary}</p>
+      <div class="course-item" style="background:none;padding:0;margin-top:16px;">
+        <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
+          <h4 style="font-size:14px;">Sources (${(data.sources || []).length})</h4>
+          <span class="idx">Voir →</span>
+        </div>
+        <div class="course-body">
+          <div class="course-body-inner">
+            <ul style="font-size:13px;margin:0 0 0 18px;">${sourcesHtml}</ul>
+          </div>
+        </div>
+      </div>`;
+  } catch(err){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Le récap du jour est momentanément indisponible.</p>`;
+  }
+}
+renderDailyRecap();
+
 const cats = ['Toutes', ...new Set(NEWS_DATA.map(n=>n.categorie))];
 const filtersEl = document.getElementById('newsFilters');
 filtersEl.innerHTML = cats.map((c,i)=>`<button class="pill ${i===0?'active':''}" data-cat="${c}">${c}</button>`).join('');

@@ -1,0 +1,9 @@
+{
+  "name": "likanza-academy-site",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@neondatabase/serverless": "^0.10.4",
+    "fast-xml-parser": "^5.10.1"
+  }
+}
