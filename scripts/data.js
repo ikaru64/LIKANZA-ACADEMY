@@ -731,9 +731,9 @@ function renderDashboardHeader(elId){
   el.innerHTML = `
     <div class="dash-header">
       <div class="dash-greeting">
-        <span class="smallcaps" id="dashGreeting">${greeting}</span>
+        <span class="smallcaps">${BRAND_SLOGAN}</span>
         <h1 class="display" style="font-size:26px;font-weight:600;margin-top:4px;">${lvl.title}</h1>
-        <p style="font-size:12px;color:var(--text-dim);font-style:italic;margin-top:2px;">${BRAND_SLOGAN}</p>
+        <p style="font-size:12px;color:var(--text);font-style:italic;margin-top:2px;" id="dashGreeting">${greeting}</p>
       </div>
       <div class="dash-stats">
         <div class="dash-stat"><span class="num" id="dashNumXP">0 XP</span><span class="lab">niveau ${lvl.level}</span></div>
