@@ -1,0 +1,1 @@
+renderVraiFaux('playVraiFaux');

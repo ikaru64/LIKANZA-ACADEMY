@@ -974,6 +974,62 @@ function renderQuiz(containerId){
   startQuizSession(containerId, selectQuizQuestions('tous','tous',5), 'tous');
 }
 
+// ---------- Vrai ou faux : mini-jeu rapide (réutilisé par Défis et Play) ----------
+// Puise dans QUIZ_BANK_FULL, uniquement les items type:"vraifaux" — aucun contenu dupliqué.
+function renderVraiFaux(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const questions = QUIZ_BANK_FULL.filter(q=>q.type==='vraifaux');
+  for(let i=questions.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [questions[i], questions[j]] = [questions[j], questions[i]];
+  }
+  let qIndex = 0, score = 0;
+
+  function renderQuestion(){
+    if(qIndex >= questions.length){ renderResults(); return; }
+    const item = questions[qIndex];
+    const pct = Math.round((qIndex/questions.length)*100);
+    el.innerHTML = `
+      <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span>Affirmation ${qIndex+1} / ${questions.length}</span><span>${item.categorie}</span>
+      </div>
+      <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+      <div class="vf-statement">${item.question}</div>
+      <div class="vf-buttons">
+        <button class="vf-btn vf-true" data-choice="0">Vrai</button>
+        <button class="vf-btn vf-false" data-choice="1">Faux</button>
+      </div>
+      <div class="vf-feedback" id="${elId}-feedback"></div>`;
+    Array.from(el.querySelectorAll('.vf-btn')).forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const choice = +btn.dataset.choice;
+        el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
+        const correct = choice === item.bonneReponse;
+        if(correct){ btn.classList.add('vf-correct'); score++; tryAwardQuizPoints(item.id, 10); }
+        else {
+          btn.classList.add('vf-wrong');
+          const rightBtn = el.querySelector(`[data-choice="${item.bonneReponse}"]`);
+          if(rightBtn) rightBtn.classList.add('vf-correct');
+        }
+        document.getElementById(`${elId}-feedback`).textContent = item.explication;
+        setTimeout(()=>{ qIndex++; renderQuestion(); }, 1700);
+      }, {once:true});
+    });
+  }
+
+  function renderResults(){
+    const pct = questions.length ? Math.round((score/questions.length)*100) : 0;
+    el.innerHTML = `
+      <div class="result-big">${score} / ${questions.length}</div>
+      <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${pct}% de bonnes réponses.</p>
+      <button class="btn btn-sm btn-gold" id="${elId}-restart">Recommencer</button>`;
+    document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderVraiFaux(elId));
+  }
+
+  renderQuestion();
+}
+
 // ---------- Graphique en barres générique ----------
 function renderBarChart(chartId, labelsId, series, years){
   const chart = document.getElementById(chartId);

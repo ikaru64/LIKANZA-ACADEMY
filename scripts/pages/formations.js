@@ -152,5 +152,4 @@ function renderFormationsConseil(){
 
 refreshLevelUI();
 renderFormationsConseil();
-renderQuizSetup('quizContainer');
 renderGamificationWidget('gamiWidget', true);

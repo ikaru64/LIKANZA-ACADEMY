@@ -316,7 +316,11 @@ setActiveTab(activeTab);
 safeRun('carte du jour (init)', renderTodayCard);
 safeRun('onglet apprendre (init)', renderLearnTab);
 safeRun('professeur IA mini (init)', renderTeacherMini);
-safeRun('défi (init)', ()=>renderQuizSetup('homeQuizContainer'));
+safeRun('défis (aperçu)', ()=>{
+  const el = document.getElementById('homeDefisTeaser');
+  if(!el) return;
+  el.innerHTML = `<p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions sur 23 thèmes, à ton rythme.</p><a href="defis.html" class="btn btn-sm btn-gold">Ouvrir les Défis →</a>`;
+});
 safeRun('laboratoire simulateur (init)', initHomeSim);
 safeRun('aperçus simulateurs (init)', renderSimPreviews);
 safeRun('onglet actualités (init)', renderNewsTab);

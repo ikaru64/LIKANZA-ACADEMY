@@ -1,14 +1,14 @@
-// Profil de risque + conseils adaptés au niveau
-const outilsProfile = getProfile();
-const outilsHasProfile = !!safeGetJSON('fzr-profile', null);
-if(document.getElementById('outilsRiskGauge')) renderRiskGauge('outilsRiskGauge', outilsProfile.risque);
-const outilsRiskNote = document.getElementById('outilsRiskNote');
-if(outilsRiskNote){
-  outilsRiskNote.innerHTML = outilsHasProfile
-    ? "Basé sur ton profil enregistré dans Mon compte."
-    : "Profil par défaut (équilibré) : <a href=\"compte.html\" style=\"color:var(--gold-bright);\">renseigne le tien dans Mon compte</a> pour une jauge personnalisée.";
-}
 if(document.getElementById('coachWidget')) renderCoach('coachWidget');
+
+// Cartes de la grille "Tous les outils" qui ouvrent un simulateur plus bas sur la page
+document.querySelectorAll('[data-open-tool]').forEach(card=>{
+  card.addEventListener('click', ()=>{
+    const head = document.getElementById(card.dataset.openTool);
+    if(!head) return;
+    head.nextElementSibling.classList.add('open');
+    head.scrollIntoView({behavior:'smooth', block:'center'});
+  });
+});
 
 // Intérêts composés
 const capitalEl = document.getElementById('capital'), monthlyEl = document.getElementById('monthly'), rateEl = document.getElementById('rate'), yearsEl = document.getElementById('years');
