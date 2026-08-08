@@ -145,15 +145,15 @@ function renderTodayCard(){
     const mission = mods[idx];
     missionEl.innerHTML = `
       <h4>${LANG==='en'?(isReview?'Review':'Recommended mission'):(isReview?'Révision':'Mission recommandée')}</h4>
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;">${mission.title}</p>
-      <a href="formations.html" class="btn btn-sm btn-gold">${LANG==='en'?'Continue':'Continuer'}</a>`;
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">${mission.title}</p>
+      <a href="formations.html" class="today-link">${LANG==='en'?'Continue':'Continuer'} →</a>`;
   }
   if(notionEl){
     const notion = getNotionOfDay();
     notionEl.innerHTML = `
       <h4>${LANG==='en'?'Notion to review':'Notion à revoir'}</h4>
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;">${notion.terme} · ${notion.simple}</p>
-      <a href="bibliotheque.html#${notion.terme.replace(/\s+/g,'-')}" class="btn btn-sm">${LANG==='en'?'Read more':'En savoir plus'}</a>`;
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">${notion.terme} · ${notion.simple}</p>
+      <a href="bibliotheque.html#${notion.terme.replace(/\s+/g,'-')}" class="today-link">${LANG==='en'?'Read more':'En savoir plus'} →</a>`;
   }
 }
 
