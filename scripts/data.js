@@ -508,7 +508,8 @@ const BADGES = [
   {id:'first_dca', name:'Premier DCA', desc:"Utiliser le comparateur DCA vs investissement unique.", check:(g,ctx)=> !!(ctx && ctx.usedDCA)},
   {id:'first_sim', name:'Premier laboratoire', desc:"Lancer une simulation financière.", check:(g,ctx)=> !!(ctx && ctx.usedSimulator)},
   {id:'positioning_test', name:'Bilan effectué', desc:"Terminer le test de positionnement.", check:(g,ctx)=> !!(ctx && ctx.positioningTestDone)},
-  {id:'first_cours', name:'Premier cours', desc:"Réussir le quiz de validation d'un cours.", check:(g,ctx)=> !!(ctx && ctx.coursCompleted)}
+  {id:'first_cours', name:'Premier cours', desc:"Réussir le quiz de validation d'un cours.", check:(g,ctx)=> !!(ctx && ctx.coursCompleted)},
+  {id:'mistake_slayer', name:'Retour gagnant', desc:"Corriger 5 anciennes erreurs.", check:(g,ctx)=> !!(ctx && ctx.totalResolved >= 5)}
 ];
 
 // ---------- Ligues (classement de démonstration, pas de vrais autres joueurs) ----------
@@ -810,6 +811,65 @@ function getMasteredAndToReview(){
   return {mastered, toReview};
 }
 
+// Score de maîtrise continu par catégorie, dérivé de fzr-quiz-stats (aucune
+// donnée inventée — uniquement de vraies réponses aux quiz). Remplace le
+// double seuil silencieux de getMasteredAndToReview (angle mort 50-75%).
+function getSkillMastery(){
+  const stats = getQuizStats();
+  return Object.entries(stats.categoryStats)
+    .filter(([, s]) => s.total >= 2)
+    .map(([categorie, s]) => {
+      const pct = Math.round((s.correct / s.total) * 100);
+      let niveau = 'en cours';
+      if(pct >= 75) niveau = 'maîtrisé';
+      else if(pct < 50) niveau = 'faible';
+      return {categorie, pct, correct: s.correct, total: s.total, niveau};
+    })
+    .sort((a, b) => a.pct - b.pct);
+}
+
+// ---------- Banque d'erreurs (persistée, dédoublonnée par question) ----------
+// Contrairement au tableau "wrong" local à startQuizSession (perdu au
+// rechargement), ceci garde une trace durable des erreurs à travers les 3
+// moteurs de quiz du site, pour alimenter une vraie recommandation de révision.
+function getMistakes(){ return safeGetJSON('fzr-mistakes', []); }
+function saveMistakes(list){ safeSetJSON('fzr-mistakes', list); }
+
+function recordMistake(item){
+  const list = getMistakes();
+  const existing = list.find(m => m.questionId === item.id);
+  const now = new Date().toISOString();
+  if(existing){
+    existing.misses++;
+    existing.lastMissedAt = now;
+    existing.resolved = false;
+  } else {
+    list.push({
+      questionId: item.id,
+      categorie: item.categorie,
+      niveau: item.niveau,
+      question: item.question,
+      correctAnswer: item.explication,
+      firstMissedAt: now,
+      lastMissedAt: now,
+      misses: 1,
+      resolved: false
+    });
+  }
+  saveMistakes(list);
+}
+
+function resolveMistake(questionId){
+  const list = getMistakes();
+  const entry = list.find(m => m.questionId === questionId);
+  if(!entry || entry.resolved) return;
+  entry.resolved = true;
+  entry.resolvedAt = new Date().toISOString();
+  saveMistakes(list);
+  const totalResolved = list.filter(m => m.resolved).length;
+  checkBadges(getGamification(), {mistakeResolved: true, totalResolved});
+}
+
 // ---------- Sélection des questions ----------
 function selectQuizQuestions(level, categorie, length){
   let pool = QUIZ_BANK_FULL.slice();
@@ -943,9 +1003,11 @@ function startQuizSession(elId, questions, level){
           const amount = comboBonusAmount(combo);
           const got = tryAwardQuizPoints(item.id, amount, {combo: maxCombo});
           if(got) feedback += ` (+${amount} XP · +${amount} Finance Points${combo>=3?` · combo x${combo}`:''})`;
+          resolveMistake(item.id);
         } else {
           combo = 0;
           wrong.push(item);
+          recordMistake(item);
         }
         document.getElementById(`${elId}-feedback`).textContent = feedback;
         setTimeout(()=>{ qIndex++; renderQuestion(); }, 1400);
@@ -1023,11 +1085,13 @@ function renderVraiFaux(elId){
         const choice = +btn.dataset.choice;
         el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
         const correct = choice === item.bonneReponse;
-        if(correct){ btn.classList.add('vf-correct'); score++; tryAwardQuizPoints(item.id, 10); }
+        recordAnswer(item.categorie, correct);
+        if(correct){ btn.classList.add('vf-correct'); score++; tryAwardQuizPoints(item.id, 10); resolveMistake(item.id); }
         else {
           btn.classList.add('vf-wrong');
           const rightBtn = el.querySelector(`[data-choice="${item.bonneReponse}"]`);
           if(rightBtn) rightBtn.classList.add('vf-correct');
+          recordMistake(item);
         }
         document.getElementById(`${elId}-feedback`).textContent = item.explication;
         setTimeout(()=>{ qIndex++; renderQuestion(); }, 1700);
@@ -1129,7 +1193,10 @@ function renderCoursQuiz(elId, cours){
           if(ci===item.bonneReponse) c.style.borderColor = 'var(--emerald)';
           else if(ci===i) c.style.borderColor = 'var(--bordeaux)';
         });
-        if(i===item.bonneReponse) score++;
+        const correct = i===item.bonneReponse;
+        recordAnswer(item.categorie, correct);
+        if(correct){ score++; resolveMistake(item.id); }
+        else recordMistake(item);
         document.getElementById(`${elId}-feedback`).textContent = item.explication;
         setTimeout(()=>{ qIndex++; renderQuestion(); }, 1400);
       }, {once:true});
@@ -1344,6 +1411,16 @@ function renderCoach(elId){
   if(favTypes.includes('Action')) messages.push("Tu sembles t'intéresser à la bourse : le comparateur d'actions peut t'aider à aller plus loin.");
   if(favs.length === 0) messages.push("Astuce : clique sur l'étoile Favoris sur une actualité ou une action pour la retrouver dans ton compte.");
   if(!safeGetJSON('fzr-profile', null)) messages.push("Renseigne ton profil (âge, épargne, horizon) dans Mon compte pour des simulations personnalisées.");
+
+  const unresolvedMistakes = getMistakes().filter(m=>!m.resolved);
+  if(unresolvedMistakes.length > 0){
+    const counts = {};
+    unresolvedMistakes.forEach(m=>{ counts[m.categorie] = (counts[m.categorie]||0) + 1; });
+    const topCategorie = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+    messages.push(`Tu as ${unresolvedMistakes.length} notion${unresolvedMistakes.length>1?'s':''} à revoir, surtout en ${topCategorie} : consulte le bloc "Notions à revoir" ci-dessous.`);
+  }
+  const weakSkill = getSkillMastery().find(s=>s.niveau==='faible');
+  if(weakSkill) messages.push(`Tes quiz montrent une marge de progression en ${weakSkill.categorie} (${weakSkill.pct}% de bonnes réponses) : un thème à retravailler dans les Défis.`);
 
   const positioning = getPositioningResult();
   if(positioning && positioning.categoryScores){

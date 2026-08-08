@@ -22,3 +22,18 @@ document.querySelectorAll('[data-defismode]').forEach(btn=>{
 });
 
 renderQuizSetup('defisQuiz');
+
+// Arrivée depuis un lien "Réviser cette notion" (ex. Mon parcours, banque
+// d'erreurs) : ?cat=<catégorie> présélectionne le thème et démarre direct.
+const requestedCat = new URLSearchParams(location.search).get('cat');
+if(requestedCat){
+  const validCats = new Set(QUIZ_BANK_FULL.map(q=>q.categorie));
+  if(validCats.has(requestedCat)){
+    const catSelect = document.getElementById('defisQuiz-cat');
+    const startBtn = document.getElementById('defisQuiz-start');
+    if(catSelect && startBtn){
+      catSelect.value = requestedCat;
+      startBtn.click();
+    }
+  }
+}
