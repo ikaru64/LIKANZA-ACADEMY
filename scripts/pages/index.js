@@ -258,31 +258,41 @@ function renderSimPreviews(){
 }
 
 // ================= Onglet Actualités =================
-function renderNewsTab(){
-  safeRun('actualité principale (accueil)', ()=>{
-    const main = NEWS_DATA[0];
-    const el = document.getElementById('mainNewsCardHome');
-    if(!main || !el) return;
-    el.innerHTML = `
-      <div style="flex:1;">
-        <span class="smallcaps">${main.categorie}</span>
-        <h3 style="font-size:22px;">${main.titre}</h3>
-        <p>${main.resume}</p>
-        <div class="card-footer"><span>${main.lecture} de lecture · ${main.date} · ${main.source}</span></div>
-        <a href="actualites.html#${main.id}" class="btn btn-sm" style="margin-top:12px;">${LANG==='en'?'Read full summary':'Lire le résumé complet'}</a>
-      </div>`;
-  });
-  safeRun('actualités récentes (accueil)', ()=>{
-    const el = document.getElementById('recentNewsPreview');
-    if(!el) return;
-    el.innerHTML = NEWS_DATA.slice(1,3).map(a=>`
-      <div class="card">
-        <span class="smallcaps">${a.categorie}</span>
-        <h3 style="font-size:16px;">${a.titre}</h3>
-        <p style="font-size:12.5px;">${a.resume}</p>
-        <a href="actualites.html#${a.id}" class="btn btn-sm">${LANG==='en'?'Read':'Lire'}</a>
-      </div>`).join('');
-  });
+// Depuis la refonte des actualités, le contenu vient de /api/weekly-news
+// (articles générés automatiquement, un par catégorie, renouvelés chaque
+// semaine) plutôt que de l'ancien NEWS_DATA statique.
+async function renderNewsTab(){
+  const mainEl = document.getElementById('mainNewsCardHome');
+  const recentEl = document.getElementById('recentNewsPreview');
+  try {
+    const resp = await fetch('/api/weekly-news');
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const articles = data.articles || [];
+    const main = articles[0];
+    if(main && mainEl){
+      mainEl.innerHTML = `
+        <div style="flex:1;">
+          <span class="smallcaps">${main.categorie}</span>
+          <h3 style="font-size:22px;">${main.titre}</h3>
+          <p>${main.resume}</p>
+          <div class="card-footer"><span>${main.lecture} de lecture · Source : ${main.source}</span></div>
+          <a href="actualites.html#${main.slug}" class="btn btn-sm" style="margin-top:12px;">${LANG==='en'?'Read full summary':'Lire le résumé complet'}</a>
+        </div>`;
+    }
+    if(recentEl){
+      recentEl.innerHTML = articles.slice(1,3).map(a=>`
+        <div class="card">
+          <span class="smallcaps">${a.categorie}</span>
+          <h3 style="font-size:16px;">${a.titre}</h3>
+          <p style="font-size:12.5px;">${a.resume}</p>
+          <a href="actualites.html#${a.slug}" class="btn btn-sm">${LANG==='en'?'Read':'Lire'}</a>
+        </div>`).join('');
+    }
+  } catch(err){
+    if(mainEl) mainEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Actualités momentanément indisponibles.</p>`;
+    console.error('Likanza Academy — échec dans "actualités (accueil)" :', err);
+  }
   safeRun('mini marché (accueil)', ()=>{
     const el = document.getElementById('marketMiniSnippet');
     if(!el) return;
