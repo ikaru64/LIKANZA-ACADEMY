@@ -1307,7 +1307,7 @@ function renderProfileWidget(elId){
   document.getElementById('profRisque').addEventListener('change', (e)=>renderRiskGauge('riskGauge', e.target.value));
 }
 
-// ---------- Panneau coach (accueil / compte) ----------
+// ---------- Panneau coach (Mon parcours) ----------
 function renderCoach(elId){
   const el = document.getElementById(elId);
   if(!el) return;

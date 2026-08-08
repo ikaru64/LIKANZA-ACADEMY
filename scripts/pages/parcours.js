@@ -99,3 +99,4 @@ function initParcours(){
 }
 
 initParcours();
+if(document.getElementById('coachWidget')) renderCoach('coachWidget');

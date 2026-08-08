@@ -319,7 +319,6 @@ if(newsletterFormEl) newsletterFormEl.addEventListener('submit', e=>{
 
 // ================= Initialisation =================
 safeRun('en-tête tableau de bord (init)', ()=>renderDashboardHeader('dashboardHeader'));
-safeRun('coach personnalisé (init)', ()=>renderCoach('coachWidget'));
 safeRun('textes traduits (init)', applyStaticI18n);
 safeRun('accès rapides (init)', renderQuickAccess);
 setActiveTab(activeTab);

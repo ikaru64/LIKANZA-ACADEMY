@@ -1,5 +1,3 @@
-if(document.getElementById('coachWidget')) renderCoach('coachWidget');
-
 // Cartes de la grille "Tous les outils" qui ouvrent un simulateur plus bas sur la page
 document.querySelectorAll('[data-open-tool]').forEach(card=>{
   card.addEventListener('click', ()=>{
