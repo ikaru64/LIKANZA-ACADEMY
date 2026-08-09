@@ -10,10 +10,13 @@
    données différées — statut DELAYED.
 
    Requête  : GET /api/custom-quotes?symbols=AAPL,MSFT,...  (20 max)
+                  &range=1y   (optionnel : 5d par défaut, voir ALLOWED_RANGES)
    Réponse  : { updatedAt, quotes, errors }
    ============================================================ */
 
 const { fetchYahooQuote } = require('../lib/yahoo');
+
+const ALLOWED_RANGES = new Set(['5d', '1mo', '6mo', '1y', '5y']);
 
 module.exports = async (req, res) => {
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -24,9 +27,11 @@ module.exports = async (req, res) => {
     res.status(400).json({updatedAt: new Date().toISOString(), quotes: [], errors: ['Aucun symbole fourni']});
     return;
   }
+  const requestedRange = req.query && req.query.range;
+  const range = ALLOWED_RANGES.has(requestedRange) ? requestedRange : '5d';
 
   const entries = symbols.map(s => ({symbol: s, yahoo: s, name: s, assetType: 'stock'}));
-  const settled = await Promise.allSettled(entries.map(entry => fetchYahooQuote(entry)));
+  const settled = await Promise.allSettled(entries.map(entry => fetchYahooQuote(entry, {range})));
   const quotes = [];
   const errors = [];
   settled.forEach(r => {

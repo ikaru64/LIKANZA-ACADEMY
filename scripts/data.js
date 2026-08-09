@@ -1373,6 +1373,35 @@ function computeTrendIndicator(history){
   return {changePct, posLabel, days: closes.length};
 }
 
+// Analyse technique factuelle (fiche action) : moyennes mobiles et position
+// du cours par rapport à elles, plus haut/bas de la période — uniquement
+// des faits calculés sur de vraies données de prix, jamais un signal
+// d'achat/vente/renforcement. Nécessite un historique suffisant (au moins
+// 5 séances) ; les moyennes 20/50 jours sont omises si l'historique fourni
+// est trop court plutôt que calculées sur un échantillon non représentatif.
+function computeTechnicalIndicators(history){
+  if(!Array.isArray(history) || history.length < 5) return null;
+  const closes = history.map(h => h.close).filter(c => typeof c === 'number');
+  if(closes.length < 5) return null;
+  const last = closes[closes.length - 1];
+
+  function movingAverageVsLast(period){
+    if(closes.length < period) return null;
+    const window = closes.slice(closes.length - period);
+    const ma = window.reduce((a, b) => a + b, 0) / window.length;
+    return {value: ma, diffPct: ((last / ma) - 1) * 100, above: last >= ma};
+  }
+
+  return {
+    days: closes.length,
+    last,
+    periodHigh: Math.max(...closes),
+    periodLow: Math.min(...closes),
+    ma20: movingAverageVsLast(20),
+    ma50: movingAverageVsLast(50)
+  };
+}
+
 // ---------- Profil personnel (pré-remplit les simulateurs du site) ----------
 function getProfile(){
   return safeGetJSON('fzr-profile', {age:25, epargne:150, horizon:15, risque:'equilibre', objectif:''});

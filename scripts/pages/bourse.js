@@ -60,6 +60,7 @@ function renderStockGrid(){
         ${renderTrendHtml(computeTrendIndicator(s.history))}
         ${s._live ? `<span class="badge status-reel" style="margin-top:6px;">Cotation différée (Yahoo Finance)</span>` : `<span class="demo-flag" style="margin-top:6px;">Donnée de démonstration</span>`}
         <div class="card-footer">
+          <a href="action.html#${encodeURIComponent(s.ticker)}" class="btn btn-sm btn-gold">Voir la fiche →</a>
           <button class="fav-btn" data-fav-id="stock-${s.ticker}" data-fav-title="${s.nom}" data-fav-url="bourse.html#${s.ticker}" data-fav-type="Action">${ICONS.star} Favoris</button>
           <button class="btn btn-sm" data-remove-stock="${s.ticker}">Retirer</button>
         </div>
@@ -72,6 +73,7 @@ function renderStockGrid(){
         <div class="result-row" id="quote-${entry.symbol}" style="margin:0 0 10px;"><span class="mono" style="color:var(--text-dim);">Chargement…</span></div>
         <div id="trend-${entry.symbol}"></div>
         <div class="card-footer">
+          <a href="action.html#${encodeURIComponent(entry.symbol)}" class="btn btn-sm btn-gold">Voir la fiche →</a>
           <button class="btn btn-sm" data-remove-stock="${entry.symbol}">Retirer</button>
         </div>
       </div>`;
