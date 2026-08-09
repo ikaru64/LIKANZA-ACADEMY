@@ -509,7 +509,8 @@ const BADGES = [
   {id:'first_sim', name:'Premier laboratoire', desc:"Lancer une simulation financière.", check:(g,ctx)=> !!(ctx && ctx.usedSimulator)},
   {id:'positioning_test', name:'Bilan effectué', desc:"Terminer le test de positionnement.", check:(g,ctx)=> !!(ctx && ctx.positioningTestDone)},
   {id:'first_cours', name:'Premier cours', desc:"Réussir le quiz de validation d'un cours.", check:(g,ctx)=> !!(ctx && ctx.coursCompleted)},
-  {id:'mistake_slayer', name:'Retour gagnant', desc:"Corriger 5 anciennes erreurs.", check:(g,ctx)=> !!(ctx && ctx.totalResolved >= 5)}
+  {id:'mistake_slayer', name:'Retour gagnant', desc:"Corriger 5 anciennes erreurs.", check:(g,ctx)=> !!(ctx && ctx.totalResolved >= 5)},
+  {id:'memory_perfect', name:'Mémoire d\'éléphant', desc:"Terminer une partie de Memory Finance sans erreur.", check:(g,ctx)=> !!(ctx && ctx.memoryPerfect)}
 ];
 
 // ---------- Ligues (classement de démonstration, pas de vrais autres joueurs) ----------
@@ -1109,6 +1110,92 @@ function renderVraiFaux(elId){
   }
 
   renderQuestion();
+}
+
+// ---------- Memory Finance : jeu de paires terme / définition ----------
+// Puise dans LIBRARY (glossaire déjà existant), aucun contenu dupliqué.
+const MEMORY_PAIR_COUNT = 8;
+function buildMemoryDeck(pairCount){
+  const pool = LIBRARY.slice();
+  for(let i=pool.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  const chosen = pool.slice(0, Math.min(pairCount, pool.length));
+  const cards = [];
+  chosen.forEach((item, idx)=>{
+    cards.push({uid:`${idx}-t`, pairIndex:idx, kind:'terme', text:item.terme});
+    cards.push({uid:`${idx}-d`, pairIndex:idx, kind:'definition', text:item.simple});
+  });
+  for(let i=cards.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [cards[i], cards[j]] = [cards[j], cards[i]];
+  }
+  return {cards, terms: chosen.map(item=>item.terme)};
+}
+
+function renderMemoryFinance(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const {cards, terms} = buildMemoryDeck(MEMORY_PAIR_COUNT);
+  const totalPairs = terms.length;
+  let flipped = [], matchedPairs = 0, moves = 0, errors = 0, locked = false;
+
+  el.innerHTML = `
+    <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:12px;">
+      <span>Paires trouvées : <span id="${elId}-found">0</span> / ${totalPairs}</span><span>Coups : <span id="${elId}-moves">0</span></span>
+    </div>
+    <div class="mem-grid">${cards.map(card=>`
+      <button class="mem-card" data-uid="${card.uid}" data-pair="${card.pairIndex}" type="button" aria-label="Carte retournée">
+        <span class="mem-card-inner">
+          <span class="mem-card-face mem-card-back">${ICONS['gamepad-2']}</span>
+          <span class="mem-card-face mem-card-front mem-card-${card.kind}">${card.text}</span>
+        </span>
+      </button>`).join('')}</div>`;
+
+  const foundEl = document.getElementById(`${elId}-found`);
+  const movesEl = document.getElementById(`${elId}-moves`);
+
+  function renderResults(){
+    const perfect = errors === 0;
+    if(perfect) tryAwardQuizPoints(`memory-perfect-${new Date().toDateString()}`, 15);
+    checkBadges(getGamification(), {memoryPerfect: perfect});
+    el.innerHTML = `
+      <div class="result-big">${moves} coup${moves>1?'s':''}</div>
+      <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${totalPairs} paires trouvées, ${errors} erreur${errors>1?'s':''}.${perfect ? ' Sans-faute !' : ''}</p>
+      <button class="btn btn-sm btn-gold" id="${elId}-restart">Nouvelle partie</button>`;
+    document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderMemoryFinance(elId));
+  }
+
+  Array.from(el.querySelectorAll('.mem-card')).forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      if(locked || btn.classList.contains('mem-flipped') || btn.classList.contains('mem-matched')) return;
+      btn.classList.add('mem-flipped');
+      flipped.push(btn);
+      if(flipped.length < 2) return;
+      moves++; movesEl.textContent = moves;
+      locked = true;
+      const [a, b] = flipped;
+      const isMatch = a.dataset.pair === b.dataset.pair;
+      if(isMatch){
+        setTimeout(()=>{
+          a.classList.add('mem-matched'); b.classList.add('mem-matched');
+          a.classList.remove('mem-flipped'); b.classList.remove('mem-flipped');
+          matchedPairs++;
+          foundEl.textContent = matchedPairs;
+          tryAwardQuizPoints(`memory-${terms[+a.dataset.pair]}`, 8);
+          flipped = []; locked = false;
+          if(matchedPairs === totalPairs) renderResults();
+        }, 500);
+      } else {
+        errors++;
+        setTimeout(()=>{
+          a.classList.remove('mem-flipped'); b.classList.remove('mem-flipped');
+          flipped = []; locked = false;
+        }, 900);
+      }
+    });
+  });
 }
 
 // ---------- Cours : lecture puis quiz de validation ----------

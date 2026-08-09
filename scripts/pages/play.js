@@ -1,1 +1,2 @@
 renderVraiFaux('playVraiFaux');
+renderMemoryFinance('playMemory');
