@@ -93,6 +93,17 @@
   <div class="home-tab-panel" id="tab-fiches">
     <div class="section-head"><h2>Actions</h2><span class="meta-line">8 valeurs éligibles PEA</span></div>
     <div class="card-grid" id="stockGrid"></div>
+
+    <div class="section-head" style="margin-top:32px;"><h2>Tes actions suivies</h2><span class="meta-line">recherche libre, cours en direct</span></div>
+    <div class="card" style="max-width:520px;margin-bottom:16px;">
+      <div class="field" style="margin-bottom:0;">
+        <label>Rechercher une action (nom ou ticker)</label>
+        <input type="text" id="stockSearchInput" placeholder="Ex : Apple, Microsoft, TSLA...">
+      </div>
+      <div id="stockSearchResults" style="margin-top:8px;"></div>
+    </div>
+    <p class="disclaimer-box" id="customStocksDisclaimer" style="max-width:640px;display:none;">Ces actions affichent un cours en direct réel (Yahoo Finance), mais pas de ratios fondamentaux (PER, dividende, marge nette...) : elles ne participent pas au Comparateur, aux Scénarios ni au simulateur de Dividendes, réservés aux 8 actions ci-dessus.</p>
+    <div class="card-grid" id="customStockGrid"></div>
   </div>
 
   <div class="home-tab-panel" id="tab-comparateur">

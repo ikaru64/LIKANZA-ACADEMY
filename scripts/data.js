@@ -1320,6 +1320,23 @@ function parseNumericValue(str){
   return isNaN(n) ? null : n;
 }
 
+// ---------- Actions personnalisées suivies (page Bourse, recherche libre) ----------
+// Séparé de fzr-watchlist volontairement : pas de seuil d'alerte ici, juste
+// un cours en direct réel (voir api/custom-quotes.js) — ne participe pas au
+// Comparateur/Scénarios/Dividendes, qui dépendent de ratios fondamentaux
+// saisis à la main pour les 8 actions de démonstration uniquement.
+const CUSTOM_STOCKS_MAX = 20;
+function getCustomStocks(){ return safeGetJSON('fzr-custom-stocks', []); }
+function saveCustomStocks(list){ safeSetJSON('fzr-custom-stocks', list); }
+function addCustomStock(stock){
+  const list = getCustomStocks().filter(s => s.symbol !== stock.symbol);
+  list.unshift({symbol: stock.symbol, name: stock.name, addedAt: new Date().toISOString()});
+  saveCustomStocks(list.slice(0, CUSTOM_STOCKS_MAX));
+}
+function removeCustomStock(symbol){
+  saveCustomStocks(getCustomStocks().filter(s => s.symbol !== symbol));
+}
+
 // ---------- Profil personnel (pré-remplit les simulateurs du site) ----------
 function getProfile(){
   return safeGetJSON('fzr-profile', {age:25, epargne:150, horizon:15, risque:'equilibre', objectif:''});

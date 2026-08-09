@@ -332,3 +332,86 @@ if(location.protocol !== 'file:'){
       console.info('Likanza Academy — cotations actions en direct indisponibles, valeurs de démonstration affichées :', err.message);
     });
 }
+
+// ---------- Tes actions suivies : recherche libre + cours en direct (/api/stock-search, /api/custom-quotes) ----------
+function renderCustomStockGrid(){
+  const grid = document.getElementById('customStockGrid');
+  const disclaimer = document.getElementById('customStocksDisclaimer');
+  if(!grid) return;
+  const list = getCustomStocks();
+  disclaimer.style.display = list.length ? 'block' : 'none';
+  if(list.length === 0){ grid.innerHTML = ''; return; }
+
+  grid.innerHTML = list.map(s => `
+    <div class="card" id="custom-${s.symbol}">
+      <span class="smallcaps">Cours en direct</span>
+      <h3>${s.name} <span class="mono" style="font-size:13px;color:var(--text-dim);">${s.symbol}</span></h3>
+      <div class="result-row" id="custom-${s.symbol}-quote" style="margin:0 0 10px;"><span class="mono" style="color:var(--text-dim);">Chargement…</span></div>
+      <div class="card-footer">
+        <button class="btn btn-sm" data-remove-custom="${s.symbol}">Retirer</button>
+      </div>
+    </div>`).join('');
+
+  grid.querySelectorAll('[data-remove-custom]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      removeCustomStock(btn.dataset.removeCustom);
+      renderCustomStockGrid();
+    });
+  });
+
+  if(location.protocol === 'file:') return;
+  const symbols = list.map(s=>s.symbol).join(',');
+  fetch('/api/custom-quotes?symbols=' + encodeURIComponent(symbols))
+    .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(payload=>{
+      (payload.quotes || []).forEach(q=>{
+        const el = document.getElementById(`custom-${q.symbol}-quote`);
+        if(!el || typeof q.price !== 'number') return;
+        const spark = Array.isArray(q.history) && q.history.length >= 2 ? renderSparklineHTML(q.history, {compact:true}) : '';
+        el.innerHTML = `<span class="mono" style="font-size:18px;color:var(--text);">${q.price.toFixed(2)} ${q.currency==='EUR'?'€':q.currency}</span><span class="mono" style="color:${q.changePercent>=0?'var(--emerald)':'var(--bordeaux)'}">${q.changePercent>=0?'+':''}${q.changePercent.toFixed(2)}%</span>${spark}`;
+      });
+    })
+    .catch(err=>{
+      console.info('Likanza Academy — cours en direct indisponibles pour les actions suivies :', err.message);
+      list.forEach(s=>{
+        const el = document.getElementById(`custom-${s.symbol}-quote`);
+        if(el) el.innerHTML = `<span style="color:var(--text-dim);font-size:12.5px;">Cours momentanément indisponible.</span>`;
+      });
+    });
+}
+
+const stockSearchInput = document.getElementById('stockSearchInput');
+const stockSearchResults = document.getElementById('stockSearchResults');
+let stockSearchTimer = null;
+if(stockSearchInput){
+  stockSearchInput.addEventListener('input', ()=>{
+    clearTimeout(stockSearchTimer);
+    const q = stockSearchInput.value.trim();
+    if(q.length < 2){ stockSearchResults.innerHTML = ''; return; }
+    stockSearchTimer = setTimeout(()=>{
+      fetch('/api/stock-search?q=' + encodeURIComponent(q))
+        .then(r=>r.json())
+        .then(payload=>{
+          const results = payload.results || [];
+          if(results.length === 0){
+            stockSearchResults.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Aucun résultat.</p>`;
+            return;
+          }
+          stockSearchResults.innerHTML = results.map(r=>
+            `<button class="pill" style="display:block;width:100%;text-align:left;margin-bottom:6px;" data-add-symbol="${r.symbol}" data-add-name="${r.name.replace(/"/g,'&quot;')}">${r.name} <span class="mono" style="color:var(--text-dim);">${r.symbol} · ${r.exchange}</span></button>`
+          ).join('');
+          stockSearchResults.querySelectorAll('[data-add-symbol]').forEach(btn=>{
+            btn.addEventListener('click', ()=>{
+              addCustomStock({symbol: btn.dataset.addSymbol, name: btn.dataset.addName});
+              stockSearchInput.value = '';
+              stockSearchResults.innerHTML = '';
+              renderCustomStockGrid();
+            });
+          });
+        })
+        .catch(()=>{ stockSearchResults.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Recherche momentanément indisponible.</p>`; });
+    }, 300);
+  });
+}
+
+renderCustomStockGrid();
