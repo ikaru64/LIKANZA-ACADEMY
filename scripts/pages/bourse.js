@@ -34,23 +34,57 @@ window.addEventListener('hashchange', ()=>{
   if(target && target.classList.contains('home-tab-panel')) setBourseTab(tab);
 });
 
-// ---------- Fiches actions ----------
+// ---------- Fiches actions (liste modifiable : STOCKS_DEMO + actions ajoutées par recherche) ----------
+function renderTrendHtml(trend){
+  if(!trend) return '';
+  return `<p style="font-size:11.5px;color:${trend.changePct>=0?'var(--emerald)':'var(--bordeaux)'};margin-top:6px;">Tendance ${trend.days}j : ${trend.changePct>=0?'+':''}${trend.changePct.toFixed(1)}% · ${trend.posLabel}</p>`;
+}
+
 function renderStockGrid(){
-  document.getElementById('stockGrid').innerHTML = STOCKS_DEMO.map(s=>`
-    <div class="card" id="${s.ticker}">
-      <span class="smallcaps">${s.secteur} · ${s.pays}</span>
-      <h3>${s.nom} <span class="mono" style="font-size:13px;color:var(--text-dim);">${s.ticker}</span></h3>
-      <div class="result-row" style="margin:0 0 10px;">
-        <span class="mono" style="font-size:18px;color:var(--text);">${s.prix.toFixed(1)} €</span>
-        <span class="mono ${s.variation>=0?'up':'down'}" style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span>
-      </div>
-      <p>PER ${s.per} · Rendement ${s.dividende}% · Cap. ${s.cap} ${s.pea ? '· <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
-      ${s._live ? `<span class="badge status-reel" style="margin-top:6px;">Cotation différée (Yahoo Finance)</span>` : `<span class="demo-flag" style="margin-top:6px;">Donnée de démonstration</span>`}
-      <div class="card-footer">
-        <button class="fav-btn" data-fav-id="stock-${s.ticker}" data-fav-title="${s.nom}" data-fav-url="bourse.html#${s.ticker}" data-fav-type="Action">${ICONS.star} Favoris</button>
-      </div>
-    </div>`).join('');
+  const list = getFollowedStocks();
+  const metaEl = document.getElementById('stockGridMeta');
+  if(metaEl) metaEl.textContent = `${list.length} valeur${list.length>1?'s':''} suivie${list.length>1?'s':''}`;
+
+  document.getElementById('stockGrid').innerHTML = list.map(entry=>{
+    const s = STOCKS_DEMO.find(x=>x.ticker===entry.symbol);
+    if(s){
+      return `
+      <div class="card" id="${s.ticker}">
+        <span class="smallcaps">${s.secteur} · ${s.pays}</span>
+        <h3>${s.nom} <span class="mono" style="font-size:13px;color:var(--text-dim);">${s.ticker}</span></h3>
+        <div class="result-row" style="margin:0 0 10px;">
+          <span class="mono" style="font-size:18px;color:var(--text);">${s.prix.toFixed(1)} €</span>
+          <span class="mono ${s.variation>=0?'up':'down'}" style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span>
+        </div>
+        <p>PER ${s.per} · Rendement ${s.dividende}% · Cap. ${s.cap} ${s.pea ? '· <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
+        ${renderTrendHtml(computeTrendIndicator(s.history))}
+        ${s._live ? `<span class="badge status-reel" style="margin-top:6px;">Cotation différée (Yahoo Finance)</span>` : `<span class="demo-flag" style="margin-top:6px;">Donnée de démonstration</span>`}
+        <div class="card-footer">
+          <button class="fav-btn" data-fav-id="stock-${s.ticker}" data-fav-title="${s.nom}" data-fav-url="bourse.html#${s.ticker}" data-fav-type="Action">${ICONS.star} Favoris</button>
+          <button class="btn btn-sm" data-remove-stock="${s.ticker}">Retirer</button>
+        </div>
+      </div>`;
+    }
+    return `
+      <div class="card" id="custom-${entry.symbol}">
+        <span class="smallcaps">Cours en direct uniquement</span>
+        <h3>${entry.name} <span class="mono" style="font-size:13px;color:var(--text-dim);">${entry.symbol}</span></h3>
+        <div class="result-row" id="quote-${entry.symbol}" style="margin:0 0 10px;"><span class="mono" style="color:var(--text-dim);">Chargement…</span></div>
+        <div id="trend-${entry.symbol}"></div>
+        <div class="card-footer">
+          <button class="btn btn-sm" data-remove-stock="${entry.symbol}">Retirer</button>
+        </div>
+      </div>`;
+  }).join('');
+
   initFavButtons();
+  document.querySelectorAll('[data-remove-stock]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      removeFollowedStock(btn.dataset.removeStock);
+      refreshAllStockViews();
+    });
+  });
+  loadCustomQuotesForGrid(list);
 }
 
 // ---------- Comparateur ----------
@@ -71,9 +105,11 @@ function toggleMode(btn){
 
 const CRITERIA_BASIC = [
   {key:'prix', label:'Cours', unit:'€', higherBetter:null},
+  {key:'variation', label:'Variation du jour', unit:'%', higherBetter:null},
   {key:'per', label:'PER', unit:'×', higherBetter:false},
   {key:'dividende', label:'Rendement dividende', unit:'%', higherBetter:true},
   {key:'cap', label:'Capitalisation', unit:'', higherBetter:null},
+  {key:'ca', label:"Chiffre d'affaires", unit:'', higherBetter:null},
 ];
 const CRITERIA_ADV = [
   ...CRITERIA_BASIC,
@@ -109,6 +145,8 @@ function renderCompare(){
     }).join('') + '</tr>';
   });
   html += '<tr><td>Éligible PEA</td>' + stocks.map(s=>`<td>${s.pea?'Oui':'Non'}</td>`).join('') + '</tr>';
+  html += '<tr><td>Secteur</td>' + stocks.map(s=>`<td>${s.secteur}</td>`).join('') + '</tr>';
+  html += '<tr><td>Pays</td>' + stocks.map(s=>`<td>${s.pays}</td>`).join('') + '</tr>';
   table.innerHTML = html;
 }
 checksEl.addEventListener('change', renderCompare);
@@ -333,53 +371,32 @@ if(location.protocol !== 'file:'){
     });
 }
 
-// ---------- Tes actions suivies : recherche libre + cours en direct (/api/stock-search, /api/custom-quotes) ----------
-function renderCustomStockGrid(){
-  const grid = document.getElementById('customStockGrid');
-  const disclaimer = document.getElementById('customStocksDisclaimer');
-  if(!grid) return;
-  const list = getCustomStocks();
-  disclaimer.style.display = list.length ? 'block' : 'none';
-  if(list.length === 0){ grid.innerHTML = ''; return; }
-
-  grid.innerHTML = list.map(s => `
-    <div class="card" id="custom-${s.symbol}">
-      <span class="smallcaps">Cours en direct</span>
-      <h3>${s.name} <span class="mono" style="font-size:13px;color:var(--text-dim);">${s.symbol}</span></h3>
-      <div class="result-row" id="custom-${s.symbol}-quote" style="margin:0 0 10px;"><span class="mono" style="color:var(--text-dim);">Chargement…</span></div>
-      <div class="card-footer">
-        <button class="btn btn-sm" data-remove-custom="${s.symbol}">Retirer</button>
-      </div>
-    </div>`).join('');
-
-  grid.querySelectorAll('[data-remove-custom]').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      removeCustomStock(btn.dataset.removeCustom);
-      renderCustomStockGrid();
-    });
-  });
-
-  if(location.protocol === 'file:') return;
-  const symbols = list.map(s=>s.symbol).join(',');
-  fetch('/api/custom-quotes?symbols=' + encodeURIComponent(symbols))
+// ---------- Cours en direct des actions ajoutées par recherche (/api/custom-quotes) ----------
+function loadCustomQuotesForGrid(list){
+  const liteSymbols = list.filter(e => !STOCKS_DEMO.find(s=>s.ticker===e.symbol)).map(e=>e.symbol);
+  if(liteSymbols.length === 0 || location.protocol === 'file:') return;
+  fetch('/api/custom-quotes?symbols=' + encodeURIComponent(liteSymbols.join(',')))
     .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(payload=>{
       (payload.quotes || []).forEach(q=>{
-        const el = document.getElementById(`custom-${q.symbol}-quote`);
-        if(!el || typeof q.price !== 'number') return;
-        const spark = Array.isArray(q.history) && q.history.length >= 2 ? renderSparklineHTML(q.history, {compact:true}) : '';
-        el.innerHTML = `<span class="mono" style="font-size:18px;color:var(--text);">${q.price.toFixed(2)} ${q.currency==='EUR'?'€':q.currency}</span><span class="mono" style="color:${q.changePercent>=0?'var(--emerald)':'var(--bordeaux)'}">${q.changePercent>=0?'+':''}${q.changePercent.toFixed(2)}%</span>${spark}`;
+        const quoteEl = document.getElementById(`quote-${q.symbol}`);
+        if(quoteEl && typeof q.price === 'number'){
+          quoteEl.innerHTML = `<span class="mono" style="font-size:18px;color:var(--text);">${q.price.toFixed(2)} ${q.currency==='EUR'?'€':q.currency}</span><span class="mono" style="color:${q.changePercent>=0?'var(--emerald)':'var(--bordeaux)'}">${q.changePercent>=0?'+':''}${q.changePercent.toFixed(2)}%</span>`;
+        }
+        const trendEl = document.getElementById(`trend-${q.symbol}`);
+        if(trendEl) trendEl.innerHTML = renderTrendHtml(computeTrendIndicator(q.history));
       });
     })
     .catch(err=>{
       console.info('Likanza Academy — cours en direct indisponibles pour les actions suivies :', err.message);
-      list.forEach(s=>{
-        const el = document.getElementById(`custom-${s.symbol}-quote`);
+      liteSymbols.forEach(sym=>{
+        const el = document.getElementById(`quote-${sym}`);
         if(el) el.innerHTML = `<span style="color:var(--text-dim);font-size:12.5px;">Cours momentanément indisponible.</span>`;
       });
     });
 }
 
+// ---------- Recherche d'action à ajouter (/api/stock-search) ----------
 const stockSearchInput = document.getElementById('stockSearchInput');
 const stockSearchResults = document.getElementById('stockSearchResults');
 let stockSearchTimer = null;
@@ -402,10 +419,10 @@ if(stockSearchInput){
           ).join('');
           stockSearchResults.querySelectorAll('[data-add-symbol]').forEach(btn=>{
             btn.addEventListener('click', ()=>{
-              addCustomStock({symbol: btn.dataset.addSymbol, name: btn.dataset.addName});
+              addFollowedStock({symbol: btn.dataset.addSymbol, name: btn.dataset.addName});
               stockSearchInput.value = '';
               stockSearchResults.innerHTML = '';
-              renderCustomStockGrid();
+              refreshAllStockViews();
             });
           });
         })
@@ -414,4 +431,8 @@ if(stockSearchInput){
   });
 }
 
-renderCustomStockGrid();
+const resetStocksBtn = document.getElementById('resetStocksBtn');
+if(resetStocksBtn) resetStocksBtn.addEventListener('click', ()=>{
+  resetFollowedStocks();
+  refreshAllStockViews();
+});

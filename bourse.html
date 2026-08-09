@@ -91,19 +91,17 @@
   </div>
 
   <div class="home-tab-panel" id="tab-fiches">
-    <div class="section-head"><h2>Actions</h2><span class="meta-line">8 valeurs éligibles PEA</span></div>
-    <div class="card-grid" id="stockGrid"></div>
-
-    <div class="section-head" style="margin-top:32px;"><h2>Tes actions suivies</h2><span class="meta-line">recherche libre, cours en direct</span></div>
-    <div class="card" style="max-width:520px;margin-bottom:16px;">
+    <div class="section-head"><h2>Actions</h2><span class="meta-line" id="stockGridMeta">liste modifiable</span></div>
+    <div class="card" style="max-width:640px;margin-bottom:16px;">
       <div class="field" style="margin-bottom:0;">
-        <label>Rechercher une action (nom ou ticker)</label>
+        <label>Ajouter une action à suivre (nom ou ticker)</label>
         <input type="text" id="stockSearchInput" placeholder="Ex : Apple, Microsoft, TSLA...">
       </div>
       <div id="stockSearchResults" style="margin-top:8px;"></div>
+      <button class="btn btn-sm" id="resetStocksBtn" style="margin-top:10px;">Réinitialiser aux 8 valeurs de départ</button>
     </div>
-    <p class="disclaimer-box" id="customStocksDisclaimer" style="max-width:640px;display:none;">Ces actions affichent un cours en direct réel (Yahoo Finance), mais pas de ratios fondamentaux (PER, dividende, marge nette...) : elles ne participent pas au Comparateur, aux Scénarios ni au simulateur de Dividendes, réservés aux 8 actions ci-dessus.</p>
-    <div class="card-grid" id="customStockGrid"></div>
+    <p class="disclaimer-box" style="max-width:70ch;">Les actions ajoutées par recherche affichent un cours en direct réel (Yahoo Finance) et un indicateur de tendance basé sur les prix réels — jamais un conseil d'achat ou de vente. Sans les données fondamentales (PER, dividende...) des 8 valeurs de départ, elles ne participent pas au Comparateur, aux Scénarios ni au simulateur de Dividendes.</p>
+    <div class="card-grid" id="stockGrid"></div>
   </div>
 
   <div class="home-tab-panel" id="tab-comparateur">

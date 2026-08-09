@@ -1320,21 +1320,57 @@ function parseNumericValue(str){
   return isNaN(n) ? null : n;
 }
 
-// ---------- Actions personnalisées suivies (page Bourse, recherche libre) ----------
-// Séparé de fzr-watchlist volontairement : pas de seuil d'alerte ici, juste
-// un cours en direct réel (voir api/custom-quotes.js) — ne participe pas au
-// Comparateur/Scénarios/Dividendes, qui dépendent de ratios fondamentaux
-// saisis à la main pour les 8 actions de démonstration uniquement.
-const CUSTOM_STOCKS_MAX = 20;
-function getCustomStocks(){ return safeGetJSON('fzr-custom-stocks', []); }
-function saveCustomStocks(list){ safeSetJSON('fzr-custom-stocks', list); }
-function addCustomStock(stock){
-  const list = getCustomStocks().filter(s => s.symbol !== stock.symbol);
-  list.unshift({symbol: stock.symbol, name: stock.name, addedAt: new Date().toISOString()});
-  saveCustomStocks(list.slice(0, CUSTOM_STOCKS_MAX));
+// ---------- Actions suivies (page Bourse, liste modifiable) ----------
+// Initialisée avec les 8 tickers STOCKS_DEMO, mais l'utilisateur peut en
+// retirer et en ajouter d'autres via recherche libre (voir api/stock-search.js,
+// api/custom-quotes.js). Seuls les tickers STOCKS_DEMO ont de vraies données
+// fondamentales (PER, dividende...) : les autres n'affichent qu'un cours en
+// direct réel et ne participent pas au Comparateur/Scénarios/Dividendes.
+const FOLLOWED_STOCKS_MAX = 20;
+function getFollowedStocks(){
+  let list = safeGetJSON('fzr-followed-stocks', null);
+  if(list === null){
+    // Premier chargement : on part des 8 valeurs de démonstration, en
+    // reprenant une éventuelle liste de l'ancienne fonctionnalité séparée
+    // (fzr-custom-stocks) pour ne rien perdre de ce qui avait déjà été ajouté.
+    const defaults = STOCKS_DEMO.map(s => ({symbol: s.ticker, name: s.nom}));
+    const legacy = safeGetJSON('fzr-custom-stocks', []).map(s => ({symbol: s.symbol, name: s.name}));
+    const seen = new Set(defaults.map(s => s.symbol));
+    legacy.forEach(s => { if(!seen.has(s.symbol)){ defaults.push(s); seen.add(s.symbol); } });
+    list = defaults;
+    saveFollowedStocks(list);
+  }
+  return list;
 }
-function removeCustomStock(symbol){
-  saveCustomStocks(getCustomStocks().filter(s => s.symbol !== symbol));
+function saveFollowedStocks(list){ safeSetJSON('fzr-followed-stocks', list); }
+function addFollowedStock(stock){
+  const list = getFollowedStocks().filter(s => s.symbol !== stock.symbol);
+  list.push({symbol: stock.symbol, name: stock.name});
+  saveFollowedStocks(list.slice(0, FOLLOWED_STOCKS_MAX));
+}
+function removeFollowedStock(symbol){
+  saveFollowedStocks(getFollowedStocks().filter(s => s.symbol !== symbol));
+}
+function resetFollowedStocks(){
+  saveFollowedStocks(STOCKS_DEMO.map(s => ({symbol: s.ticker, name: s.nom})));
+}
+
+// Indicateur factuel de tendance, calculé uniquement à partir de vraies
+// données de prix (Yahoo Finance) — décrit la situation, ne recommande
+// jamais d'acheter, vendre ou renforcer une position.
+function computeTrendIndicator(history){
+  if(!Array.isArray(history) || history.length < 2) return null;
+  const closes = history.map(h => h.close).filter(c => typeof c === 'number');
+  if(closes.length < 2) return null;
+  const first = closes[0], last = closes[closes.length - 1];
+  const changePct = ((last / first) - 1) * 100;
+  const min = Math.min(...closes), max = Math.max(...closes);
+  const range = max - min;
+  const posPct = range > 0 ? ((last - min) / range) * 100 : 50;
+  let posLabel = 'dans sa fourchette récente';
+  if(posPct >= 85) posLabel = 'proche de son plus haut récent';
+  else if(posPct <= 15) posLabel = 'proche de son plus bas récent';
+  return {changePct, posLabel, days: closes.length};
 }
 
 // ---------- Profil personnel (pré-remplit les simulateurs du site) ----------
