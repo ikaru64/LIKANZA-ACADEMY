@@ -316,16 +316,19 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 
 /* ---------- Memory Finance ---------- */
 .mem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:8px;}
-.mem-card{background:none;border:none;padding:0;perspective:800px;height:130px;cursor:pointer;}
+.mem-card{background:none;border:none;padding:0;perspective:800px;height:140px;cursor:pointer;}
 .mem-card-inner{position:relative;width:100%;height:100%;display:block;transition:transform .4s;transform-style:preserve-3d;}
 .mem-card.mem-flipped .mem-card-inner,.mem-card.mem-matched .mem-card-inner{transform:rotateY(180deg);}
-.mem-card-face{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;border-radius:var(--radius);border:1px solid var(--hairline);backface-visibility:hidden;padding:8px;overflow:auto;}
+.mem-card-face{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;border-radius:var(--radius);border:1px solid var(--hairline);backface-visibility:hidden;padding:8px;overflow:auto;}
 .mem-card-back{background:var(--bg-alt);color:var(--gold);}
-.mem-card-back svg{width:26px;height:26px;}
-.mem-card-front{transform:rotateY(180deg);background:var(--bg);font-size:11.5px;line-height:1.35;color:var(--text-dim);}
-.mem-card-front.mem-card-terme{font-family:'Cormorant Garamond',serif;font-size:16px;font-weight:600;color:var(--text);}
-.mem-card.mem-matched .mem-card-front{border-color:var(--emerald);color:var(--emerald);}
-.mem-card.mem-matched .mem-card-front.mem-card-terme{color:var(--emerald);}
+.mem-card-back .mem-card-icon svg{width:28px;height:28px;}
+.mem-card-front{transform:rotateY(180deg);background:var(--bg);color:var(--text);}
+.mem-card-front .mem-card-icon svg{width:18px;height:18px;color:var(--gold-bright);}
+.mem-card-front .mem-card-text{font-family:'Cormorant Garamond',serif;font-size:15px;font-weight:600;line-height:1.25;}
+.mem-card-front.mem-long .mem-card-text{font-family:'Inter',sans-serif;font-size:10.5px;font-weight:400;line-height:1.35;color:var(--text-dim);}
+.mem-card.mem-matched .mem-card-front{border-color:var(--emerald);}
+.mem-card.mem-matched .mem-card-front .mem-card-text{color:var(--emerald);}
+.mem-card.mem-matched .mem-card-front .mem-card-icon svg{color:var(--emerald);}
 .vf-feedback{font-size:13.5px;color:var(--text-dim);min-height:20px;margin-top:16px;}
 
 /* ---------- Mon parcours : chemin visuel ---------- */
