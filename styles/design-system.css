@@ -326,6 +326,8 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .mem-card-front .mem-card-icon svg{width:32px;height:32px;color:var(--gold-bright);}
 .mem-card.mem-matched .mem-card-front{border-color:var(--emerald);}
 .mem-card.mem-matched .mem-card-front .mem-card-icon svg{color:var(--emerald);}
+
+.pattern-chart{border:1px solid var(--hairline);border-radius:var(--radius);background:var(--bg-alt);padding:8px 4px 2px;}
 .vf-feedback{font-size:13.5px;color:var(--text-dim);min-height:20px;margin-top:16px;}
 
 /* ---------- Mon parcours : chemin visuel ---------- */

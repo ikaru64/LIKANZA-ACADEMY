@@ -1204,6 +1204,134 @@ function renderMemoryFinance(elId){
   });
 }
 
+// ---------- Figures chartistes : reconnaître les motifs d'analyse technique ----------
+// Schémas SYNTHÉTIQUES et pédagogiques uniquement — jamais un vrai cours d'un
+// instrument réel — clairement annoncé sous chaque graphique. Les définitions
+// des figures elles-mêmes sont du savoir standard d'analyse technique.
+const CHART_PATTERNS = [
+  {id:'tete-epaules', nom:'Tête-épaules',
+    explication:"Trois sommets, celui du milieu plus haut que les deux autres, reliés par une ligne de cou. Les chartistes y voient souvent un possible signal de fin de tendance haussière une fois la ligne de cou cassée à la baisse.",
+    points:[[0,0.3],[0.15,0.62],[0.3,0.42],[0.5,0.9],[0.7,0.42],[0.85,0.6],[1,0.22]]},
+  {id:'tete-epaules-inversee', nom:'Tête-épaules inversée',
+    explication:"L'inverse de la figure tête-épaules : trois creux, celui du milieu plus bas que les deux autres. Souvent interprétée comme un possible signal de fin de tendance baissière une fois la ligne de cou cassée à la hausse.",
+    points:[[0,0.7],[0.15,0.38],[0.3,0.58],[0.5,0.12],[0.7,0.58],[0.85,0.4],[1,0.78]]},
+  {id:'double-sommet', nom:'Double sommet',
+    explication:"Deux sommets à peu près à la même hauteur, séparés par un creux — une forme en 'M'. Souvent associée à un possible essoufflement d'une tendance haussière.",
+    points:[[0,0.32],[0.25,0.85],[0.5,0.48],[0.75,0.85],[1,0.25]]},
+  {id:'double-fond', nom:'Double fond',
+    explication:"Deux creux à peu près à la même profondeur, séparés par un sommet — une forme en 'W'. Souvent associée à un possible essoufflement d'une tendance baissière.",
+    points:[[0,0.68],[0.25,0.15],[0.5,0.52],[0.75,0.15],[1,0.75]]},
+  {id:'triangle-ascendant', nom:'Triangle ascendant',
+    explication:"Une résistance à peu près horizontale en haut et des creux de plus en plus hauts en bas, qui se rapprochent. Souvent vue comme une figure de continuation dans une tendance haussière.",
+    points:[[0,0.3],[0.15,0.78],[0.3,0.45],[0.45,0.78],[0.6,0.55],[0.75,0.78],[0.9,0.65],[1,0.88]]},
+  {id:'triangle-descendant', nom:'Triangle descendant',
+    explication:"Un support à peu près horizontal en bas et des sommets de plus en plus bas en haut, qui se rapprochent. Souvent vue comme une figure de continuation dans une tendance baissière.",
+    points:[[0,0.7],[0.15,0.22],[0.3,0.55],[0.45,0.22],[0.6,0.45],[0.75,0.22],[0.9,0.35],[1,0.12]]},
+  {id:'canal', nom:'Canal / Rectangle',
+    explication:"Le prix oscille entre deux lignes à peu près horizontales et parallèles, un support et une résistance, sans direction claire — une phase de range plutôt que de tendance.",
+    points:[[0,0.5],[0.125,0.76],[0.25,0.28],[0.375,0.76],[0.5,0.28],[0.625,0.76],[0.75,0.28],[0.875,0.76],[1,0.5]]},
+  {id:'cup-and-handle', nom:'Cup and handle (tasse avec anse)',
+    explication:"Un creux arrondi en U (la « tasse ») suivi d'une petite consolidation qui redescend légèrement (l'« anse ») avant un possible dépassement du niveau de départ. Vue comme une figure de continuation haussière.",
+    points:[[0,0.75],[0.15,0.45],[0.3,0.24],[0.4,0.2],[0.5,0.24],[0.65,0.45],[0.78,0.76],[0.85,0.64],[0.92,0.68],[1,0.95]]}
+];
+
+function generatePatternSeries(pattern, sampleCount){
+  sampleCount = sampleCount || 48;
+  const jittered = pattern.points.map(([x,y])=>[x, Math.min(0.96, Math.max(0.04, y + (Math.random()-0.5)*0.05))]);
+  const series = [];
+  for(let i=0;i<sampleCount;i++){
+    const x = i/(sampleCount-1);
+    let p0 = jittered[0], p1 = jittered[jittered.length-1];
+    for(let k=0;k<jittered.length-1;k++){
+      if(x >= jittered[k][0] && x <= jittered[k+1][0]){ p0 = jittered[k]; p1 = jittered[k+1]; break; }
+    }
+    const span = p1[0]-p0[0];
+    const t = span > 0 ? (x-p0[0])/span : 0;
+    let y = p0[1] + (p1[1]-p0[1])*t + (Math.random()-0.5)*0.02;
+    series.push(Math.min(0.98, Math.max(0.02, y)));
+  }
+  return series;
+}
+
+function renderPatternChartSVG(series){
+  const w = 560, h = 190, padX = 12, padY = 14;
+  const innerW = w - padX*2, innerH = h - padY*2;
+  const pts = series.map((y,i)=>{
+    const x = padX + (i/(series.length-1)) * innerW;
+    const yy = padY + (1-y) * innerH;
+    return `${x.toFixed(1)},${yy.toFixed(1)}`;
+  }).join(' ');
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;"><polyline points="${pts}" fill="none" stroke="var(--gold-bright)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+}
+
+function renderChartPatternGame(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const rounds = CHART_PATTERNS.slice();
+  for(let i=rounds.length-1;i>0;i--){
+    const j = Math.floor(Math.random()*(i+1));
+    [rounds[i], rounds[j]] = [rounds[j], rounds[i]];
+  }
+  let qIndex = 0, score = 0;
+
+  function pickChoices(correct){
+    const others = CHART_PATTERNS.filter(p=>p.id!==correct.id);
+    for(let i=others.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [others[i], others[j]] = [others[j], others[i]];
+    }
+    const choices = [correct, ...others.slice(0,3)];
+    for(let i=choices.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [choices[i], choices[j]] = [choices[j], choices[i]];
+    }
+    return choices;
+  }
+
+  function renderRound(){
+    if(qIndex >= rounds.length){ renderResults(); return; }
+    const pattern = rounds[qIndex];
+    const series = generatePatternSeries(pattern);
+    const choices = pickChoices(pattern);
+    const pct = Math.round((qIndex/rounds.length)*100);
+    el.innerHTML = `
+      <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span>Figure ${qIndex+1} / ${rounds.length}</span><span>Quelle figure reconnais-tu ?</span>
+      </div>
+      <div class="dash-weekbar" style="width:100%;margin-bottom:12px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+      <div class="pattern-chart">${renderPatternChartSVG(series)}</div>
+      <p style="font-size:10.5px;color:var(--text-dim);margin:6px 0 14px;text-align:right;">Schéma pédagogique (données synthétiques) — pas un cours réel.</p>
+      <div class="vf-buttons" style="grid-template-columns:1fr 1fr;">${choices.map(c=>`<button class="vf-btn" data-id="${c.id}">${c.nom}</button>`).join('')}</div>
+      <div class="vf-feedback" id="${elId}-feedback"></div>`;
+    Array.from(el.querySelectorAll('.vf-btn')).forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
+        const correct = btn.dataset.id === pattern.id;
+        if(correct){ btn.classList.add('vf-correct'); score++; tryAwardQuizPoints(`pattern-${pattern.id}`, 10); }
+        else {
+          btn.classList.add('vf-wrong');
+          const rightBtn = el.querySelector(`[data-id="${pattern.id}"]`);
+          if(rightBtn) rightBtn.classList.add('vf-correct');
+        }
+        document.getElementById(`${elId}-feedback`).textContent = pattern.explication;
+        setTimeout(()=>{ qIndex++; renderRound(); }, 2400);
+      }, {once:true});
+    });
+  }
+
+  function renderResults(){
+    const pct = rounds.length ? Math.round((score/rounds.length)*100) : 0;
+    if(pct === 100) awardXP(25, {quizPerfect:true});
+    el.innerHTML = `
+      <div class="result-big">${score} / ${rounds.length}</div>
+      <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${pct}% de figures reconnues.</p>
+      <button class="btn btn-sm btn-gold" id="${elId}-restart">Recommencer</button>`;
+    document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderChartPatternGame(elId));
+  }
+
+  renderRound();
+}
+
 // ---------- Cours : lecture puis quiz de validation ----------
 // Contenu de lecture puisé dans LIBRARY, quiz puisé dans QUIZ_BANK_FULL — voir
 // COURS_CATALOG (app.js). Les points ne sont accordés qu'à la réussite du quiz,
