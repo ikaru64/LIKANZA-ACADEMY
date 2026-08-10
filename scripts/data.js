@@ -1112,47 +1112,37 @@ function renderVraiFaux(elId){
   renderQuestion();
 }
 
-// ---------- Memory Finance : jeu de paires 100% bourse ----------
-// Puise dans STOCKS_DEMO (ticker <-> nom de société), MARKET_DATA (symbole <->
-// nom des grands indices boursiers) et LIBRARY catégorie "Bourse" (terme <->
-// définition) — trois sources réelles déjà utilisées ailleurs sur le site,
-// aucun contenu inventé pour ce jeu.
-const MEMORY_PAIR_COUNT = 12;
-const MEMORY_ICONS = {stock:'landmark', index:'trending-up', terme:'book-open'};
-
-function buildMemoryPairPool(){
-  const pool = [];
-  STOCKS_DEMO.forEach(s=> pool.push({type:'stock', id:`stock-${s.ticker}`, a:s.ticker, b:s.nom}));
-  MARKET_DATA.filter(d=>d.assetType==='index').forEach(d=> pool.push({type:'index', id:`index-${d.symbol}`, a:d.symbol, b:d.nom}));
-  LIBRARY.filter(l=>l.categorie==='Bourse').forEach(l=> pool.push({type:'terme', id:`terme-${l.terme}`, a:l.terme, b:l.simple}));
-  return pool;
-}
+// ---------- Memory Finance : jeu de paires d'images, thème bourse ----------
+// Cartes 100% visuelles (aucun texte) : on retrouve deux cartes portant la
+// même icône. Le jeu de symboles est un sous-ensemble d'ICONS (scripts/icons.js)
+// choisi pour son lien avec la bourse/la finance — pas de logo ou visuel externe.
+const MEMORY_ICON_POOL = ['trending-up','trending-down','landmark','coins','banknote','scale','briefcase','building-2','wallet','calculator','shield','telescope'];
+const MEMORY_BACK_ICON = 'circle';
 
 function buildMemoryDeck(pairCount){
-  const pool = buildMemoryPairPool();
+  const pool = MEMORY_ICON_POOL.slice();
   for(let i=pool.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
   const chosen = pool.slice(0, Math.min(pairCount, pool.length));
   const cards = [];
-  chosen.forEach((pair, idx)=>{
-    const icon = MEMORY_ICONS[pair.type];
-    cards.push({uid:`${idx}-a`, pairIndex:idx, icon, text:pair.a});
-    cards.push({uid:`${idx}-b`, pairIndex:idx, icon, text:pair.b});
+  chosen.forEach((icon, idx)=>{
+    cards.push({uid:`${idx}-a`, pairIndex:idx, icon});
+    cards.push({uid:`${idx}-b`, pairIndex:idx, icon});
   });
   for(let i=cards.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
     [cards[i], cards[j]] = [cards[j], cards[i]];
   }
-  return {cards, pairIds: chosen.map(p=>p.id)};
+  return {cards, icons: chosen};
 }
 
 function renderMemoryFinance(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const {cards, pairIds} = buildMemoryDeck(MEMORY_PAIR_COUNT);
-  const totalPairs = pairIds.length;
+  const {cards, icons} = buildMemoryDeck(MEMORY_ICON_POOL.length);
+  const totalPairs = icons.length;
   let flipped = [], matchedPairs = 0, moves = 0, errors = 0, locked = false;
 
   el.innerHTML = `
@@ -1162,10 +1152,9 @@ function renderMemoryFinance(elId){
     <div class="mem-grid">${cards.map(card=>`
       <button class="mem-card" data-uid="${card.uid}" data-pair="${card.pairIndex}" type="button" aria-label="Carte retournée">
         <span class="mem-card-inner">
-          <span class="mem-card-face mem-card-back"><span class="mem-card-icon">${ICONS['trending-up']}</span></span>
-          <span class="mem-card-face mem-card-front${card.text.length>40?' mem-long':''}">
+          <span class="mem-card-face mem-card-back"><span class="mem-card-icon">${ICONS[MEMORY_BACK_ICON]}</span></span>
+          <span class="mem-card-face mem-card-front">
             <span class="mem-card-icon">${ICONS[card.icon]}</span>
-            <span class="mem-card-text">${card.text}</span>
           </span>
         </span>
       </button>`).join('')}</div>`;
@@ -1200,7 +1189,7 @@ function renderMemoryFinance(elId){
           a.classList.remove('mem-flipped'); b.classList.remove('mem-flipped');
           matchedPairs++;
           foundEl.textContent = matchedPairs;
-          tryAwardQuizPoints(`memory-${pairIds[+a.dataset.pair]}`, 8);
+          tryAwardQuizPoints(`memory-icon-${icons[+a.dataset.pair]}`, 8);
           flipped = []; locked = false;
           if(matchedPairs === totalPairs) renderResults();
         }, 500);
