@@ -328,6 +328,12 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .mem-card.mem-matched .mem-card-front .mem-card-icon svg{color:var(--emerald);}
 
 .pattern-chart{border:1px solid var(--hairline);border-radius:var(--radius);background:var(--bg-alt);padding:8px 4px 2px;}
+
+/* ---------- Construis ton portefeuille ---------- */
+.portfolio-alloc-list{display:flex;flex-direction:column;}
+.portfolio-alloc-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--hairline);}
+.portfolio-alloc-name{flex:1;font-size:13px;}
+.portfolio-alloc-input{width:60px;background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:6px 8px;border-radius:2px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .vf-feedback{font-size:13.5px;color:var(--text-dim);min-height:20px;margin-top:16px;}
 
 /* ---------- Mon parcours : chemin visuel ---------- */
