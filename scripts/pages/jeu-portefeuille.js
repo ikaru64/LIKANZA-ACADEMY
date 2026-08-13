@@ -1,0 +1,1 @@
+renderPortfolioGame('portfolioGame');

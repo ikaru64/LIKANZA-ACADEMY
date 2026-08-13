@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Play · Likanza Academy</title>
-<meta name="description" content="Le coin jeu de Likanza Academy : Vrai ou faux disponible dès maintenant, et d'autres mini-jeux financiers bientôt.">
+<title>Construis ton portefeuille · Likanza Academy</title>
+<meta name="description" content="Backtest ta répartition sur de vrais cours historiques, comparée au CAC 40.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -74,45 +74,12 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Play</div>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / <a href="play.html">Play</a> / Construis ton portefeuille</div>
 
 <section class="section">
-  <div class="section-head"><h2>Jeux</h2><span class="meta-line">apprendre en jouant</span></div>
-  <div class="card-grid">
-    <a href="jeu-vrai-faux.html" class="card play-tile">
-      <span class="icon" data-icon="shield" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Vrai ou faux</h3>
-      <p>Démasque les affirmations trompeuses sur l'argent et les arnaques financières.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Jouer →</span></div>
-    </a>
-    <a href="jeu-memory.html" class="card play-tile">
-      <span class="icon" data-icon="coins" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Memory Finance</h3>
-      <p>Retrouve les paires d'icônes identiques, sur le thème de la bourse.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Jouer →</span></div>
-    </a>
-    <a href="jeu-figures-chartistes.html" class="card play-tile">
-      <span class="icon" data-icon="trending-up" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Figures chartistes</h3>
-      <p>Reconnais les motifs classiques d'analyse technique sur des schémas pédagogiques.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Jouer →</span></div>
-    </a>
-    <a href="jeu-portefeuille.html" class="card play-tile">
-      <span class="icon" data-icon="briefcase" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Construis ton portefeuille</h3>
-      <p>Backtest ta répartition sur de vrais cours historiques, comparée au CAC 40.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Jouer →</span></div>
-    </a>
-  </div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Bientôt</h2><span class="meta-line">en construction</span></div>
-  <div class="card-grid">
-    <div class="card"><span class="icon" data-icon="target" style="color:var(--gold-bright);"></span><h3 style="font-size:15px;margin-top:10px;">Finance Dice</h3><span class="badge status-demo">Bientôt</span></div>
-    <div class="card"><span class="icon" data-icon="scale" style="color:var(--gold-bright);"></span><h3 style="font-size:15px;margin-top:10px;">Bull vs Bear</h3><span class="badge status-demo">Bientôt</span></div>
-    <div class="card"><span class="icon" data-icon="wallet" style="color:var(--gold-bright);"></span><h3 style="font-size:15px;margin-top:10px;">Budget Rush</h3><span class="badge status-demo">Bientôt</span></div>
-    <div class="card"><span class="icon" data-icon="triangle-alert" style="color:var(--gold-bright);"></span><h3 style="font-size:15px;margin-top:10px;">Market Panic</h3><span class="badge status-demo">Bientôt</span></div>
+  <div class="section-head"><h2>Construis ton portefeuille</h2><span class="meta-line">backtest sur données réelles</span></div>
+  <div class="card" style="max-width:none;">
+    <div id="portfolioGame"></div>
   </div>
 </section>
 
@@ -120,7 +87,7 @@
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
     <div><h4>Apprendre</h4><ul><li><a href="formations.html">Academy</a></li><li><a href="bibliotheque.html">Bibliothèque</a></li></ul></div>
-    <div><h4>Jouer</h4><ul><li><a href="defis.html">Défis</a></li><li><a href="parcours.html">Mon parcours</a></li></ul></div>
+    <div><h4>Jouer</h4><ul><li><a href="play.html">Tous les jeux</a></li><li><a href="defis.html">Défis</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
   <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
@@ -129,6 +96,7 @@
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
+<script src="scripts/pages/jeu-portefeuille.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
