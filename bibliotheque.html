@@ -78,16 +78,19 @@
 
 <section class="section">
   <div class="section-head"><h2>Bibliothèque Likanza Academy</h2><span class="meta-line" id="libCount">notions</span></div>
-  <input type="text" id="libSearch" class="search-input" style="width:100%;max-width:360px;margin-bottom:16px;" placeholder="Filtrer par mot-clé…">
-  <div class="tabs" id="libFilters"></div>
+  <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px;max-width:60ch;">L'arbre du savoir : choisis un thème, puis une notion à l'intérieur — ou cherche directement un mot-clé.</p>
+  <input type="text" id="libSearch" class="search-input" style="width:100%;max-width:360px;margin-bottom:16px;" placeholder="Chercher une notion…">
   <div class="mode-toggle">
     <span style="font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;align-self:center;margin-right:6px;">Mode :</span>
     <button class="pill active" data-mode="simple">Explique-moi simplement</button>
     <button class="pill" data-mode="detail">Comprendre en détail</button>
     <button class="pill" data-mode="avance">Version avancée</button>
   </div>
-  <div class="az-strip" id="azStrip"></div>
-  <div class="glossary-list" id="libList" style="margin-top:16px;"></div>
+  <div class="knowledge-tree">
+    <div class="kt-breadcrumb" id="ktBreadcrumb" style="display:none;"></div>
+    <div class="kt-themes" id="ktThemes"></div>
+    <div class="kt-leaf-grid" id="ktLeaves" style="display:none;"></div>
+  </div>
 </section>
 
 <footer class="site-footer">

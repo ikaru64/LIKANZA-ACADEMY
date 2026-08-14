@@ -1,70 +1,121 @@
+/* ============================================================
+   LIKANZA ACADEMY — Bibliothèque : "arbre du savoir"
+   Navigation à deux niveaux sur LIBRARY (aucune donnée nouvelle) :
+   niveau 1 = thèmes (une catégorie = une carte), niveau 2 = les
+   notions ("feuilles") de ce thème. La recherche court-circuite les
+   deux niveaux et affiche directement les feuilles correspondantes.
+   ============================================================ */
 document.getElementById('libCount').textContent = LIBRARY.length + ' notions';
 
 let currentMode = 'simple';
-let currentCat = 'Toutes';
-const cats = ['Toutes', ...new Set(LIBRARY.map(l=>l.categorie))];
-document.getElementById('libFilters').innerHTML = cats.map((c,i)=>`<button class="pill ${i===0?'active':''}" data-cat="${c}">${c}</button>`).join('');
+let currentTheme = null; // null = on est au niveau "thèmes"
 
-// ---------- Lexique A-Z : saute jusqu'à la première notion commençant par la lettre ----------
-const AZ_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
-const availableLetters = new Set(LIBRARY.map(l=>l.terme[0].toUpperCase()));
-document.getElementById('azStrip').innerHTML = AZ_LETTERS.map(letter=>{
-  const has = availableLetters.has(letter);
-  return `<a href="#" class="${has?'':'disabled'}" data-letter="${letter}">${letter}</a>`;
-}).join('');
-document.getElementById('azStrip').addEventListener('click', e=>{
-  const a = e.target.closest('a');
-  if(!a || a.classList.contains('disabled')) return;
-  e.preventDefault();
-  const target = document.querySelector(`#libList [data-letter="${a.dataset.letter}"]`);
-  if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
-});
+function bibliothequeBodyKey(){
+  return currentMode === 'detail' ? 'detail' : (currentMode === 'avance' ? 'avance' : 'simple');
+}
 
-function renderLib(){
-  const searchInputEl = document.getElementById('libSearch');
-  const query = searchInputEl ? searchInputEl.value.trim().toLowerCase() : '';
-  let items = currentCat==='Toutes' ? LIBRARY : LIBRARY.filter(l=>l.categorie===currentCat);
-  if(query) items = items.filter(l=>l.terme.toLowerCase().includes(query) || l.simple.toLowerCase().includes(query));
-  items = [...items].sort((a,b)=>a.terme.localeCompare(b.terme));
-  const bodyKey = {simple:'simple', detail:'detail', avance:'avance'}[currentMode] === 'detail' ? 'detail' : (currentMode==='avance' ? 'avance' : 'simple');
-  document.getElementById('libList').innerHTML = items.map((l,i)=>`
-    <div class="glossary-item" id="${l.terme.replace(/\s+/g,'-')}" data-letter="${l.terme[0].toUpperCase()}">
-      <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
+function themeCounts(){
+  const counts = {};
+  LIBRARY.forEach(l => { counts[l.categorie] = (counts[l.categorie]||0) + 1; });
+  return counts;
+}
+
+function renderLeafCards(container, items){
+  const bodyKey = bibliothequeBodyKey();
+  container.innerHTML = items.map((l,i) => `
+    <div class="kt-leaf-card" id="leaf-${l.terme.replace(/\s+/g,'-')}">
+      <div class="kt-leaf-head" data-idx="${i}">
         <h4>${l.terme}</h4>
-        <span class="idx">${l.niveau} · ${l.lecture}</span>
+        <span class="kt-leaf-meta">${l.niveau} · ${l.lecture}</span>
       </div>
-      <div class="glossary-body">
-        <div class="glossary-body-inner">
-          <div id="libConseil-${i}"></div>
-          <p style="margin-bottom:10px;">${l[bodyKey]}</p>
-          ${l.exemple ? `<p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;"><strong style="color:var(--text);">Exemple : </strong>${l.exemple}</p>` : ''}
-          ${l.avantages && l.avantages.length ? `<p style="font-size:12.5px;margin-bottom:6px;"><strong style="color:var(--emerald);">Avantages :</strong> ${l.avantages.join(' · ')}</p>` : ''}
-          ${l.inconvenients && l.inconvenients.length ? `<p style="font-size:12.5px;margin-bottom:6px;"><strong style="color:var(--bordeaux);">Limites :</strong> ${l.inconvenients.join(' · ')}</p>` : ''}
-          ${l.erreurs && l.erreurs.length ? `<p style="font-size:12.5px;"><strong style="color:var(--gold-bright);">Erreurs fréquentes :</strong> ${l.erreurs.join(' · ')}</p>` : ''}
-        </div>
+      <div class="kt-leaf-body">
+        <div id="ktConseil-${i}"></div>
+        <p>${l[bodyKey]}</p>
+        ${l.exemple ? `<p class="kt-leaf-example"><strong>Exemple : </strong>${l.exemple}</p>` : ''}
+        ${l.avantages && l.avantages.length ? `<p class="kt-leaf-pro"><strong>Avantages :</strong> ${l.avantages.join(' · ')}</p>` : ''}
+        ${l.inconvenients && l.inconvenients.length ? `<p class="kt-leaf-con"><strong>Limites :</strong> ${l.inconvenients.join(' · ')}</p>` : ''}
+        ${l.erreurs && l.erreurs.length ? `<p class="kt-leaf-err"><strong>Erreurs fréquentes :</strong> ${l.erreurs.join(' · ')}</p>` : ''}
       </div>
-    </div>`).join('') || '<p class="empty-note" style="padding:24px;">Aucune notion trouvée.</p>';
+    </div>`).join('') || '<p style="padding:12px 4px;color:#6B6558;">Aucune notion trouvée.</p>';
 
-  items.forEach((l,i)=>{
+  container.querySelectorAll('.kt-leaf-head').forEach(head => {
+    head.addEventListener('click', () => head.closest('.kt-leaf-card').classList.toggle('open'));
+  });
+  items.forEach((l,i) => {
     const conseil = pickConseilMessage(l.niveau, {weakCategory: getWeakCategoryLabel(l.categorie)});
-    renderConseilBadge(`libConseil-${i}`, conseil);
+    renderConseilBadge(`ktConseil-${i}`, conseil);
   });
 }
-document.getElementById('libFilters').addEventListener('click', e=>{
-  if(e.target.tagName !== 'BUTTON') return;
-  document.querySelectorAll('#libFilters .pill').forEach(p=>p.classList.remove('active'));
-  e.target.classList.add('active');
-  currentCat = e.target.dataset.cat;
-  renderLib();
-});
-document.querySelectorAll('.mode-toggle .pill').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('.mode-toggle .pill').forEach(p=>p.classList.remove('active'));
+
+function renderKnowledgeTree(){
+  const themesEl = document.getElementById('ktThemes');
+  const leavesEl = document.getElementById('ktLeaves');
+  const crumbEl = document.getElementById('ktBreadcrumb');
+  const query = (document.getElementById('libSearch').value || '').trim().toLowerCase();
+
+  if(query){
+    const matches = LIBRARY
+      .filter(l => l.terme.toLowerCase().includes(query) || l.simple.toLowerCase().includes(query))
+      .sort((a,b) => a.terme.localeCompare(b.terme));
+    themesEl.style.display = 'none';
+    leavesEl.style.display = '';
+    crumbEl.style.display = '';
+    crumbEl.innerHTML = `<button class="kt-back-btn" id="ktBack" type="button">← Tous les thèmes</button><span class="kt-crumb-label">Résultats pour « ${query} » (${matches.length})</span>`;
+    document.getElementById('ktBack').addEventListener('click', () => { document.getElementById('libSearch').value = ''; renderKnowledgeTree(); });
+    renderLeafCards(leavesEl, matches);
+    return;
+  }
+
+  if(currentTheme){
+    const items = LIBRARY.filter(l => l.categorie === currentTheme).sort((a,b) => a.terme.localeCompare(b.terme));
+    themesEl.style.display = 'none';
+    leavesEl.style.display = '';
+    crumbEl.style.display = '';
+    crumbEl.innerHTML = `<button class="kt-back-btn" id="ktBack" type="button">← Tous les thèmes</button><span class="kt-crumb-label">${currentTheme} · ${items.length} notion${items.length>1?'s':''}</span>`;
+    document.getElementById('ktBack').addEventListener('click', () => { currentTheme = null; renderKnowledgeTree(); });
+    renderLeafCards(leavesEl, items);
+    return;
+  }
+
+  crumbEl.style.display = 'none';
+  leavesEl.style.display = 'none';
+  themesEl.style.display = '';
+  const counts = themeCounts();
+  const cats = Object.keys(counts).sort((a,b) => a.localeCompare(b));
+  themesEl.innerHTML = cats.map(cat => `
+    <button class="kt-theme-card" data-theme="${cat}" type="button">
+      <span class="kt-leaf-icon">${ICONS.sprout}</span>
+      <h3>${cat}</h3>
+      <span class="kt-theme-count">${counts[cat]} notion${counts[cat]>1?'s':''}</span>
+    </button>`).join('');
+  themesEl.querySelectorAll('.kt-theme-card').forEach(btn => {
+    btn.addEventListener('click', () => { currentTheme = btn.dataset.theme; renderKnowledgeTree(); });
+  });
+}
+
+document.querySelectorAll('.mode-toggle .pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-toggle .pill').forEach(p => p.classList.remove('active'));
     btn.classList.add('active');
     currentMode = btn.dataset.mode;
-    renderLib();
+    renderKnowledgeTree();
   });
 });
-document.getElementById('libSearch').addEventListener('input', renderLib);
-renderLib();
-if(location.hash) setTimeout(()=>{ const el=document.querySelector(location.hash); if(el) el.scrollIntoView({behavior:'smooth'}); }, 200);
+document.getElementById('libSearch').addEventListener('input', renderKnowledgeTree);
+
+renderKnowledgeTree();
+
+// Liens profonds (recherche globale, notion du jour sur le tableau de bord) :
+// bibliotheque.html#Terme-Avec-Tirets doit ouvrir le bon thème et déplier la notion.
+if(location.hash){
+  const rawHash = location.hash.slice(1);
+  const item = LIBRARY.find(l => l.terme.replace(/\s+/g,'-') === rawHash);
+  if(item){
+    currentTheme = item.categorie;
+    renderKnowledgeTree();
+    setTimeout(() => {
+      const el = document.getElementById(`leaf-${item.terme.replace(/\s+/g,'-')}`);
+      if(el){ el.classList.add('open'); el.scrollIntoView({behavior:'smooth', block:'start'}); }
+    }, 50);
+  }
+}
