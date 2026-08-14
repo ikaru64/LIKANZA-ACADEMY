@@ -105,17 +105,27 @@ document.getElementById('libSearch').addEventListener('input', renderKnowledgeTr
 
 renderKnowledgeTree();
 
-// Liens profonds (recherche globale, notion du jour sur le tableau de bord) :
-// bibliotheque.html#Terme-Avec-Tirets doit ouvrir le bon thème et déplier la notion.
+// Liens profonds :
+//  - bibliotheque.html#theme:NomDuTheme ouvre directement ce thème (ex. depuis Éco).
+//  - bibliotheque.html#Terme-Avec-Tirets (recherche globale, notion du jour du
+//    tableau de bord) ouvre le bon thème et déplie la notion visée.
 if(location.hash){
-  const rawHash = location.hash.slice(1);
-  const item = LIBRARY.find(l => l.terme.replace(/\s+/g,'-') === rawHash);
-  if(item){
-    currentTheme = item.categorie;
-    renderKnowledgeTree();
-    setTimeout(() => {
-      const el = document.getElementById(`leaf-${item.terme.replace(/\s+/g,'-')}`);
-      if(el){ el.classList.add('open'); el.scrollIntoView({behavior:'smooth', block:'start'}); }
-    }, 50);
+  const rawHash = decodeURIComponent(location.hash.slice(1));
+  if(rawHash.startsWith('theme:')){
+    const wantedTheme = rawHash.slice('theme:'.length);
+    if(LIBRARY.some(l => l.categorie === wantedTheme)){
+      currentTheme = wantedTheme;
+      renderKnowledgeTree();
+    }
+  } else {
+    const item = LIBRARY.find(l => l.terme.replace(/\s+/g,'-') === rawHash);
+    if(item){
+      currentTheme = item.categorie;
+      renderKnowledgeTree();
+      setTimeout(() => {
+        const el = document.getElementById(`leaf-${item.terme.replace(/\s+/g,'-')}`);
+        if(el){ el.classList.add('open'); el.scrollIntoView({behavior:'smooth', block:'start'}); }
+      }, 50);
+    }
   }
 }

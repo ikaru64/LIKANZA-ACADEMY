@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Comparateur de décisions · Likanza Academy</title>
-<meta name="description" content="Compare de vraies décisions financières du quotidien : payer cash ou à crédit en investissant à côté, rembourser par anticipation ou investir.">
+<title>Éco · Likanza Academy</title>
+<meta name="description" content="Économie, entreprise et immobilier : indicateurs de marché en direct, actualité économique et notions clés réunis au même endroit.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -19,12 +19,12 @@
   <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
   <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
-  <a href="outils.html" class="active"><span class="icon" data-icon="calculator"></span><span>Simulateurs</span></a>
+  <a href="outils.html"><span class="icon" data-icon="calculator"></span><span>Simulateurs</span></a>
   <a href="play.html"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
   <span class="sidebar-group-label">Marchés</span>
   <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
   <a href="crypto.html"><span class="icon" data-icon="bitcoin"></span><span>Crypto</span></a>
-  <a href="eco.html"><span class="icon" data-icon="landmark"></span><span>Éco</span></a>
+  <a href="eco.html" class="active"><span class="icon" data-icon="landmark"></span><span>Éco</span></a>
   <a href="finances-personnelles.html"><span class="icon" data-icon="wallet"></span><span>Finances perso</span></a>
   <span class="sidebar-group-label">Compte</span>
   <a href="compte.html"><span class="icon" data-icon="trophy"></span><span>Mon compte</span></a>
@@ -74,49 +74,83 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / <a href="outils.html">Simulateurs</a> / Comparateur de décisions</div>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / Éco</div>
 
 <section class="section" style="padding-bottom:0;">
-  <div class="section-head"><h2>Comparateur de décisions</h2><span class="meta-line">de vraies questions, des vrais calculs</span></div>
+  <div class="section-head"><h2>Éco</h2><span class="meta-line">économie, entreprise &amp; immobilier</span></div>
   <div class="card" style="max-width:720px;">
-    <p style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;font-style:italic;line-height:1.5;">« Payer cash ou à crédit ? Rembourser ou investir ? Deux décisions concrètes, chiffrées à partir de tes propres hypothèses. »</p>
+    <p style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;font-style:italic;line-height:1.5;">« L'économie, ce n'est pas que des graphiques : c'est ce qui se passe dans ton quartier, ton entreprise, ta banque. »</p>
   </div>
 </section>
 
 <section class="section">
-  <div class="section-head"><h2>Payer cash ou à crédit + investir ?</h2><span class="meta-line">ex. une voiture, des travaux...</span></div>
-  <div class="card" style="max-width:720px;">
-    <div id="cashVsCredit"></div>
+  <div class="section-head"><h2>Indicateurs en direct</h2><span class="meta-line" id="ecoIndicatorsMeta">cotations différées, jamais temps réel</span></div>
+  <div class="panel" style="max-width:720px;">
+    <div id="ecoIndicators"></div>
   </div>
 </section>
 
 <section class="section">
-  <div class="section-head"><h2>Rembourser par anticipation ou investir ?</h2><span class="meta-line">une somme disponible, deux usages possibles</span></div>
-  <div class="card" style="max-width:720px;">
-    <div id="prepayVsInvest"></div>
+  <div class="section-head"><h2>Actualité économique</h2><span class="meta-line">synthèse hebdomadaire</span></div>
+  <div class="card" style="max-width:720px;" id="ecoNewsCard"></div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Explorer</h2><span class="meta-line">immobilier, entreprise, économie</span></div>
+  <div class="card-grid">
+    <a href="immobilier.html" class="card play-tile">
+      <span class="icon" data-icon="building-2" style="color:var(--gold-bright);"></span>
+      <h3 style="font-size:16px;margin-top:10px;">Immobilier</h3>
+      <p>Rendement locatif, crédit, simulateurs dédiés.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
+    </a>
+    <a href="bibliotheque.html#theme:Entreprise" class="card play-tile">
+      <span class="icon" data-icon="briefcase" style="color:var(--gold-bright);"></span>
+      <h3 style="font-size:16px;margin-top:10px;">Entreprise</h3>
+      <p>Chiffre d'affaires, marge, bilan, startup, levée de fonds...</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
+    </a>
+    <a href="bibliotheque.html#theme:%C3%89conomie" class="card play-tile">
+      <span class="icon" data-icon="landmark" style="color:var(--gold-bright);"></span>
+      <h3 style="font-size:16px;margin-top:10px;">Économie</h3>
+      <p>PIB, inflation, taux directeur, récession, offre et demande...</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
+    </a>
+    <a href="cours.html#entreprise-essentiels" class="card play-tile">
+      <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
+      <h3 style="font-size:16px;margin-top:10px;">Cours : Comprendre l'entreprise</h3>
+      <p>Lecture + quiz de validation.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
+    </a>
+    <a href="cours.html#economie-generale" class="card play-tile">
+      <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
+      <h3 style="font-size:16px;margin-top:10px;">Cours : Comprendre l'économie</h3>
+      <p>Lecture + quiz de validation.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
+    </a>
   </div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
-    <div><h4>Explorer</h4><ul><li><a href="outils.html">Tous les simulateurs</a></li><li><a href="eco.html">Éco</a></li></ul></div>
+    <div><h4>Explorer</h4><ul><li><a href="immobilier.html">Immobilier</a></li><li><a href="bourse.html">Bourse</a></li></ul></div>
     <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Academy</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
-  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Investir comporte un risque de perte en capital.</span></div>
+  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
 </footer>
 
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
-<script src="scripts/pages/comparateur-decisions.js"></script>
+<script src="scripts/pages/eco.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
   <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
   <a href="defis.html"><span class="icon" data-icon="swords"></span>Défis</a>
-  <a href="outils.html" class="active"><span class="icon" data-icon="calculator"></span>Simuler</a>
+  <a href="outils.html"><span class="icon" data-icon="calculator"></span>Simuler</a>
   <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>
 </nav>
 </body>
