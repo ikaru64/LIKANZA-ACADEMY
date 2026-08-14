@@ -1596,6 +1596,27 @@ function renderCoursTiles(elId){
 // Rendu complet d'un seul cours (lecture + quiz) — utilisé par cours.html.
 // onComplete (optionnel) est appelé une fois, la première fois que le quiz
 // est réussi, pour laisser la page appelante mettre à jour son propre titre.
+// Répartit une liste de notions en au plus maxPages pages à peu près égales
+// (une notion isolée reste seule sur sa page, jamais étirée artificiellement).
+function paginateCoursTerms(items, maxPages){
+  maxPages = maxPages || 3;
+  const pageCount = Math.max(1, Math.min(maxPages, items.length || 1));
+  if(pageCount <= 1) return [items];
+  const base = Math.floor(items.length / pageCount);
+  const remainder = items.length - base*pageCount;
+  const pages = [];
+  let idx = 0;
+  for(let p=0; p<pageCount; p++){
+    const size = base + (p < remainder ? 1 : 0);
+    pages.push(items.slice(idx, idx+size));
+    idx += size;
+  }
+  return pages;
+}
+
+// Lecture découpée en 2-3 écrans courts (bouton "Suivant") avant le quiz de
+// validation, plutôt qu'un seul bloc de texte — plus digeste, surtout pour
+// les cours qui regroupent plusieurs notions.
 function renderCoursDetail(elId, coursId, onComplete){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -1604,26 +1625,43 @@ function renderCoursDetail(elId, coursId, onComplete){
     el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Cours introuvable. <a href="formations.html" style="color:var(--gold-bright);">Retour à l'Academy</a>.</p>`;
     return;
   }
-  const progress = getCoursProgress();
-  const done = !!progress[cours.id];
-  const readingHtml = cours.libraryTermes.map(terme=>{
-    const item = LIBRARY.find(l=>l.terme===terme);
-    if(!item) return '';
-    return `<div class="mission-chapter"><h5>${item.terme}</h5><p>${item.simple}</p><p>${item.detail}</p></div>`;
-  }).join('');
+  const termItems = cours.libraryTermes.map(t=>LIBRARY.find(l=>l.terme===t)).filter(Boolean);
+  const pages = paginateCoursTerms(termItems, 3);
+  let pageIndex = 0;
 
-  el.innerHTML = `
-    ${readingHtml}
-    <div class="mission-question">
-      <p class="mission-q-prompt">${done ? "Cours validé — retente le quiz quand tu veux, en révision." : "Une fois la lecture terminée, valide le quiz pour gagner des points."}</p>
-      <div id="${elId}-quiz"></div>
-      <button class="btn btn-sm btn-gold" id="${elId}-start">${done ? 'Revoir le quiz' : 'Commencer le quiz'}</button>
-    </div>`;
+  function renderReadingPage(){
+    const items = pages[pageIndex] || [];
+    const isLast = pageIndex === pages.length - 1;
+    const pct = pages.length ? Math.round(((pageIndex+1)/pages.length)*100) : 100;
+    el.innerHTML = `
+      <div class="mono" style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Lecture ${pageIndex+1} / ${pages.length}</div>
+      <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+      ${items.map(item=>`<div class="mission-chapter"><h5>${item.terme}</h5><p>${item.simple}</p><p>${item.detail}</p></div>`).join('')}
+      <button class="btn btn-sm btn-gold" id="${elId}-next">${isLast ? 'Passer au quiz →' : 'Suivant →'}</button>`;
+    document.getElementById(`${elId}-next`).addEventListener('click', ()=>{
+      if(isLast){ renderQuizStep(); }
+      else { pageIndex++; renderReadingPage(); }
+    });
+  }
 
-  document.getElementById(`${elId}-start`).addEventListener('click', function(){
-    this.style.display = 'none';
-    renderCoursQuiz(`${elId}-quiz`, cours, onComplete);
-  });
+  function renderQuizStep(){
+    const progress = getCoursProgress();
+    const done = !!progress[cours.id];
+    el.innerHTML = `
+      <div class="mission-question">
+        <p class="mission-q-prompt">${done ? "Cours validé — retente le quiz quand tu veux, en révision." : "Lecture terminée : valide le quiz pour gagner des points."}</p>
+        <div id="${elId}-quiz"></div>
+        <button class="btn btn-sm btn-gold" id="${elId}-start">${done ? 'Revoir le quiz' : 'Commencer le quiz'}</button>
+      </div>
+      <button class="btn btn-sm" id="${elId}-back" style="margin-top:12px;">← Revoir la lecture</button>`;
+    document.getElementById(`${elId}-start`).addEventListener('click', function(){
+      this.style.display = 'none';
+      renderCoursQuiz(`${elId}-quiz`, cours, onComplete);
+    });
+    document.getElementById(`${elId}-back`).addEventListener('click', ()=>{ pageIndex = 0; renderReadingPage(); });
+  }
+
+  renderReadingPage();
 }
 
 function renderCoursQuiz(elId, cours, onComplete){
@@ -1699,6 +1737,125 @@ function renderCoursQuiz(elId, cours, onComplete){
   renderQuestion();
 }
 
+// ---------- Missions (formations.html) : story + question, par niveau ----------
+// Contenu dans COURSES (app.js). Comme pour les cours, les missions sont
+// présentées en tuiles cliquables sur formations.html plutôt qu'en accordéon
+// — chaque tuile ouvre sa mission complète sur mission.html#niveau-index.
+function getMissionProgress(){ return safeGetJSON('fzr-progress', {}); }
+
+function renderMissionTiles(elId, level){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const progress = getMissionProgress();
+  const mods = COURSES[level] || [];
+  el.innerHTML = `<div class="card-grid">${mods.map((c,i)=>{
+    const done = !!progress[level+'-'+i];
+    return `
+    <a href="mission.html#${level}-${i}" class="card play-tile">
+      <span class="icon" data-icon="target" style="color:var(--gold-bright);"></span>
+      <h3 style="font-size:16px;margin-top:10px;">${done ? ICONS.check + ' ' : ''}${c.title}</h3>
+      <p>Mission ${String(i+1).padStart(2,'0')} · ${c.story.length} étape${c.story.length>1?'s':''} de lecture</p>
+      <div class="card-footer"><span class="badge ${done ? 'status-reel' : 'status-differe'}">${done ? 'Terminée' : 'À faire'}</span><span>Ouvrir →</span></div>
+    </a>`;
+  }).join('')}</div>`;
+}
+
+// onLevelComplete (optionnel) n'est appelé qu'une fois, la première fois que
+// la dernière mission d'un niveau vient d'être validée.
+function completeMission(level, index, onLevelComplete){
+  const progress = getMissionProgress();
+  const key = level+'-'+index;
+  if(progress[key]) return;
+  progress[key] = true;
+  safeSetJSON('fzr-progress', progress);
+  const mods = COURSES[level] || [];
+  const doneCount = mods.filter((c,i)=>progress[level+'-'+i]).length;
+  const levelJustCompleted = doneCount === mods.length;
+  awardXP(30, {moduleCompleted:true, levelJustCompleted});
+  if(levelJustCompleted && typeof onLevelComplete === 'function') onLevelComplete();
+}
+
+// Rendu complet d'une seule mission (lecture + question) — utilisé par mission.html.
+function renderMissionDetail(elId, level, index, onComplete){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const mods = COURSES[level] || [];
+  const c = mods[index];
+  if(!c){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Mission introuvable. <a href="formations.html" style="color:var(--gold-bright);">Retour à l'Academy</a>.</p>`;
+    return;
+  }
+  const key = level+'-'+index;
+  const progress = getMissionProgress();
+  const done = !!progress[key];
+  const q = c.question;
+  const storyHtml = c.story.map(ch=>`<div class="mission-chapter"><h5>${ch.heading}</h5><p>${ch.text}</p></div>`).join('');
+
+  let questionHtml;
+  if(done){
+    questionHtml = `
+      <div class="mission-question">
+        <p class="mission-q-prompt">${q.prompt}</p>
+        <p class="mission-solved">${ICONS.check} Mission validée : ${q.explication}</p>
+      </div>`;
+  } else if(q.type === 'calcul'){
+    questionHtml = `
+      <div class="mission-question">
+        <p class="mission-q-prompt">${q.prompt}</p>
+        <div class="field" style="max-width:260px;">
+          <input type="number" step="any" id="${elId}-input" placeholder="Ta réponse${q.unit ? ' ('+q.unit+')' : ''}">
+        </div>
+        <button class="btn btn-sm btn-gold" id="${elId}-check">Vérifier</button>
+        <p class="mission-feedback" id="${elId}-feedback"></p>
+      </div>`;
+  } else {
+    questionHtml = `
+      <div class="mission-question">
+        <p class="mission-q-prompt">${q.prompt}</p>
+        <div class="mission-choices" id="${elId}-choices">
+          ${q.choix.map((opt,oi)=>`<button class="pill" style="text-align:left;display:block;width:100%;margin-bottom:6px;" data-choice="${oi}">${opt}</button>`).join('')}
+        </div>
+        <p class="mission-feedback" id="${elId}-feedback"></p>
+      </div>`;
+  }
+
+  el.innerHTML = storyHtml + questionHtml;
+  if(done) return;
+
+  const feedback = document.getElementById(`${elId}-feedback`);
+  if(q.type === 'calcul'){
+    const btn = document.getElementById(`${elId}-check`);
+    const input = document.getElementById(`${elId}-input`);
+    const check = ()=>{
+      const val = parseFloat(input.value);
+      if(isNaN(val)){ feedback.textContent = "Entre un nombre avant de vérifier."; feedback.style.color = 'var(--text-dim)'; return; }
+      if(Math.abs(val - q.reponse) <= q.tolerance){
+        completeMission(level, index, onComplete);
+        renderMissionDetail(elId, level, index, onComplete);
+      } else {
+        feedback.textContent = `Pas tout à fait : ${q.explication}`;
+        feedback.style.color = 'var(--bordeaux)';
+      }
+    };
+    btn.addEventListener('click', check);
+    input.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') check(); });
+  } else {
+    const choicesEl = document.getElementById(`${elId}-choices`);
+    Array.from(choicesEl.children).forEach((btn, oi)=>{
+      btn.addEventListener('click', ()=>{
+        if(oi === q.bonneReponse){
+          completeMission(level, index, onComplete);
+          renderMissionDetail(elId, level, index, onComplete);
+        } else {
+          btn.style.borderColor = 'var(--bordeaux)';
+          feedback.textContent = q.explication;
+          feedback.style.color = 'var(--bordeaux)';
+        }
+      });
+    });
+  }
+}
+
 // ---------- Graphique en barres générique ----------
 function renderBarChart(chartId, labelsId, series, years){
   const chart = document.getElementById(chartId);
@@ -1744,6 +1901,134 @@ function borrowingCapacity(monthlyPayment, rateAnnual, years){
   const n = years*12;
   if(rm === 0) return monthlyPayment*n;
   return monthlyPayment * (1 - Math.pow(1+rm, -n)) / rm;
+}
+
+// ---------- Comparateur de décisions : achat cash ou à crédit + investir ----------
+// Compare deux façons de financer le même achat sur la même durée, avec le même
+// effort d'épargne mensuel total dans les deux cas (mêmes formules que le
+// simulateur d'intérêts composés et le calcul de mensualité déjà utilisés
+// ailleurs — aucune nouvelle hypothèse, juste une mise en regard) :
+//  - "Cash" : on paie comptant, puis on investit chaque mois l'équivalent de
+//    la mensualité qu'on aurait payée à la banque.
+//  - "Crédit" : on emprunte, on investit tout de suite la somme non dépensée,
+//    et la mensualité part rembourser la banque plutôt qu'être investie.
+function computeCashVsCreditComparison(price, creditRate, investRate, years){
+  const monthlyPayment = loanMonthlyPayment(price, creditRate, years);
+  const cashSeries = compoundSeries(0, monthlyPayment, investRate, years);
+  const creditSeries = compoundSeries(price, 0, investRate, years);
+  const totalRepaid = monthlyPayment * years * 12;
+  return {
+    monthlyPayment,
+    totalRepaid,
+    totalInterest: totalRepaid - price,
+    cashSeries,
+    creditSeries,
+    cashFinalValue: cashSeries[cashSeries.length-1],
+    creditFinalValue: creditSeries[creditSeries.length-1]
+  };
+}
+
+// ---------- Comparateur de décisions : rembourser par anticipation ou investir ----------
+// Une somme disponible peut soit réduire un crédit existant (gain "garanti"
+// équivalent au taux du crédit, puisque c'est un intérêt qu'on cesse de payer),
+// soit être investie (rendement supposé, jamais garanti). Comparaison purement
+// arithmétique à partir des hypothèses saisies par l'utilisateur.
+function computePrepayVsInvestComparison(amount, creditRate, investRate, years){
+  const prepaySeries = [];
+  const investSeries = [];
+  for(let y=0;y<=years;y++){
+    prepaySeries.push(amount * Math.pow(1+creditRate/100, y));
+    investSeries.push(amount * Math.pow(1+investRate/100, y));
+  }
+  return {
+    prepaySeries,
+    investSeries,
+    prepayFinalValue: prepaySeries[prepaySeries.length-1],
+    investFinalValue: investSeries[investSeries.length-1]
+  };
+}
+
+function renderCashVsCreditTool(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px;">Un même achat, deux façons de le financer sur la même durée : payer comptant puis investir chaque mois l'équivalent de la mensualité que tu aurais payée à la banque, ou emprunter et investir tout de suite la somme non dépensée.</p>
+    <div class="slider-row field"><label>Prix de l'achat <span class="v mono" id="${elId}-price-v">15 000 €</span></label><input type="range" id="${elId}-price" min="1000" max="60000" step="500" value="15000"></div>
+    <div class="slider-row field"><label>Taux du crédit <span class="v mono" id="${elId}-creditrate-v">4 %</span></label><input type="range" id="${elId}-creditrate" min="0" max="12" step="0.1" value="4"></div>
+    <div class="slider-row field"><label>Rendement d'investissement espéré <span class="v mono" id="${elId}-investrate-v">6 %</span></label><input type="range" id="${elId}-investrate" min="0" max="12" step="0.1" value="6"></div>
+    <div class="slider-row field"><label>Durée <span class="v mono" id="${elId}-years-v">7 ans</span></label><input type="range" id="${elId}-years" min="1" max="25" step="1" value="7"></div>
+    <div class="result-row" style="margin-top:4px;"><span>Mensualité du crédit : <strong id="${elId}-monthly">—</strong></span><span>Coût total du crédit (intérêts) : <strong id="${elId}-interest">—</strong></span></div>
+    <div class="card-grid" style="margin:16px 0;">
+      <div class="card"><span class="smallcaps">Cash + investir la mensualité</span><div class="result-big" style="font-size:26px;margin-top:6px;" id="${elId}-cash-final">—</div></div>
+      <div class="card"><span class="smallcaps">Crédit + investir le capital</span><div class="result-big" style="font-size:26px;margin-top:6px;" id="${elId}-credit-final">—</div></div>
+    </div>
+    <p style="font-size:13.5px;margin-bottom:12px;" id="${elId}-verdict"></p>
+    <div class="pattern-chart"><div id="${elId}-chart"></div></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin:10px 0 4px;font-size:12px;color:var(--text-dim);">
+      <span><span style="display:inline-block;width:10px;height:2px;background:var(--gold-bright);margin-right:6px;vertical-align:middle;"></span>Cash + investir la mensualité</span>
+      <span><span style="display:inline-block;width:10px;height:2px;background:var(--text-dim);margin-right:6px;vertical-align:middle;"></span>Crédit + investir le capital</span>
+    </div>
+    <p class="disclaimer-box">Le taux du crédit est contractuel : une fois signé, il ne bouge pas. Le rendement d'investissement est une hypothèse que tu choisis toi-même : il n'est jamais garanti, peut être négatif certaines années, et les marchés réels restent imprévisibles. Ce comparateur applique tes hypothèses à une formule mathématique standard — ce n'est ni une prédiction, ni un conseil personnalisé.</p>`;
+
+  function update(){
+    const price = +document.getElementById(`${elId}-price`).value;
+    const creditRate = +document.getElementById(`${elId}-creditrate`).value;
+    const investRate = +document.getElementById(`${elId}-investrate`).value;
+    const years = +document.getElementById(`${elId}-years`).value;
+    document.getElementById(`${elId}-price-v`).textContent = fmtEUR(price);
+    document.getElementById(`${elId}-creditrate-v`).textContent = creditRate + ' %';
+    document.getElementById(`${elId}-investrate-v`).textContent = investRate + ' %';
+    document.getElementById(`${elId}-years-v`).textContent = years + ' an' + (years>1?'s':'');
+
+    const r = computeCashVsCreditComparison(price, creditRate, investRate, years);
+    const better = r.creditFinalValue >= r.cashFinalValue;
+    document.getElementById(`${elId}-monthly`).textContent = fmtEUR(r.monthlyPayment) + ' / mois';
+    document.getElementById(`${elId}-interest`).textContent = fmtEUR(r.totalInterest);
+    document.getElementById(`${elId}-cash-final`).textContent = fmtEUR(r.cashFinalValue);
+    document.getElementById(`${elId}-credit-final`).textContent = fmtEUR(r.creditFinalValue);
+    document.getElementById(`${elId}-verdict`).innerHTML = `Avec ces hypothèses, sur ${years} an${years>1?'s':''}, le scénario <strong>${better ? 'crédit + investir le capital' : 'cash + investir la mensualité'}</strong> aboutit à un patrimoine final plus élevé de ${fmtEUR(Math.abs(r.creditFinalValue - r.cashFinalValue))}.`;
+    document.getElementById(`${elId}-chart`).innerHTML = renderPortfolioBacktestChart(r.cashSeries, r.creditSeries);
+  }
+
+  el.querySelectorAll('input[type="range"]').forEach(inp => inp.addEventListener('input', update));
+  update();
+}
+
+function renderPrepayVsInvestTool(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px;">Tu as une somme disponible : la mettre sur ton crédit en cours réduit les intérêts que tu paies (gain garanti, contractuel), ou tu peux l'investir (rendement supposé, jamais garanti).</p>
+    <div class="slider-row field"><label>Somme disponible <span class="v mono" id="${elId}-amount-v">5 000 €</span></label><input type="range" id="${elId}-amount" min="500" max="30000" step="500" value="5000"></div>
+    <div class="slider-row field"><label>Taux du crédit en cours <span class="v mono" id="${elId}-creditrate-v">4 %</span></label><input type="range" id="${elId}-creditrate" min="0" max="12" step="0.1" value="4"></div>
+    <div class="slider-row field"><label>Rendement d'investissement espéré <span class="v mono" id="${elId}-investrate-v">6 %</span></label><input type="range" id="${elId}-investrate" min="0" max="12" step="0.1" value="6"></div>
+    <div class="slider-row field"><label>Durée restante du crédit <span class="v mono" id="${elId}-years-v">10 ans</span></label><input type="range" id="${elId}-years" min="1" max="25" step="1" value="10"></div>
+    <div class="card-grid" style="margin:16px 0;">
+      <div class="card"><span class="smallcaps">Rembourser par anticipation</span><div class="result-big" style="font-size:26px;margin-top:6px;" id="${elId}-prepay-final">—</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">Gain garanti (contractuel)</p></div>
+      <div class="card"><span class="smallcaps">Investir la somme</span><div class="result-big" style="font-size:26px;margin-top:6px;" id="${elId}-invest-final">—</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">Rendement non garanti</p></div>
+    </div>
+    <p style="font-size:13.5px;margin-bottom:12px;" id="${elId}-verdict"></p>
+    <p class="disclaimer-box">Rembourser par anticipation procure un gain certain, équivalent au taux de ton crédit. Investir peut rapporter davantage, mais sans aucune garantie : le rendement réel peut être inférieur à l'hypothèse choisie, voire négatif. Ce comparateur applique tes hypothèses à une formule mathématique standard — ce n'est ni une prédiction, ni un conseil personnalisé.</p>`;
+
+  function update(){
+    const amount = +document.getElementById(`${elId}-amount`).value;
+    const creditRate = +document.getElementById(`${elId}-creditrate`).value;
+    const investRate = +document.getElementById(`${elId}-investrate`).value;
+    const years = +document.getElementById(`${elId}-years`).value;
+    document.getElementById(`${elId}-amount-v`).textContent = fmtEUR(amount);
+    document.getElementById(`${elId}-creditrate-v`).textContent = creditRate + ' %';
+    document.getElementById(`${elId}-investrate-v`).textContent = investRate + ' %';
+    document.getElementById(`${elId}-years-v`).textContent = years + ' an' + (years>1?'s':'');
+
+    const r = computePrepayVsInvestComparison(amount, creditRate, investRate, years);
+    const better = r.investFinalValue >= r.prepayFinalValue;
+    document.getElementById(`${elId}-prepay-final`).textContent = fmtEUR(r.prepayFinalValue);
+    document.getElementById(`${elId}-invest-final`).textContent = fmtEUR(r.investFinalValue);
+    document.getElementById(`${elId}-verdict`).innerHTML = `Avec ces hypothèses, sur ${years} an${years>1?'s':''}, ${better ? "investir aboutit à un montant plus élevé" : "rembourser par anticipation aboutit à un gain plus élevé"} de ${fmtEUR(Math.abs(r.investFinalValue - r.prepayFinalValue))}${better ? ", mais sans la garantie du remboursement" : ""}.`;
+  }
+
+  el.querySelectorAll('input[type="range"]').forEach(inp => inp.addEventListener('input', update));
+  update();
 }
 
 // ---------- Apparition en fondu au scroll ----------
