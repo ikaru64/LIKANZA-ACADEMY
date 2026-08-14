@@ -102,21 +102,22 @@ function renderMistakesSection(){
   const section = document.getElementById('mistakesSection');
   const listEl = document.getElementById('mistakesList');
   if(!section || !listEl) return;
-  const unresolved = getMistakes()
+  const allUnresolved = getMistakes()
     .filter(m=>!m.resolved)
-    .sort((a,b)=> new Date(a.firstMissedAt) - new Date(b.firstMissedAt))
-    .slice(0, 3);
-  if(unresolved.length === 0){
+    .sort((a,b)=> new Date(a.firstMissedAt) - new Date(b.firstMissedAt));
+  if(allUnresolved.length === 0){
     section.style.display = 'none';
     return;
   }
   section.style.display = '';
-  listEl.innerHTML = unresolved.map(m => `
+  const shown = allUnresolved.slice(0, 3);
+  listEl.innerHTML = shown.map(m => `
     <div class="today-block" style="margin-bottom:10px;">
       <h4>${m.categorie}</h4>
       <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">${m.question}</p>
       <a href="defis.html?cat=${encodeURIComponent(m.categorie)}" class="today-link">Réviser cette notion →</a>
-    </div>`).join('');
+    </div>`).join('')
+    + (allUnresolved.length > shown.length ? `<a href="revisions.html" class="today-link">Voir toutes mes notions à revoir (${allUnresolved.length}) →</a>` : `<a href="revisions.html" class="today-link">Voir le détail →</a>`);
 }
 
 initParcours();

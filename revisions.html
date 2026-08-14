@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Formations · Likanza Academy</title>
-<meta name="description" content="Parcours de formation par niveau : débutant, intermédiaire, avancé, expert. Progression sauvegardée sur cet appareil.">
+<title>Révisions · Likanza Academy</title>
+<meta name="description" content="Toutes tes notions à revoir, basées sur tes erreurs de quiz, et ta maîtrise par thème.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -16,8 +16,8 @@
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
   <span class="sidebar-group-label">Apprendre</span>
   <a href="defis.html"><span class="icon" data-icon="target"></span><span>Défis</span></a>
-  <a href="formations.html" class="active"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
-  <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
+  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
+  <a href="parcours.html" class="active"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
   <a href="outils.html"><span class="icon" data-icon="calculator"></span><span>Simulateurs</span></a>
   <a href="play.html"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
@@ -74,49 +74,23 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Formations</div>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / <a href="parcours.html">Mon parcours</a> / Révisions</div>
 
-<section class="section" id="test-niveau">
-  <div class="level-box">
-    <div>
-      <h3 class="display" style="font-size:22px;font-weight:600;margin-bottom:4px;">Quel est ton niveau ?</h3>
-      <p style="font-size:13.5px;color:var(--text-dim);">Choisis directement, ou lance le test rapide ci-dessous. Mémorisé sur cet appareil.</p>
-    </div>
-    <div class="level-pills" style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="pill" data-lvl="debutant">Débutant</button>
-      <button class="pill" data-lvl="intermediaire">Intermédiaire</button>
-      <button class="pill" data-lvl="avance">Avancé</button>
-      <button class="pill" data-lvl="expert">Expert</button>
-    </div>
-  </div>
+<section class="section">
+  <div class="section-head"><h2>Notions à revoir</h2><span class="meta-line" id="revisionsCount"></span></div>
+  <div id="revisionsList"></div>
 </section>
 
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Missions · <span id="levelLabel"></span></h2><span class="meta-line" id="progressLabel"></span></div>
-  <div id="formationsConseil" style="margin-bottom:14px;"></div>
-  <div class="course-list" id="courseList"></div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Cours</h2><span class="meta-line">lecture + quiz de validation</span></div>
-  <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;max-width:70ch;">Lis un cours, puis valide-le avec son quiz : les points ne sont attribués qu'une fois le quiz réussi (60% de bonnes réponses minimum).</p>
-  <div id="coursList"></div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="card" style="max-width:640px;background:var(--bg-alt);border:1px solid var(--hairline);">
-    <span class="smallcaps">Envie de tester tes connaissances ?</span>
-    <h3 style="margin:8px 0 10px;">Rejoins les Défis</h3>
-    <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions réparties sur 23 thèmes.</p>
-    <a href="defis.html" class="btn btn-sm btn-gold">Ouvrir les Défis →</a>
-  </div>
+<section class="section">
+  <div class="section-head"><h2>Maîtrise par thème</h2><span class="meta-line">basé sur tes quiz (Défis, Vrai ou faux, Cours)</span></div>
+  <div id="masteryList"></div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
-    <div><h4>Explorer</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="outils.html">Outils</a></li></ul></div>
-    <div><h4>Apprendre</h4><ul><li><a href="bourse.html">Bourse</a></li><li><a href="crypto.html">Crypto</a></li></ul></div>
+    <div><h4>Apprendre</h4><ul><li><a href="formations.html">Academy</a></li><li><a href="bibliotheque.html">Bibliothèque</a></li></ul></div>
+    <div><h4>Jouer</h4><ul><li><a href="play.html">Play</a></li><li><a href="defis.html">Défis</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
   <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
@@ -125,11 +99,11 @@
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
-<script src="scripts/pages/formations.js"></script>
+<script src="scripts/pages/revisions.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
-  <a href="formations.html" class="active"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
+  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
   <a href="defis.html"><span class="icon" data-icon="swords"></span>Défis</a>
   <a href="outils.html"><span class="icon" data-icon="calculator"></span>Simuler</a>
   <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>

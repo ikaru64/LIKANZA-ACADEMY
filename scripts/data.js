@@ -871,6 +871,51 @@ function resolveMistake(questionId){
   checkBadges(getGamification(), {mistakeResolved: true, totalResolved});
 }
 
+// ---------- Révisions (revisions.html) : vue complète des erreurs non
+// résolues + maîtrise par thème, à partir des mêmes données que le bloc
+// "Notions à revoir" de Mon parcours (juste non tronqué à 3 éléments). ----------
+function renderRevisionsList(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const unresolved = getMistakes()
+    .filter(m=>!m.resolved)
+    .sort((a,b)=> b.misses - a.misses || new Date(a.firstMissedAt) - new Date(b.firstMissedAt));
+
+  if(unresolved.length === 0){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Aucune notion en attente de révision pour le moment : continue comme ça !</p>`;
+    return;
+  }
+
+  el.innerHTML = `<div class="course-list">${unresolved.map(m=>`
+    <div class="course-item">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:14px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:220px;">
+          <span class="smallcaps">${m.categorie}</span>
+          <p style="font-size:14px;margin-top:6px;">${m.question}</p>
+          <p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">Ratée ${m.misses} fois · depuis le ${new Date(m.firstMissedAt).toLocaleDateString('fr-FR')}</p>
+        </div>
+        <a href="defis.html?cat=${encodeURIComponent(m.categorie)}" class="btn btn-sm btn-gold" style="white-space:nowrap;">Réviser →</a>
+      </div>
+    </div>`).join('')}</div>`;
+}
+
+function renderMasteryList(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const mastery = getSkillMastery();
+  if(mastery.length === 0){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Réponds à quelques quiz (Défis, Vrai ou faux, Cours) pour voir apparaître ta maîtrise par thème ici.</p>`;
+    return;
+  }
+  const colorFor = niveau => niveau==='maîtrisé' ? 'var(--emerald)' : niveau==='faible' ? 'var(--bordeaux)' : 'var(--gold-bright)';
+  el.innerHTML = `<div class="card-grid">${mastery.map(s=>`
+    <div class="card">
+      <span class="smallcaps">${s.categorie}</span>
+      <div class="result-big" style="font-size:26px;margin-top:8px;color:${colorFor(s.niveau)};">${s.pct}%</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${s.correct}/${s.total} bonnes réponses · ${s.niveau}</p>
+    </div>`).join('')}</div>`;
+}
+
 // ---------- Sélection des questions ----------
 function selectQuizQuestions(level, categorie, length){
   let pool = QUIZ_BANK_FULL.slice();
@@ -1529,47 +1574,59 @@ function renderPortfolioGame(elId){
 const COURS_PASS_THRESHOLD = 0.6;
 function getCoursProgress(){ return safeGetJSON('fzr-cours-progress', {}); }
 
-function renderCoursList(elId){
+// Grille de tuiles cliquables (page Academy) — chaque tuile ouvre le cours
+// complet sur sa propre page (cours.html#id) plutôt que de tout dérouler en
+// accordéon sur la même page, pour éviter un scroll interminable.
+function renderCoursTiles(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const progress = getCoursProgress();
-  el.innerHTML = COURS_CATALOG.map(cours=>{
+  el.innerHTML = `<div class="card-grid">${COURS_CATALOG.map(cours=>{
     const done = !!progress[cours.id];
-    const readingHtml = cours.libraryTermes.map(terme=>{
-      const item = LIBRARY.find(l=>l.terme===terme);
-      if(!item) return '';
-      return `<div class="mission-chapter"><h5>${item.terme}</h5><p>${item.simple}</p><p>${item.detail}</p></div>`;
-    }).join('');
     return `
-    <div class="course-item">
-      <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
-        <h4>${done ? ICONS.check + ' ' : ''}${cours.titre}</h4>
-        <span class="idx">${cours.niveau}</span>
-      </div>
-      <div class="course-body">
-        <div class="course-body-inner">
-          ${readingHtml}
-          <div class="mission-question">
-            <p class="mission-q-prompt">${done ? "Cours validé — retente le quiz quand tu veux, en révision." : "Une fois la lecture terminée, valide le quiz pour gagner des points."}</p>
-            <div id="cours-quiz-${cours.id}"></div>
-            <button class="btn btn-sm btn-gold" id="cours-start-${cours.id}">${done ? 'Revoir le quiz' : 'Commencer le quiz'}</button>
-          </div>
-        </div>
-      </div>
-    </div>`;
+    <a href="cours.html#${encodeURIComponent(cours.id)}" class="card play-tile">
+      <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
+      <h3 style="font-size:16px;margin-top:10px;">${done ? ICONS.check + ' ' : ''}${cours.titre}</h3>
+      <p>${cours.libraryTermes.length} notion${cours.libraryTermes.length>1?'s':''} · lecture + quiz de validation</p>
+      <div class="card-footer"><span class="badge ${done ? 'status-reel' : 'status-differe'}">${done ? 'Validé' : cours.niveau}</span><span>Ouvrir →</span></div>
+    </a>`;
+  }).join('')}</div>`;
+}
+
+// Rendu complet d'un seul cours (lecture + quiz) — utilisé par cours.html.
+// onComplete (optionnel) est appelé une fois, la première fois que le quiz
+// est réussi, pour laisser la page appelante mettre à jour son propre titre.
+function renderCoursDetail(elId, coursId, onComplete){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const cours = COURS_CATALOG.find(c=>c.id===coursId);
+  if(!cours){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Cours introuvable. <a href="formations.html" style="color:var(--gold-bright);">Retour à l'Academy</a>.</p>`;
+    return;
+  }
+  const progress = getCoursProgress();
+  const done = !!progress[cours.id];
+  const readingHtml = cours.libraryTermes.map(terme=>{
+    const item = LIBRARY.find(l=>l.terme===terme);
+    if(!item) return '';
+    return `<div class="mission-chapter"><h5>${item.terme}</h5><p>${item.simple}</p><p>${item.detail}</p></div>`;
   }).join('');
 
-  COURS_CATALOG.forEach(cours=>{
-    const btn = document.getElementById(`cours-start-${cours.id}`);
-    if(!btn) return;
-    btn.addEventListener('click', ()=>{
-      btn.style.display = 'none';
-      renderCoursQuiz(`cours-quiz-${cours.id}`, cours);
-    });
+  el.innerHTML = `
+    ${readingHtml}
+    <div class="mission-question">
+      <p class="mission-q-prompt">${done ? "Cours validé — retente le quiz quand tu veux, en révision." : "Une fois la lecture terminée, valide le quiz pour gagner des points."}</p>
+      <div id="${elId}-quiz"></div>
+      <button class="btn btn-sm btn-gold" id="${elId}-start">${done ? 'Revoir le quiz' : 'Commencer le quiz'}</button>
+    </div>`;
+
+  document.getElementById(`${elId}-start`).addEventListener('click', function(){
+    this.style.display = 'none';
+    renderCoursQuiz(`${elId}-quiz`, cours, onComplete);
   });
 }
 
-function renderCoursQuiz(elId, cours){
+function renderCoursQuiz(elId, cours, onComplete){
   const el = document.getElementById(elId);
   if(!el) return;
   let pool = QUIZ_BANK_FULL.filter(q=>cours.quizCategories.includes(q.categorie));
@@ -1626,9 +1683,7 @@ function renderCoursQuiz(elId, cours){
       safeSetJSON('fzr-cours-progress', progress);
       awardXP(50, {coursCompleted:true});
       rewardMsg = ' · +50 XP · +50 Finance Points';
-      const courseItem = el.closest('.course-item');
-      const h4 = courseItem && courseItem.querySelector('.head h4');
-      if(h4 && !h4.dataset.marked){ h4.innerHTML = ICONS.check + ' ' + h4.innerHTML; h4.dataset.marked = '1'; }
+      if(typeof onComplete === 'function') onComplete();
     } else if(passed && alreadyDone){
       rewardMsg = ' · déjà validé, pas de nouveaux points';
     }
@@ -1638,7 +1693,7 @@ function renderCoursQuiz(elId, cours){
         ${passed ? `Cours validé (${Math.round(pct*100)}%)${rewardMsg}` : `Pas encore validé (${Math.round(pct*100)}%, ${Math.round(COURS_PASS_THRESHOLD*100)}% requis) — relis le cours et réessaie.`}
       </p>
       <button class="btn btn-sm btn-gold" id="${elId}-retry">${passed ? 'Repasser le quiz' : 'Réessayer'}</button>`;
-    document.getElementById(`${elId}-retry`).addEventListener('click', ()=>renderCoursQuiz(elId, cours));
+    document.getElementById(`${elId}-retry`).addEventListener('click', ()=>renderCoursQuiz(elId, cours, onComplete));
   }
 
   renderQuestion();

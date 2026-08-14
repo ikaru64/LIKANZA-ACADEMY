@@ -164,4 +164,4 @@ function renderFormationsConseil(){
 
 refreshLevelUI();
 renderFormationsConseil();
-renderCoursList('coursList');
+renderCoursTiles('coursList');
