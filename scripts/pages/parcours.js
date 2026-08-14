@@ -76,9 +76,8 @@ function renderParcoursPath(){
           <h3 style="font-size:17px;">${m.titre}</h3>
           ${badge}
         </div>
-        <p style="font-size:11.5px;color:var(--text-dim);margin:4px 0 8px;">${m.difficulte} · ${m.duree}${m.lecons ? ' · ' + m.lecons + ' leçons' : ''} · compétence : ${m.competence}</p>
-        <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:8px;">${m.notions.join(' · ')}</p>
-        <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${m.note}</p>
+        <p style="font-size:11.5px;color:var(--text-dim);margin:4px 0 6px;">${m.difficulte} · ${m.duree}${m.lecons ? ' · ' + m.lecons + ' leçons' : ''} · compétence : ${m.competence}</p>
+        <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px;">${m.notions.join(' · ')}</p>
         ${isAvailable ? `<a href="${m.lien}" class="btn btn-sm btn-gold">Ouvrir ce niveau</a>` : `<button class="btn btn-sm" disabled>Bientôt disponible</button>`}
       </div>
     </div>`;
