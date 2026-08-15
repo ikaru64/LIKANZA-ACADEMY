@@ -1856,38 +1856,38 @@ function renderMissionDetail(elId, level, index, onComplete){
   }
 }
 
-// ---------- Éco (eco.html) : widgets réutilisant des données déjà réelles ----------
+// ---------- Business (business.html) : widgets réutilisant des données déjà réelles ----------
 // Aucun de ces widgets ne crée de nouveau système de points ou de progression :
 // tout vient de getGamification/getSkillMastery/getCoursProgress/QUIZ_BANK_FULL,
 // déjà utilisés ailleurs sur le site.
-const ECO_COURS_IDS = ['economie-generale', 'entreprise-essentiels', 'immobilier-locatif'];
-const ECO_QUESTION_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation'];
-const ECO_SKILL_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation', "Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'];
+const BUSINESS_COURS_IDS = ['economie-generale', 'entreprise-essentiels', 'immobilier-locatif'];
+const BUSINESS_QUESTION_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation'];
+const BUSINESS_SKILL_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation', "Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'];
 
-// Bandeau "Reprends où tu t'es arrêté" — masqué si aucun cours Éco n'a encore
-// été commencé (pas de fausse reprise pour un premier visiteur).
-function renderEcoResume(elId){
+// Bandeau "Reprends où tu t'es arrêté" — masqué si aucun cours Business n'a
+// encore été commencé (pas de fausse reprise pour un premier visiteur).
+function renderBusinessResume(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const progress = getCoursProgress();
-  const doneCount = ECO_COURS_IDS.filter(id => progress[id]).length;
+  const doneCount = BUSINESS_COURS_IDS.filter(id => progress[id]).length;
 
   if(doneCount === 0){
     el.style.display = 'none';
     return;
   }
   el.style.display = '';
-  if(doneCount === ECO_COURS_IDS.length){
+  if(doneCount === BUSINESS_COURS_IDS.length){
     el.innerHTML = `
       <span class="smallcaps">Reprends où tu t'es arrêté</span>
-      <p class="eco-resume-text">${ICONS.check} Tu as terminé les 3 cours Éco. Direction les <a href="defis.html" style="color:var(--gold-bright);">Défis</a> ou <a href="revisions.html" style="color:var(--gold-bright);">tes révisions</a> pour aller plus loin.</p>`;
+      <p class="business-resume-text">${ICONS.check} Tu as terminé les 3 cours Business. Direction les <a href="defis.html" style="color:var(--gold-bright);">Défis</a> ou <a href="revisions.html" style="color:var(--gold-bright);">tes révisions</a> pour aller plus loin.</p>`;
     return;
   }
-  const nextId = ECO_COURS_IDS.find(id => !progress[id]);
+  const nextId = BUSINESS_COURS_IDS.find(id => !progress[id]);
   const nextCours = COURS_CATALOG.find(c => c.id === nextId);
   el.innerHTML = `
     <span class="smallcaps">Reprends où tu t'es arrêté</span>
-    <p class="eco-resume-text">${nextCours.titre}</p>
+    <p class="business-resume-text">${nextCours.titre}</p>
     <a href="cours.html#${encodeURIComponent(nextId)}" class="btn btn-sm btn-gold">Continuer →</a>`;
 }
 
@@ -1895,20 +1895,20 @@ function renderEcoResume(elId){
 // "terme du jour" de la Bibliothèque), pool = vraies questions déjà écrites
 // dans QUIZ_BANK_FULL. Réutilise le même mécanisme anti-farming quotidien que
 // Vrai ou faux et les Cours (tryAwardQuizPoints).
-function ecoQuestionPool(){
-  return QUIZ_BANK_FULL.filter(q => ECO_QUESTION_CATEGORIES.includes(q.categorie));
+function businessQuestionPool(){
+  return QUIZ_BANK_FULL.filter(q => BUSINESS_QUESTION_CATEGORIES.includes(q.categorie));
 }
 
-function renderEcoQuestionDuJour(elId){
+function renderBusinessQuestionDuJour(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const pool = ecoQuestionPool();
+  const pool = businessQuestionPool();
   if(pool.length === 0){ el.style.display = 'none'; return; }
   const item = pool[dayOfYear() % pool.length];
 
   el.innerHTML = `
     <span class="smallcaps">Question du jour</span>
-    <p class="eco-question-text">${item.question}</p>
+    <p class="business-question-text">${item.question}</p>
     <div class="vf-buttons" style="grid-template-columns:1fr 1fr;margin-top:12px;">
       ${item.choix.map((opt,oi)=>`<button class="vf-btn" data-choice="${oi}">${opt}</button>`).join('')}
     </div>
@@ -1932,28 +1932,28 @@ function renderEcoQuestionDuJour(elId){
   });
 }
 
-// Niveau Éco — regroupe le niveau/titre global déjà existant (pas dupliqué,
-// juste affiché ici), la maîtrise par thème déjà calculée par
-// getSkillMastery(), et la progression réelle des 3 cours Éco.
-function renderEcoNiveau(elId){
+// Niveau Business — regroupe le niveau/titre global déjà existant (pas
+// dupliqué, juste affiché ici), la maîtrise par thème déjà calculée par
+// getSkillMastery(), et la progression réelle des 3 cours Business.
+function renderBusinessNiveau(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const g = getGamification();
   const lvl = levelFromXP(g.xp);
   const mastery = getSkillMastery();
   const progress = getCoursProgress();
-  const coursDone = ECO_COURS_IDS.filter(id => progress[id]).length;
+  const coursDone = BUSINESS_COURS_IDS.filter(id => progress[id]).length;
 
-  const conceptsHtml = ECO_SKILL_CATEGORIES.map(cat => {
+  const conceptsHtml = BUSINESS_SKILL_CATEGORIES.map(cat => {
     const found = mastery.find(m => m.categorie === cat);
     let icon, label, color;
     if(found && found.niveau === 'maîtrisé'){ icon = ICONS.check; label = 'maîtrisé'; color = 'var(--emerald)'; }
     else if(found){ icon = '○'; label = 'à consolider'; color = 'var(--gold-bright)'; }
     else { icon = '·'; label = 'pas encore commencé'; color = 'var(--text-dim)'; }
-    return `<div class="eco-concept-row" style="color:${color};"><span class="eco-concept-icon">${icon}</span><span class="eco-concept-name">${cat}</span><span class="eco-concept-label">${label}</span></div>`;
+    return `<div class="business-concept-row" style="color:${color};"><span class="business-concept-icon">${icon}</span><span class="business-concept-name">${cat}</span><span class="business-concept-label">${label}</span></div>`;
   }).join('');
 
-  const nextCoursId = ECO_COURS_IDS.find(id => !progress[id]);
+  const nextCoursId = BUSINESS_COURS_IDS.find(id => !progress[id]);
   const ctaHtml = nextCoursId
     ? `<a href="cours.html#${encodeURIComponent(nextCoursId)}" class="btn btn-sm btn-gold">Continuer mon parcours →</a>`
     : `<a href="formations.html" class="btn btn-sm btn-gold">Explorer d'autres cours →</a>`;
@@ -1961,8 +1961,8 @@ function renderEcoNiveau(elId){
   el.innerHTML = `
     <span class="smallcaps">Ton niveau</span>
     <h3 style="margin:8px 0 4px;">${lvl.title}</h3>
-    <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">${g.xp} XP au total · ${coursDone}/${ECO_COURS_IDS.length} cours Éco terminés</p>
-    <div class="eco-concepts-list">${conceptsHtml}</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">${g.xp} XP au total · ${coursDone}/${BUSINESS_COURS_IDS.length} cours Business terminés</p>
+    <div class="business-concepts-list">${conceptsHtml}</div>
     <div style="margin-top:14px;">${ctaHtml}</div>`;
 }
 
@@ -1978,19 +1978,19 @@ function renderConceptLevels(elId, termeName){
 
   function update(){
     document.getElementById(`${elId}-text`).textContent = mode === 'detail' ? item.detail : item.simple;
-    el.querySelectorAll('.eco-level-btn').forEach(b => b.classList.toggle('active', b.dataset.level === mode));
+    el.querySelectorAll('.business-level-btn').forEach(b => b.classList.toggle('active', b.dataset.level === mode));
   }
 
   el.innerHTML = `
     <span class="smallcaps">${item.terme}</span>
-    <div class="eco-level-toggle">
-      <button class="eco-level-btn active" data-level="simple" type="button">30 secondes</button>
-      <button class="eco-level-btn" data-level="detail" type="button">2 minutes</button>
+    <div class="business-level-toggle">
+      <button class="business-level-btn active" data-level="simple" type="button">30 secondes</button>
+      <button class="business-level-btn" data-level="detail" type="button">2 minutes</button>
     </div>
-    <p id="${elId}-text" class="eco-level-text"></p>
+    <p id="${elId}-text" class="business-level-text"></p>
     <a href="bibliotheque.html#${encodeURIComponent(item.terme.replace(/\s+/g,'-'))}" class="btn btn-sm" style="margin-top:10px;">Approfondir →</a>`;
 
-  el.querySelectorAll('.eco-level-btn').forEach(btn=>{
+  el.querySelectorAll('.business-level-btn').forEach(btn=>{
     btn.addEventListener('click', ()=>{ mode = btn.dataset.level; update(); });
   });
   update();
@@ -1998,11 +1998,11 @@ function renderConceptLevels(elId, termeName){
 
 // Catégories Économie / Entreprise / Immobilier avec progression réelle —
 // remplace la simple grille de liens de la version précédente de la page.
-function renderEcoCategories(elId){
+function renderBusinessCategories(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const progress = getCoursProgress();
-  const catalog = ECO_COURS_IDS.map(id => COURS_CATALOG.find(c => c.id === id)).filter(Boolean);
+  const catalog = BUSINESS_COURS_IDS.map(id => COURS_CATALOG.find(c => c.id === id)).filter(Boolean);
   el.innerHTML = `<div class="card-grid">${catalog.map(cours=>{
     const done = !!progress[cours.id];
     return `
