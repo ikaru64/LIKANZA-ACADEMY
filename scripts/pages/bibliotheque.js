@@ -36,7 +36,7 @@ function renderLeafCards(container, items){
         ${l.inconvenients && l.inconvenients.length ? `<p class="kt-leaf-con"><strong>Limites :</strong> ${l.inconvenients.join(' · ')}</p>` : ''}
         ${l.erreurs && l.erreurs.length ? `<p class="kt-leaf-err"><strong>Erreurs fréquentes :</strong> ${l.erreurs.join(' · ')}</p>` : ''}
       </div>
-    </div>`).join('') || '<p style="padding:12px 4px;color:#6B6558;">Aucune notion trouvée.</p>';
+    </div>`).join('') || '<p style="padding:12px 4px;color:var(--text-dim);">Aucune notion trouvée.</p>';
 
   container.querySelectorAll('.kt-leaf-head').forEach(head => {
     head.addEventListener('click', () => head.closest('.kt-leaf-card').classList.toggle('open'));
