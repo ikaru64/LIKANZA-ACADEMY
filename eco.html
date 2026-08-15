@@ -77,16 +77,30 @@
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Éco</div>
 
 <section class="section" style="padding-bottom:0;">
-  <div class="section-head"><h2>Éco</h2><span class="meta-line">économie, entreprise &amp; immobilier</span></div>
+  <div class="section-head"><h2>Comprends l'économie qui t'entoure</h2><span class="meta-line">économie, entreprise &amp; immobilier</span></div>
   <div class="card" style="max-width:720px;">
-    <p style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;font-style:italic;line-height:1.5;">« L'économie, ce n'est pas que des graphiques : c'est ce qui se passe dans ton quartier, ton entreprise, ta banque. »</p>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;">L'économie n'est pas qu'une suite de graphiques : elle influence ton salaire, ton crédit, tes investissements, ton entreprise et ton quotidien.</p>
+    <ul class="eco-hero-questions">
+      <li>Pourquoi ton crédit peut-il devenir plus cher ?</li>
+      <li>Pourquoi les prix augmentent-ils ?</li>
+      <li>Pourquoi les marchés réagissent-ils aux décisions de la BCE ?</li>
+    </ul>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <a href="cours.html#economie-generale" class="btn btn-gold">Comprendre l'économie en 5 min</a>
+      <a href="#eco-indicateurs" class="btn btn-sm">Voir la situation actuelle</a>
+    </div>
   </div>
 </section>
 
-<section class="section">
-  <div class="section-head"><h2>Indicateurs en direct</h2><span class="meta-line" id="ecoIndicatorsMeta">cotations différées, jamais temps réel</span></div>
-  <div class="panel" style="max-width:720px;">
-    <div id="ecoIndicators"></div>
+<section class="section" style="padding-bottom:0;">
+  <div class="eco-resume" id="ecoResume" style="max-width:720px;"></div>
+</section>
+
+<section class="section" id="eco-indicateurs">
+  <div class="section-head"><h2>Indicateurs en direct</h2><span class="meta-line">cotations différées, jamais temps réel</span></div>
+  <div class="card-grid" style="max-width:720px;">
+    <div class="eco-featured-rate" id="ecoRateCard"></div>
+    <div class="card"><div id="ecoIndicators"></div></div>
   </div>
 </section>
 
@@ -96,39 +110,73 @@
 </section>
 
 <section class="section">
-  <div class="section-head"><h2>Explorer</h2><span class="meta-line">immobilier, entreprise, économie</span></div>
+  <div class="section-head"><h2>Pourquoi ça compte pour moi ?</h2><span class="meta-line">choisis ton profil</span></div>
   <div class="card-grid">
-    <a href="immobilier.html" class="card play-tile">
-      <span class="icon" data-icon="building-2" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Immobilier</h3>
-      <p>Rendement locatif, crédit, simulateurs dédiés.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-    </a>
-    <a href="bibliotheque.html#theme:Entreprise" class="card play-tile">
-      <span class="icon" data-icon="briefcase" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Entreprise</h3>
-      <p>Chiffre d'affaires, marge, bilan, startup, levée de fonds...</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-    </a>
-    <a href="bibliotheque.html#theme:%C3%89conomie" class="card play-tile">
-      <span class="icon" data-icon="landmark" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Économie</h3>
-      <p>PIB, inflation, taux directeur, récession, offre et demande...</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-    </a>
-    <a href="cours.html#entreprise-essentiels" class="card play-tile">
-      <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Cours : Comprendre l'entreprise</h3>
-      <p>Lecture + quiz de validation.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-    </a>
-    <a href="cours.html#economie-generale" class="card play-tile">
-      <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Cours : Comprendre l'économie</h3>
-      <p>Lecture + quiz de validation.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-    </a>
+    <div class="card">
+      <span class="smallcaps">Je veux investir</span>
+      <p>Inflation, taux, croissance, résultats des entreprises, chômage, politique monétaire.</p>
+      <a href="cours.html#economie-generale" class="today-link">Comprendre les bases →</a>
+    </div>
+    <div class="card">
+      <span class="smallcaps">Je veux acheter un logement</span>
+      <p>Taux immobiliers, taux BCE, inflation, prix immobilier, pouvoir d'achat, coût du crédit.</p>
+      <a href="immobilier.html" class="today-link">Voir les simulateurs →</a>
+    </div>
+    <div class="card">
+      <span class="smallcaps">Je veux entreprendre</span>
+      <p>Consommation, croissance, coût du financement, inflation, emploi, marges.</p>
+      <a href="cours.html#entreprise-essentiels" class="today-link">Comprendre l'entreprise →</a>
+    </div>
+    <div class="card">
+      <span class="smallcaps">Je veux simplement comprendre</span>
+      <p>Un parcours pensé pour les débutants, notion par notion.</p>
+      <a href="bibliotheque.html" class="today-link">Ouvrir l'arbre du savoir →</a>
+    </div>
   </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Comprendre un mécanisme</h2><span class="meta-line">schéma simplifié</span></div>
+  <div class="card" style="max-width:520px;">
+    <div class="eco-mechanism">
+      <div class="eco-mechanism-step">La BCE relève son taux directeur</div>
+      <span class="eco-mechanism-arrow">↓</span>
+      <div class="eco-mechanism-step">Les banques se financent plus cher auprès d'elle</div>
+      <span class="eco-mechanism-arrow">↓</span>
+      <div class="eco-mechanism-step">Elles peuvent répercuter ce coût sur les crédits accordés</div>
+      <span class="eco-mechanism-arrow">↓</span>
+      <div class="eco-mechanism-step">Ménages et entreprises empruntent potentiellement moins</div>
+      <span class="eco-mechanism-arrow">↓</span>
+      <div class="eco-mechanism-step">La consommation et l'investissement peuvent ralentir</div>
+      <span class="eco-mechanism-arrow">↓</span>
+      <div class="eco-mechanism-step">Impact potentiel sur la croissance économique</div>
+    </div>
+    <p class="disclaimer-box" style="margin-top:16px;">Schéma pédagogique simplifié : dans la réalité, de nombreux autres facteurs interviennent en même temps. Ce n'est jamais un enchaînement automatique ni garanti.</p>
+    <a href="cours.html#economie-generale" class="btn btn-sm btn-gold" style="margin-top:14px;">Comprendre ce mécanisme →</a>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Approfondir un concept</h2><span class="meta-line">à ton rythme</span></div>
+  <div class="card-grid">
+    <div class="card" id="ecoLevelPib"></div>
+    <div class="card" id="ecoLevelTaux"></div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Question du jour</h2><span class="meta-line">une nouvelle question chaque jour</span></div>
+  <div class="card" style="max-width:520px;border-color:var(--gold);" id="ecoQuestion"></div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Ton niveau</h2><span class="meta-line">basé sur ta vraie progression</span></div>
+  <div class="card" style="max-width:520px;" id="ecoNiveau"></div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Économie, entreprise, immobilier</h2><span class="meta-line">les 3 cours Éco</span></div>
+  <div id="ecoCategories"></div>
 </section>
 
 <footer class="site-footer">

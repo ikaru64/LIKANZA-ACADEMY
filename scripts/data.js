@@ -1856,6 +1856,165 @@ function renderMissionDetail(elId, level, index, onComplete){
   }
 }
 
+// ---------- Éco (eco.html) : widgets réutilisant des données déjà réelles ----------
+// Aucun de ces widgets ne crée de nouveau système de points ou de progression :
+// tout vient de getGamification/getSkillMastery/getCoursProgress/QUIZ_BANK_FULL,
+// déjà utilisés ailleurs sur le site.
+const ECO_COURS_IDS = ['economie-generale', 'entreprise-essentiels', 'immobilier-locatif'];
+const ECO_QUESTION_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation'];
+const ECO_SKILL_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation', "Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'];
+
+// Bandeau "Reprends où tu t'es arrêté" — masqué si aucun cours Éco n'a encore
+// été commencé (pas de fausse reprise pour un premier visiteur).
+function renderEcoResume(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const progress = getCoursProgress();
+  const doneCount = ECO_COURS_IDS.filter(id => progress[id]).length;
+
+  if(doneCount === 0){
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = '';
+  if(doneCount === ECO_COURS_IDS.length){
+    el.innerHTML = `
+      <span class="smallcaps">Reprends où tu t'es arrêté</span>
+      <p class="eco-resume-text">${ICONS.check} Tu as terminé les 3 cours Éco. Direction les <a href="defis.html" style="color:var(--gold-bright);">Défis</a> ou <a href="revisions.html" style="color:var(--gold-bright);">tes révisions</a> pour aller plus loin.</p>`;
+    return;
+  }
+  const nextId = ECO_COURS_IDS.find(id => !progress[id]);
+  const nextCours = COURS_CATALOG.find(c => c.id === nextId);
+  el.innerHTML = `
+    <span class="smallcaps">Reprends où tu t'es arrêté</span>
+    <p class="eco-resume-text">${nextCours.titre}</p>
+    <a href="cours.html#${encodeURIComponent(nextId)}" class="btn btn-sm btn-gold">Continuer →</a>`;
+}
+
+// Question du jour — sélection déterministe par jour (même principe que le
+// "terme du jour" de la Bibliothèque), pool = vraies questions déjà écrites
+// dans QUIZ_BANK_FULL. Réutilise le même mécanisme anti-farming quotidien que
+// Vrai ou faux et les Cours (tryAwardQuizPoints).
+function ecoQuestionPool(){
+  return QUIZ_BANK_FULL.filter(q => ECO_QUESTION_CATEGORIES.includes(q.categorie));
+}
+
+function renderEcoQuestionDuJour(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const pool = ecoQuestionPool();
+  if(pool.length === 0){ el.style.display = 'none'; return; }
+  const item = pool[dayOfYear() % pool.length];
+
+  el.innerHTML = `
+    <span class="smallcaps">Question du jour</span>
+    <p class="eco-question-text">${item.question}</p>
+    <div class="vf-buttons" style="grid-template-columns:1fr 1fr;margin-top:12px;">
+      ${item.choix.map((opt,oi)=>`<button class="vf-btn" data-choice="${oi}">${opt}</button>`).join('')}
+    </div>
+    <div class="vf-feedback" id="${elId}-feedback"></div>`;
+
+  Array.from(el.querySelectorAll('.vf-btn')).forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const choice = +btn.dataset.choice;
+      el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
+      const correct = choice === item.bonneReponse;
+      recordAnswer(item.categorie, correct);
+      if(correct){ btn.classList.add('vf-correct'); tryAwardQuizPoints(item.id, 10); resolveMistake(item.id); }
+      else {
+        btn.classList.add('vf-wrong');
+        const rightBtn = el.querySelector(`[data-choice="${item.bonneReponse}"]`);
+        if(rightBtn) rightBtn.classList.add('vf-correct');
+        recordMistake(item);
+      }
+      document.getElementById(`${elId}-feedback`).textContent = item.explication;
+    }, {once:true});
+  });
+}
+
+// Niveau Éco — regroupe le niveau/titre global déjà existant (pas dupliqué,
+// juste affiché ici), la maîtrise par thème déjà calculée par
+// getSkillMastery(), et la progression réelle des 3 cours Éco.
+function renderEcoNiveau(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const g = getGamification();
+  const lvl = levelFromXP(g.xp);
+  const mastery = getSkillMastery();
+  const progress = getCoursProgress();
+  const coursDone = ECO_COURS_IDS.filter(id => progress[id]).length;
+
+  const conceptsHtml = ECO_SKILL_CATEGORIES.map(cat => {
+    const found = mastery.find(m => m.categorie === cat);
+    let icon, label, color;
+    if(found && found.niveau === 'maîtrisé'){ icon = ICONS.check; label = 'maîtrisé'; color = 'var(--emerald)'; }
+    else if(found){ icon = '○'; label = 'à consolider'; color = 'var(--gold-bright)'; }
+    else { icon = '·'; label = 'pas encore commencé'; color = 'var(--text-dim)'; }
+    return `<div class="eco-concept-row" style="color:${color};"><span class="eco-concept-icon">${icon}</span><span class="eco-concept-name">${cat}</span><span class="eco-concept-label">${label}</span></div>`;
+  }).join('');
+
+  const nextCoursId = ECO_COURS_IDS.find(id => !progress[id]);
+  const ctaHtml = nextCoursId
+    ? `<a href="cours.html#${encodeURIComponent(nextCoursId)}" class="btn btn-sm btn-gold">Continuer mon parcours →</a>`
+    : `<a href="formations.html" class="btn btn-sm btn-gold">Explorer d'autres cours →</a>`;
+
+  el.innerHTML = `
+    <span class="smallcaps">Ton niveau</span>
+    <h3 style="margin:8px 0 4px;">${lvl.title}</h3>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">${g.xp} XP au total · ${coursDone}/${ECO_COURS_IDS.length} cours Éco terminés</p>
+    <div class="eco-concepts-list">${conceptsHtml}</div>
+    <div style="margin-top:14px;">${ctaHtml}</div>`;
+}
+
+// 30 secondes / 2 minutes / Approfondir — réutilise les champs déjà existants
+// de LIBRARY (simple/detail), zéro contenu dupliqué. "Approfondir" pointe
+// vers la fiche complète de la Bibliothèque (exemple, avantages, erreurs...).
+function renderConceptLevels(elId, termeName){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const item = LIBRARY.find(l => l.terme === termeName);
+  if(!item){ el.style.display = 'none'; return; }
+  let mode = 'simple';
+
+  function update(){
+    document.getElementById(`${elId}-text`).textContent = mode === 'detail' ? item.detail : item.simple;
+    el.querySelectorAll('.eco-level-btn').forEach(b => b.classList.toggle('active', b.dataset.level === mode));
+  }
+
+  el.innerHTML = `
+    <span class="smallcaps">${item.terme}</span>
+    <div class="eco-level-toggle">
+      <button class="eco-level-btn active" data-level="simple" type="button">30 secondes</button>
+      <button class="eco-level-btn" data-level="detail" type="button">2 minutes</button>
+    </div>
+    <p id="${elId}-text" class="eco-level-text"></p>
+    <a href="bibliotheque.html#${encodeURIComponent(item.terme.replace(/\s+/g,'-'))}" class="btn btn-sm" style="margin-top:10px;">Approfondir →</a>`;
+
+  el.querySelectorAll('.eco-level-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{ mode = btn.dataset.level; update(); });
+  });
+  update();
+}
+
+// Catégories Économie / Entreprise / Immobilier avec progression réelle —
+// remplace la simple grille de liens de la version précédente de la page.
+function renderEcoCategories(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const progress = getCoursProgress();
+  const catalog = ECO_COURS_IDS.map(id => COURS_CATALOG.find(c => c.id === id)).filter(Boolean);
+  el.innerHTML = `<div class="card-grid">${catalog.map(cours=>{
+    const done = !!progress[cours.id];
+    return `
+    <a href="cours.html#${encodeURIComponent(cours.id)}" class="card play-tile">
+      <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
+      <h3 style="font-size:16px;margin-top:10px;">${done ? ICONS.check + ' ' : ''}${cours.titre}</h3>
+      <p>${cours.libraryTermes.join(' · ')}</p>
+      <div class="card-footer"><span class="badge ${done ? 'status-reel' : 'status-differe'}">${done ? 'Terminé' : cours.niveau}</span><span>${done ? 'Revoir' : 'Continuer'} →</span></div>
+    </a>`;
+  }).join('')}</div>`;
+}
+
 // ---------- Graphique en barres générique ----------
 function renderBarChart(chartId, labelsId, series, years){
   const chart = document.getElementById(chartId);
