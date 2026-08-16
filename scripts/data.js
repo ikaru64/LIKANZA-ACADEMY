@@ -2313,9 +2313,23 @@ function computeTechnicalIndicators(history){
   };
 }
 
-// ---------- Profil personnel (pré-remplit les simulateurs du site) ----------
+// ---------- Profil personnel (pré-remplit les simulateurs + test de positionnement) ----------
+// fzr-profile est le seul objet profil du site : le test de positionnement
+// (levels/interests/learningStyle) fait évoluer cette même structure plutôt
+// que d'en créer une seconde. Migration non destructive : un profil déjà
+// enregistré avant l'ajout de ces 3 champs (ou un profil qui n'existe pas du
+// tout) reçoit des valeurs par défaut sans jamais perdre age/epargne/horizon/
+// risque/objectif déjà saisis.
 function getProfile(){
-  return safeGetJSON('fzr-profile', {age:25, epargne:150, horizon:15, risque:'equilibre', objectif:''});
+  const defaults = {age:25, epargne:150, horizon:15, risque:'equilibre', objectif:'', levels:{}, interests:{}, learningStyle:{}};
+  const stored = safeGetJSON('fzr-profile', null);
+  if(!stored) return defaults;
+  return {
+    ...defaults, ...stored,
+    levels: {...defaults.levels, ...(stored.levels || {})},
+    interests: {...defaults.interests, ...(stored.interests || {})},
+    learningStyle: {...defaults.learningStyle, ...(stored.learningStyle || {})}
+  };
 }
 function saveProfile(p){ safeSetJSON('fzr-profile', p); }
 
@@ -2371,6 +2385,7 @@ function renderProfileWidget(elId){
   renderRiskGauge('riskGauge', p.risque);
   document.getElementById('profSaveBtn').addEventListener('click', ()=>{
     const newP = {
+      ...getProfile(),
       age: Number(document.getElementById('profAge').value) || 0,
       epargne: Number(document.getElementById('profEpargne').value) || 0,
       horizon: Number(document.getElementById('profHorizon').value) || 1,

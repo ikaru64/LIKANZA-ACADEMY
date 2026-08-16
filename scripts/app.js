@@ -531,23 +531,51 @@ const QUIZ_BANK_FULL = [
 ];
 // ===EXPORT:QUIZ_BANK:END===
 
-// ---------- Test de positionnement ----------
-// Réutilise des questions déjà existantes dans QUIZ_BANK_FULL (aucun contenu
-// dupliqué) — juste une sélection groupée par grande catégorie pédagogique.
-const POSITIONING_CATEGORIES = [
-  {key:'budget', label:'Budget', ids:['q-budget-001','q-budget-003']},
-  {key:'epargne', label:'Épargne', ids:['q-epargne-001','q-epargne-003']},
-  {key:'banque', label:'Banque & livrets', ids:['q-livreta-001']},
-  {key:'credit', label:'Crédit', ids:['q-credit-001','q-credit-002']},
-  {key:'interets', label:'Intérêts composés', ids:['q-intcomposes-001','q-intcomposes-003']},
-  {key:'investissement', label:'Risque & rendement', ids:['q-risque-001','q-risque-002']},
-  {key:'bourse', label:'Bourse', ids:['q-bourse-001','q-bourse-003']},
-  {key:'etf', label:'ETF', ids:['q-etf-001']},
-  {key:'diversification', label:'Diversification', ids:['q-diversification-001','q-diversification-002']},
-  {key:'immobilier', label:'Immobilier', ids:['q-immobilier-001']},
-  {key:'fiscalite', label:'Fiscalité', ids:['q-fiscalite-001']},
-  {key:'crypto', label:'Crypto & risques', ids:['q-crypto-001']},
-  {key:'arnaques', label:'Prévention des arnaques', ids:['q-arnaques-001']}
+// ---------- Test de positionnement (profil Likanza en 3 parties) ----------
+// Partie A — connaissances : réutilise des questions déjà existantes dans
+// QUIZ_BANK_FULL (aucun contenu dupliqué), regroupées par 6 grands domaines
+// plutôt que par 13 catégories fines — permet un niveau distinct par domaine
+// (ex. finance personnelle : intermédiaire, bourse : débutant...) plutôt
+// qu'un seul niveau global.
+const POSITIONING_DOMAINS = [
+  {key:'personalFinance', label:'Finances personnelles', ids:['q-budget-001', 'q-epargne-001', 'q-credit-002', 'q-patrimoine-002']},
+  {key:'stockMarket', label:'Bourse', ids:['q-bourse-001', 'q-etf-001', 'q-diversification-002', 'q-risque-003']},
+  {key:'economics', label:'Économie', ids:['q-pib-001', 'q-inflation-001', 'q-tauxdirecteur-002', 'q-recession-004']},
+  {key:'realEstate', label:'Immobilier', ids:['q-immobilier-001', 'q-scpi-003', 'q-immobilier-002', 'q-immobilier-003']},
+  {key:'business', label:'Business', ids:['q-ca-002', 'q-startup-001', 'q-margenette-001', 'q-bilan-004']},
+  {key:'crypto', label:'Crypto', ids:['q-crypto-001', 'q-crypto-002', 'q-crypto-003', 'q-vf-crypto-001']}
+];
+
+// Partie B — centres d'intérêt : choix multiples, un intérêt peut être coché
+// via plusieurs libellés proches (ex. "investir" et "comprendre la bourse"
+// pointent tous deux vers stockMarket).
+const POSITIONING_INTERESTS = [
+  {key:'personalFinance', label:'Mieux gérer mon argent au quotidien'},
+  {key:'personalFinance', label:'Améliorer ma culture financière générale'},
+  {key:'stockMarket', label:'Investir et comprendre la bourse'},
+  {key:'stockMarket', label:'Comprendre les ETF'},
+  {key:'realEstate', label:'Immobilier (achat, investissement locatif)'},
+  {key:'business', label:'Créer ou développer un business'},
+  {key:'marketing', label:'Marketing (acquisition, image de marque)'},
+  {key:'economics', label:"Comprendre l'économie (taux, inflation, croissance)"},
+  {key:'crypto', label:'Crypto-actifs'}
+];
+
+// Partie C — manière d'apprendre (style pédagogique) + compréhension légère
+// du risque. Le risque reste purement descriptif : il réutilise le même champ
+// "risque" (prudent/équilibre/dynamique) déjà utilisé par le profil de
+// Mon compte, jamais présenté comme un profil investisseur réglementaire.
+const POSITIONING_LEARNING_STYLES = [
+  {key:'explanations', label:'Une explication simple, avec des mots clairs'},
+  {key:'examples', label:'Un exemple concret ou une mise en situation'},
+  {key:'visual', label:'Un graphique ou un schéma visuel'},
+  {key:'simulations', label:'Une simulation où je peux essayer moi-même'},
+  {key:'quizzes', label:'Un quiz pour tester mes connaissances'}
+];
+const POSITIONING_RISK_COMFORT = [
+  {value:'prudent', label:"Mal à l'aise : je préfère la sécurité, même pour un gain plus faible"},
+  {value:'equilibre', label:"Ça dépend : un peu de risque ne me dérange pas si c'est mesuré"},
+  {value:'dynamique', label:"À l'aise avec les variations si l'horizon est long"}
 ];
 
 // ---------- Cours (lecture + quiz de validation) ----------
