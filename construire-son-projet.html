@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Business · Likanza Academy</title>
-<meta name="description" content="Entreprise, immobilier et économie : indicateurs en direct, actualité et notions clés pour comprendre et construire un business.">
+<title>Construis ton projet · Likanza Academy</title>
+<meta name="description" content="Un parcours guidé de 20 questions pour réfléchir à un projet entrepreneurial : problème, client, offre, modèle économique, coûts et prochaines actions.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -72,105 +72,42 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Business</div>
-<div id="levelTip" style="max-width:720px;margin:14px auto 0;padding:0 24px;"></div>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / <a href="business.html">Business</a> / Construis ton projet</div>
 
-<section class="section" style="padding-bottom:0;">
-  <div class="section-head"><h2>Construis ta culture business</h2><span class="meta-line">immobilier, marketing &amp; clients</span></div>
-  <div class="card" style="max-width:720px;">
-    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;">Investir dans l'immobilier, se faire connaître ou comprendre à qui l'on s'adresse : entreprendre demande les mêmes bases, quel que soit le projet.</p>
-    <ul class="business-hero-questions">
-      <li>Comment estimer le rendement réel d'un investissement locatif ?</li>
-      <li>Comment attirer des clients sans dépenser au hasard ?</li>
-      <li>Qui est vraiment mon client idéal ?</li>
-    </ul>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <a href="#business-immobilier" class="btn btn-gold">Explorer les 3 piliers</a>
-      <a href="#business-indicateurs" class="btn btn-sm">Voir la situation actuelle</a>
+<section class="section">
+  <div id="wizardIntro" class="card" style="max-width:640px;margin:0 auto;">
+    <span class="smallcaps">Facultatif · environ 15 minutes</span>
+    <h2 class="display" style="font-size:26px;font-weight:600;margin:10px 0;">Construis ton projet</h2>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:8px;">20 questions guidées pour structurer ta réflexion : problème, client, offre, modèle économique, coûts, risques. Ce n'est pas un générateur d'idées : c'est un outil pour t'aider à réfléchir à un projet que tu as déjà en tête, ou à en clarifier un.</p>
+    <p class="disclaimer-box">Ce parcours ne génère jamais « le business parfait » et ne garantit aucun succès. Il t'aide à structurer ta réflexion à partir de tes propres réponses. Tes réponses sont enregistrées uniquement sur cet appareil.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+      <button class="btn btn-gold" id="wizardStartBtn">Commencer</button>
+      <a href="business.html" class="btn">Retour à Business</a>
     </div>
   </div>
-</section>
 
-<section class="section" style="padding-bottom:0;">
-  <div class="business-resume" id="businessResume" style="max-width:720px;"></div>
-</section>
-
-<section class="section" style="padding-bottom:0;">
-  <a href="construire-son-projet.html" class="card play-tile" style="max-width:720px;background:var(--bg-alt);border:1px solid var(--gold);">
-    <span class="icon" data-icon="compass" style="color:var(--gold-bright);"></span>
-    <h3 style="margin:10px 0 6px;">Construis ton projet</h3>
-    <p>20 questions guidées pour structurer une réflexion entrepreneuriale : problème, client, offre, chiffres, risques. Un outil pour réfléchir, pas un générateur d'idées.</p>
-    <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
-  </a>
-</section>
-
-<section class="section" id="business-immobilier">
-  <div class="section-head"><h2>Immobilier</h2><span class="meta-line">achat, location, crédit</span></div>
-  <div class="card" style="max-width:720px;" id="businessImmobilier"></div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="card" style="max-width:520px;">
-    <span class="smallcaps">Pourquoi le crédit peut devenir plus cher</span>
-    <div class="business-mechanism" style="margin-top:12px;">
-      <div class="business-mechanism-step">La BCE relève son taux directeur</div>
-      <span class="business-mechanism-arrow">↓</span>
-      <div class="business-mechanism-step">Les banques se financent plus cher auprès d'elle</div>
-      <span class="business-mechanism-arrow">↓</span>
-      <div class="business-mechanism-step">Elles répercutent potentiellement ce coût sur les crédits immobiliers</div>
-      <span class="business-mechanism-arrow">↓</span>
-      <div class="business-mechanism-step">L'effet de levier d'un investissement locatif devient plus coûteux</div>
+  <div id="wizardStep" class="card" style="max-width:640px;margin:0 auto;display:none;">
+    <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
+      <span id="wizardStepCounter"></span><span id="wizardStepCategory"></span>
     </div>
-    <p class="disclaimer-box" style="margin-top:16px;">Schéma pédagogique simplifié : dans la réalité, de nombreux autres facteurs interviennent en même temps. Ce n'est jamais un enchaînement automatique ni garanti.</p>
+    <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" id="wizardProgressFill" style="width:0%;"></div></div>
+    <h3 class="display" style="font-size:20px;font-weight:600;margin-bottom:8px;" id="wizardStepTitle"></h3>
+    <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:14px;" id="wizardStepPrompt"></p>
+    <div id="wizardStepFields"></div>
+    <div id="wizardStepHint" style="margin-top:10px;"></div>
+    <div style="display:flex;justify-content:space-between;margin-top:20px;">
+      <button class="btn btn-sm" id="wizardBackBtn">← Précédent</button>
+      <button class="btn btn-sm btn-gold" id="wizardNextBtn">Suivant →</button>
+    </div>
   </div>
-</section>
 
-<section class="section">
-  <div class="section-head"><h2>Marketing</h2><span class="meta-line">se faire connaître et convaincre</span></div>
-  <div class="card" style="max-width:720px;" id="businessMarketing"></div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Clients</h2><span class="meta-line">comprendre à qui on s'adresse</span></div>
-  <div class="card" style="max-width:720px;" id="businessClients"></div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Question du jour</h2><span class="meta-line">une nouvelle question chaque jour</span></div>
-  <div class="card" style="max-width:520px;border-color:var(--gold);" id="businessQuestion"></div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Approfondir un concept</h2><span class="meta-line">à ton rythme</span></div>
-  <div class="card-grid">
-    <div class="card" id="businessLevelPib"></div>
-    <div class="card" id="businessLevelTaux"></div>
-    <div class="card" id="businessLevelLevier"></div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Ton niveau</h2><span class="meta-line">basé sur ta vraie progression</span></div>
-  <div class="card" style="max-width:520px;" id="businessNiveau"></div>
-</section>
-
-<section class="section" id="business-indicateurs" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
-  <div class="section-head"><h2>Indicateurs en direct</h2><span class="meta-line">cotations différées, jamais temps réel</span></div>
-  <div class="card-grid" style="max-width:720px;">
-    <div class="business-featured-rate" id="businessRateCard"></div>
-    <div class="card"><div id="businessIndicators"></div></div>
-  </div>
-</section>
-
-<section class="section" style="background:var(--bg-alt);border-bottom:1px solid var(--hairline);">
-  <div class="section-head"><h2>Actualité économique</h2><span class="meta-line">synthèse hebdomadaire</span></div>
-  <div class="card" style="max-width:720px;" id="businessNewsCard"></div>
+  <div id="wizardFinal" style="display:none;"></div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
-    <div><h4>Explorer</h4><ul><li><a href="immobilier.html">Immobilier</a></li><li><a href="bourse.html">Bourse</a></li></ul></div>
+    <div><h4>Explorer</h4><ul><li><a href="business.html">Business</a></li><li><a href="bourse.html">Bourse</a></li></ul></div>
     <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Academy</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
@@ -180,7 +117,7 @@
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
-<script src="scripts/pages/business.js"></script>
+<script src="scripts/pages/construire-son-projet.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
