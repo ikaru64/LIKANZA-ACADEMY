@@ -6,7 +6,7 @@
    générée depuis de vrais flux RSS, champs pourquoi/impact déjà réels
    mais jusqu'ici inexploités), et plusieurs widgets qui réutilisent la
    vraie progression déjà existante (renderBusinessResume/renderBusinessNiveau/
-   renderBusinessQuestionDuJour/renderConceptLevels/renderBusinessCategories,
+   renderBusinessQuestionDuJour/renderConceptLevels/renderTopicWidget,
    tous dans scripts/data.js). Aucune donnée inventée : en cas d'échec,
    dégradation silencieuse avec un message clair, jamais un contenu
    fictif.
@@ -100,8 +100,33 @@ renderBusinessResume('businessResume');
 renderBusinessIndicators();
 renderBusinessRate();
 renderBusinessNews();
+
+renderTopicWidget('businessImmobilier', {
+  title: 'Immobilier',
+  intro: "Acheter, investir en locatif ou comprendre un crédit : les bases pour ne pas se faire surprendre par les chiffres.",
+  terms: ['Rendement locatif', 'Apport personnel', 'Effet de levier', 'Cash-flow (immobilier)', 'Charges locatives', 'Vacance locative', 'Crédit immobilier'],
+  ctaLabel: "Simuler un crédit ou un rendement →",
+  ctaHref: 'immobilier.html'
+});
+
+renderTopicWidget('businessMarketing', {
+  title: 'Marketing',
+  intro: "Se faire connaître et convaincre : les leviers pour attirer des clients et les convertir, sans dépenser au hasard.",
+  terms: ['Proposition de valeur', 'Acquisition', 'SEO', 'Contenu (marketing de contenu)', 'Réseaux sociaux (marketing)', 'Publicité', 'Email marketing', 'CAC', 'Taux de conversion', 'Rétention', 'Branding'],
+  ctaLabel: "Voir tout le vocabulaire Business →",
+  ctaHref: 'bibliotheque.html#theme:Business'
+});
+
+renderTopicWidget('businessClients', {
+  title: 'Clients',
+  intro: "Comprendre qui on sert vraiment : le socle de toute proposition de valeur solide.",
+  terms: ['Client idéal', 'Persona', 'Segmentation', 'Niche', 'Objections (commerciales)', 'B2B et B2C', 'LTV'],
+  ctaLabel: "Voir tout le vocabulaire Business →",
+  ctaHref: 'bibliotheque.html#theme:Business'
+});
+
 renderConceptLevels('businessLevelPib', 'PIB (Produit intérieur brut)');
 renderConceptLevels('businessLevelTaux', "Taux d'intérêt directeur");
+renderConceptLevels('businessLevelLevier', "Effet de levier");
 renderBusinessQuestionDuJour('businessQuestion');
 renderBusinessNiveau('businessNiveau');
-renderBusinessCategories('businessCategories');

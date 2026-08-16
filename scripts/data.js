@@ -1862,7 +1862,7 @@ function renderMissionDetail(elId, level, index, onComplete){
 // déjà utilisés ailleurs sur le site.
 const BUSINESS_COURS_IDS = ['economie-generale', 'entreprise-essentiels', 'immobilier-locatif'];
 const BUSINESS_QUESTION_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation'];
-const BUSINESS_SKILL_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation', "Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'];
+const BUSINESS_SKILL_CATEGORIES = ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Inflation', "Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds', 'Immobilier', 'Crédit'];
 
 // Bandeau "Reprends où tu t'es arrêté" — masqué si aucun cours Business n'a
 // encore été commencé (pas de fausse reprise pour un premier visiteur).
@@ -1996,23 +1996,24 @@ function renderConceptLevels(elId, termeName){
   update();
 }
 
-// Catégories Économie / Entreprise / Immobilier avec progression réelle —
-// remplace la simple grille de liens de la version précédente de la page.
-function renderBusinessCategories(elId){
+// Widget thématique générique (Immobilier / Marketing / Clients sur business.html) :
+// une grille de notions réelles de LIBRARY (aucune donnée inventée), chacune reliant
+// directement vers sa fiche complète dans la Bibliothèque.
+function renderTopicWidget(elId, {title, intro, terms, ctaLabel, ctaHref}){
   const el = document.getElementById(elId);
   if(!el) return;
-  const progress = getCoursProgress();
-  const catalog = BUSINESS_COURS_IDS.map(id => COURS_CATALOG.find(c => c.id === id)).filter(Boolean);
-  el.innerHTML = `<div class="card-grid">${catalog.map(cours=>{
-    const done = !!progress[cours.id];
-    return `
-    <a href="cours.html#${encodeURIComponent(cours.id)}" class="card play-tile">
-      <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">${done ? ICONS.check + ' ' : ''}${cours.titre}</h3>
-      <p>${cours.libraryTermes.join(' · ')}</p>
-      <div class="card-footer"><span class="badge ${done ? 'status-reel' : 'status-differe'}">${done ? 'Terminé' : cours.niveau}</span><span>${done ? 'Revoir' : 'Continuer'} →</span></div>
-    </a>`;
-  }).join('')}</div>`;
+  const items = terms.map(t => LIBRARY.find(l => l.terme === t)).filter(Boolean);
+  el.innerHTML = `
+    <span class="smallcaps">${title}</span>
+    <p class="topic-widget-intro">${intro}</p>
+    <div class="topic-widget-grid">
+      ${items.map(l => `
+        <a href="bibliotheque.html#${encodeURIComponent(l.terme.replace(/\s+/g,'-'))}" class="topic-widget-chip">
+          <span class="topic-widget-chip-term">${l.terme}</span>
+          <span class="topic-widget-chip-def">${l.simple}</span>
+        </a>`).join('')}
+    </div>
+    ${ctaHref ? `<a href="${ctaHref}" class="btn btn-sm btn-gold" style="margin-top:14px;">${ctaLabel}</a>` : ''}`;
 }
 
 // ---------- Graphique en barres générique ----------
