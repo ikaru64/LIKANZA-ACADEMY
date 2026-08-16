@@ -2097,6 +2097,21 @@ function renderBarChart(chartId, labelsId, series, years){
   }
 }
 
+// ---------- Hypothèses de rendement centralisées ----------
+// Source unique pour les scénarios "prudent/central/optimiste" proposés par
+// le simulateur d'intérêts composés (outils.html) — évite d'avoir des
+// pourcentages différents éparpillés dans plusieurs fichiers. Ce sont des
+// hypothèses pédagogiques, jamais une prévision ni un rendement garanti.
+const RETURN_ASSUMPTIONS = {
+  prudent: {rate: 3, label: 'Prudente', desc: "Proche d'un support à capital garanti (fonds euro, obligations d'État) : rendement plus stable, mais plus limité."},
+  central: {rate: 6, label: 'Centrale', desc: "Ordre de grandeur souvent cité pour un portefeuille actions diversifié sur longue période — sans certitude de le retrouver à l'avenir."},
+  optimiste: {rate: 9, label: 'Optimiste', desc: "Scénario favorable, proche des meilleures décennies boursières historiques. À ne jamais retenir comme hypothèse par défaut."}
+};
+// Inflation illustrative par défaut, cohérente avec celle déjà utilisée par
+// ailleurs sur outils.html (widget "Impact de l'inflation") — pas une donnée
+// macroéconomique en direct, une hypothèse constante à but pédagogique.
+const DEFAULT_INFLATION_ASSUMPTION = 2.1;
+
 // ---------- Fonctions financières partagées ----------
 const fmtEUR = n => Math.round(n).toLocaleString('fr-FR') + ' €';
 function compoundSeries(P, PMT, rAnnual, years){

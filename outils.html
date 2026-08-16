@@ -124,17 +124,29 @@
 
     <div class="card">
       <h3>Intérêts composés</h3>
+      <div class="mode-toggle" id="simModeToggle">
+        <button class="pill" data-mode="prudent">Prudente</button>
+        <button class="pill active" data-mode="central">Centrale</button>
+        <button class="pill" data-mode="optimiste">Optimiste</button>
+        <button class="pill" data-mode="historique">Historique</button>
+        <button class="pill" data-mode="personnalise">Personnalisé</button>
+      </div>
+      <p id="simModeDesc" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;"></p>
       <div class="slider-row field"><label>Capital de départ <span class="v mono" id="valCapital">500 €</span></label><input type="range" id="capital" min="0" max="10000" step="100" value="500"></div>
       <div class="slider-row field"><label>Versement mensuel <span class="v mono" id="valMonthly">100 €</span></label><input type="range" id="monthly" min="0" max="1000" step="10" value="100"></div>
-      <div class="slider-row field"><label>Rendement annuel moyen <span class="v mono" id="valRate">6 %</span></label><input type="range" id="rate" min="0" max="12" step="0.5" value="6"></div>
+      <div class="slider-row field" id="simRateRow"><label>Rendement annuel moyen <span class="v mono" id="valRate">6 %</span></label><input type="range" id="rate" min="0" max="20" step="0.5" value="6" disabled></div>
+      <div id="simRateAlert"></div>
       <div class="slider-row field"><label>Durée <span class="v mono" id="valYears">15 ans</span></label><input type="range" id="years" min="1" max="40" step="1" value="15"></div>
+      <div class="field"><label>Frais de gestion annuels (optionnel)</label><input type="number" id="simFrais" value="0" min="0" max="5" step="0.1"></div>
       <div class="result-label">Capital estimé au terme</div>
       <div class="result-big" id="simTotal">— €</div>
       <div class="result-row"><span>Versé : <span id="simInvested">—</span></span><span>Gains : <span id="simGains" style="color:var(--emerald)">—</span></span></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);margin:10px 0;cursor:pointer;"><input type="checkbox" id="simShowReal" style="width:15px;height:15px;">Afficher aussi la valeur en pouvoir d'achat (ajustée de l'inflation)</label>
+      <div id="simRealValue"></div>
       <div class="bar-chart" id="simChart"></div>
       <div class="bar-labels" id="simChartLabels"></div>
       <div id="simWhatIf"></div>
-      <p class="disclaimer-box">Simulation illustrative, rendement hypothétique constant. Ce n'est pas un conseil en investissement.</p>
+      <p class="disclaimer-box"><strong>Ce scénario n'est pas une prévision.</strong> Les performances passées ne préjugent pas des performances futures. Les marchés actions ont déjà connu des baisses de plus de 30% sur une seule année dans le passé (crises de 2000, 2008, 2020) : un scénario réaliste doit intégrer cette possibilité, pas seulement une moyenne lissée.</p>
     </div>
 
     <div class="card">
