@@ -45,6 +45,15 @@ function safeSetJSON(key, val){
   try{ localStorage.setItem(key, JSON.stringify(val)); return true; }catch(e){ return false; }
 }
 
+// ---------- Échappement HTML (texte libre saisi par l'utilisateur, ex. "Construis ton projet") ----------
+// À utiliser systématiquement avant d'interpoler une réponse libre dans un
+// template innerHTML : le texte reste local à l'appareil (jamais envoyé à un
+// serveur ni à un autre utilisateur), mais rien n'empêche un contenu collé
+// (ex. copié depuis une page piégée) de casser le rendu ou de s'exécuter.
+function escapeHtml(str){
+  return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 // ---------- Navigation : menu mobile + menu déroulant Explorer + lien actif ----------
 function initNav(){
   const toggle = document.getElementById('mobileToggle');

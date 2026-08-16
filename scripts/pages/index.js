@@ -9,11 +9,11 @@ const I18N = {
     libraryCardTitle: "The Likanza Academy encyclopedia",
     libraryDesc: "Clear definitions, examples and three reading levels for every key concept.",
     libraryCta: "Explore the library",
-    teacherTitle: "AI Teacher",
-    teacherDemoFlag: "Local demo",
+    teacherTitle: "Quick lookup",
+    teacherDemoFlag: "From the Library",
     teacherTopicLabel: "Pick a topic",
     teacherAskCta: "Explain simply",
-    teacherNote: "Local demonstration: the full AI teacher will need a future connection to a real API.",
+    teacherNote: "Pulls the existing Library definition instantly — not an AI teacher. A connected AI explainer is planned (see What's next).",
     challengeTitle: "Interactive challenge",
     arenaTitle: "Arena: coming soon",
     leaguePreviewTitle: "See your league",
@@ -23,10 +23,10 @@ const I18N = {
     labToolTitle: "Compound interest lab",
     simCapitalLabel: "Starting capital",
     simMonthlyLabel: "Monthly contribution",
-    simRateLabel: "Annual return",
+    simRateLabel: "Annual return (central hypothesis)",
     simYearsLabel: "Years",
     labToolCta: "Open all simulators",
-    simLabNote: "This is a teaching lab with hypothetical numbers, not a real wealth sync or investment advice. Below: quick links to the other simulators (wealth projection, savings goal, budget, credit and scenario comparison), all kept fully working on their own pages.",
+    simLabNote: "This preview uses a fixed central hypothesis (6%/year), the same one used across the site — not a prediction. Open the full simulator for prudent/optimistic/real-historical scenarios and a plain-language warning on extreme assumptions. Below: quick links to the other simulators (wealth projection, savings goal, budget, credit and scenario comparison), all kept fully working on their own pages.",
     seeAllLink: "see all →",
     freeLabel: "FREE, FOREVER",
     premiumTeaserTitle: "Premium (planned)",
@@ -59,11 +59,11 @@ const I18N = {
     libraryCardTitle: "L'encyclopédie Likanza Academy",
     libraryDesc: "Des définitions claires, des exemples et trois niveaux de lecture pour chaque notion clé.",
     libraryCta: "Explorer la bibliothèque",
-    teacherTitle: "Professeur IA",
-    teacherDemoFlag: "Démonstration locale",
+    teacherTitle: "Définition express",
+    teacherDemoFlag: "Depuis la Bibliothèque",
     teacherTopicLabel: "Choisis une notion",
     teacherAskCta: "Explique-moi simplement",
-    teacherNote: "Démonstration locale : la version IA complète nécessitera une future connexion à une API.",
+    teacherNote: "Affiche instantanément la définition déjà présente dans la Bibliothèque — pas un professeur IA. Un vrai assistant IA connecté est prévu (voir À venir).",
     challengeTitle: "Défi interactif",
     arenaTitle: "Arène : bientôt disponible",
     leaguePreviewTitle: "Voir ma ligue",
@@ -73,10 +73,10 @@ const I18N = {
     labToolTitle: "Laboratoire d'intérêts composés",
     simCapitalLabel: "Capital de départ",
     simMonthlyLabel: "Versement mensuel",
-    simRateLabel: "Rendement annuel",
+    simRateLabel: "Rendement annuel (hypothèse centrale)",
     simYearsLabel: "Durée",
     labToolCta: "Ouvrir tous les simulateurs",
-    simLabNote: "Ceci est un laboratoire pédagogique avec des chiffres hypothétiques, pas une synchronisation réelle de patrimoine ni un conseil en investissement. Ci-dessous : accès rapide aux autres simulateurs (projection de patrimoine, objectif d'épargne, budget, crédit et comparaison de scénarios), tous pleinement fonctionnels sur leur page dédiée.",
+    simLabNote: "Cet aperçu utilise une hypothèse centrale fixe (6%/an), la même que celle utilisée partout ailleurs sur le site — pas une prédiction. Ouvre le simulateur complet pour les scénarios prudent/optimiste/historique réel et un avertissement en langage clair sur les hypothèses extrêmes. Ci-dessous : accès rapide aux autres simulateurs (projection de patrimoine, objectif d'épargne, budget, crédit et comparaison de scénarios), tous pleinement fonctionnels sur leur page dédiée.",
     seeAllLink: "tout voir →",
     freeLabel: "GRATUIT, TOUJOURS",
     premiumTeaserTitle: "Premium (à venir)",
@@ -208,7 +208,7 @@ function renderLearnTab(){
   }
 }
 
-// ================= Onglet Professeur IA (mini) =================
+// ================= Onglet "Définition express" (lookup direct dans la Bibliothèque, pas de l'IA) =================
 function renderTeacherMini(){
   const select = document.getElementById('teacherTopic');
   const btn = document.getElementById('teacherAskBtn');
@@ -222,20 +222,25 @@ function renderTeacherMini(){
 }
 
 // ================= Onglet Simuler =================
+// Rendement fixé sur RETURN_ASSUMPTIONS.central (scripts/data.js) — la même
+// hypothèse que le simulateur complet d'outils.html, pour ne plus avoir deux
+// niveaux de rigueur différents sur le même calcul à deux endroits du site.
 function updateHomeSim(){
   const capEl = document.getElementById('homeSimCapital');
   const monEl = document.getElementById('homeSimMonthly');
-  const rateEl = document.getElementById('homeSimRate');
   const yrsEl = document.getElementById('homeSimYears');
   const resEl = document.getElementById('homeSimResult');
-  if(!capEl || !monEl || !rateEl || !yrsEl || !resEl) return;
-  const P = Number(capEl.value)||0, PMT = Number(monEl.value)||0, rate = Number(rateEl.value)||0, years = Number(yrsEl.value)||1;
+  const rateValEl = document.getElementById('homeSimRateVal');
+  if(!capEl || !monEl || !yrsEl || !resEl) return;
+  const rate = RETURN_ASSUMPTIONS.central.rate;
+  if(rateValEl) rateValEl.textContent = rate + ' %';
+  const P = Number(capEl.value)||0, PMT = Number(monEl.value)||0, years = Number(yrsEl.value)||1;
   const series = compoundSeries(P, PMT, rate, years);
   resEl.textContent = fmtEUR(series[series.length-1]);
   renderBarChart('homeSimChart', 'homeSimChartLabels', series, years);
 }
 function initHomeSim(){
-  ['homeSimCapital','homeSimMonthly','homeSimRate','homeSimYears'].forEach(id=>{
+  ['homeSimCapital','homeSimMonthly','homeSimYears'].forEach(id=>{
     const el = document.getElementById(id);
     if(el) el.addEventListener('input', ()=>safeRun('laboratoire intérêts composés', updateHomeSim));
   });

@@ -18,14 +18,16 @@
     const avatar = user.image
       ? `<img src="${user.image}" alt="" style="width:40px;height:40px;border-radius:50%;">`
       : '';
+    const esc = window.escapeHtml || (s => String(s == null ? '' : s));
     body.innerHTML = `
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
         ${avatar}
         <div>
-          <p style="font-weight:600;">${user.name || 'Utilisateur'}</p>
-          <p style="font-size:12px;color:var(--text-dim);">${user.email}</p>
+          <p style="font-weight:600;">${esc(user.name) || 'Utilisateur'}</p>
+          <p style="font-size:12px;color:var(--text-dim);">${esc(user.email)}</p>
         </div>
       </div>
+      <p style="font-size:11.5px;color:var(--text-dim);border-left:2px solid var(--hairline);padding-left:10px;margin-bottom:12px;">Seule cette connexion (nom, e-mail) est sauvegardée sur un vrai compte. Ta progression (XP, missions, quiz, profil) reste pour l'instant locale à cet appareil — elle ne te suivra pas si tu changes de navigateur ou d'appareil.</p>
       <a class="btn btn-sm" href="${AUTH_BASE}/?action=signout&callbackUrl=${encodeURIComponent(location.origin + location.pathname)}">Se déconnecter</a>
     `;
   }
@@ -36,7 +38,8 @@
     if (statusLine) statusLine.textContent = 'non connecté';
     if (!body) return;
     body.innerHTML = `
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Connecte-toi pour créer ton compte réel Likanza Academy.</p>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Connecte-toi pour associer un vrai compte (nom, e-mail) à cet appareil.</p>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:12px;">Ta progression (XP, missions, quiz, profil) reste locale à cet appareil, connecté ou non — la synchronisation complète est prévue mais pas encore disponible.</p>
       <a class="btn btn-gold btn-sm" href="${AUTH_BASE}/?callbackUrl=${encodeURIComponent(location.origin + location.pathname)}">Se connecter avec Google</a>
     `;
   }

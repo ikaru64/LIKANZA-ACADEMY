@@ -125,7 +125,7 @@ function renderHint(hintTerme){
 
 function renderFieldsHtml(step){
   return step.fields.map(f=>{
-    const value = answers[f.key] ?? '';
+    const value = escapeHtml(answers[f.key] ?? '');
     const label = f.label ? `<label style="font-size:12.5px;color:var(--text-dim);display:block;margin-bottom:4px;">${f.label}</label>` : '';
     if(f.type === 'textarea'){
       return `<div class="field" style="margin-bottom:12px;">${label}<textarea id="field-${f.key}" rows="3" placeholder="${f.placeholder||''}" style="width:100%;background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:10px;border-radius:2px;font-family:inherit;font-size:13.5px;resize:vertical;">${value}</textarea></div>`;
@@ -188,8 +188,9 @@ function renderSummaryStep(){
     const vals = step.fields.map(f=>{
       let v = answers[f.key];
       if(f.type === 'radio' && f.key === 'clientType') v = CLIENT_TYPE_LABELS[v] || v;
-      if(f.key === 'businessModel') v = BUSINESS_MODEL_LABELS[v] || v;
-      if(f.type === 'number' && v) v = fmtEUR(Number(v));
+      else if(f.key === 'businessModel') v = BUSINESS_MODEL_LABELS[v] || v;
+      else if(f.type === 'number' && v) v = fmtEUR(Number(v));
+      else if(v) v = escapeHtml(v);
       return v;
     }).filter(Boolean);
     if(!vals.length) return '';
@@ -205,22 +206,23 @@ function renderFinalStep(a){
   el.style.display = 'block';
   const r = computeSeuil(a);
   const revenuVise = (Number(a.prix)||0) * (Number(a.ventesVisees)||0);
+  const esc = escapeHtml;
   const fiche = [
-    {label:'Projet', value: a.offre || '—'},
-    {label:'Problème', value: a.probleme || '—'},
-    {label:'Client cible', value: [CLIENT_TYPE_LABELS[a.clientType], a.clientDetail].filter(Boolean).join(' — ') || '—'},
-    {label:'Marché', value: a.marche || '—'},
-    {label:'Proposition de valeur', value: a.valeur || '—'},
-    {label:'Offre', value: a.offre || '—'},
+    {label:'Projet', value: esc(a.offre) || '—'},
+    {label:'Problème', value: esc(a.probleme) || '—'},
+    {label:'Client cible', value: [CLIENT_TYPE_LABELS[a.clientType], esc(a.clientDetail)].filter(Boolean).join(' — ') || '—'},
+    {label:'Marché', value: esc(a.marche) || '—'},
+    {label:'Proposition de valeur', value: esc(a.valeur) || '—'},
+    {label:'Offre', value: esc(a.offre) || '—'},
     {label:'Business model', value: BUSINESS_MODEL_LABELS[a.businessModel] || '—'},
     {label:'Prix', value: a.prix ? fmtEUR(Number(a.prix)) : '—'},
-    {label:'Acquisition', value: a.acquisition || '—'},
-    {label:'Marketing', value: a.marketing || '—'},
+    {label:'Acquisition', value: esc(a.acquisition) || '—'},
+    {label:'Marketing', value: esc(a.marketing) || '—'},
     {label:'Coûts principaux', value: (a.chargesFixes || a.coutVariable) ? `${fmtEUR(Number(a.chargesFixes)||0)}/mois fixes, ${fmtEUR(Number(a.coutVariable)||0)} variable par vente` : '—'},
     {label:'Sources de revenus', value: a.ventesVisees ? `${BUSINESS_MODEL_LABELS[a.businessModel]||''} — ${a.ventesVisees} ventes visées/mois, soit environ ${fmtEUR(revenuVise)}/mois` : '—'},
-    {label:'Hypothèses à tester', value: a.testIdee || '—'},
-    {label:'Risques', value: a.risques || '—'},
-    {label:'Prochaines actions', value: [a.testIdee, a.premiersClients].filter(Boolean).join(' · ') || '—'}
+    {label:'Hypothèses à tester', value: esc(a.testIdee) || '—'},
+    {label:'Risques', value: esc(a.risques) || '—'},
+    {label:'Prochaines actions', value: [esc(a.testIdee), esc(a.premiersClients)].filter(Boolean).join(' · ') || '—'}
   ];
   el.innerHTML = `
     <div class="card" style="max-width:640px;margin:0 auto;">
