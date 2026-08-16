@@ -719,8 +719,28 @@ function dayOfYear(){
   const start = new Date(now.getFullYear(), 0, 0);
   return Math.floor((now - start) / 86400000);
 }
-// ---------- Notion à revoir (rotation quotidienne stable) ----------
+// ---------- Notion du jour (rotation quotidienne stable, personnalisée par intérêt) ----------
+// Si le profil a un intérêt enregistré (test de positionnement), la rotation
+// reste déterministe mais se fait dans le sous-ensemble réel de LIBRARY
+// correspondant à cet intérêt plutôt que dans la bibliothèque entière —
+// dégradation silencieuse vers la rotation globale si aucun intérêt n'est
+// encore connu ou si le sous-ensemble est vide.
+const INTEREST_LIBRARY_CATEGORIES = {
+  personalFinance: ['Finances personnelles', 'Épargne', 'Fiscalité'],
+  stockMarket: ['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque'],
+  business: ['Business', 'Entreprise'],
+  realEstate: ['Immobilier'],
+  economics: ['Économie'],
+  crypto: ['Crypto'],
+  marketing: ['Business']
+};
 function getNotionOfDay(){
+  const profile = getProfile();
+  const topInterest = Object.keys(profile.interests || {}).find(k => profile.interests[k]);
+  if(topInterest && INTEREST_LIBRARY_CATEGORIES[topInterest]){
+    const pool = LIBRARY.filter(l => INTEREST_LIBRARY_CATEGORIES[topInterest].includes(l.categorie));
+    if(pool.length) return pool[dayOfYear() % pool.length];
+  }
   return LIBRARY[dayOfYear() % LIBRARY.length];
 }
 
@@ -750,13 +770,25 @@ function animateNumber(el, target, opts){
   requestAnimationFrame(tick);
 }
 
+// Libellés courts pour la salutation personnalisée (Accueil) — réutilisés
+// nulle part ailleurs comme identifiant technique, uniquement pour l'affichage.
+const INTEREST_DISPLAY_LABELS = {
+  personalFinance: 'les finances personnelles', stockMarket: 'la bourse', business: 'le Business',
+  realEstate: "l'immobilier", economics: "l'économie", crypto: 'la crypto', marketing: 'le marketing'
+};
 // ---------- En-tête de tableau de bord (salutation, rang, FinPoints, série, activité hebdo) ----------
 function renderDashboardHeader(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const g = getGamification();
   const lvl = levelFromXP(g.xp);
-  const greeting = WELCOME_PHRASES[Math.floor(Math.random() * WELCOME_PHRASES.length)];
+  let greeting = WELCOME_PHRASES[Math.floor(Math.random() * WELCOME_PHRASES.length)];
+  const profileInterests = getProfile().interests || {};
+  const interests = Object.keys(profileInterests).filter(k => profileInterests[k]);
+  if(interests.length){
+    const labels = interests.slice(0,2).map(k => INTEREST_DISPLAY_LABELS[k] || k);
+    greeting = `Tu t'intéresses surtout à ${labels.join(' et à ')}.`;
+  }
   const weekDays = getWeeklyActivityDays();
   const weekPct = Math.min(100, Math.round((weekDays/WEEKLY_GOAL_DAYS)*100));
   el.innerHTML = `
