@@ -305,6 +305,35 @@ const MARKET_TIPS = {
   expert: "Une variation de PER à bénéfice constant reflète un changement d'anticipations du marché, pas un changement de la valeur intrinsèque de l'entreprise, utile à distinguer avant d'interpréter un mouvement de cours."
 };
 
+// ---------- Personnalisation légère par domaine (profil Likanza) ----------
+// Utilise le niveau spécifique au domaine (fzr-profile.levels, alimenté par
+// le test de positionnement) quand il existe, sinon le niveau global
+// (fzr-level) — jamais une valeur inventée : dégradation silencieuse vers le
+// signal réel disponible le plus précis.
+function getDomainLevel(domainKey){
+  if(domainKey){
+    const lvl = getProfile().levels[domainKey];
+    if(lvl) return lvl;
+  }
+  return getLevel();
+}
+const LEVEL_TIPS = {
+  debutant: "Pas besoin de retenir tous les chiffres pour l'instant. Comprends d'abord le principe.",
+  intermediaire: "Tu connais déjà ce principe : regarde maintenant ce qui peut modifier le résultat.",
+  avance: "Passons directement aux hypothèses et aux limites du modèle.",
+  expert: "Passons directement aux hypothèses et aux limites du modèle."
+};
+// Discret par nature : à n'appeler qu'une fois par page, à un endroit où le
+// conseil apporte une vraie valeur (jamais en répétition sur plusieurs blocs).
+function renderLevelTip(elId, domainKey){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const level = getDomainLevel(domainKey);
+  const text = LEVEL_TIPS[level];
+  if(!text){ el.innerHTML = ''; return; }
+  renderConseilBadge(elId, {text, tone:'neutral'});
+}
+
 // ---------- Conseil Likanza : recommandations adaptées au niveau (composant réutilisable) ----------
 const NIVEAU_RANK = {debutant:0, 'débutant':0, intermediaire:1, 'intermédiaire':1, avance:2, 'avancé':2, expert:3};
 function normalizeNiveau(v){

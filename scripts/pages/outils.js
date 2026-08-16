@@ -1,3 +1,5 @@
+renderLevelTip('levelTip', 'personalFinance');
+
 // Budget
 ['budgetRevenu','budgetLoyer','budgetFixe','budgetVariable'].forEach(id=>document.getElementById(id).addEventListener('input', updateBudget));
 function updateBudget(){

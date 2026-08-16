@@ -96,6 +96,7 @@ async function renderBusinessNews(){
   }
 }
 
+renderLevelTip('levelTip', 'business');
 renderBusinessResume('businessResume');
 renderBusinessIndicators();
 renderBusinessRate();

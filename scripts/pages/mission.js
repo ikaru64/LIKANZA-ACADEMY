@@ -34,6 +34,7 @@ function renderMissionPage(){
     const banner = document.getElementById('missionLevelDone');
     if(banner) banner.style.display = '';
   });
+  renderLevelTip('levelTip');
 }
 
 safeRun('page mission', renderMissionPage);

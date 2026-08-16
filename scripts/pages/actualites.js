@@ -1,3 +1,5 @@
+renderLevelTip('levelTip');
+
 // ---------- Récap du jour (généré automatiquement, voir /api/generate-daily-news) ----------
 async function renderDailyRecap(){
   const el = document.getElementById('dailyRecapCard');

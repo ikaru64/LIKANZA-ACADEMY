@@ -1,1 +1,2 @@
 renderVraiFaux('vraiFauxGame');
+renderLevelTip('levelTip');

@@ -7,6 +7,7 @@ document.getElementById('cryptoPanel').innerHTML = cryptoItems.map(c=>`
     <div class="card-footer"><span class="badge status-${c.statut}" title="Source : ${c.source}">${c.statusLabel}</span><span>${c.maj} · ${c.heure}</span></div>
   </div>`).join('');
 safeRun('bannière démo crypto', ()=>renderDemoBanner('cryptoDemoBanner'));
+safeRun('conseil niveau crypto', ()=>renderLevelTip('levelTip', 'crypto'));
 
 const cryptoLib = LIBRARY.filter(l=>l.categorie==='Crypto');
 document.getElementById('cryptoCourses').innerHTML = cryptoLib.map(l=>`

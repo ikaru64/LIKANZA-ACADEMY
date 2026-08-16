@@ -55,3 +55,4 @@ function updateCmp(){
   document.getElementById('cmpResult').innerHTML = `<span>Coût mensuel locataire : ${fmtEUR(rent)}</span><span>Coût mensuel propriétaire : ${fmtEUR(ownerCost)}</span><span style="color:${diff<=0?'var(--emerald)':'var(--bordeaux)'}">Écart : ${diff>=0?'+':''}${fmtEUR(diff)} / mois</span>`;
 }
 updateCmp();
+renderLevelTip('levelTip', 'realEstate');
