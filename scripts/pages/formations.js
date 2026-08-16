@@ -44,3 +44,5 @@ function renderFormationsConseil(){
 refreshLevelUI();
 renderFormationsConseil();
 renderCoursTiles('coursList');
+renderDailyMissions('dailyMissions');
+renderWeeklyMissions('weeklyMissions');

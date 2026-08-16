@@ -744,6 +744,145 @@ function getNotionOfDay(){
   return LIBRARY[dayOfYear() % LIBRARY.length];
 }
 
+// ---------- Missions renouvelables (quotidiennes / hebdomadaires) ----------
+// Couche additionnelle au-dessus des missions fixes de COURSES (formations.html) :
+// celles-ci ne s'épuisent jamais, se régénèrent chaque jour/semaine à partir
+// de gabarits, et s'adaptent au niveau/intérêts/progression réels de
+// l'utilisateur. N'utilise jamais fzr-progress (clé des missions fixes) :
+// stockage dédié (fzr-daily-missions-log / fzr-weekly-missions-log), aucune
+// collision possible avec le système existant.
+const MISSION_TEMPLATES = [
+  {id:'decouvrir-concept', xp:5, build(){
+    const n = getNotionOfDay();
+    return {title:'Découvrir 1 concept', desc:`Lis la notion « ${n.terme} » dans la Bibliothèque.`, href:`bibliotheque.html#${encodeURIComponent(n.terme.replace(/\s+/g,'-'))}`};
+  }},
+  {id:'terminer-lecon', xp:10, build(){
+    const progress = getCoursProgress();
+    const next = COURS_CATALOG.find(c=>!progress[c.id]);
+    if(!next) return null;
+    return {title:'Terminer une leçon', desc:`Termine le cours « ${next.titre} » et son quiz de validation.`, href:`cours.html#${encodeURIComponent(next.id)}`};
+  }},
+  {id:'repondre-questions', xp:8, build(){
+    return {title:'Répondre à 5 questions', desc:'Réponds à 5 questions dans les Défis pour tester tes connaissances.', href:'defis.html'};
+  }},
+  {id:'analyser-actualite', xp:5, build(){
+    return {title:'Analyser une actualité', desc:"Lis une actualité de la semaine et repère pourquoi elle compte pour toi.", href:'actualites.html'};
+  }},
+  {id:'tester-simulateur', xp:5, build(){
+    return {title:'Tester un simulateur', desc:'Ouvre un simulateur et modifie au moins une variable pour voir son effet.', href:'outils.html'};
+  }},
+  {id:'sujet-nouveau', xp:5, build(){
+    const profile = getProfile();
+    const knownKeys = Object.keys(profile.interests || {}).filter(k=>profile.interests[k]);
+    const knownCats = knownKeys.flatMap(k => INTEREST_LIBRARY_CATEGORIES[k] || []);
+    const allCats = [...new Set(LIBRARY.map(l=>l.categorie))];
+    const unknownCats = allCats.filter(c=>!knownCats.includes(c));
+    const pool = (knownCats.length && unknownCats.length) ? LIBRARY.filter(l=>unknownCats.includes(l.categorie)) : LIBRARY;
+    const n = pool[dayOfYear() % pool.length];
+    return {title:'Découvrir un sujet hors de ta zone habituelle', desc:`Explore « ${n.terme} » (${n.categorie}), un thème différent de tes habitudes.`, href:`bibliotheque.html#${encodeURIComponent(n.terme.replace(/\s+/g,'-'))}`};
+  }},
+  {id:'etape-business', xp:8, build(){
+    return {title:'Compléter une étape Business', desc:'Avance d\'une étape dans « Construis ton projet ».', href:'construire-son-projet.html'};
+  }},
+  {id:'comparer-actifs', xp:5, build(){
+    return {title:'Comparer deux actifs', desc:'Utilise le comparateur pour comparer deux actions ou ETF entre eux.', href:'bourse.html'};
+  }},
+  {id:'revoir-notion', xp:8, build(){
+    const mistakes = getMistakes().filter(m=>!m.resolved);
+    if(!mistakes.length) return null;
+    const m = mistakes[0];
+    return {title:'Revoir une notion mal comprise', desc:`Retravaille « ${m.categorie} » dans les Défis, d'après tes vraies erreurs de quiz.`, href:`defis.html?cat=${encodeURIComponent(m.categorie)}`};
+  }}
+];
+function pickMissions(count, seed, excludeIds){
+  const applicable = MISSION_TEMPLATES.filter(t => !(excludeIds||[]).includes(t.id));
+  const results = [];
+  const tried = new Set();
+  let i = seed;
+  while(results.length < count && tried.size < applicable.length){
+    const t = applicable[i % applicable.length];
+    if(!tried.has(t.id)){
+      tried.add(t.id);
+      const built = t.build();
+      if(built) results.push({...built, id:t.id, xp:t.xp});
+    }
+    i++;
+  }
+  return results;
+}
+function isoWeekStart(){
+  const now = new Date();
+  const day = now.getDay();
+  const diff = (day === 0 ? -6 : 1) - day;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() + diff);
+  monday.setHours(0,0,0,0);
+  return monday.toISOString().slice(0,10);
+}
+function getDailyMissionsLog(){
+  const today = new Date().toDateString();
+  const log = safeGetJSON('fzr-daily-missions-log', {date:today, doneIds:[]});
+  if(log.date !== today) return {date:today, doneIds:[]};
+  return log;
+}
+function completeDailyMission(id, xp){
+  const log = getDailyMissionsLog();
+  if(log.doneIds.includes(id)) return false;
+  log.doneIds.push(id);
+  safeSetJSON('fzr-daily-missions-log', log);
+  awardXP(xp, {dailyMissionDone:id});
+  return true;
+}
+function getWeeklyMissionsLog(){
+  const weekStart = isoWeekStart();
+  const log = safeGetJSON('fzr-weekly-missions-log', {weekStart, doneIds:[]});
+  if(log.weekStart !== weekStart) return {weekStart, doneIds:[]};
+  return log;
+}
+function completeWeeklyMission(id, xp){
+  const log = getWeeklyMissionsLog();
+  if(log.doneIds.includes(id)) return false;
+  log.doneIds.push(id);
+  safeSetJSON('fzr-weekly-missions-log', log);
+  awardXP(xp, {weeklyMissionDone:id});
+  return true;
+}
+function renderMissionsBlock(elId, missions, doneIds, onComplete){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = missions.map(m=>{
+    const done = doneIds.includes(m.id);
+    return `
+    <div class="today-block" style="margin-bottom:10px;">
+      <h4>${m.title}</h4>
+      <p style="font-size:12.5px;color:var(--text-dim);margin:4px 0 8px;">${m.desc}</p>
+      <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
+        <a href="${m.href}" class="today-link">Ouvrir →</a>
+        <button class="btn btn-sm" data-mission-id="${m.id}" data-mission-xp="${m.xp}" ${done?'disabled':''}>${done ? ICONS.check+' Fait' : `Marquer comme fait (+${m.xp} XP)`}</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('[data-mission-id]').forEach(btn=>{
+    btn.addEventListener('click', ()=>onComplete(btn.dataset.missionId, +btn.dataset.missionXp));
+  });
+}
+function renderDailyMissions(elId){
+  const missions = pickMissions(2, dayOfYear(), []);
+  const log = getDailyMissionsLog();
+  renderMissionsBlock(elId, missions, log.doneIds, (id, xp)=>{
+    completeDailyMission(id, xp);
+    renderDailyMissions(elId);
+  });
+}
+function renderWeeklyMissions(elId){
+  const missions = pickMissions(3, Math.floor(dayOfYear()/7), []);
+  const log = getWeeklyMissionsLog();
+  renderMissionsBlock(elId, missions, log.doneIds, (id, xp)=>{
+    completeWeeklyMission(id, xp);
+    renderWeeklyMissions(elId);
+  });
+}
+
 // ---------- Petites animations : barres qui se remplissent, compteurs qui montent ----------
 function prefersReducedMotion(){
   return window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
