@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Laboratoire financier · Likanza Academy</title>
-<meta name="description" content="Le laboratoire financier Likanza Academy : intérêts composés, DCA, budget, crédit, rendement locatif, comparateur d'actions — expérimente sans risque.">
+<title>Simulateurs · Likanza Academy</title>
+<meta name="description" content="Budget, épargne, intérêts composés, DCA, inflation et comparateur de décisions : tous les simulateurs Likanza Academy réunis sur une seule page.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -25,7 +25,6 @@
   <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
   <a href="crypto.html"><span class="icon" data-icon="bitcoin"></span><span>Crypto</span></a>
   <a href="business.html"><span class="icon" data-icon="briefcase"></span><span>Business</span></a>
-  <a href="finances-personnelles.html"><span class="icon" data-icon="wallet"></span><span>Finances perso</span></a>
   <span class="sidebar-group-label">Compte</span>
   <a href="compte.html"><span class="icon" data-icon="trophy"></span><span>Mon compte</span></a>
 </aside>
@@ -47,7 +46,6 @@
             <a href="bourse.html">Bourse &amp; comparateur</a>
             <a href="crypto.html">Crypto</a>
             <a href="business.html">Business</a>
-            <a href="finances-personnelles.html">Finances personnelles</a>
           </div>
           <div class="nav-dropdown-col">
             <h5>Apprendre</h5>
@@ -76,72 +74,93 @@
 </header>
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Simulateurs</div>
 
-<section class="section" style="padding-bottom:0;">
-  <div class="section-head"><h2>Laboratoire financier</h2><span class="meta-line">simulateurs & calculateurs</span></div>
-  <div class="card" style="max-width:720px;">
-    <p style="font-family:'Cormorant Garamond',serif;font-size:19px;font-weight:600;font-style:italic;line-height:1.5;">« Et si tu pouvais voir ce que dix années de décisions financières auraient changé ? Modifie une variable. Laisse le temps faire le reste. »</p>
-    <p style="font-size:12px;color:var(--text-dim);margin-top:12px;">Ces outils appliquent des formules mathématiques standards (intérêts composés, moyennes...) à but pédagogique. Ce ne sont ni des prévisions ni des conseils personnalisés : les marchés réels restent imprévisibles.</p>
-  </div>
+<section class="section" style="padding-bottom:26px;">
+  <div class="section-head"><h2>Simulateurs</h2><span class="meta-line">budget, épargne, investissement, décisions</span></div>
+  <p style="font-size:12.5px;color:var(--text-dim);max-width:80ch;">Ces outils appliquent des formules mathématiques standards (intérêts composés, moyennes...) à but pédagogique. Ce ne sont ni des prévisions ni des conseils personnalisés : les marchés réels restent imprévisibles.</p>
 </section>
 
-<section class="section" style="padding-bottom:0;">
-  <a href="comparateur-decisions.html" class="card play-tile" style="max-width:720px;background:var(--bg-alt);border:1px solid var(--hairline);">
-    <span class="icon" data-icon="scale" style="color:var(--gold-bright);"></span>
-    <h3 style="margin:10px 0 6px;">Comparateur de décisions</h3>
-    <p>Payer cash ou à crédit en investissant à côté ? Rembourser par anticipation ou investir ? Deux vraies questions de foyer, chiffrées à partir de tes propres hypothèses.</p>
-    <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-  </a>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Tous les outils</h2><span class="meta-line">simulateurs & calculateurs</span></div>
+<section class="section" style="padding-top:0;">
   <div class="card-grid">
-    <div class="card" style="cursor:pointer;" data-open-tool="toggleInterets"><h3>Intérêts composés</h3><p>Simule la croissance d'un capital investi régulièrement.</p><span class="meta-line" style="color:var(--gold-bright);">Ouvrir ↓</span></div>
-    <div class="card" style="cursor:pointer;" data-open-tool="toggleDca"><h3>Prix moyen d'achat (DCA)</h3><p>Calcule ton prix moyen sur plusieurs achats.</p><span class="meta-line" style="color:var(--gold-bright);">Ouvrir ↓</span></div>
-    <div class="card"><h3>Budget & objectif d'épargne</h3><p>Sur la page Finances personnelles.</p><a href="finances-personnelles.html" class="btn btn-sm">Ouvrir</a></div>
-    <div class="card"><h3>Crédit & rendement locatif</h3><p>Sur la page Immobilier.</p><a href="immobilier.html" class="btn btn-sm">Ouvrir</a></div>
-    <div class="card"><h3>Comparateur d'actions</h3><p>Sur la page Bourse.</p><a href="bourse.html" class="btn btn-sm">Ouvrir</a></div>
-    <div class="card"><h3>Scénarios d'action</h3><p>Sur la page Bourse.</p><a href="bourse.html" class="btn btn-sm">Ouvrir</a></div>
-  </div>
-</section>
 
-<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);">
-  <div class="wrap">
-    <div class="course-list">
-      <div class="course-item">
-        <div class="head" id="toggleInterets" onclick="this.nextElementSibling.classList.toggle('open')">
-          <h4>Intérêts composés</h4>
-          <span class="idx">Simulateur</span>
-        </div>
-        <div class="course-body">
-          <div class="course-body-inner">
-            <div class="slider-row field"><label>Capital de départ <span class="v mono" id="valCapital">500 €</span></label><input type="range" id="capital" min="0" max="10000" step="100" value="500"></div>
-            <div class="slider-row field"><label>Versement mensuel <span class="v mono" id="valMonthly">100 €</span></label><input type="range" id="monthly" min="0" max="1000" step="10" value="100"></div>
-            <div class="slider-row field"><label>Rendement annuel moyen <span class="v mono" id="valRate">6 %</span></label><input type="range" id="rate" min="0" max="12" step="0.5" value="6"></div>
-            <div class="slider-row field"><label>Durée <span class="v mono" id="valYears">15 ans</span></label><input type="range" id="years" min="1" max="40" step="1" value="15"></div>
-            <div class="result-label">Capital estimé au terme</div>
-            <div class="result-big" id="simTotal">— €</div>
-            <div class="result-row"><span>Versé : <span id="simInvested">—</span></span><span>Gains : <span id="simGains" style="color:var(--emerald)">—</span></span></div>
-            <div class="bar-chart" id="simChart"></div>
-            <div class="bar-labels" id="simChartLabels"></div>
-          </div>
-        </div>
-      </div>
-      <div class="course-item">
-        <div class="head" id="toggleDca" onclick="this.nextElementSibling.classList.toggle('open')">
-          <h4>Prix moyen d'achat (DCA)</h4>
-          <span class="idx">Dollar Cost Averaging</span>
-        </div>
-        <div class="course-body">
-          <div class="course-body-inner">
-            <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Ajoute tes achats successifs pour voir ton prix moyen d'achat.</p>
-            <div id="dcaRows"></div>
-            <button class="btn btn-sm" id="dcaAdd" style="margin-top:10px;">+ Ajouter un achat</button>
-            <div class="result-row" id="dcaResult" style="margin-top:18px;"></div>
-          </div>
-        </div>
+    <div class="card">
+      <h3>Calculateur de budget</h3>
+      <div class="field"><label>Revenus mensuels nets (€)</label><input type="number" id="budgetRevenu" value="2200"></div>
+      <div class="field"><label>Loyer / crédit (€)</label><input type="number" id="budgetLoyer" value="750"></div>
+      <div class="field"><label>Charges fixes : assurances, abonnements, transport (€)</label><input type="number" id="budgetFixe" value="400"></div>
+      <div class="field"><label>Dépenses variables : courses, sorties (€)</label><input type="number" id="budgetVariable" value="600"></div>
+      <div class="result-label">Capacité d'épargne mensuelle</div>
+      <div class="result-big" id="budgetResult">— €</div>
+      <p class="disclaimer-box">Une capacité d'épargne négative signale un budget à revoir avant tout projet d'investissement.</p>
+    </div>
+
+    <div class="card">
+      <h3>Objectif d'épargne</h3>
+      <div class="field"><label>Montant visé (€)</label><input type="number" id="goalAmount" value="5000"></div>
+      <div class="field"><label>Épargne mensuelle possible (€)</label><input type="number" id="goalMonthly" value="150"></div>
+      <div class="result-label">Temps nécessaire pour atteindre l'objectif</div>
+      <div class="result-big" id="goalResult">—</div>
+    </div>
+
+    <div class="card">
+      <h3>Coût futur d'un abonnement</h3>
+      <div class="field"><label>Coût mensuel de l'abonnement (€)</label><input type="number" id="subCost" value="15"></div>
+      <div class="slider-row field"><label>Sur une durée de <span class="v mono" id="valSubYears">5 ans</span></label><input type="range" id="subYears" min="1" max="20" step="1" value="5"></div>
+      <div class="slider-row field"><label>Si investi à la place, rendement annuel <span class="v mono" id="valSubRate">6 %</span></label><input type="range" id="subRate" min="0" max="10" step="0.5" value="6"></div>
+      <div class="result-row" id="subResult" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <h3>Impact de l'inflation sur ton épargne</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Une épargne qui ne rapporte pas assez perd du pouvoir d'achat, même si le chiffre affiché augmente.</p>
+      <div class="field"><label>Montant épargné aujourd'hui (€)</label><input type="number" id="inflAmount" value="10000"></div>
+      <div class="slider-row field"><label>Rendement de ton épargne <span class="v mono" id="valInflReturn">1 %</span></label><input type="range" id="inflReturn" min="0" max="10" step="0.5" value="1"></div>
+      <div class="slider-row field"><label>Inflation annuelle <span class="v mono" id="valInflRate">2.1 %</span></label><input type="range" id="inflRate" min="0" max="8" step="0.1" value="2.1"></div>
+      <div class="slider-row field"><label>Durée <span class="v mono" id="valInflYears">10 ans</span></label><input type="range" id="inflYears" min="1" max="30" step="1" value="10"></div>
+      <div class="result-row" id="inflResult" style="margin-top:14px;"></div>
+      <div class="bar-chart" id="inflChart"></div>
+      <div class="bar-labels" id="inflChartLabels"></div>
+    </div>
+
+    <div class="card">
+      <h3>Intérêts composés</h3>
+      <div class="slider-row field"><label>Capital de départ <span class="v mono" id="valCapital">500 €</span></label><input type="range" id="capital" min="0" max="10000" step="100" value="500"></div>
+      <div class="slider-row field"><label>Versement mensuel <span class="v mono" id="valMonthly">100 €</span></label><input type="range" id="monthly" min="0" max="1000" step="10" value="100"></div>
+      <div class="slider-row field"><label>Rendement annuel moyen <span class="v mono" id="valRate">6 %</span></label><input type="range" id="rate" min="0" max="12" step="0.5" value="6"></div>
+      <div class="slider-row field"><label>Durée <span class="v mono" id="valYears">15 ans</span></label><input type="range" id="years" min="1" max="40" step="1" value="15"></div>
+      <div class="result-label">Capital estimé au terme</div>
+      <div class="result-big" id="simTotal">— €</div>
+      <div class="result-row"><span>Versé : <span id="simInvested">—</span></span><span>Gains : <span id="simGains" style="color:var(--emerald)">—</span></span></div>
+      <div class="bar-chart" id="simChart"></div>
+      <div class="bar-labels" id="simChartLabels"></div>
+      <div id="simWhatIf"></div>
+      <p class="disclaimer-box">Simulation illustrative, rendement hypothétique constant. Ce n'est pas un conseil en investissement.</p>
+    </div>
+
+    <div class="card">
+      <h3>Prix moyen d'achat (DCA)</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Ajoute tes achats successifs pour voir ton prix moyen d'achat.</p>
+      <div id="dcaRows"></div>
+      <button class="btn btn-sm" id="dcaAdd" style="margin-top:10px;">+ Ajouter un achat</button>
+      <div class="result-row" id="dcaResult" style="margin-top:16px;"></div>
+    </div>
+
+    <a href="comparateur-decisions.html" class="card play-tile">
+      <span class="icon" data-icon="scale" style="color:var(--gold-bright);"></span>
+      <h3 style="margin:10px 0 6px;">Comparateur de décisions</h3>
+      <p>Payer cash ou à crédit en investissant à côté ? Rembourser par anticipation ou investir ? Deux vraies questions de foyer, chiffrées à partir de tes propres hypothèses.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
+    </a>
+
+    <div class="card">
+      <h3>Autres outils</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px;">Sur leurs pages dédiées, entièrement fonctionnels.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <a href="immobilier.html" class="btn btn-sm" style="justify-content:space-between;">Crédit & rendement locatif →</a>
+        <a href="bourse.html" class="btn btn-sm" style="justify-content:space-between;">Comparateur d'actions →</a>
+        <a href="bourse.html" class="btn btn-sm" style="justify-content:space-between;">Scénarios d'action →</a>
       </div>
     </div>
+
   </div>
 </section>
 

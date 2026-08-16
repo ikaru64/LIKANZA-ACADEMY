@@ -11,15 +11,15 @@ const PARCOURS_PRINCIPAL = [
     titre:"Comprendre sa situation", difficulte:"Débutant", duree:"~25 min", lecons:4,
     competence:"Faire le point sur son budget",
     notions:["Revenus","Charges fixes","Dépenses variables","Reste à vivre","Patrimoine","Dettes"],
-    lien:"finances-personnelles.html", statut:"disponible",
-    note:"Regroupe le simulateur de budget (Finances personnelles) et la mission \"Construire son premier plan financier\"."
+    lien:"outils.html", statut:"disponible",
+    note:"Regroupe le simulateur de budget (Simulateurs) et la mission \"Construire son premier plan financier\"."
   },
   {
     titre:"Construire un budget", difficulte:"Débutant", duree:"~20 min", lecons:3,
     competence:"Construire un budget réaliste",
     notions:["Catégories de dépenses","Méthode 50/30/20","Suivi","Réduire les dépenses inutiles"],
-    lien:"finances-personnelles.html", statut:"disponible",
-    note:"Le simulateur de budget (Finances personnelles) couvre déjà cette base."
+    lien:"outils.html", statut:"disponible",
+    note:"Le simulateur de budget (Simulateurs) couvre déjà cette base."
   },
   {
     titre:"Sécuriser ses finances", difficulte:"Débutant", duree:"~20 min", lecons:3,
