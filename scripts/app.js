@@ -1191,6 +1191,84 @@ const LIBRARY = [
     avantages:[],
     inconvenients:[],
     erreurs:["Oublier de recalculer le seuil de rentabilité après une évolution des charges fixes ou du prix de vente"]
+  },
+  {
+    terme:"ROAS",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"1 min",
+    simple:"Le ROAS (Return On Ad Spend) mesure le chiffre d'affaires généré pour chaque euro dépensé en publicité.",
+    detail:"Il se calcule en divisant le chiffre d'affaires généré par une campagne par son coût. Contrairement au ROI, qui tient compte de toutes les charges, le ROAS se concentre uniquement sur le rapport entre dépense publicitaire et chiffre d'affaires brut généré.",
+    avance:"Un ROAS élevé ne garantit pas la rentabilité : il ignore les coûts de production, de livraison ou de gestion. Une campagne peut afficher un bon ROAS tout en étant globalement déficitaire une fois toutes les charges intégrées.",
+    exemple:"Une campagne publicitaire ayant coûté 1000€ et généré 4000€ de ventes a un ROAS de 4 (ou 400%).",
+    avantages:["Indicateur rapide pour comparer l'efficacité brute de différentes campagnes publicitaires"],
+    inconvenients:["Ignore les coûts autres que la publicité, contrairement au ROI"],
+    erreurs:["Confondre un bon ROAS avec une campagne rentable, sans vérifier la marge réelle"]
+  },
+  {
+    terme:"Acquisition",
+    categorie:"Business",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"L'acquisition désigne l'ensemble des actions et canaux utilisés par une entreprise pour obtenir de nouveaux clients.",
+    detail:"Elle regroupe des leviers variés : publicité payante, référencement naturel (SEO), réseaux sociaux, bouche-à-oreille, partenariats... Le choix des canaux d'acquisition dépend du type de clientèle visée et du budget disponible.",
+    avance:"Une stratégie d'acquisition efficace se mesure rarement à un seul indicateur : le coût d'acquisition (CAC), la qualité des clients obtenus et leur valeur dans le temps (LTV) doivent s'analyser ensemble, canal par canal.",
+    exemple:"Une entreprise peut tester plusieurs canaux d'acquisition (publicité en ligne, réseaux sociaux, bouche-à-oreille) pour identifier lequel ramène les clients les plus rentables.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Se concentrer sur un seul canal d'acquisition sans jamais tester d'alternatives"]
+  },
+  {
+    terme:"Rétention",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La rétention désigne la capacité d'une entreprise à garder ses clients dans la durée, plutôt qu'à les voir partir vers la concurrence.",
+    detail:"Elle s'oppose au churn (taux de résiliation) : plus la rétention est élevée, plus les clients restent longtemps, ce qui augmente leur valeur totale pour l'entreprise (LTV). De nombreuses entreprises jugent qu'il coûte moins cher de fidéliser un client existant que d'en acquérir un nouveau.",
+    avance:"Améliorer la rétention (support client, programme de fidélité, amélioration continue du produit) a souvent un effet de levier plus fort sur la rentabilité à long terme que d'augmenter le budget d'acquisition, en particulier dans les modèles par abonnement.",
+    exemple:"Une entreprise SaaS qui améliore son support client et voit son taux de rétention annuel passer de 80% à 90% conserve davantage de revenus récurrents sans dépenser plus en acquisition.",
+    avantages:["Souvent moins coûteux que l'acquisition de nouveaux clients"],
+    inconvenients:[],
+    erreurs:["Investir uniquement dans l'acquisition de nouveaux clients en négligeant la fidélisation des clients existants"]
+  },
+  {
+    terme:"Branding",
+    categorie:"Business",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Le branding désigne le travail de construction et de gestion de l'image et de l'identité d'une marque.",
+    detail:"Il englobe le nom, le logo, les couleurs, le ton de communication, mais aussi la perception globale que les clients ont de l'entreprise : sérieuse, innovante, accessible, premium... Un branding cohérent aide les clients à reconnaître et à se souvenir d'une marque parmi la concurrence.",
+    avance:"Le branding agit sur le long terme et se mesure difficilement par un seul indicateur financier immédiat ; il influence indirectement le taux de conversion, le pricing possible (une marque perçue comme premium peut pratiquer des prix plus élevés) et la fidélité des clients.",
+    exemple:"Deux produits techniquement similaires peuvent se vendre à des prix très différents selon la perception de la marque qui les propose.",
+    avantages:["Peut justifier un prix plus élevé si la marque est perçue comme différenciante"],
+    inconvenients:["Effets difficiles à mesurer précisément et à court terme"],
+    erreurs:["Négliger la cohérence de l'image de marque entre les différents canaux de communication"]
+  },
+  {
+    terme:"Trésorerie",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La trésorerie représente l'argent immédiatement disponible sur les comptes d'une entreprise pour faire face à ses dépenses courantes.",
+    detail:"Une entreprise peut être rentable sur le papier (bénéfice positif) tout en ayant des problèmes de trésorerie si l'argent des ventes rentre plus lentement que les charges à payer. Le suivi de la trésorerie est donc distinct du suivi de la rentabilité.",
+    avance:"La faillite d'une entreprise peut survenir pour manque de trésorerie même lorsqu'elle est rentable sur le papier — c'est pourquoi les investisseurs et créanciers surveillent autant le tableau de flux de trésorerie que le compte de résultat.",
+    exemple:"Une entreprise qui facture ses clients à 60 jours mais doit payer ses fournisseurs à 30 jours peut se retrouver en tension de trésorerie même si elle est rentable sur l'année.",
+    avantages:[],
+    inconvenients:["Peut se dégrader rapidement même quand l'entreprise est rentable"],
+    erreurs:["Confondre rentabilité (résultat comptable) et trésorerie disponible (argent réellement sur le compte)"]
+  },
+  {
+    terme:"BFR",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le BFR (besoin en fonds de roulement) est le montant qu'une entreprise doit financer pour couvrir le décalage entre ses dépenses et ses encaissements dans son activité courante.",
+    detail:"Il naît du fait qu'une entreprise paie souvent ses fournisseurs et ses stocks avant d'être payée par ses propres clients. Plus ce décalage est important, plus le BFR est élevé, et plus l'entreprise a besoin de financement pour fonctionner au quotidien.",
+    avance:"Un BFR qui augmente plus vite que le chiffre d'affaires peut signaler un problème (stocks qui s'accumulent, clients qui payent de plus en plus tard) même si l'activité semble croître normalement — c'est un signal que les analystes financiers surveillent de près.",
+    exemple:"Une entreprise qui doit payer ses fournisseurs sous 30 jours mais n'est payée par ses clients qu'à 90 jours doit financer ce décalage de 60 jours grâce à son BFR.",
+    avantages:[],
+    inconvenients:["Immobilise des capitaux qui ne peuvent pas être utilisés autrement"],
+    erreurs:["Ignorer le BFR lors de la croissance rapide d'une entreprise, ce qui peut créer des tensions de trésorerie inattendues"]
   }
 ];
 
