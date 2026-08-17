@@ -356,6 +356,58 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .portfolio-alloc-input{width:60px;background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:6px 8px;border-radius:2px;text-align:right;font-family:'IBM Plex Mono',monospace;font-size:13px;}
 .vf-feedback{font-size:13.5px;color:var(--text-dim);min-height:20px;margin-top:16px;}
 
+/* ---------- Défis : feedback pédagogique partagé (tous formats) ---------- */
+.feedback-verdict{font-family:'IBM Plex Mono',monospace;font-size:12px;font-weight:600;letter-spacing:.03em;text-transform:uppercase;margin-bottom:6px;}
+.feedback-correct{color:var(--emerald);}
+.feedback-incorrect{color:var(--bordeaux);}
+.feedback-explanation{font-size:13.5px;color:var(--text-dim);line-height:1.6;}
+.feedback-xp{font-size:11.5px;color:var(--gold-bright);margin-top:6px;}
+
+/* ---------- Défis : bloc de mise en situation (cas / vrai-mais) ---------- */
+.defi-intro{background:var(--bg-alt);border-left:3px solid var(--gold);border-radius:var(--radius);padding:14px 18px;margin-bottom:16px;}
+.defi-intro-statement{font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;line-height:1.5;}
+.defi-intro-quote{margin-bottom:12px;}
+.defi-intro-quote:last-child{margin-bottom:0;}
+.defi-intro-quote-name{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--gold);display:block;margin-bottom:3px;}
+.defi-intro-quote-text{font-family:'Cormorant Garamond',serif;font-size:16.5px;font-style:italic;line-height:1.5;}
+.defi-intro-facts{list-style:none;padding:0;margin:0;font-size:13.5px;color:var(--text-dim);}
+.defi-intro-facts li{padding:3px 0;}
+.defi-vrai-chip{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--emerald);border:1px solid var(--emerald);border-radius:2px;padding:2px 8px;margin-bottom:10px;text-transform:uppercase;letter-spacing:.04em;}
+
+/* ---------- Défis : séquence causale (réordonner) ---------- */
+.defi-seq-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;}
+.defi-seq-row{display:flex;align-items:center;gap:10px;background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);padding:10px 12px;}
+.defi-seq-row-text{flex:1;font-size:13.5px;}
+.defi-seq-row-controls{display:flex;gap:4px;}
+.defi-seq-btn{width:30px;height:30px;border-radius:2px;border:1px solid var(--hairline);background:var(--bg);color:var(--text-dim);font-size:14px;line-height:1;}
+.defi-seq-btn:disabled{opacity:.3;}
+.defi-seq-row.defi-seq-correct{border-color:var(--emerald);}
+.defi-seq-row.defi-seq-wrong{border-color:var(--bordeaux);}
+
+/* ---------- Défis : classe-les (buckets par select) ---------- */
+.defi-classe-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);padding:10px 12px;margin-bottom:8px;}
+.defi-classe-row-label{font-size:13.5px;flex:1;}
+.defi-classe-row select{background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:6px 8px;border-radius:2px;font-size:12.5px;}
+.defi-classe-row.defi-classe-correct{border-color:var(--emerald);}
+.defi-classe-row.defi-classe-wrong{border-color:var(--bordeaux);}
+
+/* ---------- Défis : info manquante (sélection multiple) ---------- */
+.defi-info-list{display:flex;flex-direction:column;gap:8px;margin:14px 0;}
+.defi-info-option{display:flex;align-items:flex-start;gap:10px;background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);padding:10px 12px;cursor:pointer;}
+.defi-info-option input{margin-top:3px;width:15px;height:15px;flex-shrink:0;}
+.defi-info-option-text{font-size:13.5px;}
+
+/* ---------- Défis : cartes de la nouvelle page d'accueil ---------- */
+.defi-hero-card{background:var(--bg-alt);border:1px solid var(--gold);border-radius:var(--radius);padding:22px 26px;box-shadow:0 20px 40px -28px rgba(0,0,0,0.7);}
+.defi-hero-meta{display:flex;gap:16px;flex-wrap:wrap;margin:14px 0;font-size:12px;color:var(--text-dim);font-family:'IBM Plex Mono',monospace;}
+.defi-stat-row{display:flex;gap:18px;flex-wrap:wrap;}
+.defi-stat{flex:1;min-width:120px;}
+.defi-stat-value{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:600;color:var(--gold-bright);}
+.defi-stat-label{font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;}
+.defi-parcours-step{display:flex;align-items:center;gap:10px;padding:8px 0;font-size:13px;color:var(--text-dim);}
+.defi-parcours-step.is-done{color:var(--emerald);}
+.defi-parcours-step.is-boss{color:var(--gold);font-style:italic;}
+
 /* ---------- Mon parcours : chemin visuel ---------- */
 .parcours-path{display:flex;flex-direction:column;}
 .parcours-step{display:flex;gap:18px;padding:14px 0;position:relative;}

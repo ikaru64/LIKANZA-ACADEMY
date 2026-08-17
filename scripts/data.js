@@ -527,8 +527,6 @@ const WELCOME_PHRASES = [
 ];
 const BRAND_SLOGAN = "Apprends la finance. À ton rythme.";
 
-// Niveau à partir duquel le niveau de quiz "Avancé" se débloque.
-const ADVANCED_QUIZ_UNLOCK_LEVEL = 4;
 const BADGES = [
   {id:'first_module', name:'Première mission', desc:"Terminer ta première mission.", check:(g,ctx)=> !!(ctx && ctx.moduleCompleted)},
   {id:'level_complete', name:'Parcours terminé', desc:"Terminer toutes les missions d'un niveau.", check:(g,ctx)=> !!(ctx && ctx.levelJustCompleted)},
@@ -742,6 +740,19 @@ const INTEREST_LIBRARY_CATEGORIES = {
   economics: ['Économie'],
   crypto: ['Crypto'],
   marketing: ['Business']
+};
+// Même principe qu'INTEREST_LIBRARY_CATEGORIES, mais pointant vers la
+// taxonomie propre à QUIZ_BANK_FULL/MENTAL_CHALLENGES (Défis) — les deux
+// taxonomies sont volontairement différentes (glossaire vs. questions),
+// donc ce mapping ne peut pas être déduit de l'autre.
+const INTEREST_QUIZ_CATEGORIES = {
+  personalFinance: ['Épargne', 'Livret A', 'Inflation', 'Intérêts simples', 'Intérêts composés', 'Budget', "Constitution d'un patrimoine", 'Fiscalité de base', 'Retraite et PER', 'Assurance-vie', 'Arnaques financières'],
+  stockMarket: ['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur"],
+  business: ["Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'],
+  realEstate: ['Immobilier', 'SCPI', 'Crédit'],
+  economics: ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande'],
+  crypto: ['Cryptoactifs'],
+  marketing: ["Chiffre d'affaires", 'Marge nette', 'Startup']
 };
 function getNotionOfDay(){
   const profile = getProfile();
@@ -982,15 +993,6 @@ function tryAwardQuizPoints(questionId, amount, ctx){
   return true;
 }
 
-// ---------- Bonus de combo : plus on enchaîne de bonnes réponses d'affilée
-// dans un même défi, plus chaque question suivante rapporte de points. ----------
-function comboBonusAmount(combo){
-  if(combo >= 8) return 20;
-  if(combo >= 5) return 15;
-  if(combo >= 3) return 12;
-  return 10;
-}
-
 // ---------- Statistiques de quiz (par catégorie, historique) ----------
 function getQuizStats(){
   return safeGetJSON('fzr-quiz-stats', {categoryStats:{}, history:[]});
@@ -1009,21 +1011,10 @@ function recordQuizCompletion(level, categorie, length, score){
   stats.history = stats.history.slice(0, 30);
   saveQuizStats(stats);
 }
-function getMasteredAndToReview(){
-  const stats = getQuizStats();
-  const mastered = [], toReview = [];
-  Object.entries(stats.categoryStats).forEach(([cat, s])=>{
-    if(s.total < 2) return;
-    const pct = s.correct / s.total;
-    if(pct >= 0.75) mastered.push(cat);
-    else if(pct < 0.5) toReview.push(cat);
-  });
-  return {mastered, toReview};
-}
-
 // Score de maîtrise continu par catégorie, dérivé de fzr-quiz-stats (aucune
-// donnée inventée — uniquement de vraies réponses aux quiz). Remplace le
-// double seuil silencieux de getMasteredAndToReview (angle mort 50-75%).
+// donnée inventée — uniquement de vraies réponses aux quiz). Seule mesure de
+// maîtrise du site (l'ancienne version à double seuil silencieux, avec son
+// angle mort 50-75%, a été retirée).
 function getSkillMastery(){
   const stats = getQuizStats();
   return Object.entries(stats.categoryStats)
@@ -1125,188 +1116,25 @@ function renderMasteryList(elId){
     </div>`).join('')}</div>`;
 }
 
-// ---------- Sélection des questions ----------
-function selectQuizQuestions(level, categorie, length){
-  let pool = QUIZ_BANK_FULL.slice();
-  if(level && level !== 'tous') pool = pool.filter(q=>q.niveau===level);
-  if(categorie && categorie !== 'tous') pool = pool.filter(q=>q.categorie===categorie);
-  // mélange (Fisher-Yates)
-  for(let i=pool.length-1;i>0;i--){
-    const j = Math.floor(Math.random()*(i+1));
-    [pool[i], pool[j]] = [pool[j], pool[i]];
-  }
-  return pool.slice(0, Math.min(length, pool.length));
+// selectQuizQuestions, renderQuickChallenge et renderQuizSetup ont été
+// retirés : entièrement remplacés par le moteur Défis (defisFullPool,
+// startMixedSession, renderDefiDuJour, renderModesEntrainement) qui couvre
+// le même besoin (sélection niveau/thème/longueur) sur un pool combiné
+// QUIZ_BANK_FULL + MENTAL_CHALLENGES, avec plusieurs formats possibles.
+
+// ---------- Feedback pédagogique partagé (Défis) ----------
+// Utilisé par tous les moteurs de quiz/défis, anciens et nouveaux : un
+// verdict court suivi de la vraie explication — jamais un simple ✅/❌ nu,
+// jamais un ton enfantin ("Oups ! Essaie encore champion 😜").
+function renderFeedbackHtml(correct, explication, xpMsg){
+  return `
+    <p class="feedback-verdict ${correct ? 'feedback-correct' : 'feedback-incorrect'}">
+      <span aria-hidden="true">${correct ? '✓' : '✗'}</span> ${correct ? 'Exact.' : 'Pas tout à fait.'}
+    </p>
+    <p class="feedback-explanation">${explication}</p>
+    ${xpMsg ? `<p class="feedback-xp">${xpMsg}</p>` : ''}`;
 }
 
-// ---------- Défi rapide (1 question, pour le tableau de bord) ----------
-function renderQuickChallenge(elId){
-  const el = document.getElementById(elId);
-  if(!el) return;
-  const item = QUIZ_BANK_FULL[dayOfYear() % QUIZ_BANK_FULL.length];
-  el.innerHTML = `
-    <div class="quiz-q" style="font-size:14px;margin-bottom:10px;">${item.question}</div>
-    <div id="${elId}-opts" style="display:flex;flex-direction:column;gap:6px;"></div>
-    <div id="${elId}-feedback" style="font-size:12.5px;color:var(--text-dim);margin-top:8px;min-height:18px;"></div>`;
-  const opts = document.getElementById(elId+'-opts');
-  item.choix.forEach((opt,i)=>{
-    const btn = document.createElement('button');
-    btn.className = 'pill';
-    btn.style.textAlign = 'left';
-    btn.textContent = opt;
-    btn.addEventListener('click', ()=>{
-      Array.from(opts.children).forEach((c,ci)=>{
-        c.disabled = true;
-        c.style.borderColor = ci===item.bonneReponse ? 'var(--emerald)' : (ci===i ? 'var(--bordeaux)' : 'var(--hairline)');
-      });
-      const correct = i===item.bonneReponse;
-      recordAnswer(item.categorie, correct);
-      let msg = item.explication;
-      if(correct){ const got = tryAwardQuizPoints(item.id, 10); msg += got ? ' (+10 XP · +10 Finance Points)' : ' (déjà validée aujourd\u2019hui, sans nouveaux gains)'; }
-      document.getElementById(elId+'-feedback').textContent = msg;
-    }, {once:true});
-    opts.appendChild(btn);
-  });
-}
-
-// ---------- Moteur de quiz complet (sélection, session, résultats) ----------
-function renderQuizSetup(elId){
-  const el = document.getElementById(elId);
-  if(!el) return;
-  const categories = [...new Set(QUIZ_BANK_FULL.map(q=>q.categorie))].sort();
-  const userLevel = levelFromXP(getGamification().xp).level;
-  const advancedUnlocked = userLevel >= ADVANCED_QUIZ_UNLOCK_LEVEL;
-  el.innerHTML = `
-    <div class="field"><label>Niveau</label>
-      <select id="${elId}-level">
-        <option value="tous">Tous niveaux</option>
-        <option value="debutant">Débutant</option>
-        <option value="intermediaire">Intermédiaire</option>
-        <option value="avance" ${advancedUnlocked?'':'disabled'}>Avancé${advancedUnlocked?'':` (débloqué au niveau ${ADVANCED_QUIZ_UNLOCK_LEVEL})`}</option>
-      </select>
-      ${advancedUnlocked?'':`<p style="font-size:11px;color:var(--text-dim);margin-top:4px;">Le niveau Avancé se débloque au niveau ${ADVANCED_QUIZ_UNLOCK_LEVEL} (tu es niveau ${userLevel}).</p>`}
-    </div>
-    <div class="field"><label>Thème</label>
-      <select id="${elId}-cat">
-        <option value="tous">Mélange de thèmes</option>
-        ${categories.map(c=>`<option value="${c}">${c}</option>`).join('')}
-      </select>
-    </div>
-    <div class="field"><label>Nombre de questions</label>
-      <select id="${elId}-len">
-        <option value="5">5 questions</option>
-        <option value="10">10 questions</option>
-        <option value="20">20 questions</option>
-        <option value="30">30 questions</option>
-      </select>
-    </div>
-    <button class="btn btn-gold btn-sm" id="${elId}-start">Commencer le défi</button>
-    <div id="${elId}-session" style="margin-top:18px;"></div>`;
-  document.getElementById(`${elId}-start`).addEventListener('click', ()=>{
-    const level = document.getElementById(`${elId}-level`).value;
-    const categorie = document.getElementById(`${elId}-cat`).value;
-    const length = +document.getElementById(`${elId}-len`).value;
-    const questions = selectQuizQuestions(level, categorie, length);
-    startQuizSession(`${elId}-session`, questions, level);
-  });
-}
-
-function startQuizSession(elId, questions, level){
-  const el = document.getElementById(elId);
-  if(!el) return;
-  if(questions.length === 0){
-    el.innerHTML = `<p class="empty-note">Pas assez de questions disponibles pour cette combinaison : essaie un autre thème.</p>`;
-    return;
-  }
-  let qIndex = 0, score = 0, combo = 0, maxCombo = 0;
-  const wrong = [];
-  const startTime = Date.now();
-
-  function renderQuestion(){
-    if(qIndex >= questions.length){
-      renderResults();
-      return;
-    }
-    const item = questions[qIndex];
-    const pct = Math.round((qIndex/questions.length)*100);
-    el.innerHTML = `
-      <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span>Question ${qIndex+1} / ${questions.length}</span><span>${item.categorie} · ${item.niveau}${combo>=3?` · ${ICONS.flame} combo x${combo}`:''}</span>
-      </div>
-      <div class="dash-weekbar" style="width:100%;margin-bottom:14px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
-      <div style="font-size:15px;margin-bottom:12px;font-weight:500;">${item.question}</div>
-      <div id="${elId}-opts" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
-      <div id="${elId}-feedback" style="font-size:13.5px;color:var(--text-dim);min-height:20px;"></div>`;
-    const opts = document.getElementById(`${elId}-opts`);
-    item.choix.forEach((opt,i)=>{
-      const btn = document.createElement('button');
-      btn.className = 'pill';
-      btn.style.textAlign = 'left';
-      btn.textContent = opt;
-      btn.addEventListener('click', ()=>{
-        Array.from(opts.children).forEach((c,ci)=>{
-          c.disabled = true;
-          if(ci===item.bonneReponse) c.style.borderColor = 'var(--emerald)';
-          else if(ci===i) c.style.borderColor = 'var(--bordeaux)';
-        });
-        const correct = i===item.bonneReponse;
-        recordAnswer(item.categorie, correct);
-        let feedback = item.explication;
-        if(correct){
-          score++;
-          combo++;
-          maxCombo = Math.max(maxCombo, combo);
-          const amount = comboBonusAmount(combo);
-          const got = tryAwardQuizPoints(item.id, amount, {combo: maxCombo});
-          if(got) feedback += ` (+${amount} XP · +${amount} Finance Points${combo>=3?` · combo x${combo}`:''})`;
-          resolveMistake(item.id);
-        } else {
-          combo = 0;
-          wrong.push(item);
-          recordMistake(item);
-        }
-        document.getElementById(`${elId}-feedback`).textContent = feedback;
-        setTimeout(()=>{ qIndex++; renderQuestion(); }, 1400);
-      });
-      opts.appendChild(btn);
-    });
-  }
-
-  function renderResults(){
-    const pct = Math.round((score/questions.length)*100);
-    let msg = "Revois les notions essentielles avant de réessayer.";
-    if(pct >= 90) msg = "Excellente maîtrise du sujet.";
-    else if(pct >= 70) msg = "Très bon résultat. Tu maîtrises l'essentiel du sujet.";
-    else if(pct >= 50) msg = "Les bases sont présentes, mais certaines notions restent à consolider.";
-    if(level) recordQuizCompletion(level, 'mélange', questions.length, pct);
-    const seconds = Math.round((Date.now()-startTime)/1000);
-    const {mastered, toReview} = getMasteredAndToReview();
-    if(pct === 100) awardXP(25, {quizPerfect:true, combo: maxCombo});
-    el.innerHTML = `
-      <div class="result-big">${score} / ${questions.length} <span style="font-size:16px;color:var(--text-dim);">(${pct}%)</span></div>
-      <p style="color:var(--text-dim);font-size:14px;margin:8px 0;">${msg}</p>
-      <p style="font-size:11.5px;color:var(--text-dim);">Temps passé : ${seconds}s · meilleur combo : x${maxCombo}${pct===100?' · + 25 XP bonus (sans-faute)':''} (points par question limités à un gain par jour, bonifiés par combo et série de connexion)</p>
-      ${mastered.length ? `<p style="font-size:12.5px;color:var(--emerald);margin-top:10px;">Maîtrisé : ${mastered.join(', ')}</p>` : ''}
-      ${toReview.length ? `<p style="font-size:12.5px;color:var(--gold-bright);">À revoir : ${toReview.join(', ')}</p>` : ''}
-      ${wrong.length ? `<div style="margin-top:14px;"><p style="font-size:12.5px;font-weight:600;margin-bottom:6px;">Réponses à revoir :</p>${wrong.map(w=>`<p style="font-size:12px;color:var(--text-dim);margin-bottom:6px;">• ${w.question} · ${w.explication}</p>`).join('')}</div>` : ''}
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
-        ${wrong.length ? `<button class="btn btn-sm" id="${elId}-retry-wrong">Revoir uniquement mes erreurs</button>` : ''}
-        <button class="btn btn-sm btn-gold" id="${elId}-retry-fresh">Nouveau défi</button>
-      </div>`;
-    if(wrong.length) document.getElementById(`${elId}-retry-wrong`).addEventListener('click', ()=>{
-      startQuizSession(elId, wrong.slice(), level);
-    });
-    document.getElementById(`${elId}-retry-fresh`).addEventListener('click', ()=>{
-      startQuizSession(elId, selectQuizQuestions(level||'tous','tous',questions.length), level);
-    });
-  }
-
-  renderQuestion();
-}
-
-// Compatibilité : ancien point d'entrée simple (5 questions mélangées, niveau libre)
-function renderQuiz(containerId){
-  startQuizSession(containerId, selectQuizQuestions('tous','tous',5), 'tous');
-}
 
 // ---------- Vrai ou faux : mini-jeu rapide (réutilisé par Défis et Play) ----------
 // Puise dans QUIZ_BANK_FULL, uniquement les items type:"vraifaux" — aucun contenu dupliqué.
@@ -1341,14 +1169,19 @@ function renderVraiFaux(elId){
         el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
         const correct = choice === item.bonneReponse;
         recordAnswer(item.categorie, correct);
-        if(correct){ btn.classList.add('vf-correct'); score++; tryAwardQuizPoints(item.id, 10); resolveMistake(item.id); }
-        else {
+        let xpMsg = '';
+        if(correct){
+          btn.classList.add('vf-correct'); score++;
+          const got = tryAwardQuizPoints(item.id, 10);
+          if(got) xpMsg = '+10 XP · +10 Finance Points';
+          resolveMistake(item.id);
+        } else {
           btn.classList.add('vf-wrong');
           const rightBtn = el.querySelector(`[data-choice="${item.bonneReponse}"]`);
           if(rightBtn) rightBtn.classList.add('vf-correct');
           recordMistake(item);
         }
-        document.getElementById(`${elId}-feedback`).textContent = item.explication;
+        document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
         setTimeout(()=>{ qIndex++; renderQuestion(); }, 1700);
       }, {once:true});
     });
@@ -1364,6 +1197,683 @@ function renderVraiFaux(elId){
   }
 
   renderQuestion();
+}
+
+// ============================================================
+// Défis — moteurs de format "mentaux" (au-delà du QCM/vrai-faux)
+// Chaque moteur respecte le même contrat : renderFormatX(container, item,
+// onAnswered(correct, xpEarned)) — verrouille après une seule réponse,
+// passe systématiquement par recordAnswer/recordMistake/resolveMistake/
+// tryAwardQuizPoints (ou awardXP explicite quand il n'y a pas de bonne/
+// mauvaise réponse unique), et affiche le feedback pédagogique partagé
+// (renderFeedbackHtml) — jamais un ✅/❌ nu.
+// ============================================================
+
+// Tous les moteurs ci-dessous prennent un `elId` (identifiant de l'élément
+// hôte déjà présent dans le DOM), pas une référence de nœud — même
+// convention que le reste du fichier (startQuizSession, renderVraiFaux,
+// renderMissionDetail...), ce qui les rend adressables sans collision même
+// si plusieurs sessions existent sur une même page.
+
+// ---------- Moteur interne : liste de choix avec bloc d'intro optionnel ----------
+// Réutilisé par renderQcmItem (sans intro), renderCasItem et renderVraiMaisItem
+// (avec intro) — même mécanique de clic/verrouillage/couleur que les moteurs
+// QCM historiques, juste factorisée pour ne pas la dupliquer 3 fois.
+function renderChoiceItem(elId, introHtml, item, onAnswered){
+  const host = document.getElementById(elId);
+  if(!host) return;
+  host.innerHTML = `
+    ${introHtml || ''}
+    <div class="defi-q-prompt" style="font-size:15px;font-weight:500;margin-bottom:12px;">${item.question}</div>
+    <div id="${elId}-opts" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <div id="${elId}-feedback"></div>`;
+  const opts = document.getElementById(`${elId}-opts`);
+  item.choix.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'pill';
+    btn.style.textAlign = 'left';
+    btn.textContent = opt;
+    btn.addEventListener('click', () => {
+      Array.from(opts.children).forEach((c, ci) => {
+        c.disabled = true;
+        if(ci === item.bonneReponse) c.style.borderColor = 'var(--emerald)';
+        else if(ci === i) c.style.borderColor = 'var(--bordeaux)';
+      });
+      const correct = i === item.bonneReponse;
+      recordAnswer(item.categorie, correct);
+      const xp = item.xp || 10;
+      let xpMsg = '';
+      if(correct){
+        const got = tryAwardQuizPoints(item.id, xp);
+        if(got) xpMsg = `+${xp} XP · +${xp} Finance Points`;
+        resolveMistake(item.id);
+      } else {
+        recordMistake(item);
+      }
+      document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+      onAnswered(correct, correct ? xp : 0);
+    }, {once:true});
+    opts.appendChild(btn);
+  });
+}
+
+// ---------- Format "qcm" : items QUIZ_BANK_FULL (type qcm/situation/calcul-mcq) ----------
+function renderQcmItem(elId, item, onAnswered){
+  renderChoiceItem(elId, '', item, onAnswered);
+}
+
+// ---------- Format "vraifaux" : un seul item, extrait du pattern de renderVraiFaux
+// (qui reste par ailleurs une boucle multi-questions autonome pour Play/jeu-vrai-faux.html) ----------
+function renderVraiFauxItem(elId, item, onAnswered){
+  const host = document.getElementById(elId);
+  if(!host) return;
+  host.innerHTML = `
+    <div class="vf-statement">${item.question}</div>
+    <div class="vf-buttons">
+      <button class="vf-btn vf-true" data-choice="0">Vrai</button>
+      <button class="vf-btn vf-false" data-choice="1">Faux</button>
+    </div>
+    <div id="${elId}-feedback" style="margin-top:16px;"></div>`;
+  Array.from(host.querySelectorAll('.vf-btn')).forEach(btn => {
+    btn.addEventListener('click', () => {
+      const choice = +btn.dataset.choice;
+      host.querySelectorAll('.vf-btn').forEach(b => b.disabled = true);
+      const correct = choice === item.bonneReponse;
+      recordAnswer(item.categorie, correct);
+      const xp = item.xp || 10;
+      let xpMsg = '';
+      if(correct){
+        btn.classList.add('vf-correct');
+        const got = tryAwardQuizPoints(item.id, xp);
+        if(got) xpMsg = `+${xp} XP · +${xp} Finance Points`;
+        resolveMistake(item.id);
+      } else {
+        btn.classList.add('vf-wrong');
+        const rightBtn = host.querySelector(`[data-choice="${item.bonneReponse}"]`);
+        if(rightBtn) rightBtn.classList.add('vf-correct');
+        recordMistake(item);
+      }
+      document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+      onAnswered(correct, correct ? xp : 0);
+    }, {once:true});
+  });
+}
+
+// ---------- Format "cas" : mise en situation + question à choix ----------
+// Un seul moteur pour 4 formats nommés par le cahier des charges (Trouve
+// l'erreur / Qui a raison ? / Décision sous contrainte / Cas express) —
+// seul le champ `presentation` change l'habillage de l'intro, la mécanique
+// de réponse est identique.
+function renderCasItem(elId, item, onAnswered){
+  let introHtml;
+  if(item.presentation === 'personnes' && Array.isArray(item.personnes)){
+    introHtml = `<div class="defi-intro">${item.personnes.map(p => `
+      <div class="defi-intro-quote">
+        <span class="defi-intro-quote-name">${p.nom}</span>
+        <p class="defi-intro-quote-text">« ${p.citation} »</p>
+      </div>`).join('')}</div>`;
+  } else if(item.presentation === 'situation' && Array.isArray(item.faits)){
+    introHtml = `<div class="defi-intro">
+      ${item.contexte ? `<p style="font-size:13.5px;color:var(--text-dim);margin-bottom:8px;">${item.contexte}</p>` : ''}
+      <ul class="defi-intro-facts">${item.faits.map(f => `<li>• ${f}</li>`).join('')}</ul>
+    </div>`;
+  } else {
+    introHtml = `<div class="defi-intro"><p class="defi-intro-statement">${item.statement}</p></div>`;
+  }
+  renderChoiceItem(elId, introHtml, item, onAnswered);
+}
+
+// ---------- Format "vraimais" : affirmation vraie mais incomplète ----------
+function renderVraiMaisItem(elId, item, onAnswered){
+  const introHtml = `<div class="defi-intro">
+    <span class="defi-vrai-chip">${ICONS.check} Vrai, mais...</span>
+    <p class="defi-intro-statement">${item.statement}</p>
+  </div>`;
+  renderChoiceItem(elId, introHtml, item, onAnswered);
+}
+
+// ---------- Format "calcul" : mini-calcul à réponse numérique libre ----------
+// UI reprise de renderMissionDetail (mission.html), mais règle d'interaction
+// alignée sur les autres formats Défis : verrouille après le premier essai
+// (mission.html laisse réessayer indéfiniment, ce qui ne convient pas à un
+// défi noté).
+function renderCalculItem(elId, item, onAnswered){
+  const host = document.getElementById(elId);
+  if(!host) return;
+  host.innerHTML = `
+    <div class="defi-q-prompt" style="font-size:15px;font-weight:500;margin-bottom:12px;">${item.prompt}</div>
+    <div class="field" style="max-width:220px;">
+      <input type="number" step="any" id="${elId}-input" placeholder="Ta réponse${item.unit ? ' (' + item.unit + ')' : ''}">
+    </div>
+    <button class="btn btn-sm btn-gold" id="${elId}-check">Vérifier</button>
+    <div id="${elId}-feedback" style="margin-top:12px;"></div>`;
+  const input = document.getElementById(`${elId}-input`);
+  const btn = document.getElementById(`${elId}-check`);
+  const feedbackEl = document.getElementById(`${elId}-feedback`);
+  const check = () => {
+    if(btn.disabled) return;
+    const val = parseFloat(input.value);
+    if(isNaN(val)){ feedbackEl.innerHTML = `<p class="feedback-explanation">Entre un nombre avant de vérifier.</p>`; return; }
+    btn.disabled = true;
+    input.disabled = true;
+    const correct = Math.abs(val - item.reponse) <= item.tolerance;
+    recordAnswer(item.categorie, correct);
+    const xp = item.xp || 10;
+    let xpMsg = '';
+    if(correct){
+      const got = tryAwardQuizPoints(item.id, xp);
+      if(got) xpMsg = `+${xp} XP · +${xp} Finance Points`;
+      resolveMistake(item.id);
+    } else {
+      recordMistake(item);
+    }
+    feedbackEl.innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+    onAnswered(correct, correct ? xp : 0);
+  };
+  btn.addEventListener('click', check);
+  input.addEventListener('keydown', e => { if(e.key === 'Enter') check(); });
+}
+
+// ---------- Format "sequence" : remettre des étapes dans le bon ordre ----------
+// Boutons Monter/Descendre plutôt que drag & drop, volontairement : le
+// cahier des charges lui-même met en garde contre un drag & drop peu fiable
+// sur mobile (§12/§49) — cette version fonctionne identiquement au clavier,
+// à la souris et au tactile.
+function renderSequenceItem(elId, item, onAnswered){
+  const host = document.getElementById(elId);
+  if(!host) return;
+  let order = item.steps.map((_, i) => i);
+  for(let i = order.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [order[i], order[j]] = [order[j], order[i]];
+  }
+  if(order.every((v, i) => v === i) && order.length > 1){ const t = order[0]; order[0] = order[1]; order[1] = t; }
+
+  function render(){
+    host.innerHTML = `
+      <div class="defi-q-prompt" style="font-size:15px;font-weight:500;margin-bottom:6px;">${item.prompt}</div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Remets ces étapes dans le bon ordre.</p>
+      <div id="${elId}-list" class="defi-seq-list"></div>
+      <button class="btn btn-sm btn-gold" id="${elId}-validate">Valider l'ordre</button>
+      <div id="${elId}-feedback" style="margin-top:12px;"></div>`;
+    const list = document.getElementById(`${elId}-list`);
+    order.forEach((stepIdx, pos) => {
+      const row = document.createElement('div');
+      row.className = 'defi-seq-row';
+      row.innerHTML = `
+        <div class="defi-seq-row-text">${item.steps[stepIdx]}</div>
+        <div class="defi-seq-row-controls">
+          <button class="defi-seq-btn" data-dir="up" ${pos===0?'disabled':''} aria-label="Monter">↑</button>
+          <button class="defi-seq-btn" data-dir="down" ${pos===order.length-1?'disabled':''} aria-label="Descendre">↓</button>
+        </div>`;
+      row.querySelector('[data-dir="up"]').addEventListener('click', () => move(pos, -1));
+      row.querySelector('[data-dir="down"]').addEventListener('click', () => move(pos, 1));
+      list.appendChild(row);
+    });
+    document.getElementById(`${elId}-validate`).addEventListener('click', validate, {once:true});
+  }
+  function move(pos, dir){
+    const target = pos + dir;
+    if(target < 0 || target >= order.length) return;
+    [order[pos], order[target]] = [order[target], order[pos]];
+    render();
+  }
+  function validate(){
+    const correct = order.every((stepIdx, pos) => stepIdx === pos);
+    host.querySelectorAll('.defi-seq-btn').forEach(b => b.disabled = true);
+    host.querySelectorAll('.defi-seq-row').forEach((row, pos) => {
+      row.classList.add(order[pos] === pos ? 'defi-seq-correct' : 'defi-seq-wrong');
+    });
+    recordAnswer(item.categorie, correct);
+    const xp = item.xp || 12;
+    let xpMsg = '';
+    if(correct){
+      const got = tryAwardQuizPoints(item.id, xp);
+      if(got) xpMsg = `+${xp} XP · +${xp} Finance Points`;
+      resolveMistake(item.id);
+    } else {
+      recordMistake(item);
+    }
+    document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+    onAnswered(correct, correct ? xp : 0);
+  }
+  render();
+}
+
+// ---------- Format "infomanquante" : sélection multiple, sans bonne/mauvaise réponse ----------
+// Le but pédagogique est justement qu'on ne peut pas conclure avec les seules
+// informations données — donc pas de recordAnswer/recordMistake ici, mais
+// l'XP de participation passe bien par tryAwardQuizPoints (donc par
+// awardXP → logActivity) pour ne pas fausser le suivi de série/activité.
+function renderInfoManquanteItem(elId, item, onAnswered){
+  const host = document.getElementById(elId);
+  if(!host) return;
+  host.innerHTML = `
+    ${item.contexte ? `<div class="defi-intro"><p style="font-size:13.5px;color:var(--text-dim);">${item.contexte}</p></div>` : ''}
+    <div class="defi-q-prompt" style="font-size:15px;font-weight:500;margin-bottom:4px;">${item.question}</div>
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Sélectionne autant d'éléments que tu veux, puis valide.</p>
+    <div id="${elId}-list" class="defi-info-list"></div>
+    <button class="btn btn-sm btn-gold" id="${elId}-validate">Valider</button>
+    <div id="${elId}-feedback" style="margin-top:12px;"></div>`;
+  const list = document.getElementById(`${elId}-list`);
+  item.options.forEach((opt, i) => {
+    const label = document.createElement('label');
+    label.className = 'defi-info-option';
+    label.innerHTML = `<input type="checkbox" data-idx="${i}"><span class="defi-info-option-text">${opt.label}</span>`;
+    list.appendChild(label);
+  });
+  document.getElementById(`${elId}-validate`).addEventListener('click', () => {
+    list.querySelectorAll('input').forEach(cb => cb.disabled = true);
+    document.getElementById(`${elId}-validate`).disabled = true;
+    const notes = item.options.map(o => `<li>• <strong>${o.label}</strong> — ${o.note}</li>`).join('');
+    const xp = item.xp || 8;
+    const got = tryAwardQuizPoints(item.id, xp);
+    const xpMsg = got ? `+${xp} XP · +${xp} Finance Points` : '';
+    document.getElementById(`${elId}-feedback`).innerHTML = `
+      <p class="feedback-verdict feedback-correct"><span aria-hidden="true">✓</span> Bonne question à se poser.</p>
+      <p class="feedback-explanation">${item.explication}</p>
+      <ul class="defi-intro-facts" style="margin-top:8px;">${notes}</ul>
+      ${xpMsg ? `<p class="feedback-xp">${xpMsg}</p>` : ''}`;
+    onAnswered(true, got ? xp : 0);
+  }, {once:true});
+}
+
+// ---------- Format "classe" : classer chaque élément dans un panier (select) ----------
+// Pas de drag & drop (même raison que "sequence") — un <select> par élément.
+// Seuil documenté : ≥70% des éléments bien classés = un recordAnswer(true)
+// pour rester cohérent avec le comptage binaire de la maîtrise par thème.
+function renderClasseItem(elId, item, onAnswered){
+  const host = document.getElementById(elId);
+  if(!host) return;
+  host.innerHTML = `
+    <div class="defi-q-prompt" style="font-size:15px;font-weight:500;margin-bottom:12px;">${item.prompt}</div>
+    <div id="${elId}-list" class="defi-classe-list"></div>
+    <button class="btn btn-sm btn-gold" id="${elId}-validate">Valider</button>
+    <div id="${elId}-feedback" style="margin-top:12px;"></div>`;
+  const list = document.getElementById(`${elId}-list`);
+  item.items.forEach((it, i) => {
+    const row = document.createElement('div');
+    row.className = 'defi-classe-row';
+    row.innerHTML = `
+      <span class="defi-classe-row-label">${it.label}</span>
+      <select data-idx="${i}">
+        <option value="">—</option>
+        ${item.buckets.map(b => `<option value="${b}">${b}</option>`).join('')}
+      </select>`;
+    list.appendChild(row);
+  });
+  document.getElementById(`${elId}-validate`).addEventListener('click', () => {
+    const selects = Array.from(list.querySelectorAll('select'));
+    let correctCount = 0;
+    selects.forEach((sel, i) => {
+      sel.disabled = true;
+      const row = sel.closest('.defi-classe-row');
+      const ok = sel.value === item.items[i].bucket;
+      if(ok) correctCount++;
+      row.classList.add(ok ? 'defi-classe-correct' : 'defi-classe-wrong');
+    });
+    document.getElementById(`${elId}-validate`).disabled = true;
+    const correct = (correctCount / item.items.length) >= 0.7;
+    recordAnswer(item.categorie, correct);
+    const xp = item.xp || 12;
+    let xpMsg = '';
+    if(correct){
+      const got = tryAwardQuizPoints(item.id, xp);
+      if(got) xpMsg = `+${xp} XP · +${xp} Finance Points`;
+      resolveMistake(item.id);
+    } else {
+      recordMistake(item);
+    }
+    document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, `${correctCount}/${item.items.length} bien classés. ${item.explication}`, xpMsg);
+    onAnswered(correct, correct ? xp : 0);
+  }, {once:true});
+}
+
+// ---------- Orchestrateur : session mêlant plusieurs formats/domaines ----------
+// Détermine le format réel d'un item (les items QUIZ_BANK_FULL utilisent
+// `type`, les items MENTAL_CHALLENGES utilisent `format` directement).
+function resolveDefiFormat(item){
+  if(item.format) return item.format;
+  if(item.type === 'vraifaux') return 'vraifaux';
+  return 'qcm'; // 'qcm' | 'situation' | 'calcul' (QUIZ_BANK_FULL) rendus tous comme un choix simple
+}
+const DEFI_FORMAT_RENDERERS = {
+  qcm: renderQcmItem,
+  vraifaux: renderVraiFauxItem,
+  cas: renderCasItem,
+  vraimais: renderVraiMaisItem,
+  calcul: renderCalculItem,
+  sequence: renderSequenceItem,
+  infomanquante: renderInfoManquanteItem,
+  classe: renderClasseItem
+};
+
+// Contrairement à startQuizSession/renderVraiFaux (avance automatiquement
+// après 1400-1700ms), la session mixte avance sur un clic explicite : les
+// nouveaux formats (cas, séquence, info manquante...) ont un texte plus
+// dense qu'un simple QCM, une avancée chronométrée forcerait à lire vite
+// plutôt qu'à réfléchir — contraire à l'objectif même de Défis.
+function startMixedSession(elId, items, opts){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  opts = opts || {};
+  if(!items || items.length === 0){
+    el.innerHTML = `<p class="empty-note">Pas assez d'exercices disponibles pour cette sélection.</p>`;
+    return;
+  }
+  let index = 0, score = 0, totalXp = 0;
+  const startTime = Date.now();
+
+  function renderItem(){
+    if(index >= items.length){ renderResults(); return; }
+    const item = items[index];
+    const format = resolveDefiFormat(item);
+    const renderer = DEFI_FORMAT_RENDERERS[format];
+    const pct = Math.round((index / items.length) * 100);
+    el.innerHTML = `
+      <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span>${index + 1} / ${items.length}</span><span>${item.categorie || item.domain || ''}</span>
+      </div>
+      <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+      <div id="${elId}-item"></div>
+      <div id="${elId}-next" style="margin-top:16px;"></div>`;
+    const itemElId = `${elId}-item`;
+    if(!renderer){
+      document.getElementById(itemElId).innerHTML = `<p class="empty-note">Format d'exercice non pris en charge pour le moment.</p>`;
+      index++;
+      renderItem();
+      return;
+    }
+    renderer(itemElId, item, (correct, xp) => {
+      if(correct) score++;
+      totalXp += xp;
+      const nextEl = document.getElementById(`${elId}-next`);
+      const isLast = index === items.length - 1;
+      nextEl.innerHTML = `<button class="btn btn-sm btn-gold" id="${elId}-advance">${isLast ? 'Voir le résultat' : 'Question suivante →'}</button>`;
+      document.getElementById(`${elId}-advance`).addEventListener('click', () => { index++; renderItem(); });
+    });
+  }
+
+  function renderResults(){
+    const pct = Math.round((score / items.length) * 100);
+    const seconds = Math.round((Date.now() - startTime) / 1000);
+    let msg = "Revois les notions essentielles avant de réessayer.";
+    if(pct >= 90) msg = "Excellente maîtrise du sujet.";
+    else if(pct >= 70) msg = "Très bon résultat.";
+    else if(pct >= 50) msg = "Les bases sont là, certaines notions restent à consolider.";
+    // Alimente le même historique que l'ancien moteur QCM (fzr-quiz-stats),
+    // pour que "Cette semaine" (renderDefisSemaine) reflète aussi les sessions
+    // lancées depuis Défi du jour / Recommandé / À revoir / Parcours.
+    recordQuizCompletion('mixte', 'mélange', items.length, pct);
+    el.innerHTML = `
+      <div class="result-big">${score} / ${items.length} <span style="font-size:16px;color:var(--text-dim);">(${pct}%)</span></div>
+      <p style="color:var(--text-dim);font-size:14px;margin:8px 0;">${msg}</p>
+      <p style="font-size:11.5px;color:var(--text-dim);">Temps passé : ${seconds}s${totalXp > 0 ? ` · +${totalXp} XP au total` : ''}</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
+        ${opts.onRestart ? `<button class="btn btn-sm btn-gold" id="${elId}-restart">Nouveau défi</button>` : ''}
+      </div>`;
+    if(opts.onRestart) document.getElementById(`${elId}-restart`).addEventListener('click', opts.onRestart);
+    // Distinct de onRestart (qui ne se déclenche que sur un clic explicite) :
+    // onComplete se déclenche à chaque fois que la session arrive naturellement
+    // à son résultat — nécessaire pour suivre la progression des Parcours
+    // thématiques sans dépendre d'un clic supplémentaire de l'utilisateur.
+    if(typeof opts.onComplete === 'function') opts.onComplete(score, items.length);
+  }
+
+  renderItem();
+}
+
+// Pool combiné, utilisé par toutes les sections personnalisées de Défis
+// ci-dessous (Défi du jour, Recommandé pour toi, À revoir) : les deux
+// banques ont des id distincts (vérifié par test), donc aucune collision.
+function defisFullPool(){ return QUIZ_BANK_FULL.concat(MENTAL_CHALLENGES); }
+
+// ---------- Défi du jour : 3 exercices, choisis de façon déterministe par
+// jour (identiques pour tout le monde le même jour, changent le lendemain) ----------
+function pickDefiDuJourItems(){
+  const pool = defisFullPool();
+  const seed = dayOfYear();
+  const picked = [];
+  const usedCategories = new Set();
+  let i = seed, attempts = 0;
+  while(picked.length < 3 && attempts < pool.length * 2){
+    const item = pool[i % pool.length];
+    if(!usedCategories.has(item.categorie)){
+      picked.push(item);
+      usedCategories.add(item.categorie);
+    }
+    i += 37; // pas premier avec la plupart des tailles de pool, pour bien répartir le tirage
+    attempts++;
+  }
+  i = seed;
+  while(picked.length < 3 && picked.length < pool.length){
+    const item = pool[i % pool.length];
+    if(!picked.includes(item)) picked.push(item);
+    i++;
+  }
+  return picked;
+}
+function renderDefiDuJour(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const items = pickDefiDuJourItems();
+  if(items.length === 0){ el.innerHTML = `<p class="empty-note">Défi du jour indisponible pour le moment.</p>`; return; }
+  const totalXp = items.reduce((s, it) => s + (it.xp || 10), 0);
+  const totalTime = items.reduce((s, it) => s + (it.estimatedTime || 1), 0);
+  const domains = [...new Set(items.map(it => it.domain || it.categorie))];
+  function renderIntro(){
+    el.innerHTML = `
+      <span class="smallcaps">⚡ Défi du jour</span>
+      <p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">${domains.join(' · ')}</p>
+      <div class="defi-hero-meta">
+        <span>${items.length} questions</span>
+        <span>~${totalTime} min</span>
+        <span>jusqu'à +${totalXp} XP</span>
+      </div>
+      <button class="btn btn-gold" id="${elId}-start">Commencer</button>`;
+    document.getElementById(`${elId}-start`).addEventListener('click', () => {
+      startMixedSession(elId, items, {onRestart: renderIntro});
+    });
+  }
+  renderIntro();
+}
+
+// ---------- Recommandé pour toi : catégorie la plus faible en maîtrise, ou
+// à défaut liée à un centre d'intérêt encore peu exploré ----------
+function renderRecommandePourToi(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const mastery = getSkillMastery();
+  const weakest = mastery.find(m => m.niveau === 'faible');
+  let categorie, reason;
+  if(weakest){
+    categorie = weakest.categorie;
+    reason = `Tu as récemment eu du mal avec ${categorie} (${weakest.pct}% de bonnes réponses).`;
+  } else {
+    const profile = getProfile();
+    const knownInterests = Object.keys(profile.interests || {}).filter(k => profile.interests[k]);
+    const candidateCats = knownInterests.flatMap(k => INTEREST_QUIZ_CATEGORIES[k] || []);
+    const exploredCats = new Set(mastery.map(m => m.categorie));
+    const unexplored = candidateCats.filter(c => !exploredCats.has(c));
+    if(unexplored.length > 0){
+      categorie = unexplored[dayOfYear() % unexplored.length];
+      reason = "Ça correspond à l'un de tes centres d'intérêt, et tu ne l'as pas encore beaucoup exploré.";
+    } else {
+      const allCats = [...new Set(defisFullPool().map(i => i.categorie))];
+      categorie = allCats[dayOfYear() % allCats.length];
+      reason = "Un thème à découvrir pour varier tes révisions.";
+    }
+  }
+  el.innerHTML = `
+    <span class="smallcaps">🎯 Recommandé pour toi</span>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${reason}</p>
+    <h3 style="margin-bottom:10px;font-size:17px;">${categorie}</h3>
+    <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
+  document.getElementById(`${elId}-start`).addEventListener('click', () => {
+    const pool = defisFullPool().filter(i => i.categorie === categorie);
+    startMixedSession(elId, pool.slice(0, 5), {onRestart: () => renderRecommandePourToi(elId)});
+  });
+}
+
+// ---------- À revoir : widget compact (comme sur Mon parcours), lance
+// directement une session ciblée sur la catégorie la plus en échec ----------
+function renderDefisARevoir(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const unresolved = getMistakes().filter(m => !m.resolved);
+  if(unresolved.length === 0){
+    el.innerHTML = `<span class="smallcaps">🧠 À revoir</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Aucune notion en attente de révision pour le moment : continue comme ça !</p>`;
+    return;
+  }
+  const counts = {};
+  unresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie] || 0) + 1; });
+  const [topCategorie, topCount] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  el.innerHTML = `
+    <span class="smallcaps">🧠 À revoir</span>
+    <p style="font-size:13px;color:var(--text-dim);margin:6px 0 12px;">${unresolved.length} notion${unresolved.length > 1 ? 's' : ''} à revoir, surtout en ${topCategorie} (${topCount} erreur${topCount > 1 ? 's' : ''}).</p>
+    <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ${topCategorie} →</button>`;
+  document.getElementById(`${elId}-start`).addEventListener('click', () => {
+    const pool = defisFullPool().filter(i => i.categorie === topCategorie);
+    startMixedSession(elId, pool.slice(0, 5), {onRestart: () => renderDefisARevoir(elId)});
+  });
+}
+
+// ---------- Parcours thématiques : séries de catégories, sans verrouillage
+// entre étapes (§22) — juste une progression suivie et affichée. Crypto
+// volontairement absent : le stock de contenu réel y est encore trop mince
+// pour constituer une série complète (à enrichir en phase future). ----------
+const DEFIS_PARCOURS = [
+  {id:'argent', titre:"💰 Comprendre son argent", categories:['Budget','Épargne','Livret A','Inflation','Crédit','Intérêts composés',"Constitution d'un patrimoine",'Retraite et PER']},
+  {id:'bourse', titre:"📈 Comprendre la Bourse", categories:['Bourse','Actions','ETF','Obligations','Diversification','Risque et volatilité','PEA',"Psychologie de l'investisseur"]},
+  {id:'business', titre:"💼 Penser comme un entrepreneur", categories:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds']},
+  {id:'immobilier', titre:"🏠 Comprendre l'immobilier", categories:['Immobilier','SCPI','Crédit']},
+  {id:'economie', titre:"🌍 Comprendre l'économie", categories:['PIB','Taux directeur','Banque centrale','Récession','Offre et demande']}
+];
+function getDefisParcoursProgress(){ return safeGetJSON('fzr-defis-parcours-progress', {}); }
+function renderDefisParcours(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const progress = getDefisParcoursProgress();
+  el.innerHTML = DEFIS_PARCOURS.map(p => {
+    const doneCount = p.categories.filter(c => progress[`${p.id}-${c}`]).length;
+    return `
+    <div class="card" style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h3 style="font-size:16px;">${p.titre}</h3>
+        <span class="meta-line">${doneCount} / ${p.categories.length}</span>
+      </div>
+      <div style="margin-top:8px;">
+        ${p.categories.map((c, i) => `
+          <button type="button" class="defi-parcours-step ${progress[`${p.id}-${c}`] ? 'is-done' : ''}" style="background:none;border:none;text-align:left;width:100%;cursor:pointer;" data-parcours="${p.id}" data-cat="${c}">
+            ${progress[`${p.id}-${c}`] ? ICONS.check + ' ' : (i + 1) + '. '}${c}
+          </button>`).join('')}
+        <div class="defi-parcours-step is-boss">Boss — bientôt</div>
+      </div>
+    </div>`;
+  }).join('') + `<div id="${elId}-session"></div>`;
+  el.querySelectorAll('[data-cat]').forEach(row => {
+    row.addEventListener('click', () => {
+      const cat = row.dataset.cat, parcoursId = row.dataset.parcours;
+      const pool = defisFullPool().filter(i => i.categorie === cat);
+      if(pool.length === 0) return;
+      const sessionEl = document.getElementById(`${elId}-session`);
+      if(!sessionEl) return;
+      startMixedSession(`${elId}-session`, pool.slice(0, 6), {
+        onComplete: () => {
+          const p2 = getDefisParcoursProgress();
+          p2[`${parcoursId}-${cat}`] = true;
+          safeSetJSON('fzr-defis-parcours-progress', p2);
+        },
+        onRestart: () => { renderDefisParcours(elId); }
+      });
+      sessionEl.scrollIntoView && sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+  });
+}
+
+// ---------- Modes d'entraînement : accès direct par thème/niveau/format,
+// même esprit que l'ancien renderQuizSetup mais alimente startMixedSession
+// (plusieurs formats possibles, pas seulement QCM). ----------
+function renderModesEntrainement(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const pool = defisFullPool();
+  const categories = [...new Set(pool.map(i => i.categorie))].sort();
+  el.innerHTML = `
+    <div class="field"><label>Thème</label>
+      <select id="${elId}-cat">
+        <option value="tous">Mélange de thèmes</option>
+        ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
+      </select>
+    </div>
+    <div class="field"><label>Niveau</label>
+      <select id="${elId}-level">
+        <option value="tous">Tous niveaux</option>
+        <option value="debutant">🟢 Fondamentaux</option>
+        <option value="intermediaire">🟡 Intermédiaire</option>
+        <option value="avance">🔴 Avancé</option>
+      </select>
+    </div>
+    <div class="field"><label>Nombre de questions</label>
+      <select id="${elId}-len">
+        <option value="5">5 questions</option>
+        <option value="10">10 questions</option>
+        <option value="15">15 questions</option>
+      </select>
+    </div>
+    <button class="btn btn-gold btn-sm" id="${elId}-start">Commencer le défi</button>
+    <div id="${elId}-session" style="margin-top:18px;"></div>`;
+  document.getElementById(`${elId}-start`).addEventListener('click', () => {
+    const cat = document.getElementById(`${elId}-cat`).value;
+    const level = document.getElementById(`${elId}-level`).value;
+    const length = +document.getElementById(`${elId}-len`).value;
+    let items = pool.filter(i => (cat === 'tous' || i.categorie === cat) && (level === 'tous' || i.niveau === level));
+    for(let i = items.length - 1; i > 0; i--){
+      const j = Math.floor(Math.random() * (i + 1));
+      [items[i], items[j]] = [items[j], items[i]];
+    }
+    items = items.slice(0, length);
+    startMixedSession(`${elId}-session`, items, {onRestart: () => document.getElementById(`${elId}-start`).click()});
+  });
+}
+
+// ---------- Tes performances : maîtrise réelle par thème (renderMasteryList,
+// déjà utilisé sur revisions.html) + un bloc "Cette semaine" calculé à partir
+// de vraies données (jamais un pourcentage inventé, pas de classement/
+// percentile — nécessiterait de vrais autres utilisateurs, hors P0). ----------
+function renderDefisSemaine(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const stats = getQuizStats();
+  const weekAgo = Date.now() - 7 * 24 * 3600 * 1000;
+  const parseHistDate = d => { const [j,m,a] = d.split('/').map(Number); return new Date(a, m-1, j).getTime(); };
+  const recent = (stats.history || []).filter(h => { try { return parseHistDate(h.date) >= weekAgo; } catch(e){ return false; } });
+  const exercisesCount = recent.reduce((s, h) => s + (h.length || 0), 0);
+  const avgPct = recent.length ? Math.round(recent.reduce((s, h) => s + h.score, 0) / recent.length) : null;
+  const mastery = getSkillMastery();
+  const reinforced = mastery.filter(m => m.niveau === 'maîtrisé').length;
+  const toReview = getMistakes().filter(m => !m.resolved).length;
+  const best = mastery.length ? mastery.reduce((a, b) => (b.pct > a.pct ? b : a)) : null;
+  const worst = mastery.length ? mastery.reduce((a, b) => (b.pct < a.pct ? b : a)) : null;
+  el.innerHTML = `
+    <span class="smallcaps">Cette semaine</span>
+    <div class="defi-stat-row" style="margin-top:12px;">
+      <div class="defi-stat"><div class="defi-stat-value">${exercisesCount}</div><div class="defi-stat-label">Exercices</div></div>
+      <div class="defi-stat"><div class="defi-stat-value">${avgPct !== null ? avgPct + '%' : '—'}</div><div class="defi-stat-label">Réussite moyenne</div></div>
+      <div class="defi-stat"><div class="defi-stat-value">${reinforced}</div><div class="defi-stat-label">Notions maîtrisées</div></div>
+      <div class="defi-stat"><div class="defi-stat-value">${toReview}</div><div class="defi-stat-label">Notions à revoir</div></div>
+    </div>
+    <p style="font-size:12.5px;color:var(--text-dim);margin-top:14px;">
+      ${best ? `Meilleur domaine : <strong style="color:var(--text);">${best.categorie}</strong> (${best.pct}%)` : "Réponds à quelques exercices pour voir apparaître tes points forts."}
+      ${worst && worst !== best ? ` · À renforcer : <strong style="color:var(--text);">${worst.categorie}</strong> (${worst.pct}%)` : ''}
+    </p>`;
+}
+function renderDefisPerformances(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<div id="${elId}-semaine" style="margin-bottom:20px;"></div><div id="${elId}-mastery"></div>`;
+  renderDefisSemaine(`${elId}-semaine`);
+  renderMasteryList(`${elId}-mastery`);
 }
 
 // ---------- Memory Finance : jeu de paires d'images, thème bourse ----------

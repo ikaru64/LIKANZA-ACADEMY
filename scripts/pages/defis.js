@@ -1,39 +1,32 @@
 /* ============================================================
-   LIKANZA ACADEMY — Défis
-   Deux modes construits pour cette passe : Quiz express (moteur
-   existant, renderQuizSetup) et Vrai ou faux (renderVraiFaux,
-   partagé avec Play). D'autres formats (classement, portfolio
-   challenge, graph challenge...) viendront dans une prochaine passe.
+   LIKANZA ACADEMY — Défis (defis.html)
+   Terrain d'entraînement mental : Défi du jour, Recommandé pour toi,
+   À revoir, Modes d'entraînement, Parcours thématiques, Tes performances.
+   Toute la logique de rendu vit dans scripts/data.js (renderDefiDuJour,
+   renderRecommandePourToi, renderDefisARevoir, renderModesEntrainement,
+   renderDefisParcours, renderDefisPerformances, startMixedSession) —
+   ce fichier ne fait que les déclencher et gérer l'arrivée via ?cat=.
    ============================================================ */
 
-let defisMode = 'quiz';
-document.querySelectorAll('[data-defismode]').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    document.querySelectorAll('[data-defismode]').forEach(b=>b.classList.remove('active'));
-    btn.classList.add('active');
-    defisMode = btn.dataset.defismode;
-    document.getElementById('defisQuiz').style.display = defisMode === 'quiz' ? 'block' : 'none';
-    document.getElementById('defisVraiFaux').style.display = defisMode === 'vraifaux' ? 'block' : 'none';
-    if(defisMode === 'vraifaux' && !document.getElementById('defisVraiFaux').dataset.started){
-      document.getElementById('defisVraiFaux').dataset.started = '1';
-      renderVraiFaux('defisVraiFaux');
-    }
-  });
-});
+renderDefiDuJour('defiDuJour');
+renderRecommandePourToi('recommandePourToi');
+renderDefisARevoir('defisARevoir');
+renderModesEntrainement('modesEntrainement');
+renderDefisParcours('defisParcours');
+renderDefisPerformances('defisPerformances');
 
-renderQuizSetup('defisQuiz');
-
-// Arrivée depuis un lien "Réviser cette notion" (ex. Mon parcours, banque
-// d'erreurs) : ?cat=<catégorie> présélectionne le thème et démarre direct.
+// ?cat=<categorie> : arrivée depuis revisions.html ou la mission quotidienne
+// "Revoir une notion mal comprise" — lance directement une session ciblée
+// sur ce thème dans la zone Modes d'entraînement, sans dépendre d'un ancien
+// sélecteur qui n'existe plus dans la nouvelle structure de la page.
 const requestedCat = new URLSearchParams(location.search).get('cat');
 if(requestedCat){
-  const validCats = new Set(QUIZ_BANK_FULL.map(q=>q.categorie));
-  if(validCats.has(requestedCat)){
-    const catSelect = document.getElementById('defisQuiz-cat');
-    const startBtn = document.getElementById('defisQuiz-start');
-    if(catSelect && startBtn){
-      catSelect.value = requestedCat;
-      startBtn.click();
+  const pool = QUIZ_BANK_FULL.concat(MENTAL_CHALLENGES).filter(i => i.categorie === requestedCat);
+  if(pool.length > 0){
+    const target = document.getElementById('modesEntrainement');
+    if(target){
+      target.scrollIntoView({behavior: 'smooth', block: 'start'});
+      startMixedSession('modesEntrainement', pool.slice(0, 8));
     }
   }
 }

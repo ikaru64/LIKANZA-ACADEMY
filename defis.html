@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Défis · Likanza Academy</title>
-<meta name="description" content="Challenges financiers interactifs : quiz express, vrai ou faux, et bientôt d'autres formats. 82 questions sur 23 thèmes.">
+<meta name="description" content="Entraîne ton raisonnement : des exercices rapides pour vérifier si tu comprends réellement la finance, la bourse, l'économie et le business.">
 <meta property="og:title" content="Défis · Likanza Academy">
-<meta property="og:description" content="Challenges financiers interactifs : quiz express, vrai ou faux, et bientôt d'autres formats. 82 questions sur 23 thèmes.">
+<meta property="og:description" content="Entraîne ton raisonnement : des exercices rapides pour vérifier si tu comprends réellement la finance, la bourse, l'économie et le business.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://likanza-academy.vercel.app/defis.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -79,19 +79,35 @@
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Défis</div>
 <h1 class="visually-hidden">Défis</h1>
 
-<section class="section" style="padding-bottom:0;">
-  <div class="section-head"><h2>Défis</h2><span class="meta-line">82 questions · 23 thèmes</span></div>
-  <div class="mode-toggle">
-    <button class="pill active" data-defismode="quiz">Quiz express</button>
-    <button class="pill" data-defismode="vraifaux">Vrai ou faux</button>
+<section class="section" style="padding-bottom:14px;">
+  <div class="section-head"><h2>Défis</h2><span class="meta-line">entraîne ton raisonnement</span></div>
+  <p style="font-size:13px;color:var(--text-dim);max-width:70ch;">Des exercices courts pour vérifier si tu comprends réellement la finance, la bourse, l'économie et le business — pas seulement si tu connais une définition. Academy t'apprend, la Bibliothèque explique, le Laboratoire fait expérimenter : Défis vérifie que ça tient debout face à une vraie situation.</p>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="defi-hero-card" id="defiDuJour"><p style="color:var(--text-dim);font-size:13px;">Chargement…</p></div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="dual-grid">
+    <div class="card" id="recommandePourToi"></div>
+    <div class="card" id="defisARevoir"></div>
   </div>
 </section>
 
-<section class="section" style="padding-top:16px;">
-  <div class="card" style="max-width:640px;">
-    <div id="defisQuiz"></div>
-    <div id="defisVraiFaux" style="display:none;"></div>
-  </div>
+<section class="section" style="padding-top:0;">
+  <div class="section-head"><h2>Modes d'entraînement</h2><span class="meta-line">choisis un thème, un niveau, une longueur</span></div>
+  <div class="card" style="max-width:640px;" id="modesEntrainement"></div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="section-head"><h2>Parcours de défis</h2><span class="meta-line">séries thématiques, sans obligation d'ordre</span></div>
+  <div id="defisParcours"></div>
+</section>
+
+<section class="section" style="padding-top:0;padding-bottom:34px;">
+  <div class="section-head"><h2>Tes performances</h2><span class="meta-line">basé sur tes vraies réponses, jamais un chiffre inventé</span></div>
+  <div id="defisPerformances"></div>
 </section>
 
 <footer class="site-footer">
