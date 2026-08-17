@@ -1517,7 +1517,7 @@ const SEARCH_INDEX = [
   {title:"Immobilier", url:"immobilier.html", type:"Page"},
   {title:"Bibliothèque", url:"bibliotheque.html", type:"Page"},
   {title:"Formations (Academy)", url:"formations.html", type:"Page"},
-  {title:"Simulateurs", url:"outils.html", type:"Page"},
+  {title:"Laboratoire financier", url:"laboratoire.html", type:"Page"},
   {title:"Mon compte", url:"compte.html", type:"Page"},
   {title:"Mentions légales", url:"legal.html", type:"Page"},
   {title:"À propos", url:"apropos.html", type:"Page"},

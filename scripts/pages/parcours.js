@@ -11,14 +11,14 @@ const PARCOURS_PRINCIPAL = [
     titre:"Comprendre sa situation", difficulte:"Débutant", duree:"~25 min", lecons:4,
     competence:"Faire le point sur son budget",
     notions:["Revenus","Charges fixes","Dépenses variables","Reste à vivre","Patrimoine","Dettes"],
-    lien:"outils.html", statut:"disponible",
+    lien:"laboratoire.html", statut:"disponible",
     note:"Regroupe le simulateur de budget (Simulateurs) et la mission \"Construire son premier plan financier\"."
   },
   {
     titre:"Construire un budget", difficulte:"Débutant", duree:"~20 min", lecons:3,
     competence:"Construire un budget réaliste",
     notions:["Catégories de dépenses","Méthode 50/30/20","Suivi","Réduire les dépenses inutiles"],
-    lien:"outils.html", statut:"disponible",
+    lien:"laboratoire.html", statut:"disponible",
     note:"Le simulateur de budget (Simulateurs) couvre déjà cette base."
   },
   {
@@ -39,7 +39,7 @@ const PARCOURS_PRINCIPAL = [
     titre:"Faire travailler son argent", difficulte:"Intermédiaire", duree:"~30 min", lecons:5,
     competence:"Comprendre les intérêts composés et le risque",
     notions:["Inflation","Intérêts composés","Risque","Rendement","Diversification"],
-    lien:"outils.html", statut:"disponible",
+    lien:"laboratoire.html", statut:"disponible",
     note:"Le simulateur d'intérêts composés (Outils) et plusieurs missions débutant/intermédiaire couvrent cette base."
   },
   {

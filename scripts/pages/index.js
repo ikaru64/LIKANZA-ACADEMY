@@ -43,9 +43,9 @@ const I18N = {
       {tab:"tab-actualites", title:"Understand the news", desc:"Summarised daily", icon:"newspaper"}
     ],
     simPreviews: [
-      {title:"Wealth projection", desc:"Project your net worth over time.", url:"outils.html"},
-      {title:"Savings goal", desc:"How long to reach a target amount.", url:"outils.html"},
-      {title:"Budget", desc:"Income, expenses, savings rate.", url:"outils.html"},
+      {title:"Wealth projection", desc:"Project your net worth over time.", url:"laboratoire.html"},
+      {title:"Savings goal", desc:"How long to reach a target amount.", url:"laboratoire.html"},
+      {title:"Budget", desc:"Income, expenses, savings rate.", url:"laboratoire.html"},
       {title:"Credit", desc:"Monthly payment & borrowing capacity.", url:"immobilier.html"},
       {title:"Scenario comparison", desc:"Cautious vs balanced vs ambitious.", url:"bourse.html"}
     ]
@@ -93,9 +93,9 @@ const I18N = {
       {tab:"tab-actualites", title:"Comprendre l'actualité", desc:"Résumée chaque jour", icon:"newspaper"}
     ],
     simPreviews: [
-      {title:"Projection de patrimoine", desc:"Projette ton patrimoine net dans le temps.", url:"outils.html"},
-      {title:"Objectif d'épargne", desc:"Le temps nécessaire pour atteindre un montant.", url:"outils.html"},
-      {title:"Budget", desc:"Revenus, dépenses, taux d'épargne.", url:"outils.html"},
+      {title:"Projection de patrimoine", desc:"Projette ton patrimoine net dans le temps.", url:"laboratoire.html"},
+      {title:"Objectif d'épargne", desc:"Le temps nécessaire pour atteindre un montant.", url:"laboratoire.html"},
+      {title:"Budget", desc:"Revenus, dépenses, taux d'épargne.", url:"laboratoire.html"},
       {title:"Crédit", desc:"Mensualité et capacité d'emprunt.", url:"immobilier.html"},
       {title:"Comparaison de scénarios", desc:"Prudent vs équilibré vs ambitieux.", url:"bourse.html"}
     ]
@@ -223,7 +223,7 @@ function renderTeacherMini(){
 
 // ================= Onglet Simuler =================
 // Rendement fixé sur RETURN_ASSUMPTIONS.central (scripts/data.js) — la même
-// hypothèse que le simulateur complet d'outils.html, pour ne plus avoir deux
+// hypothèse que le simulateur complet d'laboratoire.html, pour ne plus avoir deux
 // niveaux de rigueur différents sur le même calcul à deux endroits du site.
 function updateHomeSim(){
   const capEl = document.getElementById('homeSimCapital');

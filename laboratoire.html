@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Laboratoire financier · Likanza Academy</title>
+<meta name="description" content="Teste des décisions financières sur des données réellement observées : marchés, inflation, crédit et immobilier — pas des hypothèses arbitraires.">
+<meta property="og:title" content="Laboratoire financier · Likanza Academy">
+<meta property="og:description" content="Teste des décisions financières sur des données réellement observées : marchés, inflation, crédit et immobilier — pas des hypothèses arbitraires.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://likanza-academy.vercel.app/laboratoire.html">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="icon" type="image/svg+xml" href="favicon.svg">
+<link rel="stylesheet" href="styles/design-system.css">
+</head>
+<body class="has-bottom-nav">
+<aside class="app-sidebar" aria-label="Navigation principale">
+  <a href="index.html" class="sidebar-brand"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
+  <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
+  <span class="sidebar-group-label">Apprendre</span>
+  <a href="defis.html"><span class="icon" data-icon="target"></span><span>Défis</span></a>
+  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
+  <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
+  <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
+  <a href="laboratoire.html" class="active"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
+  <a href="play.html"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
+  <span class="sidebar-group-label">Marchés</span>
+  <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
+  <a href="crypto.html"><span class="icon" data-icon="bitcoin"></span><span>Crypto</span></a>
+  <a href="business.html"><span class="icon" data-icon="briefcase"></span><span>Business</span></a>
+  <span class="sidebar-group-label">Compte</span>
+  <a href="compte.html"><span class="icon" data-icon="trophy"></span><span>Mon compte</span></a>
+</aside>
+
+
+<header class="site-header">
+  <div class="utility-bar"><div class="ticker-track" id="tickerTrack"></div></div>
+  <div class="nav-row">
+    <button class="mobile-toggle" id="mobileToggle" aria-label="Menu" aria-expanded="false"><span data-icon="menu"></span></button>
+    <a href="index.html" class="logo-row"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
+        <nav class="main-nav" id="mainNav">
+      <a href="index.html">Accueil</a>
+      <a href="actualites.html">Actualités</a>
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle" type="button" aria-haspopup="true" aria-expanded="false">Explorer ▾</button>
+        <div class="nav-dropdown-panel">
+          <div class="nav-dropdown-col">
+            <h5>Marchés</h5>
+            <a href="bourse.html">Bourse &amp; comparateur</a>
+            <a href="crypto.html">Crypto</a>
+            <a href="business.html">Business</a>
+          </div>
+          <div class="nav-dropdown-col">
+            <h5>Apprendre</h5>
+            <a href="defis.html">Défis</a>
+            <a href="formations.html">Academy</a>
+            <a href="bibliotheque.html">Bibliothèque</a>
+            <a href="laboratoire.html">Laboratoire financier</a>
+            <a href="play.html">Play</a>
+          </div>
+          <div class="nav-dropdown-col">
+            <h5>Compte</h5>
+            <a href="compte.html">Mon compte</a>
+            <a href="parcours.html">Mon parcours</a>
+            <a href="test-positionnement.html">Test de positionnement</a>
+            <a href="avenir.html">À venir</a>
+            <a href="apropos.html">À propos</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+    <div class="nav-tools">
+      <div class="search-box"><input type="text" class="search-input" id="searchInput" placeholder="Rechercher..." aria-label="Recherche"><div class="search-results" id="searchResults"></div></div>
+      <button class="icon-btn" id="themeToggle" aria-label="Changer de thème"><span data-icon="moon"></span></button>
+    </div>
+  </div>
+</header>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / Laboratoire financier</div>
+<h1 class="visually-hidden">Laboratoire financier</h1>
+<div id="levelTip" style="max-width:720px;margin:14px auto 0;padding:0 24px;"></div>
+
+<section class="section" style="padding-bottom:20px;">
+  <div class="section-head"><h2>Laboratoire financier</h2><span class="meta-line">données réelles, pas des hypothèses arbitraires</span></div>
+  <p style="font-size:12.5px;color:var(--text-dim);max-width:80ch;">Ce laboratoire ne prédit pas l'avenir : il montre ce qui s'est réellement passé historiquement (marchés, inflation, crédit, immobilier), et comment des hypothèses différentes changent un résultat. Chaque chiffre porte un badge indiquant sa nature : <span class="data-badge data-badge-reel">🟢 Historique réel</span> <span class="data-badge data-badge-hypothese">🔵 Hypothèse</span> <span class="data-badge data-badge-scenario">🟡 Scénario</span> <span class="data-badge data-badge-exemple">⚪ Exemple pédagogique</span> — jamais mélangés dans un même chiffre.</p>
+</section>
+
+<!-- ================= INVESTISSEMENT ================= -->
+<section class="section" style="padding-top:0;">
+  <div class="section-head"><h2>📈 Investissement</h2><span class="meta-line">performances réelles des marchés, pas un rendement moyen lissé</span></div>
+  <div class="card-grid">
+
+    <div class="card" style="grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Et si j'avais investi ?</h3>
+        <span id="labInvestBadge"></span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Applique les vrais cours mensuels d'un support pour reconstituer ce qui se serait réellement passé — rétrospectif uniquement, jamais une prédiction.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:200px;"><label>Support</label>
+          <select id="labInvestSupport">
+            <option value="URTH">Actions monde (MSCI World, ETF URTH)</option>
+            <option value="^GSPC">Actions US (S&amp;P 500)</option>
+            <option value="^FCHI">Actions France (CAC 40)</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;min-width:120px;"><label>Capital initial (€)</label><input type="number" id="labInvestCapital" value="1000" min="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label>Versement mensuel (€)</label><input type="number" id="labInvestMonthly" value="200" min="0"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:140px;"><label>Date de départ</label><select id="labInvestStart"></select></div>
+        <div class="field" style="flex:1;min-width:140px;"><label>Date de fin</label><select id="labInvestEnd"></select></div>
+      </div>
+      <p id="labInvestPartialNote" class="source-note"></p>
+      <div id="labInvestOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
+    </div>
+
+    <div class="card" style="grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>DCA historique</h3>
+        <span id="labDcaBadge"></span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Un versement mensuel régulier appliqué aux vrais cours historiques : prix moyen d'achat réel, et combien de fois tu aurais acheté pendant une baisse.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:200px;"><label>Support</label>
+          <select id="labDcaSupport">
+            <option value="URTH">Actions monde (MSCI World, ETF URTH)</option>
+            <option value="^GSPC">Actions US (S&amp;P 500)</option>
+            <option value="^FCHI">Actions France (CAC 40)</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;min-width:120px;"><label>Versement mensuel (€)</label><input type="number" id="labDcaMonthly" value="150" min="1"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label>Depuis</label><select id="labDcaStart"></select></div>
+      </div>
+      <div id="labDcaOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
+    </div>
+
+    <div class="card">
+      <h3>Intérêts composés</h3>
+      <div class="mode-toggle" id="simModeToggle">
+        <button class="pill" data-mode="prudent">Prudente</button>
+        <button class="pill active" data-mode="central">Centrale</button>
+        <button class="pill" data-mode="optimiste">Optimiste</button>
+        <button class="pill" data-mode="historique">Historique</button>
+        <button class="pill" data-mode="personnalise">Personnalisé</button>
+      </div>
+      <p id="simModeDesc" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;"></p>
+      <div class="slider-row field"><label>Capital de départ <span class="v mono" id="valCapital">500 €</span></label><input type="range" id="capital" min="0" max="10000" step="100" value="500"></div>
+      <div class="slider-row field"><label>Versement mensuel <span class="v mono" id="valMonthly">100 €</span></label><input type="range" id="monthly" min="0" max="1000" step="10" value="100"></div>
+      <div class="slider-row field" id="simRateRow"><label>Rendement annuel moyen <span class="v mono" id="valRate">6 %</span></label><input type="range" id="rate" min="0" max="20" step="0.5" value="6" disabled></div>
+      <div id="simRateAlert"></div>
+      <div class="slider-row field"><label>Durée <span class="v mono" id="valYears">15 ans</span></label><input type="range" id="years" min="1" max="40" step="1" value="15"></div>
+      <div class="field"><label>Frais de gestion annuels (optionnel)</label><input type="number" id="simFrais" value="0" min="0" max="5" step="0.1"></div>
+      <div class="result-label">Capital estimé au terme</div>
+      <div class="result-big" id="simTotal">— €</div>
+      <div class="result-row"><span>Versé : <span id="simInvested">—</span></span><span>Gains : <span id="simGains" style="color:var(--emerald)">—</span></span></div>
+      <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);margin:10px 0;cursor:pointer;"><input type="checkbox" id="simShowReal" style="width:15px;height:15px;">Afficher aussi la valeur en pouvoir d'achat (ajustée de l'inflation)</label>
+      <div id="simRealValue"></div>
+      <div class="bar-chart" id="simChart"></div>
+      <div class="bar-labels" id="simChartLabels"></div>
+      <div id="simWhatIf"></div>
+      <p class="disclaimer-box"><strong>Ce scénario n'est pas une prévision.</strong> Les performances passées ne préjugent pas des performances futures. Les marchés actions ont déjà connu des baisses de plus de 30% sur une seule année dans le passé (crises de 2000, 2008, 2020) : un scénario réaliste doit intégrer cette possibilité, pas seulement une moyenne lissée.</p>
+    </div>
+
+    <div class="card">
+      <h3>Prix moyen d'achat <span class="data-badge data-badge-exemple" style="margin-left:6px;">⚪ Exemple pédagogique</span></h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Ajoute tes achats successifs pour voir ton prix moyen d'achat.</p>
+      <div id="dcaRows"></div>
+      <button class="btn btn-sm" id="dcaAdd" style="margin-top:10px;">+ Ajouter un achat</button>
+      <div class="result-row" id="dcaResult" style="margin-top:16px;"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= IMMOBILIER ================= -->
+<section class="section" style="padding-top:0;">
+  <div class="section-head"><h2>🏠 Immobilier</h2><span class="meta-line">taux et prix réellement observés en France</span></div>
+  <div class="card-grid">
+
+    <div class="card" id="labCreditCard" style="grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Combien coûte réellement mon crédit ?</h3>
+        <span id="labCreditBadge"></span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Tableau d'amortissement complet, comparaison des durées et des taux — pas seulement une mensualité.</p>
+      <p id="labCreditRateSource" class="source-note"></p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:140px;"><label>Prix du bien (€)</label><input type="number" id="labCreditPrice" value="250000" min="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label>Apport (€)</label><input type="number" id="labCreditApport" value="25000" min="0"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label>Taux (%)</label><input type="number" id="labCreditRate" value="3.2" min="0" max="15" step="0.05"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:100px;"><label>Durée (ans)</label><input type="number" id="labCreditYears" value="20" min="1" max="30" step="1"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label>Assurance (%/an)</label><input type="number" id="labCreditInsurance" value="0.3" min="0" max="2" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label>Frais annexes (dossier + garantie + notaire, €)</label><input type="number" id="labCreditFrais" value="18000" min="0"></div>
+      </div>
+      <div id="labCreditOutput"></div>
+    </div>
+
+    <div class="card" id="labBuyRentCard" style="grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Acheter ou louer ?</h3>
+        <span id="labBuyRentBadge"></span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Patrimoine net comparé sur plusieurs horizons, en tenant compte du coût d'opportunité de l'apport — pas juste "mensualité vs loyer".</p>
+      <p id="labBuyRentPriceSource" class="source-note"></p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:140px;"><label>Prix du bien (€)</label><input type="number" id="labBrPrice" value="250000" min="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label>Apport (€)</label><input type="number" id="labBrApport" value="30000" min="0"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label>Taux crédit (%)</label><input type="number" id="labBrRate" value="3.2" min="0" max="15" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label>Durée (ans)</label><input type="number" id="labBrYears" value="20" min="1" max="30" step="1"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:110px;"><label>Assurance (%/an)</label><input type="number" id="labBrInsurance" value="0.3" min="0" max="2" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label>Frais dossier (€)</label><input type="number" id="labBrFraisDossier" value="1000" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label>Frais garantie (€)</label><input type="number" id="labBrFraisGarantie" value="2500" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label>Frais de notaire (%)</label><input type="number" id="labBrFraisNotaire" value="7.5" min="0" max="15" step="0.1"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:130px;"><label>Charges copro (€/an)</label><input type="number" id="labBrCharges" value="1200" min="0"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label>Taxe foncière (€/an)</label><input type="number" id="labBrTaxe" value="1000" min="0"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label>Entretien (%/an du bien)</label><input type="number" id="labBrEntretien" value="0.5" min="0" max="3" step="0.1"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label>Travaux éventuels (€, ponctuel)</label><input type="number" id="labBrTravaux" value="0" min="0"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:110px;"><label>Loyer initial (€/mois)</label><input type="number" id="labBrLoyer" value="850" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label>Charges locataire (€/mois)</label><input type="number" id="labBrChargesLoc" value="50" min="0"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label>Hausse loyer (%/an)</label><input type="number" id="labBrLoyerHausse" value="1.5" min="0" max="10" step="0.1"></div>
+        <div class="field" style="flex:1;min-width:150px;"><label>Rendement si apport investi (%/an)</label><input type="number" id="labBrOpportunity" value="6" min="0" max="15" step="0.1"></div>
+      </div>
+      <div class="field" style="max-width:360px;"><label>Scénario</label>
+        <select id="labBrScenario">
+          <option value="standard">Standard (hypothèses ci-dessus)</option>
+          <option value="prix-10">Prix immobilier -10% à la revente</option>
+          <option value="choc-taux">Choc taux (+1 point)</option>
+          <option value="travaux">Travaux imprévus (+8 000 €)</option>
+        </select>
+      </div>
+      <div id="labBuyRentOutput"></div>
+    </div>
+
+    <a href="immobilier.html" class="card play-tile">
+      <span class="icon" data-icon="building-2" style="color:var(--gold-bright);"></span>
+      <h3 style="margin:10px 0 6px;">Capacité d'emprunt &amp; rendement locatif</h3>
+      <p>Combien peux-tu emprunter, et un investissement locatif est-il rentable ? Sur la page Immobilier dédiée.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
+    </a>
+
+  </div>
+</section>
+
+<!-- ================= FINANCES PERSONNELLES ================= -->
+<section class="section" style="padding-top:0;">
+  <div class="section-head"><h2>💰 Finances personnelles</h2><span class="meta-line">inflation réelle, budget, objectifs</span></div>
+  <div class="card-grid">
+
+    <div class="card" style="grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Que valent réellement mes euros ?</h3>
+        <span id="labInflationBadge"></span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Inflation française réellement mesurée (indice harmonisé des prix à la consommation, BCE), pas une hypothèse constante.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:120px;"><label>Montant (€)</label><input type="number" id="labInflAmount" value="10000" min="0"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label>Depuis</label><select id="labInflStart"></select></div>
+        <div class="field" style="flex:1;min-width:140px;"><label>Jusqu'à</label><select id="labInflEnd"></select></div>
+      </div>
+      <div id="labInflationOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
+      <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--hairline);">
+        <span class="smallcaps">Et pour l'avenir ? <span class="data-badge data-badge-hypothese">🔵 Scénarios, pas une prévision</span></span>
+        <div class="field" style="max-width:260px;margin-top:10px;"><label>Montant épargné aujourd'hui (€)</label><input type="number" id="inflAmount" value="10000"></div>
+        <div class="slider-row field"><label>Rendement de ton épargne <span class="v mono" id="valInflReturn">1 %</span></label><input type="range" id="inflReturn" min="0" max="10" step="0.5" value="1"></div>
+        <div class="slider-row field"><label>Inflation annuelle supposée <span class="v mono" id="valInflRate">2.1 %</span></label><input type="range" id="inflRate" min="0" max="8" step="0.1" value="2.1"></div>
+        <div class="slider-row field"><label>Durée <span class="v mono" id="valInflYears">10 ans</span></label><input type="range" id="inflYears" min="1" max="30" step="1" value="10"></div>
+        <div class="result-row" id="inflResult" style="margin-top:14px;"></div>
+        <div class="bar-chart" id="inflChart"></div>
+        <div class="bar-labels" id="inflChartLabels"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Calculateur de budget <span class="data-badge data-badge-exemple" style="margin-left:6px;">⚪ Exemple pédagogique</span></h3>
+      <div class="field"><label>Revenus mensuels nets (€)</label><input type="number" id="budgetRevenu" value="2200"></div>
+      <div class="field"><label>Loyer / crédit (€)</label><input type="number" id="budgetLoyer" value="750"></div>
+      <div class="field"><label>Charges fixes : assurances, abonnements, transport (€)</label><input type="number" id="budgetFixe" value="400"></div>
+      <div class="field"><label>Dépenses variables : courses, sorties (€)</label><input type="number" id="budgetVariable" value="600"></div>
+      <div class="result-label">Capacité d'épargne mensuelle</div>
+      <div class="result-big" id="budgetResult">— €</div>
+      <p class="disclaimer-box">Une capacité d'épargne négative signale un budget à revoir avant tout projet d'investissement.</p>
+    </div>
+
+    <div class="card">
+      <h3>Objectif d'épargne <span class="data-badge data-badge-exemple" style="margin-left:6px;">⚪ Exemple pédagogique</span></h3>
+      <div class="field"><label>Montant visé (€)</label><input type="number" id="goalAmount" value="5000"></div>
+      <div class="field"><label>Épargne mensuelle possible (€)</label><input type="number" id="goalMonthly" value="150"></div>
+      <div class="result-label">Temps nécessaire pour atteindre l'objectif</div>
+      <div class="result-big" id="goalResult">—</div>
+    </div>
+
+    <div class="card">
+      <h3>Coût futur d'un abonnement <span class="data-badge data-badge-hypothese" style="margin-left:6px;">🔵 Hypothèse</span></h3>
+      <div class="field"><label>Coût mensuel de l'abonnement (€)</label><input type="number" id="subCost" value="15"></div>
+      <div class="slider-row field"><label>Sur une durée de <span class="v mono" id="valSubYears">5 ans</span></label><input type="range" id="subYears" min="1" max="20" step="1" value="5"></div>
+      <div class="slider-row field"><label>Si investi à la place, rendement annuel <span class="v mono" id="valSubRate">6 %</span></label><input type="range" id="subRate" min="0" max="10" step="0.5" value="6"></div>
+      <div class="result-row" id="subResult" style="margin-top:10px;"></div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ================= PLANIFICATION ================= -->
+<section class="section" style="padding-top:0;padding-bottom:34px;">
+  <div class="section-head"><h2>🧭 Planification</h2><span class="meta-line">comparer des décisions</span></div>
+  <div class="card-grid">
+
+    <a href="comparateur-decisions.html" class="card play-tile">
+      <span class="icon" data-icon="scale" style="color:var(--gold-bright);"></span>
+      <h3 style="margin:10px 0 6px;">Comparateur de décisions</h3>
+      <p>Payer cash ou à crédit en investissant à côté ? Rembourser par anticipation ou investir ? Deux vraies questions de foyer, chiffrées à partir de tes propres hypothèses.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
+    </a>
+
+    <div class="card">
+      <h3>Autres outils</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:12px;">Sur leurs pages dédiées, entièrement fonctionnels.</p>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        <a href="immobilier.html" class="btn btn-sm" style="justify-content:space-between;">Capacité d'emprunt & rendement locatif →</a>
+        <a href="bourse.html" class="btn btn-sm" style="justify-content:space-between;">Comparateur d'actions →</a>
+        <a href="bourse.html" class="btn btn-sm" style="justify-content:space-between;">Scénarios d'action →</a>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
+    <div><h4>Explorer</h4><ul><li><a href="bourse.html">Bourse</a></li><li><a href="business.html">Business</a></li></ul></div>
+    <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
+    <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
+  </div>
+  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Investir comporte un risque de perte en capital. Performances passées, jamais une prédiction.</span></div>
+</footer>
+
+<script src="scripts/icons.js"></script>
+<script src="scripts/app.js"></script>
+<script src="scripts/data.js"></script>
+<script src="scripts/historical-data.js"></script>
+<script src="scripts/pages/laboratoire.js"></script>
+
+<nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
+  <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
+  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
+  <a href="defis.html"><span class="icon" data-icon="swords"></span>Défis</a>
+  <a href="laboratoire.html" class="active"><span class="icon" data-icon="calculator"></span>Labo</a>
+  <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>
+</nav>
+</body>
+</html>

@@ -778,7 +778,7 @@ const MISSION_TEMPLATES = [
     return {title:'Analyser une actualité', desc:"Lis une actualité de la semaine et repère pourquoi elle compte pour toi.", href:'actualites.html'};
   }},
   {id:'tester-simulateur', xp:5, build(){
-    return {title:'Tester un simulateur', desc:'Ouvre un simulateur et modifie au moins une variable pour voir son effet.', href:'outils.html'};
+    return {title:'Tester un simulateur', desc:'Ouvre un simulateur et modifie au moins une variable pour voir son effet.', href:'laboratoire.html'};
   }},
   {id:'sujet-nouveau', xp:5, build(){
     const profile = getProfile();
@@ -2247,7 +2247,7 @@ function renderBarChart(chartId, labelsId, series, years){
 
 // ---------- Hypothèses de rendement centralisées ----------
 // Source unique pour les scénarios "prudent/central/optimiste" proposés par
-// le simulateur d'intérêts composés (outils.html) — évite d'avoir des
+// le simulateur d'intérêts composés (laboratoire.html) — évite d'avoir des
 // pourcentages différents éparpillés dans plusieurs fichiers. Ce sont des
 // hypothèses pédagogiques, jamais une prévision ni un rendement garanti.
 const RETURN_ASSUMPTIONS = {
@@ -2256,7 +2256,7 @@ const RETURN_ASSUMPTIONS = {
   optimiste: {rate: 9, label: 'Optimiste', desc: "Scénario favorable, proche des meilleures décennies boursières historiques. À ne jamais retenir comme hypothèse par défaut."}
 };
 // Inflation illustrative par défaut, cohérente avec celle déjà utilisée par
-// ailleurs sur outils.html (widget "Impact de l'inflation") — pas une donnée
+// ailleurs sur laboratoire.html (widget "Impact de l'inflation") — pas une donnée
 // macroéconomique en direct, une hypothèse constante à but pédagogique.
 const DEFAULT_INFLATION_ASSUMPTION = 2.1;
 
@@ -2330,6 +2330,248 @@ function computePrepayVsInvestComparison(amount, creditRate, investRate, years){
     prepayFinalValue: prepaySeries[prepaySeries.length-1],
     investFinalValue: investSeries[investSeries.length-1]
   };
+}
+
+// ============================================================
+// Laboratoire financier — moteurs de calcul sur données réelles
+// (scripts/historical-data.js pour les métadonnées de source ;
+// scripts/pages/laboratoire.js pour l'interface). Toutes ces
+// fonctions sont pures : elles ne font aucun fetch, elles reçoivent
+// des séries déjà récupérées en direct (Yahoo Finance / BCE SDW) et
+// ne fabriquent jamais une valeur manquante.
+// ============================================================
+
+// ---------- Investissement historique réel (P0-1 "Et si j'avais investi ?" / P0-2 DCA historique) ----------
+// monthlyPoints : [{period:'2016-09', close:72.66}, ...] triés chronologiquement,
+// une vraie série mensuelle (Yahoo Finance via /api/custom-quotes?interval=1mo).
+// Achète des "unités" au vrai cours de chaque mois (capital initial au mois 0,
+// puis versement mensuel optionnel) — reproduit fidèlement l'effet du prix
+// réel payé à chaque date, jamais un rendement moyen lissé.
+function computeHistoricalInvestment(monthlyPoints, initial, monthlyContribution){
+  if(!monthlyPoints || monthlyPoints.length < 2) return null;
+  const points = monthlyPoints;
+  let units = initial > 0 ? initial / points[0].close : 0;
+  let invested = initial;
+  const investedSeries = [invested];
+  const valueSeries = [units * points[0].close];
+  let buysDuringDip = 0;
+
+  for(let i = 1; i < points.length; i++){
+    if(monthlyContribution > 0){
+      units += monthlyContribution / points[i].close;
+      invested += monthlyContribution;
+      if(points[i].close < points[i-1].close) buysDuringDip++;
+    }
+    investedSeries.push(invested);
+    valueSeries.push(units * points[i].close);
+  }
+
+  const finalValue = valueSeries[valueSeries.length - 1];
+  const totalInvested = investedSeries[investedSeries.length - 1];
+  const totalGain = finalValue - totalInvested;
+  const years = (points.length - 1) / 12;
+  const cagr = totalInvested > 0 && years > 0 ? (Math.pow(finalValue / totalInvested, 1 / years) - 1) * 100 : 0;
+  const avgPurchasePrice = units > 0 ? totalInvested / units : 0;
+
+  // Rendements par année civile (la première et la dernière année peuvent être partielles)
+  const yearlyReturns = [];
+  let yearStartValue = valueSeries[0];
+  let currentYear = points[0].period.slice(0, 4);
+  for(let i = 1; i <= points.length; i++){
+    const period = i < points.length ? points[i].period : null;
+    const year = period ? period.slice(0, 4) : null;
+    if(year !== currentYear){
+      const endValue = valueSeries[i - 1];
+      yearlyReturns.push({year: currentYear, returnPct: yearStartValue > 0 ? (endValue / yearStartValue - 1) * 100 : 0});
+      currentYear = year;
+      yearStartValue = endValue;
+    }
+  }
+  const bestYear = yearlyReturns.length ? yearlyReturns.reduce((a, b) => (b.returnPct > a.returnPct ? b : a)) : null;
+  const worstYear = yearlyReturns.length ? yearlyReturns.reduce((a, b) => (b.returnPct < a.returnPct ? b : a)) : null;
+  const negativeYears = yearlyReturns.filter(y => y.returnPct < 0).length;
+
+  // Drawdown maximal + temps de récupération (du sommet précédent jusqu'au retour à ce niveau)
+  let peak = valueSeries[0], peakIdx = 0, maxDD = 0, troughIdx = 0, ddPeakIdx = 0;
+  for(let i = 1; i < valueSeries.length; i++){
+    if(valueSeries[i] > peak){ peak = valueSeries[i]; peakIdx = i; }
+    else {
+      const dd = (peak - valueSeries[i]) / peak;
+      if(dd > maxDD){ maxDD = dd; troughIdx = i; ddPeakIdx = peakIdx; }
+    }
+  }
+  let recoveryMonths = null;
+  if(maxDD > 0){
+    const peakValue = valueSeries[ddPeakIdx];
+    for(let i = troughIdx + 1; i < valueSeries.length; i++){
+      if(valueSeries[i] >= peakValue){ recoveryMonths = i - ddPeakIdx; break; }
+    }
+  }
+
+  return {
+    dates: points.map(p => p.period),
+    investedSeries, valueSeries,
+    finalValue, totalInvested, totalGain, cagr, years,
+    avgPurchasePrice, finalUnits: units, buysDuringDip,
+    bestYear, worstYear, negativeYears, yearlyReturns,
+    maxDrawdownPct: maxDD * 100,
+    recoveryMonths
+  };
+}
+
+// Convertit une série de valeurs nominales en "pouvoir d'achat d'aujourd'hui"
+// à partir d'un vrai indice d'inflation (points {period, value} — plus la
+// valeur est haute, plus les prix ont augmenté). Renvoie null pour les points
+// hors de la période couverte par l'indice — jamais une valeur inventée pour boucher un trou.
+function computeRealValueSeries(dates, valueSeries, inflationPoints){
+  if(!inflationPoints || inflationPoints.length === 0) return dates.map(() => null);
+  const idx = {};
+  inflationPoints.forEach(p => { idx[p.period] = p.value; });
+  const latest = inflationPoints[inflationPoints.length - 1].value;
+  return dates.map((d, i) => {
+    const iv = idx[d];
+    if(typeof iv !== 'number') return null;
+    return valueSeries[i] * (latest / iv);
+  });
+}
+
+// ---------- Crédit immobilier complet (P0-3) ----------
+// Étend loanMonthlyPayment avec un vrai tableau d'amortissement mois par
+// mois (intérêts/capital/CRD), l'assurance et les frais annexes.
+function computeLoanAmortization(capital, rateAnnual, years, insuranceRatePct, fraisAnnexes){
+  const monthlyPayment = capital > 0 ? loanMonthlyPayment(capital, rateAnnual, years) : 0;
+  const n = Math.round(years * 12);
+  const rm = rateAnnual / 100 / 12;
+  let balance = capital;
+  const schedule = [];
+  let totalInterest = 0;
+  for(let m = 1; m <= n; m++){
+    const interest = rm === 0 ? 0 : balance * rm;
+    let principal = monthlyPayment - interest;
+    if(principal > balance) principal = balance;
+    balance = Math.max(0, balance - principal);
+    totalInterest += interest;
+    schedule.push({month: m, interest, principal, balance});
+  }
+  const insuranceMonthly = capital * ((insuranceRatePct || 0) / 100) / 12;
+  const totalInsurance = insuranceMonthly * n;
+  const totalCost = capital + totalInterest + totalInsurance + (fraisAnnexes || 0);
+  return {
+    monthlyPayment,
+    monthlyPaymentWithInsurance: monthlyPayment + insuranceMonthly,
+    insuranceMonthly,
+    totalInterest, totalInsurance,
+    fraisAnnexes: fraisAnnexes || 0,
+    totalCost,
+    schedule
+  };
+}
+
+// ---------- Acheter ou louer, version sérieuse (P0-5) ----------
+// Simulation mois par mois (pas une formule fermée) car le loyer augmente
+// chaque année et le crédit s'amortit de façon non linéaire — un calcul en
+// une étape ne représenterait pas fidèlement les deux trajectoires.
+// Patrimoine net propriétaire = valeur du bien - capital restant dû.
+// Patrimoine net locataire = apport + frais d'acquisition jamais dépensés,
+// investis dès le départ, puis abondés chaque mois de la différence entre
+// le coût mensuel réel du propriétaire et le coût mensuel du locataire
+// (section 14 : coût d'opportunité de l'apport, jamais traité comme disparu).
+function computeBuyVsRent(inputs){
+  const {
+    price, downPayment, rateAnnual, years, insuranceRatePct,
+    fraisDossier, fraisGarantie, fraisNotairePct,
+    chargesCoproAnnual, taxeFonciereAnnual, entretienAnnualPct, travauxOneOff,
+    loyerMensuelInitial, chargesLocatairesMensuel, loyerHausseAnnuelPct,
+    appreciationAnnualPct, opportunityRatePct,
+    horizonsYears
+  } = inputs;
+
+  const loanCapital = Math.max(0, price - downPayment);
+  const loan = computeLoanAmortization(loanCapital, rateAnnual, years, insuranceRatePct, 0);
+  const fraisNotaire = price * ((fraisNotairePct || 0) / 100);
+  const fraisAcquisition = (fraisDossier || 0) + (fraisGarantie || 0) + fraisNotaire;
+
+  const maxHorizon = Math.max(...horizonsYears);
+  const totalMonths = Math.round(maxHorizon * 12);
+  let renterCapital = downPayment + fraisAcquisition;
+  let loyer = loyerMensuelInitial;
+  const monthlyOpp = (opportunityRatePct || 0) / 100 / 12;
+
+  const yearly = [];
+  for(let m = 1; m <= totalMonths; m++){
+    if(m > 1 && (m - 1) % 12 === 0) loyer *= (1 + (loyerHausseAnnuelPct || 0) / 100);
+    const scheduleRow = loan.schedule[m - 1];
+    const mortgagePayment = scheduleRow ? loan.monthlyPaymentWithInsurance : 0;
+    const ownerMonthlyExtra = (chargesCoproAnnual + taxeFonciereAnnual + price * (entretienAnnualPct || 0) / 100) / 12
+      + (m === 1 ? (travauxOneOff || 0) : 0);
+    const ownerMonthlyCost = mortgagePayment + ownerMonthlyExtra;
+    const renterMonthlyCost = loyer + (chargesLocatairesMensuel || 0);
+    renterCapital = renterCapital * (1 + monthlyOpp) + (ownerMonthlyCost - renterMonthlyCost);
+
+    if(m % 12 === 0){
+      const year = m / 12;
+      const remainingDebt = scheduleRow ? scheduleRow.balance : 0;
+      const propertyValue = price * Math.pow(1 + (appreciationAnnualPct || 0) / 100, year);
+      yearly.push({
+        year,
+        ownerNetWorth: propertyValue - remainingDebt,
+        renterNetWorth: renterCapital,
+        propertyValue,
+        remainingDebt
+      });
+    }
+  }
+
+  const breakeven = yearly.find(y => y.ownerNetWorth >= y.renterNetWorth) || null;
+  const table = horizonsYears.map(h => yearly[h - 1]).filter(Boolean);
+
+  return {
+    monthlyPayment: loan.monthlyPaymentWithInsurance,
+    fraisAcquisition,
+    yearly,
+    table,
+    breakevenYear: breakeven ? breakeven.year : null
+  };
+}
+
+// ---------- Graphique multi-lignes générique (SVG, même approche que renderPortfolioBacktestChart) ----------
+// seriesList : [{data:[...nombres ou null...], color:'var(--gold-bright)', dashed:false, width:2}]
+function renderMultiLineChart(seriesList){
+  const w = 640, h = 220, padX = 12, padY = 14;
+  const innerW = w - padX * 2, innerH = h - padY * 2;
+  const allValues = seriesList.flatMap(s => s.data.filter(v => typeof v === 'number'));
+  if(allValues.length === 0) return '<p style="color:var(--text-dim);font-size:12.5px;">Pas assez de données pour tracer ce graphique.</p>';
+  const min = Math.min(...allValues), max = Math.max(...allValues);
+  const span = (max - min) || 1;
+  const len = Math.max(...seriesList.map(s => s.data.length));
+  function toPoints(data){
+    return data.map((v, i) => {
+      if(typeof v !== 'number') return null;
+      const x = padX + (i / (len - 1)) * innerW;
+      const y = padY + (1 - (v - min) / span) * innerH;
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).filter(Boolean).join(' ');
+  }
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;">
+    ${seriesList.map(s => `<polyline points="${toPoints(s.data)}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" ${s.dashed ? 'stroke-dasharray="4 3"' : ''} stroke-linejoin="round"/>`).join('')}
+  </svg>`;
+}
+
+// ---------- Explication "pourquoi" (section 39) ----------
+// Génère un court texte à partir des vrais chiffres calculés — jamais un
+// commentaire générique pré-écrit indépendant du résultat.
+function renderResultExplainer(elId, {invested, final, mainFactorLabel}){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const gain = final - invested;
+  const parts = [`<p>Tu as versé <strong>${fmtEUR(invested)}</strong>.</p>`];
+  if(gain >= 0){
+    parts.push(`<p>La différence jusqu'à <strong>${fmtEUR(final)}</strong> (+${fmtEUR(gain)}) provient de la croissance de la valeur sur cette période, pas de nouveaux versements.</p>`);
+  } else {
+    parts.push(`<p>Le résultat final (<strong>${fmtEUR(final)}</strong>) est inférieur au montant versé : sur cette période précise, la valeur a baissé plus qu'elle n'a progressé.</p>`);
+  }
+  if(mainFactorLabel) parts.push(`<p class="source-note" style="margin-top:10px;">Facteur déterminant dans cette simulation : ${mainFactorLabel}.</p>`);
+  el.innerHTML = `<div class="result-explainer">${parts.join('')}</div>`;
 }
 
 function renderCashVsCreditTool(elId){
