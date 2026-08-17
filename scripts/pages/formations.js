@@ -3,6 +3,33 @@ let level = getLevel();
 if(!COURSES[level]) level = 'debutant';
 if(!isLevelUnlocked(level)) level = firstUnlockedLevel();
 
+function renderLevelCompleteBanner(doneCount, modsLength){
+  const el = document.getElementById('levelCompleteBanner');
+  if(!el) return;
+  if(doneCount < modsLength){ el.innerHTML = ''; return; }
+  const nextLevel = LEVEL_ORDER[LEVEL_ORDER.indexOf(level) + 1];
+  if(nextLevel){
+    el.innerHTML = `
+      <div class="card" style="background:var(--bg-alt);border:1px solid var(--gold);">
+        <span class="smallcaps" style="color:var(--emerald);">${ICONS.check} Niveau ${LEVEL_LABELS[level]} terminé</span>
+        <p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">Le niveau ${LEVEL_LABELS[nextLevel]} est débloqué. Ou continue d'explorer librement : les missions du jour et de la semaine ci-dessus se renouvellent en continu et ne s'épuisent jamais.</p>
+        <button class="btn btn-sm btn-gold" id="levelCompleteNextBtn" type="button">Passer au niveau ${LEVEL_LABELS[nextLevel]} →</button>
+      </div>`;
+    document.getElementById('levelCompleteNextBtn').addEventListener('click', () => {
+      level = nextLevel;
+      setLevelStorage(level);
+      refreshLevelUI();
+      document.getElementById('courseList').scrollIntoView({behavior: 'smooth', block: 'start'});
+    });
+  } else {
+    el.innerHTML = `
+      <div class="card" style="background:var(--bg-alt);border:1px solid var(--gold);">
+        <span class="smallcaps" style="color:var(--emerald);">${ICONS.check} Niveau Expert terminé</span>
+        <p style="font-size:13px;color:var(--text-dim);margin:8px 0 0;">C'est le dernier niveau fixe — mais les missions du jour et de la semaine ci-dessus se renouvellent en continu, elles ne s'épuisent jamais.</p>
+      </div>`;
+  }
+}
+
 function refreshLevelUI(){
   document.querySelectorAll('.level-pills .pill').forEach(p=>{
     const lvl = p.dataset.lvl;
@@ -18,6 +45,7 @@ function refreshLevelUI(){
   const doneCount = mods.filter((c,i)=>progress[level+'-'+i]).length;
   document.getElementById('progressLabel').textContent = `${doneCount} / ${mods.length} missions accomplies`;
   renderMissionTiles('courseList', level);
+  renderLevelCompleteBanner(doneCount, mods.length);
 }
 document.querySelectorAll('.level-pills .pill').forEach(btn=>{
   btn.addEventListener('click', ()=>{
