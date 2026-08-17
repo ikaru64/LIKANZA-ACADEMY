@@ -2,12 +2,12 @@
    LIKANZA ACADEMY — Business (business.html)
    Indicateurs de marché en direct (Yahoo Finance via /api/custom-quotes)
    + taux de dépôt BCE en direct (via /api/eco-rate, voir lib/ecb.js),
-   actualité économique réelle restructurée (synthèse hebdomadaire déjà
-   générée depuis de vrais flux RSS, champs pourquoi/impact déjà réels
-   mais jusqu'ici inexploités), et plusieurs widgets qui réutilisent la
-   vraie progression déjà existante (renderBusinessResume/renderBusinessNiveau/
+   et plusieurs widgets qui réutilisent la vraie progression déjà
+   existante (renderBusinessResume/renderBusinessNiveau/
    renderBusinessQuestionDuJour/renderConceptLevels/renderTopicWidget,
-   tous dans scripts/data.js). Aucune donnée inventée : en cas d'échec,
+   tous dans scripts/data.js). L'actualité économique/entreprises réelle
+   vit uniquement sur actualites.html (pas de duplication ici, juste un
+   lien de renvoi). Aucune donnée inventée : en cas d'échec,
    dégradation silencieuse avec un message clair, jamais un contenu
    fictif.
    ============================================================ */
@@ -67,40 +67,10 @@ async function renderBusinessRate(){
   }
 }
 
-async function renderBusinessNews(){
-  const el = document.getElementById('businessNewsCard');
-  if(!el) return;
-  el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Chargement…</p>`;
-  try {
-    const resp = await fetch('/api/weekly-news');
-    if(!resp.ok) throw new Error('HTTP ' + resp.status);
-    const payload = await resp.json();
-    const article = (payload.articles || []).find(a => a.categorie === 'Entreprises');
-    if(!article) throw new Error('Article "Entreprises" indisponible cette semaine');
-    const impactHtml = Array.isArray(article.impact) && article.impact.length
-      ? `<div class="business-tags">${article.impact.map(i=>`<span class="business-tag">${i}</span>`).join('')}</div>` : '';
-    el.innerHTML = `
-      <span class="smallcaps">${article.categorie}</span>
-      <h3 style="margin:8px 0 10px;">${article.titre}</h3>
-      <span class="business-news-label">Ce qui s'est passé</span>
-      <p style="color:var(--text-dim);font-size:13.5px;line-height:1.6;">${article.resume}</p>
-      ${article.pourquoi ? `<span class="business-news-label">Pourquoi</span><p style="color:var(--text-dim);font-size:13.5px;line-height:1.6;">${article.pourquoi}</p>` : ''}
-      ${impactHtml ? `<span class="business-news-label">Pourquoi ça compte</span>${impactHtml}` : ''}
-      <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap;">
-        <a href="actualites.html" class="btn btn-sm">Lire toute l'actualité →</a>
-        <a href="cours.html#entreprise-essentiels" class="btn btn-sm btn-gold">Concept associé : l'entreprise →</a>
-      </div>`;
-  } catch(err){
-    el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Donnée temporairement indisponible. <a href="actualites.html" style="color:var(--gold-bright);">Voir toutes les actualités →</a></p>`;
-    console.info('Likanza Academy — actualité Business indisponible :', err.message);
-  }
-}
-
 renderLevelTip('levelTip', 'business');
 renderBusinessResume('businessResume');
 renderBusinessIndicators();
 renderBusinessRate();
-renderBusinessNews();
 
 renderTopicWidget('businessImmobilier', {
   title: 'Immobilier',

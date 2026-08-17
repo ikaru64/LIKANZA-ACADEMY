@@ -122,3 +122,5 @@ function renderMistakesSection(){
 initParcours();
 if(document.getElementById('coachWidget')) renderCoach('coachWidget');
 renderMistakesSection();
+renderDailyMissions('dailyMissions');
+renderWeeklyMissions('weeklyMissions');

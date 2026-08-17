@@ -580,10 +580,6 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .business-level-btn.active{border-color:var(--gold);color:var(--gold-bright);background:rgba(184,151,78,0.1);}
 .business-level-text{font-size:13.5px;color:var(--text-dim);line-height:1.6;margin-top:12px;min-height:40px;}
 
-.business-mechanism{display:flex;flex-direction:column;align-items:center;gap:4px;}
-.business-mechanism-step{background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);padding:12px 18px;text-align:center;font-size:13.5px;max-width:440px;width:100%;}
-.business-mechanism-arrow{color:var(--gold);font-size:16px;line-height:1;}
-
 .business-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
 .business-tag{font-size:10px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-dim);border:1px solid var(--hairline);border-radius:2px;padding:3px 8px;}
 

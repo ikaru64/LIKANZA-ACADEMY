@@ -2637,7 +2637,8 @@ function renderCoach(elId){
   const messages = [];
   if(done === 0) messages.push(`Tu n'as pas encore commencé les missions du niveau ${labels[level]}.`);
   else if(pct < 100) messages.push(`Tu as terminé ${pct}% du parcours ${labels[level]}.`);
-  else messages.push(`Parcours ${labels[level]} terminé : tente le niveau supérieur dans Formations.`);
+  else if(level === 'expert') messages.push(`Parcours ${labels[level]} terminé : c'est le dernier niveau fixe, mais de nouvelles missions du jour et de la semaine t'attendent juste en dessous, elles se renouvellent sans jamais s'épuiser.`);
+  else messages.push(`Parcours ${labels[level]} terminé : tente le niveau supérieur dans Formations. En attendant, les missions du jour et de la semaine ci-dessous se renouvellent en continu.`);
 
   const favTypes = favs.map(f=>f.type);
   if(favTypes.includes('Action')) messages.push("Tu sembles t'intéresser à la bourse : le comparateur d'actions peut t'aider à aller plus loin.");
