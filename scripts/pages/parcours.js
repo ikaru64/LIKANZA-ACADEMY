@@ -99,28 +99,21 @@ function initParcours(){
 
 function renderMistakesSection(){
   const section = document.getElementById('mistakesSection');
-  const listEl = document.getElementById('mistakesList');
-  if(!section || !listEl) return;
-  const allUnresolved = getMistakes()
-    .filter(m=>!m.resolved)
-    .sort((a,b)=> new Date(a.firstMissedAt) - new Date(b.firstMissedAt));
+  const summaryEl = document.getElementById('mistakesSummary');
+  if(!section || !summaryEl) return;
+  const allUnresolved = getMistakes().filter(m=>!m.resolved);
   if(allUnresolved.length === 0){
     section.style.display = 'none';
     return;
   }
   section.style.display = '';
-  const shown = allUnresolved.slice(0, 3);
-  listEl.innerHTML = shown.map(m => `
-    <div class="today-block" style="margin-bottom:10px;">
-      <h4>${m.categorie}</h4>
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">${m.question}</p>
-      <a href="defis.html?cat=${encodeURIComponent(m.categorie)}" class="today-link">Réviser cette notion →</a>
-    </div>`).join('')
-    + (allUnresolved.length > shown.length ? `<a href="revisions.html" class="today-link">Voir toutes mes notions à revoir (${allUnresolved.length}) →</a>` : `<a href="revisions.html" class="today-link">Voir le détail →</a>`);
+  const counts = {};
+  allUnresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie]||0) + 1; });
+  const topCategorie = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
+  summaryEl.textContent = `${allUnresolved.length} notion${allUnresolved.length>1?'s':''} à revoir, surtout en ${topCategorie}.`;
 }
 
 initParcours();
-if(document.getElementById('coachWidget')) renderCoach('coachWidget');
 renderMistakesSection();
 renderDailyMissions('dailyMissions');
 renderWeeklyMissions('weeklyMissions');

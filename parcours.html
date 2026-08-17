@@ -100,17 +100,6 @@
 </section>
 
 <section class="section" style="padding-top:0;">
-  <div class="dual-grid">
-    <div id="coachWidget"></div>
-    <div class="card" id="mistakesSection">
-      <span class="smallcaps">Notions à revoir</span>
-      <p style="font-size:11px;color:var(--text-dim);margin:4px 0 12px;">basé sur tes erreurs de quiz</p>
-      <div id="mistakesList"></div>
-    </div>
-  </div>
-</section>
-
-<section class="section" style="padding-top:0;">
   <div class="section-head"><h2>Missions du jour &amp; de la semaine</h2><span class="meta-line">se renouvellent, ne s'épuisent jamais — même une fois ton parcours fixe terminé</span></div>
   <div class="dual-grid">
     <div>
@@ -120,6 +109,18 @@
     <div>
       <span class="smallcaps">Cette semaine</span>
       <div id="weeklyMissions" style="margin-top:8px;"></div>
+    </div>
+  </div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="card" id="mistakesSection" style="max-width:480px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <div>
+        <span class="smallcaps">Notions à revoir</span>
+        <p id="mistakesSummary" style="font-size:12.5px;color:var(--text-dim);margin-top:4px;"></p>
+      </div>
+      <a href="revisions.html" class="btn btn-sm">Réviser →</a>
     </div>
   </div>
 </section>

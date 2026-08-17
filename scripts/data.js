@@ -2864,58 +2864,6 @@ function renderProfileWidget(elId){
   document.getElementById('profRisque').addEventListener('change', (e)=>renderRiskGauge('riskGauge', e.target.value));
 }
 
-// ---------- Panneau coach (Mon parcours) ----------
-function renderCoach(elId){
-  const el = document.getElementById(elId);
-  if(!el) return;
-  const level = getLevel();
-  const progress = safeGetJSON('fzr-progress', {});
-  const favs = getFavorites();
-  const mods = COURSES[level] || COURSES.debutant;
-  const done = mods.filter((c,i)=>progress[level+'-'+i]).length;
-  const pct = mods.length ? Math.round((done/mods.length)*100) : 0;
-  const labels = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
-
-  const messages = [];
-  if(done === 0) messages.push(`Tu n'as pas encore commencé les missions du niveau ${labels[level]}.`);
-  else if(pct < 100) messages.push(`Tu as terminé ${pct}% du parcours ${labels[level]}.`);
-  else if(level === 'expert') messages.push(`Parcours ${labels[level]} terminé : c'est le dernier niveau fixe, mais de nouvelles missions du jour et de la semaine t'attendent juste en dessous, elles se renouvellent sans jamais s'épuiser.`);
-  else messages.push(`Parcours ${labels[level]} terminé : tente le niveau supérieur dans Formations. En attendant, les missions du jour et de la semaine ci-dessous se renouvellent en continu.`);
-
-  const favTypes = favs.map(f=>f.type);
-  if(favTypes.includes('Action')) messages.push("Tu sembles t'intéresser à la bourse : le comparateur d'actions peut t'aider à aller plus loin.");
-  if(favs.length === 0) messages.push("Astuce : clique sur l'étoile Favoris sur une actualité ou une action pour la retrouver dans ton compte.");
-  if(!safeGetJSON('fzr-profile', null)) messages.push("Renseigne ton profil (âge, épargne, horizon) dans Mon compte pour des simulations personnalisées.");
-
-  const unresolvedMistakes = getMistakes().filter(m=>!m.resolved);
-  if(unresolvedMistakes.length > 0){
-    const counts = {};
-    unresolvedMistakes.forEach(m=>{ counts[m.categorie] = (counts[m.categorie]||0) + 1; });
-    const topCategorie = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
-    messages.push(`Tu as ${unresolvedMistakes.length} notion${unresolvedMistakes.length>1?'s':''} à revoir, surtout en ${topCategorie} : consulte le bloc "Notions à revoir" ci-dessous.`);
-  }
-  const weakSkill = getSkillMastery().find(s=>s.niveau==='faible');
-  if(weakSkill) messages.push(`Tes quiz montrent une marge de progression en ${weakSkill.categorie} (${weakSkill.pct}% de bonnes réponses) : un thème à retravailler dans les Défis.`);
-
-  const positioning = getPositioningResult();
-  if(positioning && positioning.categoryScores){
-    const weakest = Object.values(positioning.categoryScores).sort((a,b)=>a.pct-b.pct)[0];
-    if(weakest && weakest.pct < 60) messages.push(`Ton test de positionnement indique une marge de progression en ${weakest.label} (${weakest.pct}%) : un bon point de départ.`);
-    messages.push(`Ton parcours personnalisé t'attend dans <a href="parcours.html" style="color:var(--gold-bright);">Mon parcours</a>.`);
-  } else {
-    messages.push(`Envie d'un parcours vraiment adapté à ton niveau ? <a href="test-positionnement.html" style="color:var(--gold-bright);">Fais le test de positionnement</a> (facultatif, environ 5 minutes).`);
-  }
-
-  el.innerHTML = `
-    <div class="coach-panel">
-      <span class="smallcaps">Ton coach Likanza Academy</span>
-      <div class="coach-progress" style="margin-top:10px;"><div class="coach-bar" id="coachBar-${elId}" style="width:0%;"></div></div>
-      <p style="font-size:12px;color:var(--text-dim);margin:8px 0 14px;">${done}/${mods.length} missions accomplies · niveau ${labels[level]}</p>
-      ${messages.map(m=>`<p class="coach-msg">→ ${m}</p>`).join('')}
-    </div>`;
-  animateWidthIn(document.getElementById('coachBar-'+elId), pct);
-}
-
 // ---------- Comparateur "Et si...?" générique ----------
 function renderWhatIf(elId, scenarios, computeFn, formatFn){
   const el = document.getElementById(elId);

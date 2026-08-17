@@ -529,12 +529,6 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .gauge-inner{width:64px;height:64px;border-radius:50%;background:var(--bg-alt);display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--gold-bright);}
 .gauge-label{font-size:11px;color:var(--text-dim);text-transform:capitalize;margin-bottom:14px;}
 
-/* ---------- Panneau coach ---------- */
-.coach-panel{background:var(--bg-alt);border-left:3px solid var(--gold);border-radius:var(--radius);padding:16px 20px;box-shadow:0 20px 40px -28px rgba(0,0,0,0.7);}
-.coach-progress{height:6px;background:var(--hairline);border-radius:3px;overflow:hidden;}
-.coach-bar{height:100%;background:linear-gradient(90deg, var(--gold), var(--emerald));transition:width .8s ease;}
-.coach-msg{font-size:13.5px;color:var(--text-dim);margin-bottom:6px;}
-
 /* ---------- Comparateur "Et si...?" ---------- */
 .whatif-row{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;}
 .whatif-btn{background:rgba(184,151,78,0.08);border:1px solid var(--hairline);color:var(--gold-bright);padding:8px 14px;border-radius:2px;font-size:12px;cursor:pointer;transition:all .2s;}
