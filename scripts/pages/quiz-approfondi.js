@@ -34,11 +34,13 @@ if(!domain){
   const pool = buildDeepQuizPool(domain);
   const isShort = pool.length < 8;
   const estMinutes = Math.max(3, Math.round(pool.length * 0.55));
+  const hook = domain.deepQuizHook || {title:`${domain.label} : où en es-tu vraiment ?`, subtitle:'Raisonnement, cas concrets, calculs simples — pas seulement des définitions.'};
 
   introEl.innerHTML = `
-    <span class="smallcaps">${domain.icon} Quiz approfondi · ${domain.label}</span>
-    <h2 class="display" style="font-size:24px;font-weight:600;margin:10px 0;">${domain.label} : où en es-tu vraiment ?</h2>
-    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:8px;">${pool.length} question${pool.length > 1 ? 's' : ''}, environ ${estMinutes} minutes. Raisonnement, cas concrets, calculs simples — pas seulement des définitions.</p>
+    <span class="smallcaps">${domain.icon} ${domain.label}</span>
+    <h2 class="display" style="font-size:24px;font-weight:600;margin:10px 0;">${hook.title}</h2>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:8px;">${hook.subtitle}</p>
+    <p class="mono" style="font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;">${pool.length} situation${pool.length > 1 ? 's' : ''} · à ton rythme (~${estMinutes} min)</p>
     ${isShort ? `<p class="disclaimer-box">Le contenu réel pour ${domain.displayLabel} est encore limité sur Likanza : ce quiz est volontairement plus court, plutôt que rempli de répétitions pour atteindre un chiffre rond.</p>` : ''}
     <p class="disclaimer-box">Facultatif. Le résultat remplace ton niveau déclaré par un niveau réellement évalué pour ${domain.displayLabel} — visible dans Mon Parcours.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">

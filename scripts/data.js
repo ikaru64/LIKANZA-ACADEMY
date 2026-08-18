@@ -432,6 +432,130 @@ function renderDomainDashboard(elId){
   }).join('');
 }
 
+// ---------- Mon Parcours : porte d'entrée + une seule action à la fois ----------
+// Règle UX : à chaque instant, une seule action principale évidente — jamais
+// une liste de 6 quiz de "8 minutes" qui ressemble à une to-do list.
+
+// Avant le premier quiz : une seule CTA, le reste de la page (missions,
+// révisions) reste accessible, mais rien n'est bloqué ailleurs sur le site.
+function renderParcoursGate(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <div class="card" style="max-width:600px;margin:0 auto;text-align:center;">
+      <span class="smallcaps">🧭 Construisons ton expérience</span>
+      <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin:12px 0 6px;">Avant de te proposer une expérience personnalisée, aide-nous simplement à mieux te connaître.</p>
+      <p class="mono" style="font-size:11px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.05em;">⏱ Environ 2 minutes · Pas de bonne ou mauvaise réponse</p>
+      <a href="test-positionnement.html" class="btn btn-gold" style="margin-top:16px;">Commencer</a>
+      <div class="business-concepts-list" style="margin-top:24px;text-align:left;opacity:0.5;">
+        <div class="business-concept-row"><span class="business-concept-icon">🔒</span><span class="business-concept-name">Ton profil</span></div>
+        <div class="business-concept-row"><span class="business-concept-icon">🔒</span><span class="business-concept-name">Tes niveaux</span></div>
+        <div class="business-concept-row"><span class="business-concept-icon">🔒</span><span class="business-concept-name">Tes points forts</span></div>
+        <div class="business-concept-row"><span class="business-concept-icon">🔒</span><span class="business-concept-name">Tes recommandations</span></div>
+      </div>
+    </div>`;
+}
+
+const LEARNING_STYLE_TAGLINE = {
+  explanations: 'des explications simples',
+  examples: 'des exemples concrets',
+  visual: 'des schémas visuels',
+  simulations: 'des simulations',
+  quizzes: 'des quiz'
+};
+// "marketing" est un sous-intérêt de Business (voir INTEREST_QUIZ_CATEGORIES),
+// pas un domaine à part entière — ramené sur "business" pour ces classements.
+function normalizeToDomainKey(k){
+  if(k === 'marketing') return 'business';
+  return DOMAINS.some(d => d.key === k) ? k : null;
+}
+// Domaines réellement déclarés par l'utilisateur (objectifs puis intérêts),
+// dans l'ordre où ils doivent primer — jamais un ordre inventé.
+function getProfileTopDomainKeys(limit){
+  const profile = getProfile();
+  const goalKeys = Object.keys(profile.goals || {}).map(normalizeToDomainKey).filter(Boolean);
+  const interestKeys = Object.keys(profile.interests || {}).filter(k => profile.interests[k]).map(normalizeToDomainKey).filter(Boolean);
+  const ordered = [];
+  goalKeys.concat(interestKeys).forEach(k => { if(!ordered.includes(k)) ordered.push(k); });
+  return typeof limit === 'number' ? ordered.slice(0, limit) : ordered;
+}
+
+// Une fois le premier quiz fait : résumé du profil réel (jamais de barres
+// d'intensité inventées — le premier quiz ne capture pas de classement entre
+// intérêts, seulement des cases cochées).
+function renderParcoursProfileSummary(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const profile = getProfile();
+  const topLabels = getProfileTopDomainKeys(2).map(k => (DOMAINS.find(d => d.key === k) || {}).label).filter(Boolean);
+  const styleKeys = Object.keys(profile.learningStyle || {}).filter(k => profile.learningStyle[k]);
+  const styleLabel = styleKeys.length ? LEARNING_STYLE_TAGLINE[styleKeys[0]] : null;
+
+  let tagline;
+  if(topLabels.length && styleLabel){
+    tagline = `Tu t'intéresses surtout à ${topLabels.join(' et à ')}, et tu préfères apprendre avec ${styleLabel}.`;
+  } else if(topLabels.length){
+    tagline = `Tu t'intéresses surtout à ${topLabels.join(' et à ')}.`;
+  } else {
+    tagline = "Ton profil est enregistré — explore librement, tes recommandations s'affineront avec le temps.";
+  }
+
+  const allInterestKeys = Object.keys(profile.interests || {}).filter(k => profile.interests[k]);
+  const chipsHtml = allInterestKeys.length
+    ? `<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;">${allInterestKeys.map(k => `<span class="pill">${INTEREST_DISPLAY_LABELS[k] || k}</span>`).join('')}</div>`
+    : '';
+
+  el.innerHTML = `
+    <div class="card">
+      <span class="smallcaps">Ton profil Likanza</span>
+      <p style="font-size:14.5px;line-height:1.6;margin-top:10px;">${tagline}</p>
+      ${chipsHtml}
+      <a href="test-positionnement.html" class="btn btn-sm" style="margin-top:14px;">Revoir mon profil</a>
+    </div>`;
+}
+
+// Une seule recommandation d'évaluation à la fois : priorité aux domaines
+// déclarés (objectifs puis intérêts) qui n'ont pas encore de niveau évalué ;
+// à défaut, le premier domaine non évalué dans l'ordre du registre ; si tout
+// est déjà évalué, aucune recommandation à afficher (jamais une CTA inutile).
+function pickPrimaryDomainRecommendation(){
+  const priorityKeys = getProfileTopDomainKeys();
+  const orderedKeys = priorityKeys.concat(DOMAINS.map(d => d.key).filter(k => !priorityKeys.includes(k)));
+  const found = orderedKeys.map(k => DOMAINS.find(d => d.key === k)).find(d => d && getEvaluatedLevel(d.key) === null);
+  return found || null;
+}
+
+function renderNextStepRecommendation(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const primary = pickPrimaryDomainRecommendation();
+
+  if(!primary){
+    el.innerHTML = `
+      <div class="card">
+        <span class="smallcaps">🎯 Tes évaluations</span>
+        <p style="font-size:13.5px;color:var(--text-dim);margin-top:10px;">Tous tes domaines ont déjà un niveau évalué. Continue d'explorer Likanza : ton niveau continue de s'affiner avec ton activité.</p>
+      </div>`;
+    return;
+  }
+
+  const hook = primary.deepQuizHook || {title:`Évaluer mon niveau en ${primary.displayLabel}`, subtitle:''};
+  const others = DOMAINS.filter(d => d.key !== primary.key);
+  const othersHtml = others.map(d => `<a href="quiz-approfondi.html?domaine=${d.key}" class="pill">${d.icon} ${d.label}</a>`).join('');
+
+  el.innerHTML = `
+    <div class="card">
+      <span class="smallcaps">🎯 Ton prochain pas</span>
+      <h3 style="margin:8px 0 4px;">${primary.icon} ${hook.title}</h3>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">${hook.subtitle}</p>
+      <a href="quiz-approfondi.html?domaine=${primary.key}" class="btn btn-gold">Commencer</a>
+    </div>
+    <details style="margin-top:12px;">
+      <summary class="smallcaps" style="cursor:pointer;">Autres évaluations disponibles</summary>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;">${othersHtml}</div>
+    </details>`;
+}
+
 const LEVEL_TIPS = {
   debutant: "Pas besoin de retenir tous les chiffres pour l'instant. Comprends d'abord le principe.",
   intermediaire: "Tu connais déjà ce principe : regarde maintenant ce qui peut modifier le résultat.",

@@ -79,10 +79,20 @@
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Mon parcours</div>
 <h1 class="visually-hidden">Mon parcours</h1>
 
-<section class="section">
-  <div class="section-head"><h2>Ton niveau, par domaine</h2><span class="meta-line">déclaré = ce que tu dis · évalué = ce que tes quiz montrent réellement</span></div>
-  <p class="disclaimer-box" style="max-width:640px;">Le niveau déclaré vient de <a href="test-positionnement.html" style="color:var(--gold-bright);">ton profil Likanza</a> : une hypothèse de départ, jamais présentée comme vérifiée. Le niveau évalué vient d'un quiz approfondi ou de ton activité réelle (Défis, cours) — et n'apparaît que lorsqu'il y a assez de données pour être honnête.</p>
-  <div id="domainDashboard" style="max-width:640px;margin-top:18px;"></div>
+<section class="section" id="parcoursGateSection" style="display:none;">
+  <div id="parcoursGate"></div>
+</section>
+
+<section class="section" id="parcoursMainSection" style="display:none;">
+  <div style="max-width:640px;">
+    <div id="parcoursProfileSummary"></div>
+    <div id="parcoursNextStep" style="margin-top:16px;"></div>
+    <details style="margin-top:22px;">
+      <summary class="smallcaps" style="cursor:pointer;">Voir le détail par domaine</summary>
+      <p class="disclaimer-box" style="margin-top:12px;">Le niveau déclaré vient de <a href="test-positionnement.html" style="color:var(--gold-bright);">ton profil Likanza</a> : une hypothèse de départ, jamais présentée comme vérifiée. Le niveau évalué vient d'un quiz approfondi ou de ton activité réelle (Défis, cours) — et n'apparaît que lorsqu'il y a assez de données pour être honnête.</p>
+      <div id="domainDashboard" style="margin-top:14px;"></div>
+    </details>
+  </div>
 </section>
 
 <section class="section" style="padding-top:0;">

@@ -912,31 +912,40 @@ const MENTAL_CHALLENGES = [
 // `mentalChallengeDomain` = valeur exacte du champ `domain` dans
 // MENTAL_CHALLENGES (corrige un piège découvert : "Finance personnelle" au
 // singulier là-bas contre "Finances personnelles" au pluriel comme libellé ici).
+// deepQuizHook : accroche du quiz approfondi (quiz-approfondi.html), pensée
+// pour ne jamais se présenter comme "un devoir de 8 minutes" — une question
+// concrète plutôt qu'une durée en avant.
 const DOMAINS = [
   {key:'personalFinance', label:'Finances personnelles', displayLabel:'les finances personnelles', icon:'💰',
     mentalChallengeDomain:'Finance personnelle',
     quizCategories:['Épargne', 'Livret A', 'Inflation', 'Intérêts simples', 'Intérêts composés', 'Budget', "Constitution d'un patrimoine", 'Fiscalité de base', 'Retraite et PER', 'Assurance-vie', 'Arnaques financières'],
-    libraryCategories:['Finances personnelles', 'Épargne', 'Fiscalité']},
+    libraryCategories:['Finances personnelles', 'Épargne', 'Fiscalité'],
+    deepQuizHook:{title:'Comprends-tu vraiment tes finances ?', subtitle:'Découvre tes forces et les notions à approfondir.'}},
   {key:'stockMarket', label:'Bourse', displayLabel:'la bourse', icon:'📈',
     mentalChallengeDomain:'Bourse',
     quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur"],
-    libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque']},
+    libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque'],
+    deepQuizHook:{title:'Penses-tu vraiment comprendre la Bourse ?', subtitle:'Des situations concrètes pour découvrir tes forces.'}},
   {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
     mentalChallengeDomain:'Business',
     quizCategories:["Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'],
-    libraryCategories:['Business', 'Entreprise']},
+    libraryCategories:['Business', 'Entreprise'],
+    deepQuizHook:{title:'Quel type d\'entrepreneur es-tu ?', subtitle:'Découvre tes forces et les notions que tu pourrais approfondir.'}},
   {key:'economics', label:'Économie', displayLabel:"l'économie", icon:'🌍',
     mentalChallengeDomain:'Économie',
     quizCategories:['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande'],
-    libraryCategories:['Économie']},
+    libraryCategories:['Économie'],
+    deepQuizHook:{title:'Comprends-tu vraiment l\'économie ?', subtitle:'Des situations concrètes pour tester ta compréhension.'}},
   {key:'realEstate', label:'Immobilier', displayLabel:"l'immobilier", icon:'🏠',
     mentalChallengeDomain:'Immobilier',
     quizCategories:['Immobilier', 'SCPI', 'Crédit'],
-    libraryCategories:['Immobilier']},
+    libraryCategories:['Immobilier'],
+    deepQuizHook:{title:'Immobilier : deal ou piège ?', subtitle:'Des mises en situation pour tester ton œil.'}},
   {key:'crypto', label:'Crypto', displayLabel:'la crypto', icon:'₿',
     mentalChallengeDomain:'Crypto',
     quizCategories:['Cryptoactifs'],
-    libraryCategories:['Crypto']}
+    libraryCategories:['Crypto'],
+    deepQuizHook:{title:'Crypto : sais-tu repérer les risques ?', subtitle:'Des situations concrètes pour tester tes réflexes.'}}
 ];
 
 // ---------- Premier quiz de profil (100% déclaratif, aucune question notée) ----------

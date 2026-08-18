@@ -1,10 +1,26 @@
 /* ============================================================
    LIKANZA ACADEMY — Mon parcours
    Tableau de bord personnel par domaine (niveau déclaré vs évalué,
-   confiance, quiz approfondis). Jamais verrouillé : accessible sans
-   avoir fait le premier quiz, avec des états vides honnêtes par
-   domaine tant qu'aucune donnée n'existe.
+   confiance, quiz approfondis). Jamais verrouillé : le reste du site
+   reste accessible sans avoir fait le premier quiz. Mais tant qu'il
+   n'est pas fait, cette page elle-même met une seule action en avant
+   (le premier quiz) plutôt qu'un tableau de bord vide — et une fois
+   fait, une seule recommandation d'évaluation à la fois, jamais les
+   6 domaines listés comme une to-do list.
    ============================================================ */
+
+function initParcoursHero(){
+  const hasProfile = !!getPositioningResult();
+  if(!hasProfile){
+    document.getElementById('parcoursGateSection').style.display = 'block';
+    renderParcoursGate('parcoursGate');
+    return;
+  }
+  document.getElementById('parcoursMainSection').style.display = 'block';
+  renderParcoursProfileSummary('parcoursProfileSummary');
+  renderNextStepRecommendation('parcoursNextStep');
+  renderDomainDashboard('domainDashboard');
+}
 
 function renderMistakesSection(){
   const section = document.getElementById('mistakesSection');
@@ -22,7 +38,7 @@ function renderMistakesSection(){
   summaryEl.textContent = `${allUnresolved.length} notion${allUnresolved.length>1?'s':''} à revoir, surtout en ${topCategorie}.`;
 }
 
-renderDomainDashboard('domainDashboard');
+initParcoursHero();
 renderMistakesSection();
 renderDailyMissions('dailyMissions');
 renderWeeklyMissions('weeklyMissions');
