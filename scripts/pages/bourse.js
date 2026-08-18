@@ -256,12 +256,22 @@ function renderCompareAnalysis(stocks){
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">8. Scénarios (hypothèses ajustables)</span> ${renderDataBadge('scenario')}
-          <div class="slider-row field"><label>Croissance annuelle du bénéfice <span class="v mono" id="compValGrowth">6 %</span></label><input type="range" id="compGrowth" min="-10" max="25" step="1" value="6"></div>
-          <div class="slider-row field"><label>PER cible <span class="v mono" id="compValPer">18×</span></label><input type="range" id="compPer" min="5" max="40" step="1" value="18"></div>
-          <div class="slider-row field"><label>Horizon <span class="v mono" id="compValHorizon">5 ans</span></label><input type="range" id="compHorizon" min="1" max="15" step="1" value="5"></div>
-          <div id="compScenResults" style="margin-top:12px;"></div>
-          <p class="disclaimer-box">Cette estimation dépend de tes hypothèses et ne constitue pas une prédiction. Estimation basée sur les informations actuellement disponibles ; les marchés peuvent évoluer différemment.</p>
+          <span class="smallcaps">8. Scénarios (cibles réelles des analystes)</span> ${renderDataBadge('reel')}
+          <div class="field" style="max-width:260px;margin-top:10px;margin-bottom:0;"><label>Montant investi aujourd'hui (€)</label><input type="number" id="compInvestAmount" min="1" step="1" value="300"></div>
+          <div id="compConsensus" style="margin:14px 0;"></div>
+          <div id="compScenResults"></div>
+          <p class="disclaimer-box">Cibles de cours réelles des analystes qui suivent chaque titre (Yahoo Finance), horizon type d'environ 12 mois (convention courante du secteur) — des estimations professionnelles, pas des garanties. Ceci ne constitue jamais une recommandation d'achat ou de vente personnalisée.</p>
+
+          <details style="margin-top:16px;">
+            <summary class="smallcaps" style="cursor:pointer;font-size:11px;">Explorer mes propres hypothèses (plutôt que les cibles des analystes)</summary>
+            <div style="margin-top:12px;">
+              <div class="slider-row field"><label>Croissance annuelle du bénéfice <span class="v mono" id="compValGrowth">6 %</span></label><input type="range" id="compGrowth" min="-10" max="25" step="1" value="6"></div>
+              <div class="slider-row field"><label>PER cible <span class="v mono" id="compValPer">18×</span></label><input type="range" id="compPer" min="5" max="40" step="1" value="18"></div>
+              <div class="slider-row field"><label>Horizon <span class="v mono" id="compValHorizon">5 ans</span></label><input type="range" id="compHorizon" min="1" max="15" step="1" value="5"></div>
+              <div id="compFreeScenResults" style="margin-top:12px;"></div>
+              <p class="disclaimer-box">Cette estimation dépend des hypothèses que tu as saisies ci-dessus — pas les cibles des analystes. Elle ne constitue pas une prédiction.</p>
+            </div>
+          </details>
         </div>
         <div class="card">
           <span class="smallcaps">Verdict — selon l'angle</span>
@@ -282,7 +292,49 @@ function renderCompareAnalysis(stocks){
     document.getElementById('compVerdict').innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
   }
 
-  function updateCompScenarios(){
+  // ---- 8. Scénarios réels (cibles des analystes), contenu principal ----
+  function renderCompAnalystScenarios(){
+    const investAmount = +document.getElementById('compInvestAmount').value || 0;
+    const consensusEl = document.getElementById('compConsensus');
+    const resultsEl = document.getElementById('compScenResults');
+
+    function consensusCard(nom, fund){
+      const c = fund && fund.fundamentals ? formatAnalystConsensus(fund.fundamentals) : null;
+      if(!c) return `<div class="card"><h4>${nom}</h4><p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p></div>`;
+      return `<div class="card"><h4>${nom}</h4><p style="font-size:13px;margin-top:4px;">${c.label}</p><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">${c.total} analyste${c.total>1?'s':''} · ${c.breakdown.strongBuy} achat fort · ${c.breakdown.buy} achat · ${c.breakdown.hold} conserver · ${c.breakdown.sell} vente · ${c.breakdown.strongSell} vente forte</p></div>`;
+    }
+    consensusEl.innerHTML = `<div class="card-grid" style="grid-template-columns:1fr 1fr;">${consensusCard(sA.nom, fundA)}${consensusCard(sB.nom, fundB)}</div>`;
+
+    if(investAmount <= 0){
+      resultsEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Indique un montant investi supérieur à 0 pour voir la projection.</p>`;
+      return;
+    }
+    function renderCasesForCompany(nom, ff, prix, editorial){
+      const scenarios = ff ? computeAnalystScenarios(ff, prix, investAmount) : null;
+      if(!scenarios || (!scenarios.bear && !scenarios.base && !scenarios.bull)){
+        return `<div class="card"><h4>${nom}</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p></div>`;
+      }
+      const rows = ['bear','base','bull'].map(key=>{
+        const c = scenarios[key];
+        const meta = CASE_META[key];
+        if(!c) return `<p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">${meta.label} : ${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+        const color = c.gainEur >= 0 ? 'var(--emerald)' : 'var(--bordeaux)';
+        const factors = buildAnalystScenarioFactors(key, ff, editorial);
+        return `<div style="margin-top:10px;border-top:1px solid var(--hairline);padding-top:8px;">
+          <p style="font-size:11px;color:var(--text-dim);">${meta.label} (${meta.sub})</p>
+          <div class="result-row" style="justify-content:space-between;"><span class="mono" style="font-size:13px;">${c.targetPrice.toFixed(1)} €</span><span class="mono" style="color:${color};font-size:12px;">${fmtEUR(c.projectedValue)} (${c.gainEur>=0?'+':''}${fmtEUR(c.gainEur)})</span></div>
+          ${factors.length ? `<p style="font-size:11px;color:var(--text-dim);margin-top:4px;">${factors[0]}</p>` : ''}
+        </div>`;
+      }).join('');
+      return `<div class="card"><h4>${nom}</h4>${rows}</div>`;
+    }
+    resultsEl.innerHTML = `<p style="font-size:12px;color:var(--text-dim);">${fmtEUR(investAmount)} investis aujourd'hui dans chaque entreprise →</p><div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:8px;">${renderCasesForCompany(sA.nom, ffA, sA.prix, edA)}${renderCasesForCompany(sB.nom, ffB, sB.prix, edB)}</div>`;
+  }
+  document.getElementById('compInvestAmount').addEventListener('input', renderCompAnalystScenarios);
+  renderCompAnalystScenarios();
+
+  // ---- Explorer mes propres hypothèses, outil secondaire replié ----
+  function updateCompFreeScenarios(){
     const growth = +document.getElementById('compGrowth').value;
     const perTarget = +document.getElementById('compPer').value;
     const horizon = +document.getElementById('compHorizon').value;
@@ -292,13 +344,13 @@ function renderCompareAnalysis(stocks){
     const {a, b} = computeComparativeScenarios(ffA ? ffA.trailingEps : null, ffB ? ffB.trailingEps : null, {growth, perTarget, horizon});
     const labels = {defavorable:'Défavorable', central:'Central', favorable:'Favorable'};
     function renderSide(nom, scenarios){
-      if(!scenarios) return `<div><h4>${nom}</h4><p style="font-size:12.5px;color:var(--text-dim);">${FUNDAMENTALS_UNAVAILABLE_TEXT} (BPA réel indisponible, scénario non calculable)</p></div>`;
-      return `<div><h4>${nom}</h4>${Object.entries(scenarios).map(([k,r])=>`<div class="result-row" style="justify-content:space-between;"><span>${labels[k]}</span><span class="mono">${r.prixCible.toFixed(1)} €</span></div>`).join('')}</div>`;
+      if(!scenarios) return `<div class="card"><h4>${nom}</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (BPA réel indisponible, scénario non calculable)</p></div>`;
+      return `<div class="card"><h4>${nom}</h4>${Object.entries(scenarios).map(([k,r])=>`<div class="result-row" style="justify-content:space-between;"><span>${labels[k]}</span><span class="mono">${r.prixCible.toFixed(1)} €</span></div>`).join('')}</div>`;
     }
-    document.getElementById('compScenResults').innerHTML = `<div class="card-grid" style="grid-template-columns:1fr 1fr;">${renderSide(sA.nom, a)}${renderSide(sB.nom, b)}</div>`;
+    document.getElementById('compFreeScenResults').innerHTML = `<div class="card-grid" style="grid-template-columns:1fr 1fr;">${renderSide(sA.nom, a)}${renderSide(sB.nom, b)}</div>`;
   }
-  ['compGrowth','compPer','compHorizon'].forEach(id => document.getElementById(id).addEventListener('input', updateCompScenarios));
-  updateCompScenarios();
+  ['compGrowth','compPer','compHorizon'].forEach(id => document.getElementById(id).addEventListener('input', updateCompFreeScenarios));
+  updateCompFreeScenarios();
 }
 checksEl.addEventListener('change', renderCompare);
 
