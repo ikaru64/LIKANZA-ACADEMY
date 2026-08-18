@@ -325,6 +325,82 @@ function computeScenarios(bpaActuel, prixActuel, growth, perTarget, horizon){
 
 const scenSelect = document.getElementById('scenStock');
 scenSelect.innerHTML = STOCKS_DEMO.map(s=>`<option value="${s.ticker}">${s.nom}</option>`).join('');
+
+// ---------- Scénarios ancrés sur de vraies cibles de cours d'analystes (contenu principal de l'onglet) ----------
+const CASE_META = {
+  bear: {label: 'Scénario bas', sub: 'cible basse des analystes'},
+  base: {label: 'Scénario central', sub: 'cible moyenne des analystes'},
+  bull: {label: 'Scénario haut', sub: 'cible haute des analystes'}
+};
+function renderAnalystScenarios(){
+  const stock = STOCKS_DEMO.find(s=>s.ticker===scenSelect.value) || STOCKS_DEMO[0];
+  if(!stock) return;
+  const investAmount = +document.getElementById('scenInvestAmount').value || 0;
+  const consensusEl = document.getElementById('scenConsensus');
+  const gridEl = document.getElementById('scenCasesGrid');
+  const disclaimerEl = document.getElementById('scenDisclaimer');
+
+  const fund = companyFundamentalsCache[stock.ticker];
+  const ff = getFundamentalsFields(stock.ticker);
+  if(fund === undefined){
+    gridEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Chargement des cibles réelles des analystes…</p>`;
+    consensusEl.innerHTML = ''; disclaimerEl.innerHTML = '';
+    return;
+  }
+  if(!ff){
+    gridEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} pour ${stock.nom}.</p>`;
+    consensusEl.innerHTML = ''; disclaimerEl.innerHTML = '';
+    return;
+  }
+
+  const consensus = formatAnalystConsensus(fund.fundamentals);
+  consensusEl.innerHTML = consensus ? `
+    <div class="card">
+      <span class="smallcaps">Consensus actuel des analystes</span> ${renderDataBadge('reel')}
+      <h3 style="margin-top:6px;">${consensus.label}</h3>
+      <p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${consensus.total} analyste${consensus.total>1?'s':''} · ${consensus.breakdown.strongBuy} achat fort · ${consensus.breakdown.buy} achat · ${consensus.breakdown.hold} conserver · ${consensus.breakdown.sell} vente · ${consensus.breakdown.strongSell} vente forte</p>
+    </div>` : '';
+
+  if(investAmount <= 0){
+    gridEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Indique un montant investi supérieur à 0 pour voir la projection.</p>`;
+    disclaimerEl.innerHTML = '';
+    return;
+  }
+  const scenarios = computeAnalystScenarios(ff, stock.prix, investAmount);
+  if(!scenarios || (!scenarios.bear && !scenarios.base && !scenarios.bull)){
+    gridEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (cibles de cours indisponibles pour ${stock.nom}).</p>`;
+    disclaimerEl.innerHTML = '';
+    return;
+  }
+
+  const editorial = COMPANY_EDITORIAL[stock.ticker];
+  gridEl.innerHTML = ['bear','base','bull'].map(key => {
+    const c = scenarios[key];
+    const meta = CASE_META[key];
+    if(!c) return `<div class="card"><span class="smallcaps">${meta.label}</span><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p></div>`;
+    const factors = buildAnalystScenarioFactors(key, ff, editorial);
+    const color = c.gainEur >= 0 ? 'var(--emerald)' : 'var(--bordeaux)';
+    return `
+      <div class="card">
+        <span class="smallcaps">${meta.label}</span>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:2px;">${meta.sub}</p>
+        <div class="result-big" style="margin-top:8px;font-size:22px;">${c.targetPrice.toFixed(1)} €</div>
+        <p style="font-size:12px;color:${color};margin-top:2px;">${c.gainPct>=0?'+':''}${c.gainPct.toFixed(0)}% vs cours actuel</p>
+        <div class="result-row" style="justify-content:space-between;margin-top:10px;border-top:1px solid var(--hairline);padding-top:8px;">
+          <span style="font-size:12.5px;">${fmtEUR(investAmount)} investis aujourd'hui →</span>
+          <span class="mono" style="color:${color};">${fmtEUR(c.projectedValue)}</span>
+        </div>
+        <p style="font-size:11.5px;color:${color};margin-top:2px;">${c.gainEur>=0?'+':''}${fmtEUR(c.gainEur)}</p>
+        ${factors.length ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">Facteurs qui pourraient peser vers ce scénario :</p><ul style="font-size:11.5px;color:var(--text-dim);margin:4px 0 0 16px;">${factors.slice(0,3).map(f=>`<li>${f}</li>`).join('')}</ul>` : ''}
+      </div>`;
+  }).join('');
+
+  disclaimerEl.innerHTML = `${renderDataBadge('reel')} Cibles de cours de ${ff.numberOfAnalystOpinions || '?'} analyste(s) suivant ce titre, Yahoo Finance, récupérées le ${new Date(fund.fundamentals.asOfDate).toLocaleDateString('fr-FR')}. Les cibles de cours reflètent généralement un horizon d'environ 12 mois (convention courante du secteur) — ce sont des estimations professionnelles, pas des garanties : les analystes peuvent se tromper, et le consensus peut changer. Ceci ne constitue jamais une recommandation d'achat ou de vente personnalisée.`;
+}
+scenSelect.addEventListener('change', renderAnalystScenarios);
+document.getElementById('scenInvestAmount').addEventListener('input', renderAnalystScenarios);
+
+// ---------- Explorer mes propres hypothèses (outil secondaire, replié) ----------
 const scenInputs = ['scenGrowth','scenPer','scenHorizon'].map(id=>document.getElementById(id));
 function updateScenario(){
   const stock = STOCKS_DEMO.find(s=>s.ticker===scenSelect.value) || STOCKS_DEMO[0];
@@ -519,6 +595,7 @@ function applyLiveStockQuotes(quotes){
 function refreshAllStockViews(){
   renderStockGrid();
   renderCompare();
+  renderAnalystScenarios();
   updateScenario();
   updateDividend();
   renderMarketOfDay();

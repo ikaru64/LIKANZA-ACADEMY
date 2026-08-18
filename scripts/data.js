@@ -3426,7 +3426,11 @@ const FUNDAMENTALS_FIELD_META = {
   totalDebt: {label: 'Dette totale', format: 'bigEUR'},
   freeCashflow: {label: 'Free cash-flow', format: 'bigEUR'},
   trailingEps: {label: 'BPA (bénéfice par action)', format: 'eur'},
-  sharesOutstanding: {label: 'Actions en circulation', format: 'bigNumber'}
+  sharesOutstanding: {label: 'Actions en circulation', format: 'bigNumber'},
+  targetLowPrice: {label: 'Cible basse des analystes', format: 'eur'},
+  targetMeanPrice: {label: 'Cible moyenne des analystes', format: 'eur'},
+  targetMedianPrice: {label: 'Cible médiane des analystes', format: 'eur'},
+  targetHighPrice: {label: 'Cible haute des analystes', format: 'eur'}
 };
 const FUNDAMENTALS_UNAVAILABLE_TEXT = 'Donnée indisponible ou non suffisamment fiable';
 
@@ -3650,6 +3654,76 @@ function computeComparativeScenarios(epsA, epsB, {growth, perTarget, horizon}){
     return out;
   }
   return {a: oneScenario(epsA), b: oneScenario(epsB)};
+}
+
+// ---------- Scénarios ancrés sur de vraies cibles de cours d'analystes ----------
+// Remplace la logique "hypothèses libres" (croissance/PER choisis par
+// l'utilisateur, qui pouvaient produire des résultats déconnectés de
+// l'entreprise réelle) par les vraies cibles basse/moyenne/haute publiées par
+// les analystes qui suivent le titre — des estimations professionnelles
+// réelles, sourcées et datées, jamais une invention Likanza. Ce ne sont pas
+// des garanties : les analystes peuvent se tromper, et l'horizon type de ces
+// cibles est d'environ 12 mois (convention courante du secteur, pas une
+// donnée renvoyée telle quelle par l'API).
+function computeAnalystScenarios(fields, currentPrice, investAmount){
+  if(typeof currentPrice !== 'number' || currentPrice <= 0 || typeof investAmount !== 'number' || investAmount <= 0) return null;
+  const shares = investAmount / currentPrice;
+  function oneCase(targetPrice){
+    if(typeof targetPrice !== 'number') return null;
+    const projectedValue = shares * targetPrice;
+    return {
+      targetPrice,
+      projectedValue,
+      gainEur: projectedValue - investAmount,
+      gainPct: (targetPrice / currentPrice - 1) * 100
+    };
+  }
+  return {
+    bear: oneCase(fields.targetLowPrice),
+    base: oneCase(fields.targetMeanPrice),
+    bull: oneCase(fields.targetHighPrice)
+  };
+}
+
+// Facteurs qui POURRAIENT peser vers chaque scénario — dérivés des vraies
+// bandes de croissance/marge/levier déjà calculées pour le Comparateur
+// (jamais une nouvelle donnée inventée) + du contenu éditorial réel de
+// l'entreprise. Décrit ce qui pourrait justifier chaque cas, jamais une
+// affirmation sur ce que les analystes pensent réellement (cette information
+// n'est pas disponible via l'API).
+function buildAnalystScenarioFactors(caseKey, fields, editorial){
+  const factors = [];
+  const growth = bucketGrowth(fields.revenueGrowth);
+  const margin = bucketMargin(fields.profitMargins);
+  const leverage = bucketLeverage(fields.totalDebt, fields.totalCash);
+
+  if(caseKey === 'bear'){
+    if(growth && (growth.level === 'stable' || growth.level === 'baisse')) factors.push(`Croissance du chiffre d'affaires actuellement ${growth.label} (${formatFundamentalValue('revenueGrowth', fields.revenueGrowth)}).`);
+    if(margin && margin.level === 'faible') factors.push(`Marge nette actuellement faible (${formatFundamentalValue('profitMargins', fields.profitMargins)}).`);
+    if(leverage && leverage.level === 'eleve') factors.push('Endettement net élevé.');
+    if(editorial) editorial.risques.forEach(r => factors.push(r));
+  } else if(caseKey === 'bull'){
+    if(growth && (growth.level === 'forte' || growth.level === 'moderee')) factors.push(`Croissance du chiffre d'affaires actuellement ${growth.label} (${formatFundamentalValue('revenueGrowth', fields.revenueGrowth)}).`);
+    if(margin && margin.level === 'elevee') factors.push(`Marge nette actuellement élevée (${formatFundamentalValue('profitMargins', fields.profitMargins)}).`);
+    if(leverage && leverage.level === 'faible') factors.push('Trésorerie nette positive (plus de cash que de dette).');
+    if(editorial) factors.push(editorial.businessModel);
+  } else {
+    factors.push("Reflète la moyenne des estimations des analystes qui suivent ce titre — un équilibre entre les facteurs favorables et défavorables listés dans les deux autres scénarios.");
+  }
+  return factors;
+}
+
+// Consensus réel (répartition achat fort/achat/conserver/vente/vente forte) —
+// null si l'API ne renvoie rien pour ce titre, jamais une répartition inventée.
+function formatAnalystConsensus(fundamentals){
+  if(!fundamentals || !fundamentals.recommendationLabel || !fundamentals.recommendationBreakdown) return null;
+  const b = fundamentals.recommendationBreakdown;
+  return {
+    label: fundamentals.recommendationLabel,
+    breakdown: b,
+    total: b.strongBuy + b.buy + b.hold + b.sell + b.strongSell,
+    numberOfAnalystOpinions: fundamentals.fields ? fundamentals.fields.numberOfAnalystOpinions : null
+  };
 }
 
 // ---------- Profil personnel (pré-remplit les simulateurs + test de positionnement) ----------
