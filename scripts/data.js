@@ -2112,6 +2112,17 @@ function renderDefisPerformances(elId){
 // choisi pour son lien avec la bourse/la finance — pas de logo ou visuel externe.
 const MEMORY_ICON_POOL = ['trending-up','trending-down','landmark','coins','banknote','scale','briefcase','building-2','wallet','calculator','shield','telescope'];
 const MEMORY_BACK_ICON = 'circle';
+// Difficulté = plus de paires à garder en tête simultanément (plus de
+// variables), jamais un chronomètre. movesBudget est un seuil de réussite
+// indicatif (~2,2 coups par paire, un jeu de mémoire quasi parfait tourne
+// autour de pairCount coups) — un choix de design du jeu, pas une donnée financière.
+const MEMORY_DIFFICULTIES = {
+  facile: {label:'Facile', pairCount:6},
+  moyen: {label:'Moyen', pairCount:9},
+  difficile: {label:'Difficile', pairCount:12}
+};
+const MEMORY_DIFFICULTY_ORDER = ['facile','moyen','difficile'];
+function memoryMovesBudget(pairCount){ return Math.ceil(pairCount * 2.2); }
 
 function buildMemoryDeck(pairCount){
   const pool = MEMORY_ICON_POOL.slice();
@@ -2132,16 +2143,31 @@ function buildMemoryDeck(pairCount){
   return {cards, icons: chosen};
 }
 
-function renderMemoryFinance(elId){
+function renderMemoryFinance(elId, difficultyId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const {cards, icons} = buildMemoryDeck(MEMORY_ICON_POOL.length);
+
+  if(!difficultyId){
+    el.innerHTML = `
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Retrouve les paires identiques. Plus de paires à mémoriser en même temps = plus difficile.</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        ${MEMORY_DIFFICULTY_ORDER.map(key => `<button type="button" class="pill mem-diff-btn" data-diff="${key}">${MEMORY_DIFFICULTIES[key].label} (${MEMORY_DIFFICULTIES[key].pairCount} paires)</button>`).join('')}
+      </div>`;
+    el.querySelectorAll('.mem-diff-btn').forEach(btn => {
+      btn.addEventListener('click', () => renderMemoryFinance(elId, btn.dataset.diff));
+    });
+    return;
+  }
+
+  const pairCount = MEMORY_DIFFICULTIES[difficultyId].pairCount;
+  const movesBudget = memoryMovesBudget(pairCount);
+  const {cards, icons} = buildMemoryDeck(pairCount);
   const totalPairs = icons.length;
   let flipped = [], matchedPairs = 0, moves = 0, errors = 0, locked = false;
 
   el.innerHTML = `
     <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:12px;">
-      <span>Paires trouvées : <span id="${elId}-found">0</span> / ${totalPairs}</span><span>Coups : <span id="${elId}-moves">0</span></span>
+      <span>Paires trouvées : <span id="${elId}-found">0</span> / ${totalPairs}</span><span>Coups : <span id="${elId}-moves">0</span> (objectif : ${movesBudget})</span>
     </div>
     <div class="mem-grid">${cards.map(card=>`
       <button class="mem-card" data-uid="${card.uid}" data-pair="${card.pairIndex}" type="button" aria-label="Carte retournée">
@@ -2158,11 +2184,13 @@ function renderMemoryFinance(elId){
 
   function renderResults(){
     const perfect = errors === 0;
+    const success = moves <= movesBudget;
     if(perfect) tryAwardQuizPoints(`memory-perfect-${new Date().toDateString()}`, 15);
     checkBadges(getGamification(), {memoryPerfect: perfect});
     el.innerHTML = `
-      <div class="result-big">${moves} coup${moves>1?'s':''}</div>
-      <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${totalPairs} paires trouvées, ${errors} erreur${errors>1?'s':''}.${perfect ? ' Sans-faute !' : ''}</p>
+      <span class="badge ${success ? 'status-reel' : 'status-demo'}">${success ? 'Réussi' : 'À retenter'}</span>
+      <div class="result-big" style="margin-top:8px;">${moves} coup${moves>1?'s':''}</div>
+      <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${totalPairs} paires trouvées, ${errors} erreur${errors>1?'s':''}, objectif : ${movesBudget} coups.${perfect ? ' Sans-faute !' : ''}</p>
       <button class="btn btn-sm btn-gold" id="${elId}-restart">Nouvelle partie</button>`;
     document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderMemoryFinance(elId));
   }
@@ -2258,6 +2286,22 @@ function renderPatternChartSVG(series){
   return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;"><polyline points="${pts}" fill="none" stroke="var(--gold-bright)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 }
 
+// Figures visuellement proches, utilisées pour composer des choix plus
+// difficiles à distinguer (plus de considérations, pas un chronomètre) —
+// jamais tirées au hasard quand une confusion réelle et pédagogiquement
+// pertinente existe (ex. tête-épaules vs sa version inversée).
+const CHART_PATTERN_CONFUSABLES = {
+  'tete-epaules': ['tete-epaules-inversee'],
+  'tete-epaules-inversee': ['tete-epaules'],
+  'double-sommet': ['double-fond'],
+  'double-fond': ['double-sommet'],
+  'triangle-ascendant': ['triangle-descendant'],
+  'triangle-descendant': ['triangle-ascendant'],
+  canal: [],
+  'cup-and-handle': []
+};
+const CHART_GAME_MAX_ERRORS = 3;
+
 function renderChartPatternGame(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -2266,15 +2310,19 @@ function renderChartPatternGame(elId){
     const j = Math.floor(Math.random()*(i+1));
     [rounds[i], rounds[j]] = [rounds[j], rounds[i]];
   }
-  let qIndex = 0, score = 0;
+  let qIndex = 0, score = 0, errors = 0;
 
   function pickChoices(correct){
-    const others = CHART_PATTERNS.filter(p=>p.id!==correct.id);
-    for(let i=others.length-1;i>0;i--){
+    const confusableIds = CHART_PATTERN_CONFUSABLES[correct.id] || [];
+    const confusables = CHART_PATTERNS.filter(p => confusableIds.includes(p.id));
+    const rest = CHART_PATTERNS.filter(p => p.id !== correct.id && !confusableIds.includes(p.id));
+    for(let i=rest.length-1;i>0;i--){
       const j = Math.floor(Math.random()*(i+1));
-      [others[i], others[j]] = [others[j], others[i]];
+      [rest[i], rest[j]] = [rest[j], rest[i]];
     }
-    const choices = [correct, ...others.slice(0,3)];
+    const distractorSlots = Math.min(5, CHART_PATTERNS.length - 1);
+    const distractors = confusables.concat(rest).slice(0, distractorSlots);
+    const choices = [correct, ...distractors];
     for(let i=choices.length-1;i>0;i--){
       const j = Math.floor(Math.random()*(i+1));
       [choices[i], choices[j]] = [choices[j], choices[i]];
@@ -2283,14 +2331,14 @@ function renderChartPatternGame(elId){
   }
 
   function renderRound(){
-    if(qIndex >= rounds.length){ renderResults(); return; }
+    if(qIndex >= rounds.length){ renderResults(false); return; }
     const pattern = rounds[qIndex];
     const series = generatePatternSeries(pattern);
     const choices = pickChoices(pattern);
     const pct = Math.round((qIndex/rounds.length)*100);
     el.innerHTML = `
       <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span>Figure ${qIndex+1} / ${rounds.length}</span><span>Quelle figure reconnais-tu ?</span>
+        <span>Figure ${qIndex+1} / ${rounds.length}</span><span>Erreurs : ${errors} / ${CHART_GAME_MAX_ERRORS}</span>
       </div>
       <div class="dash-weekbar" style="width:100%;margin-bottom:12px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
       <div class="pattern-chart">${renderPatternChartSVG(series)}</div>
@@ -2304,21 +2352,28 @@ function renderChartPatternGame(elId){
         if(correct){ btn.classList.add('vf-correct'); score++; tryAwardQuizPoints(`pattern-${pattern.id}`, 10); }
         else {
           btn.classList.add('vf-wrong');
+          errors++;
           const rightBtn = el.querySelector(`[data-id="${pattern.id}"]`);
           if(rightBtn) rightBtn.classList.add('vf-correct');
         }
         document.getElementById(`${elId}-feedback`).textContent = pattern.explication;
-        setTimeout(()=>{ qIndex++; renderRound(); }, 2400);
+        const eliminated = errors >= CHART_GAME_MAX_ERRORS;
+        setTimeout(()=>{
+          if(eliminated){ renderResults(true); return; }
+          qIndex++; renderRound();
+        }, 2400);
       }, {once:true});
     });
   }
 
-  function renderResults(){
-    const pct = rounds.length ? Math.round((score/rounds.length)*100) : 0;
-    if(pct === 100) awardXP(25, {quizPerfect:true});
+  function renderResults(eliminated){
+    const attempted = eliminated ? qIndex + 1 : rounds.length;
+    const pct = attempted ? Math.round((score/attempted)*100) : 0;
+    if(!eliminated && pct === 100) awardXP(25, {quizPerfect:true});
     el.innerHTML = `
-      <div class="result-big">${score} / ${rounds.length}</div>
-      <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${pct}% de figures reconnues.</p>
+      ${eliminated ? `<span class="badge status-demo">Manche arrêtée après ${CHART_GAME_MAX_ERRORS} erreurs</span>` : ''}
+      <div class="result-big" style="margin-top:${eliminated ? '8px' : '0'};">${score} / ${attempted}</div>
+      <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${pct}% de figures reconnues${eliminated ? `, sur ${attempted} tentées avant l'arrêt` : ''}.</p>
       <button class="btn btn-sm btn-gold" id="${elId}-restart">Recommencer</button>`;
     document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderChartPatternGame(elId));
   }
@@ -2326,195 +2381,13 @@ function renderChartPatternGame(elId){
   renderRound();
 }
 
-// ---------- Construis ton portefeuille : backtest sur données réelles ----------
-// Le joueur répartit un capital fictif entre les 8 valeurs suivies (STOCKS_DEMO,
-// fondamentaux réels), puis on récupère leurs vrais cours sur 1 an via
-// /api/custom-quotes (Yahoo Finance, déjà utilisé ailleurs sur le site) pour
-// comparer la performance obtenue à un investissement 100% CAC 40. Toujours
-// rétrospectif sur des cours réels, jamais une prédiction ni un conseil.
-const PORTFOLIO_BUDGET = 10000;
-const PORTFOLIO_BENCHMARK_SYMBOL = '^FCHI';
-const PORTFOLIO_BENCHMARK_NAME = 'CAC 40';
-
-// Pure : aligne les historiques sur les dates communes à tous les titres +
-// l'indice de référence, puis calcule la valeur du portefeuille au fil du temps.
-function computePortfolioBacktest(historyBySymbol, weights, benchmarkSymbol, budget){
-  const symbols = Object.keys(weights).filter(s => weights[s] > 0 && historyBySymbol[s] && historyBySymbol[s].length);
-  if(symbols.length === 0 || !historyBySymbol[benchmarkSymbol] || !historyBySymbol[benchmarkSymbol].length) return null;
-
-  const allSymbols = symbols.concat([benchmarkSymbol]);
-  const dateSets = allSymbols.map(s => new Set(historyBySymbol[s].map(h=>h.date)));
-  const commonDates = [...dateSets[0]].filter(d => dateSets.every(set => set.has(d))).sort();
-  if(commonDates.length < 2) return null;
-
-  const closeMaps = {};
-  allSymbols.forEach(s => {
-    closeMaps[s] = {};
-    historyBySymbol[s].forEach(h => { closeMaps[s][h.date] = h.close; });
-  });
-
-  const t0 = commonDates[0];
-  const portfolioSeries = [];
-  const benchmarkSeries = [];
-  commonDates.forEach(date => {
-    let value = 0;
-    symbols.forEach(s => {
-      const growth = closeMaps[s][date] / closeMaps[s][t0];
-      value += budget * (weights[s]/100) * growth;
-    });
-    portfolioSeries.push(value);
-    benchmarkSeries.push(budget * (closeMaps[benchmarkSymbol][date] / closeMaps[benchmarkSymbol][t0]));
-  });
-
-  const tLast = commonDates[commonDates.length-1];
-  const perTicker = symbols.map(s => ({
-    symbol: s,
-    weight: weights[s],
-    returnPct: ((closeMaps[s][tLast] / closeMaps[s][t0]) - 1) * 100
-  }));
-
-  return {
-    dates: commonDates,
-    portfolioSeries,
-    benchmarkSeries,
-    finalPortfolioValue: portfolioSeries[portfolioSeries.length-1],
-    finalBenchmarkValue: benchmarkSeries[benchmarkSeries.length-1],
-    portfolioReturnPct: (portfolioSeries[portfolioSeries.length-1]/budget - 1) * 100,
-    benchmarkReturnPct: (benchmarkSeries[benchmarkSeries.length-1]/budget - 1) * 100,
-    perTicker
-  };
-}
-
-function renderPortfolioBacktestChart(portfolioSeries, benchmarkSeries){
-  const w = 560, h = 200, padX = 12, padY = 14;
-  const innerW = w - padX*2, innerH = h - padY*2;
-  const all = portfolioSeries.concat(benchmarkSeries);
-  const min = Math.min(...all), max = Math.max(...all);
-  const span = (max - min) || 1;
-  function toPoints(series){
-    return series.map((v,i)=>{
-      const x = padX + (i/(series.length-1)) * innerW;
-      const y = padY + (1 - (v-min)/span) * innerH;
-      return `${x.toFixed(1)},${y.toFixed(1)}`;
-    }).join(' ');
-  }
-  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;">
-    <polyline points="${toPoints(benchmarkSeries)}" fill="none" stroke="var(--text-dim)" stroke-width="1.5" stroke-dasharray="4 3"/>
-    <polyline points="${toPoints(portfolioSeries)}" fill="none" stroke="var(--gold-bright)" stroke-width="2" stroke-linejoin="round"/>
-  </svg>`;
-}
-
-function portfolioEqualWeights(){
-  const n = STOCKS_DEMO.length;
-  const base = Math.floor(100/n);
-  const remainder = 100 - base*n;
-  const w = {};
-  STOCKS_DEMO.forEach((s,i)=>{ w[s.ticker] = base + (i < remainder ? 1 : 0); });
-  return w;
-}
-
-function renderPortfolioGame(elId){
-  const el = document.getElementById(elId);
-  if(!el) return;
-  let weights = portfolioEqualWeights();
-
-  function renderAllocationForm(){
-    const total = Object.values(weights).reduce((a,b)=>a+b,0);
-    el.innerHTML = `
-      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Répartis un capital fictif de ${fmtEUR(PORTFOLIO_BUDGET)} entre les 8 valeurs suivies, puis lance le backtest pour découvrir comment ce portefeuille se serait comporté sur la dernière année, comparé à un investissement 100% ${PORTFOLIO_BENCHMARK_NAME}. Basé sur de vrais cours historiques Yahoo Finance — toujours rétrospectif, jamais une prédiction.</p>
-      <div class="portfolio-alloc-list">
-        ${STOCKS_DEMO.map(s=>`
-          <div class="portfolio-alloc-row">
-            <span class="portfolio-alloc-name">${s.nom} <span class="mono" style="color:var(--text-dim);font-size:11px;">${s.ticker}</span></span>
-            <input type="number" min="0" max="100" step="1" class="portfolio-alloc-input" data-ticker="${s.ticker}" value="${weights[s.ticker]}">
-            <span class="mono" style="font-size:12px;color:var(--text-dim);">%</span>
-          </div>`).join('')}
-      </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin:14px 0;flex-wrap:wrap;gap:10px;">
-        <span class="mono" id="${elId}-total" style="font-size:13px;color:${total===100?'var(--emerald)':'var(--bordeaux)'};">Total : ${total}%</span>
-        <button class="btn btn-sm" id="${elId}-equal" type="button">Répartition égale</button>
-      </div>
-      <button class="btn btn-sm btn-gold" id="${elId}-run" type="button" ${total===100?'':'disabled'}>Lancer le backtest</button>
-      <div id="${elId}-error" style="color:var(--bordeaux);font-size:12.5px;margin-top:8px;"></div>`;
-
-    el.querySelectorAll('.portfolio-alloc-input').forEach(input=>{
-      input.addEventListener('input', ()=>{
-        weights[input.dataset.ticker] = Math.max(0, Math.min(100, +input.value || 0));
-        const newTotal = Object.values(weights).reduce((a,b)=>a+b,0);
-        const totalEl = document.getElementById(`${elId}-total`);
-        totalEl.textContent = `Total : ${newTotal}%`;
-        totalEl.style.color = newTotal===100 ? 'var(--emerald)' : 'var(--bordeaux)';
-        document.getElementById(`${elId}-run`).disabled = newTotal !== 100;
-      });
-    });
-    document.getElementById(`${elId}-equal`).addEventListener('click', ()=>{
-      weights = portfolioEqualWeights();
-      renderAllocationForm();
-    });
-    document.getElementById(`${elId}-run`).addEventListener('click', runBacktest);
-  }
-
-  async function runBacktest(){
-    const runBtn = document.getElementById(`${elId}-run`);
-    const errorEl = document.getElementById(`${elId}-error`);
-    runBtn.disabled = true;
-    runBtn.textContent = 'Chargement des données réelles…';
-    errorEl.textContent = '';
-    try {
-      const symbols = STOCKS_DEMO.map(s=>s.ticker).concat([PORTFOLIO_BENCHMARK_SYMBOL]);
-      const resp = await fetch('/api/custom-quotes?symbols=' + encodeURIComponent(symbols.join(',')) + '&range=1y');
-      if(!resp.ok) throw new Error('HTTP ' + resp.status);
-      const payload = await resp.json();
-      const historyBySymbol = {};
-      (payload.quotes || []).forEach(q => { if(Array.isArray(q.history)) historyBySymbol[q.symbol] = q.history; });
-      const result = computePortfolioBacktest(historyBySymbol, weights, PORTFOLIO_BENCHMARK_SYMBOL, PORTFOLIO_BUDGET);
-      if(!result) throw new Error('Données historiques insuffisantes pour ce backtest');
-      tryAwardQuizPoints(`portfolio-backtest-${new Date().toDateString()}`, 15, {usedSimulator:true});
-      renderResults(result);
-    } catch(err){
-      errorEl.textContent = 'Backtest indisponible pour le moment : ' + err.message;
-      runBtn.disabled = false;
-      runBtn.textContent = 'Lancer le backtest';
-    }
-  }
-
-  function renderResults(result){
-    const better = result.portfolioReturnPct >= result.benchmarkReturnPct;
-    el.innerHTML = `
-      <div class="pattern-chart">${renderPortfolioBacktestChart(result.portfolioSeries, result.benchmarkSeries)}</div>
-      <div style="display:flex;gap:16px;flex-wrap:wrap;margin:14px 0;font-size:12px;color:var(--text-dim);">
-        <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-bright);border-radius:50%;margin-right:6px;"></span>Ton portefeuille</span>
-        <span><span style="display:inline-block;width:10px;height:2px;background:var(--text-dim);margin-right:6px;vertical-align:middle;"></span>${PORTFOLIO_BENCHMARK_NAME}</span>
-      </div>
-      <div class="card-grid" style="grid-template-columns:1fr 1fr;">
-        <div class="card">
-          <span class="smallcaps">Ton portefeuille</span>
-          <div class="result-big" style="margin-top:6px;">${fmtEUR(result.finalPortfolioValue)}</div>
-          <p style="color:${result.portfolioReturnPct>=0?'var(--emerald)':'var(--bordeaux)'};font-size:14px;margin-top:4px;">${result.portfolioReturnPct>=0?'+':''}${result.portfolioReturnPct.toFixed(1)}%</p>
-        </div>
-        <div class="card">
-          <span class="smallcaps">${PORTFOLIO_BENCHMARK_NAME} (référence)</span>
-          <div class="result-big" style="margin-top:6px;">${fmtEUR(result.finalBenchmarkValue)}</div>
-          <p style="color:${result.benchmarkReturnPct>=0?'var(--emerald)':'var(--bordeaux)'};font-size:14px;margin-top:4px;">${result.benchmarkReturnPct>=0?'+':''}${result.benchmarkReturnPct.toFixed(1)}%</p>
-        </div>
-      </div>
-      <p style="font-size:13px;color:var(--text-dim);margin:14px 0;">Sur cette période, ton portefeuille a fait ${better ? 'mieux' : 'moins bien'} que le ${PORTFOLIO_BENCHMARK_NAME}.</p>
-      <table style="width:100%;font-size:12.5px;border-collapse:collapse;margin-bottom:14px;">
-        <thead><tr style="color:var(--text-dim);text-align:left;"><th style="padding:6px 0;">Valeur</th><th>Poids</th><th>Performance</th></tr></thead>
-        <tbody>
-          ${result.perTicker.map(p=>{
-            const stock = STOCKS_DEMO.find(s=>s.ticker===p.symbol);
-            return `<tr style="border-top:1px solid var(--hairline);"><td style="padding:6px 0;">${stock ? stock.nom : p.symbol}</td><td>${p.weight}%</td><td style="color:${p.returnPct>=0?'var(--emerald)':'var(--bordeaux)'};">${p.returnPct>=0?'+':''}${p.returnPct.toFixed(1)}%</td></tr>`;
-          }).join('')}
-        </tbody>
-      </table>
-      <p class="disclaimer-box">Backtest basé sur de vrais cours passés (Yahoo Finance, cotations différées) et une répartition fictive. Les performances passées ne préjugent jamais des performances futures.</p>
-      <button class="btn btn-sm btn-gold" id="${elId}-restart">Nouvelle répartition</button>`;
-    document.getElementById(`${elId}-restart`).addEventListener('click', ()=>{ weights = portfolioEqualWeights(); renderAllocationForm(); });
-  }
-
-  renderAllocationForm();
-}
+// ---------- Construis ton portefeuille : moteur déplacé ----------
+// Le jeu à tours "Construis ton portefeuille" (config difficulté/scénario,
+// boucle de tours, narration et scoring multi-dimensionnel calculés à
+// partir de vrais cours historiques) vit désormais dans son propre fichier :
+// scripts/games/portfolio-game.js — chargé uniquement par jeu-portefeuille.html
+// (seule page à en avoir besoin). Voir ce fichier pour renderPortfolioGame et
+// les fonctions associées.
 
 // ---------- Cours : lecture puis quiz de validation ----------
 // Contenu de lecture puisé dans LIBRARY, quiz puisé dans QUIZ_BANK_FULL — voir
