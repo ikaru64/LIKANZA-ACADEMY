@@ -326,6 +326,112 @@ function getDomainLevel(domainKey){
   }
   return getLevel();
 }
+
+// ---------- Niveau déclaré vs niveau évalué, par domaine ----------
+// Mêmes seuils que l'ancien test de positionnement noté (retiré) — réutilisés
+// ici pour convertir un vrai pourcentage de bonnes réponses en un des 4
+// niveaux déjà utilisés partout ailleurs sur le site.
+function levelFromPct(pct){
+  if(pct >= 80) return 'expert';
+  if(pct >= 60) return 'avance';
+  if(pct >= 35) return 'intermediaire';
+  return 'debutant';
+}
+
+// Résultats des quiz approfondis (quiz-approfondi.html) : un par domaine,
+// écrit uniquement à la fin d'un quiz complet — jamais partiel.
+function getDeepQuizResults(){ return safeGetJSON('fzr-deep-quiz-results', {}); }
+function saveDeepQuizResult(domainKey, correct, total){
+  const results = getDeepQuizResults();
+  const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
+  results[domainKey] = {niveau: levelFromPct(pct), pct, correct, total, date: new Date().toISOString()};
+  safeSetJSON('fzr-deep-quiz-results', results);
+  return results[domainKey];
+}
+
+// Niveau évalué (vérifié) par domaine — jamais inventé. Deux sources
+// possibles, jamais mélangées, par ordre de fiabilité :
+//  1. Un quiz approfondi terminé pour ce domaine → confiance élevée.
+//  2. À défaut, la vraie maîtrise accumulée par l'activité réelle (Défis,
+//     cours, Business...) sur les catégories du domaine (getSkillMastery) →
+//     confiance moyenne à partir de 20 réponses, faible à partir de 10.
+//  En dessous de 10 réponses et sans quiz approfondi : renvoie null — le
+//  code appelant doit alors afficher "pas encore assez de données", jamais
+//  un niveau calculé sur trop peu d'éléments.
+function getEvaluatedLevel(domainKey){
+  const domain = DOMAINS.find(d => d.key === domainKey);
+  if(!domain) return null;
+
+  const deepResult = getDeepQuizResults()[domainKey];
+  if(deepResult){
+    return {niveau: deepResult.niveau, pct: deepResult.pct, confiance: 'élevée', source: 'quiz approfondi', date: deepResult.date, correct: deepResult.correct, total: deepResult.total};
+  }
+
+  const stats = getQuizStats().categoryStats;
+  let correct = 0, total = 0;
+  domain.quizCategories.forEach(cat => {
+    const s = stats[cat];
+    if(s){ correct += s.correct; total += s.total; }
+  });
+  if(total < 10) return null;
+  const pct = Math.round((correct / total) * 100);
+  return {niveau: levelFromPct(pct), pct, confiance: total >= 20 ? 'moyenne' : 'faible', source: 'activité récente (Défis, cours)', correct, total};
+}
+
+const DOMAIN_LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
+
+// ---------- Mon Parcours : tableau de bord par domaine ----------
+// Une carte par domaine (déclaré vs évalué, jamais confondus). Réutilise le
+// gabarit visuel de renderBusinessNiveau (business-concept-row) plutôt que
+// d'introduire un nouveau composant pour la même idée (une ligne = un fait,
+// une étiquette).
+function renderDomainDashboard(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const profileLevels = getProfile().levels || {};
+
+  el.innerHTML = DOMAINS.map(domain => {
+    const declared = profileLevels[domain.key];
+    const declaredHtml = declared
+      ? `${DOMAIN_LEVEL_LABELS[declared] || declared}`
+      : `<span style="color:var(--text-dim);">non déclaré</span>`;
+
+    const evaluated = getEvaluatedLevel(domain.key);
+    const evaluatedHtml = evaluated
+      ? `${DOMAIN_LEVEL_LABELS[evaluated.niveau] || evaluated.niveau} <span style="color:var(--text-dim);font-size:10px;">· confiance ${evaluated.confiance}</span>`
+      : `<span style="color:var(--text-dim);">pas encore assez de données</span>`;
+
+    let divergenceHtml = '';
+    if(declared && evaluated){
+      const gap = Math.abs(normalizeNiveau(declared) - normalizeNiveau(evaluated.niveau));
+      if(gap >= 2){
+        divergenceHtml = `<p class="disclaimer-box" style="margin-top:10px;">Ton niveau évalué (${DOMAIN_LEVEL_LABELS[evaluated.niveau]}) diffère nettement de ce que tu avais déclaré (${DOMAIN_LEVEL_LABELS[declared]}) — normal, le niveau déclaré n'était qu'une hypothèse de départ.</p>`;
+      }
+    }
+
+    const cta = evaluated
+      ? `<a href="quiz-approfondi.html?domaine=${domain.key}" class="btn btn-sm">Refaire le quiz approfondi</a>`
+      : `<a href="quiz-approfondi.html?domaine=${domain.key}" class="btn btn-sm btn-gold">Évaluer mon niveau (~8 min)</a>`;
+
+    return `
+    <div class="card" style="margin-bottom:14px;">
+      <span class="smallcaps">${domain.icon} ${domain.label}</span>
+      <div class="business-concepts-list" style="margin-top:10px;">
+        <div class="business-concept-row">
+          <span class="business-concept-name">Niveau déclaré <span style="color:var(--text-dim);font-weight:400;">(hypothèse, à confirmer)</span></span>
+          <span class="business-concept-label">${declaredHtml}</span>
+        </div>
+        <div class="business-concept-row">
+          <span class="business-concept-name">Niveau évalué</span>
+          <span class="business-concept-label">${evaluatedHtml}</span>
+        </div>
+      </div>
+      ${divergenceHtml}
+      <div style="margin-top:12px;">${cta}</div>
+    </div>`;
+  }).join('');
+}
+
 const LEVEL_TIPS = {
   debutant: "Pas besoin de retenir tous les chiffres pour l'instant. Comprends d'abord le principe.",
   intermediaire: "Tu connais déjà ce principe : regarde maintenant ce qui peut modifier le résultat.",
@@ -351,12 +457,16 @@ function normalizeNiveau(v){
   return key in NIVEAU_RANK ? NIVEAU_RANK[key] : null;
 }
 function getPositioningResult(){ return safeGetJSON('fzr-positioning-result', null); }
+// Historiquement basé sur le score noté de l'ancien test de positionnement
+// (retiré : le premier quiz est désormais 100% déclaratif, sans question
+// notée). Réécrit pour s'appuyer sur la vraie maîtrise en direct
+// (getSkillMastery, alimentée par Défis/cours/quiz approfondis) — une
+// source plus fiable, mise à jour en continu plutôt qu'un instantané figé.
 function getWeakCategoryLabel(categorieOuTerme){
-  const result = getPositioningResult();
-  if(!result || !result.categoryScores || !categorieOuTerme) return null;
-  const weak = Object.values(result.categoryScores).find(c =>
-    c.pct < 50 && c.label.toLowerCase() === String(categorieOuTerme).toLowerCase());
-  return weak ? weak.label : null;
+  if(!categorieOuTerme) return null;
+  const weak = getSkillMastery().find(m =>
+    m.niveau === 'faible' && m.categorie.toLowerCase() === String(categorieOuTerme).toLowerCase());
+  return weak ? weak.categorie : null;
 }
 // Renvoie {text, tone} ou null si le niveau de l'item/utilisateur est inconnu.
 // `opts.weakCategory` (optionnel) priorise un message lié à une faiblesse détectée.
@@ -732,28 +842,16 @@ function dayOfYear(){
 // correspondant à cet intérêt plutôt que dans la bibliothèque entière —
 // dégradation silencieuse vers la rotation globale si aucun intérêt n'est
 // encore connu ou si le sous-ensemble est vide.
-const INTEREST_LIBRARY_CATEGORIES = {
-  personalFinance: ['Finances personnelles', 'Épargne', 'Fiscalité'],
-  stockMarket: ['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque'],
-  business: ['Business', 'Entreprise'],
-  realEstate: ['Immobilier'],
-  economics: ['Économie'],
-  crypto: ['Crypto'],
-  marketing: ['Business']
-};
-// Même principe qu'INTEREST_LIBRARY_CATEGORIES, mais pointant vers la
-// taxonomie propre à QUIZ_BANK_FULL/MENTAL_CHALLENGES (Défis) — les deux
-// taxonomies sont volontairement différentes (glossaire vs. questions),
-// donc ce mapping ne peut pas être déduit de l'autre.
-const INTEREST_QUIZ_CATEGORIES = {
-  personalFinance: ['Épargne', 'Livret A', 'Inflation', 'Intérêts simples', 'Intérêts composés', 'Budget', "Constitution d'un patrimoine", 'Fiscalité de base', 'Retraite et PER', 'Assurance-vie', 'Arnaques financières'],
-  stockMarket: ['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur"],
-  business: ["Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'],
-  realEstate: ['Immobilier', 'SCPI', 'Crédit'],
-  economics: ['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande'],
-  crypto: ['Cryptoactifs'],
-  marketing: ["Chiffre d'affaires", 'Marge nette', 'Startup']
-};
+// Dérivés du registre unique DOMAINS (scripts/app.js) — plus une entrée
+// "marketing" conservée à part : c'est une nuance d'intérêt à l'intérieur du
+// Business, pas un 7e domaine (voir le commentaire sur DOMAINS dans app.js).
+const INTEREST_LIBRARY_CATEGORIES = Object.fromEntries(DOMAINS.map(d => [d.key, d.libraryCategories]));
+INTEREST_LIBRARY_CATEGORIES.marketing = ['Business'];
+// Même principe, mais pointant vers la taxonomie propre à
+// QUIZ_BANK_FULL/MENTAL_CHALLENGES (Défis) — les deux taxonomies sont
+// volontairement différentes (glossaire vs. questions).
+const INTEREST_QUIZ_CATEGORIES = Object.fromEntries(DOMAINS.map(d => [d.key, d.quizCategories]));
+INTEREST_QUIZ_CATEGORIES.marketing = ["Chiffre d'affaires", 'Marge nette', 'Startup'];
 function getNotionOfDay(){
   const profile = getProfile();
   const topInterest = Object.keys(profile.interests || {}).find(k => profile.interests[k]);
@@ -931,10 +1029,8 @@ function animateNumber(el, target, opts){
 
 // Libellés courts pour la salutation personnalisée (Accueil) — réutilisés
 // nulle part ailleurs comme identifiant technique, uniquement pour l'affichage.
-const INTEREST_DISPLAY_LABELS = {
-  personalFinance: 'les finances personnelles', stockMarket: 'la bourse', business: 'le Business',
-  realEstate: "l'immobilier", economics: "l'économie", crypto: 'la crypto', marketing: 'le marketing'
-};
+const INTEREST_DISPLAY_LABELS = Object.fromEntries(DOMAINS.map(d => [d.key, d.displayLabel]));
+INTEREST_DISPLAY_LABELS.marketing = 'le marketing';
 // ---------- En-tête de tableau de bord (salutation, rang, FinPoints, série, activité hebdo) ----------
 function renderDashboardHeader(elId){
   const el = document.getElementById(elId);
@@ -942,11 +1038,21 @@ function renderDashboardHeader(elId){
   const g = getGamification();
   const lvl = levelFromXP(g.xp);
   let greeting = WELCOME_PHRASES[Math.floor(Math.random() * WELCOME_PHRASES.length)];
-  const profileInterests = getProfile().interests || {};
+  const profile = getProfile();
+  const profileInterests = profile.interests || {};
   const interests = Object.keys(profileInterests).filter(k => profileInterests[k]);
   if(interests.length){
     const labels = interests.slice(0,2).map(k => INTEREST_DISPLAY_LABELS[k] || k);
     greeting = `Tu t'intéresses surtout à ${labels.join(' et à ')}.`;
+  }
+  // L'objectif déclaré (pourquoi l'utilisateur est sur Likanza) prime sur les
+  // intérêts (ce qui l'intéresse) : c'est le signal le plus direct de son
+  // intention. "general" n'est pas un domaine réel (ex. "améliorer ma culture
+  // financière") et n'a donc rien de plus précis à afficher qu'un intérêt.
+  const goalKeys = Object.keys(profile.goals || {}).filter(k => k !== 'general' && DOMAINS.some(d => d.key === k));
+  if(goalKeys.length){
+    const labels = goalKeys.slice(0,2).map(k => (DOMAINS.find(d => d.key === k) || {}).displayLabel || k);
+    greeting = `Tu es ici avant tout pour progresser sur ${labels.join(' et sur ')}.`;
   }
   const weekDays = getWeeklyActivityDays();
   const weekPct = Math.min(100, Math.round((weekDays/WEEKLY_GOAL_DAYS)*100));
@@ -1604,7 +1710,7 @@ function startMixedSession(elId, items, opts){
     // Alimente le même historique que l'ancien moteur QCM (fzr-quiz-stats),
     // pour que "Cette semaine" (renderDefisSemaine) reflète aussi les sessions
     // lancées depuis Défi du jour / Recommandé / À revoir / Parcours.
-    recordQuizCompletion('mixte', 'mélange', items.length, pct);
+    recordQuizCompletion(opts.level || 'mixte', opts.categorie || 'mélange', items.length, pct);
     el.innerHTML = `
       <div class="result-big">${score} / ${items.length} <span style="font-size:16px;color:var(--text-dim);">(${pct}%)</span></div>
       <p style="color:var(--text-dim);font-size:14px;margin:8px 0;">${msg}</p>

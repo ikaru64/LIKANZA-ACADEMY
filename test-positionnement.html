@@ -3,10 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Test de positionnement · Likanza Academy</title>
-<meta name="description" content="Découvre ton niveau financier en quelques minutes. Facultatif pour explorer le site, recommandé pour un parcours personnalisé.">
-<meta property="og:title" content="Test de positionnement · Likanza Academy">
-<meta property="og:description" content="Découvre ton niveau financier en quelques minutes. Facultatif pour explorer le site, recommandé pour un parcours personnalisé.">
+<title>Ton profil Likanza · Likanza Academy</title>
+<meta name="description" content="2 minutes pour dire à Likanza qui tu es, ce que tu cherches et ce que tu penses déjà connaître — pour personnaliser ton expérience tout de suite.">
+<meta property="og:title" content="Ton profil Likanza · Likanza Academy">
+<meta property="og:description" content="2 minutes pour dire à Likanza qui tu es, ce que tu cherches et ce que tu penses déjà connaître — pour personnaliser ton expérience tout de suite.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://likanza-academy.vercel.app/test-positionnement.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,7 +63,7 @@
             <h5>Compte</h5>
             <a href="compte.html">Mon compte</a>
             <a href="parcours.html">Mon parcours</a>
-            <a href="test-positionnement.html">Test de positionnement</a>
+            <a href="test-positionnement.html">Ton profil Likanza</a>
             <a href="avenir.html">À venir</a>
             <a href="apropos.html">À propos</a>
           </div>
@@ -76,40 +76,55 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Test de positionnement</div>
-<h1 class="visually-hidden">Test de positionnement</h1>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / Ton profil Likanza</div>
+<h1 class="visually-hidden">Ton profil Likanza</h1>
 
 <section class="section">
   <div id="posIntro" class="card" style="max-width:640px;margin:0 auto;">
-    <span class="smallcaps">Facultatif · environ 7 minutes</span>
-    <h2 class="display" style="font-size:26px;font-weight:600;margin:10px 0;">Ton profil d'apprentissage Likanza</h2>
-    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:8px;">Trois parties courtes : 24 questions de connaissances réparties sur 6 domaines (finances personnelles, bourse, économie, immobilier, business, crypto), tes centres d'intérêt, et ta manière préférée d'apprendre. Résultat : un niveau distinct par domaine, pas un seul niveau global.</p>
-    <p class="disclaimer-box">Le test est facultatif pour explorer Likanza Academy : tu peux utiliser librement tout le site sans le faire. La question sur le risque reste purement descriptive — elle ne constitue jamais un profil investisseur réglementaire ni un conseil personnalisé.</p>
+    <span class="smallcaps">Rapide · environ 2 minutes</span>
+    <h2 class="display" style="font-size:26px;font-weight:600;margin:10px 0;">Dis-nous qui tu es</h2>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:8px;">Quelques questions rapides — pas un examen, aucune bonne ou mauvaise réponse. Tes objectifs, ce qui t'intéresse, ce que tu penses déjà connaître : de quoi personnaliser tout de suite ton expérience sur Likanza.</p>
+    <p class="disclaimer-box">Facultatif : tu peux explorer librement tout le site sans répondre. Le niveau que tu indiques ici reste une hypothèse de départ — tu pourras le vérifier plus précisément avec un quiz approfondi par domaine, dans Mon Parcours.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
-      <button class="btn btn-gold" id="posStartBtn">Faire le test</button>
-      <a href="index.html" class="btn">Explorer sans test</a>
+      <button class="btn btn-gold" id="posStartBtn">Commencer</button>
+      <a href="index.html" class="btn">Explorer sans répondre</a>
     </div>
   </div>
 
-  <div id="posQuiz" class="card" style="max-width:640px;margin:0 auto;display:none;"></div>
+  <div id="posGoals" class="card" style="max-width:640px;margin:0 auto;display:none;">
+    <span class="smallcaps">1 / 4 · ton objectif</span>
+    <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Pourquoi es-tu sur Likanza ?</h3>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Coche tout ce qui te correspond.</p>
+    <div id="posGoalsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <button class="btn btn-gold" id="posGoalsNext">Continuer →</button>
+  </div>
 
-  <div id="posPartB" class="card" style="max-width:640px;margin:0 auto;display:none;">
-    <span class="smallcaps">Partie 2 / 3 · centres d'intérêt</span>
+  <div id="posInterests" class="card" style="max-width:640px;margin:0 auto;display:none;">
+    <span class="smallcaps">2 / 4 · centres d'intérêt</span>
     <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Qu'as-tu envie d'apprendre ?</h3>
     <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Coche tout ce qui t'intéresse, plusieurs réponses possibles.</p>
     <div id="posInterestsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
-    <button class="btn btn-gold" id="posPartBNext">Continuer →</button>
+    <button class="btn btn-gold" id="posInterestsNext">Continuer →</button>
   </div>
 
-  <div id="posPartC" class="card" style="max-width:640px;margin:0 auto;display:none;">
-    <span class="smallcaps">Partie 3 / 3 · manière d'apprendre</span>
+  <div id="posLevels" class="card" style="max-width:640px;margin:0 auto;display:none;">
+    <span class="smallcaps">3 / 4 · niveau déclaré</span>
+    <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Dans quels domaines penses-tu déjà avoir des connaissances ?</h3>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Fie-toi à ton ressenti — ce n'est pas un test.</p>
+    <p class="disclaimer-box" style="margin-bottom:14px;">Ce niveau est déclaré par toi, pas encore vérifié. Tu pourras le confirmer ou le corriger avec un quiz approfondi dans Mon Parcours.</p>
+    <div id="posLevelsList" style="display:flex;flex-direction:column;gap:18px;margin-bottom:16px;"></div>
+    <button class="btn btn-gold" id="posLevelsNext">Continuer →</button>
+  </div>
+
+  <div id="posStyle" class="card" style="max-width:640px;margin:0 auto;display:none;">
+    <span class="smallcaps">4 / 4 · manière d'apprendre</span>
     <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Tu comprends mieux avec…</h3>
     <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Coche ce qui te correspond, plusieurs réponses possibles.</p>
     <div id="posStylesList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
     <h3 class="display" style="font-size:18px;font-weight:600;margin:8px 0 6px;">Face à un placement qui varie…</h3>
     <p style="color:var(--text-dim);font-size:12.5px;margin-bottom:6px;">Une seule réponse. Purement indicatif : ce n'est ni un conseil ni un profil investisseur réglementaire.</p>
     <div id="posRiskList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
-    <button class="btn btn-gold" id="posPartCSubmit">Voir mon bilan →</button>
+    <button class="btn btn-gold" id="posStyleSubmit">Terminer →</button>
   </div>
 
   <div id="posResults" style="display:none;"></div>

@@ -901,24 +901,65 @@ const MENTAL_CHALLENGES = [
     explication:"Même au sein des cryptoactifs, les niveaux de risque diffèrent : un stablecoin vise une valeur stable (mais garde un risque lié à son émetteur et à sa réserve), un actif établi comme le bitcoin reste très volatil mais bénéficie d'un marché profond, tandis qu'un projet récent et peu connu cumule volatilité, faible liquidité et risque d'échec du projet lui-même."}
 ];
 
-// ---------- Test de positionnement (profil Likanza en 3 parties) ----------
-// Partie A — connaissances : réutilise des questions déjà existantes dans
-// QUIZ_BANK_FULL (aucun contenu dupliqué), regroupées par 6 grands domaines
-// plutôt que par 13 catégories fines — permet un niveau distinct par domaine
-// (ex. finance personnelle : intermédiaire, bourse : débutant...) plutôt
-// qu'un seul niveau global.
-const POSITIONING_DOMAINS = [
-  {key:'personalFinance', label:'Finances personnelles', ids:['q-budget-001', 'q-epargne-001', 'q-credit-002', 'q-patrimoine-002']},
-  {key:'stockMarket', label:'Bourse', ids:['q-bourse-001', 'q-etf-001', 'q-diversification-002', 'q-risque-003']},
-  {key:'economics', label:'Économie', ids:['q-pib-001', 'q-inflation-001', 'q-tauxdirecteur-002', 'q-recession-004']},
-  {key:'realEstate', label:'Immobilier', ids:['q-immobilier-001', 'q-scpi-003', 'q-immobilier-002', 'q-immobilier-003']},
-  {key:'business', label:'Business', ids:['q-ca-002', 'q-startup-001', 'q-margenette-001', 'q-bilan-004']},
-  {key:'crypto', label:'Crypto', ids:['q-crypto-001', 'q-crypto-002', 'q-crypto-003', 'q-vf-crypto-001']}
+// ---------- Registre unique des 6 domaines Likanza ----------
+// Source unique de vérité pour tout ce qui identifie un domaine ailleurs
+// dans le site (anciennement dupliqué entre POSITIONING_DOMAINS,
+// INTEREST_LIBRARY_CATEGORIES, INTEREST_QUIZ_CATEGORIES et
+// INTEREST_DISPLAY_LABELS dans data.js, qui dérivent désormais tous de ce
+// tableau). `quizCategories` = vraies catégories QUIZ_BANK_FULL/
+// MENTAL_CHALLENGES du domaine (pour la maîtrise réelle et les quiz
+// approfondis) ; `libraryCategories` = catégories de la Bibliothèque (glossaire) ;
+// `mentalChallengeDomain` = valeur exacte du champ `domain` dans
+// MENTAL_CHALLENGES (corrige un piège découvert : "Finance personnelle" au
+// singulier là-bas contre "Finances personnelles" au pluriel comme libellé ici).
+const DOMAINS = [
+  {key:'personalFinance', label:'Finances personnelles', displayLabel:'les finances personnelles', icon:'💰',
+    mentalChallengeDomain:'Finance personnelle',
+    quizCategories:['Épargne', 'Livret A', 'Inflation', 'Intérêts simples', 'Intérêts composés', 'Budget', "Constitution d'un patrimoine", 'Fiscalité de base', 'Retraite et PER', 'Assurance-vie', 'Arnaques financières'],
+    libraryCategories:['Finances personnelles', 'Épargne', 'Fiscalité']},
+  {key:'stockMarket', label:'Bourse', displayLabel:'la bourse', icon:'📈',
+    mentalChallengeDomain:'Bourse',
+    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur"],
+    libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque']},
+  {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
+    mentalChallengeDomain:'Business',
+    quizCategories:["Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'],
+    libraryCategories:['Business', 'Entreprise']},
+  {key:'economics', label:'Économie', displayLabel:"l'économie", icon:'🌍',
+    mentalChallengeDomain:'Économie',
+    quizCategories:['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande'],
+    libraryCategories:['Économie']},
+  {key:'realEstate', label:'Immobilier', displayLabel:"l'immobilier", icon:'🏠',
+    mentalChallengeDomain:'Immobilier',
+    quizCategories:['Immobilier', 'SCPI', 'Crédit'],
+    libraryCategories:['Immobilier']},
+  {key:'crypto', label:'Crypto', displayLabel:'la crypto', icon:'₿',
+    mentalChallengeDomain:'Crypto',
+    quizCategories:['Cryptoactifs'],
+    libraryCategories:['Crypto']}
 ];
 
-// Partie B — centres d'intérêt : choix multiples, un intérêt peut être coché
-// via plusieurs libellés proches (ex. "investir" et "comprendre la bourse"
-// pointent tous deux vers stockMarket).
+// ---------- Premier quiz de profil (100% déclaratif, aucune question notée) ----------
+// « Pourquoi es-tu sur Likanza ? » — objectifs multiples, réutilisés pour la
+// personnalisation immédiate (accueil, recommandations) — jamais pour calculer
+// un niveau, ce champ n'a pas de bonne réponse.
+const POSITIONING_GOALS = [
+  {key:'personalFinance', label:'Mieux gérer mon argent'},
+  {key:'stockMarket', label:'Commencer à investir'},
+  {key:'stockMarket', label:'Mieux comprendre la Bourse'},
+  {key:'economics', label:"Comprendre l'économie"},
+  {key:'business', label:'Créer ou développer un business'},
+  {key:'realEstate', label:"Comprendre l'immobilier"},
+  {key:'crypto', label:'Comprendre la crypto'},
+  {key:'general', label:'Améliorer ma culture financière'},
+  {key:'general', label:"J'ai simplement envie d'apprendre plusieurs choses"}
+];
+
+// Centres d'intérêt : choix multiples, un intérêt peut être coché via
+// plusieurs libellés proches (ex. "investir" et "comprendre la bourse"
+// pointent tous deux vers stockMarket). Le champ "marketing" est une
+// nuance d'intérêt supplémentaire à l'intérieur du Business (pas un 7e
+// domaine — Likanza n'en compte que 6, voir DOMAINS ci-dessus).
 const POSITIONING_INTERESTS = [
   {key:'personalFinance', label:'Mieux gérer mon argent au quotidien'},
   {key:'personalFinance', label:'Améliorer ma culture financière générale'},
@@ -931,10 +972,21 @@ const POSITIONING_INTERESTS = [
   {key:'crypto', label:'Crypto-actifs'}
 ];
 
-// Partie C — manière d'apprendre (style pédagogique) + compréhension légère
-// du risque. Le risque reste purement descriptif : il réutilise le même champ
-// "risque" (prudent/équilibre/dynamique) déjà utilisé par le profil de
-// Mon compte, jamais présenté comme un profil investisseur réglementaire.
+// Niveau déclaré par domaine : 4 choix, mappés positionnellement sur les 4
+// niveaux déjà utilisés partout ailleurs sur le site (debutant/intermediaire/
+// avance/expert) — une simple hypothèse de départ, jamais un niveau vérifié
+// (voir getEvaluatedLevel dans data.js pour la version vérifiée).
+const POSITIONING_LEVEL_CHOICES = [
+  {value:'debutant', label:'Je découvre'},
+  {value:'intermediaire', label:"J'ai quelques bases"},
+  {value:'avance', label:'Je me débrouille'},
+  {value:'expert', label:'Je connais déjà bien le sujet'}
+];
+
+// Manière d'apprendre (style pédagogique) + compréhension légère du risque.
+// Le risque reste purement descriptif : il réutilise le même champ "risque"
+// (prudent/équilibre/dynamique) déjà utilisé par le profil de Mon compte,
+// jamais présenté comme un profil investisseur réglementaire.
 const POSITIONING_LEARNING_STYLES = [
   {key:'explanations', label:'Une explication simple, avec des mots clairs'},
   {key:'examples', label:'Un exemple concret ou une mise en situation'},

@@ -1,199 +1,140 @@
 /* ============================================================
-   LIKANZA ACADEMY — Test de positionnement (profil Likanza en 3 parties)
-   Partie A (connaissances, questions réelles de QUIZ_BANK_FULL regroupées
-   par POSITIONING_DOMAINS) -> Partie B (centres d'intérêt) -> Partie C
-   (manière d'apprendre + compréhension légère du risque). Le résultat fait
-   évoluer le même fzr-profile que Mon compte (pas de second système de
-   profil), et conserve exactement la forme historique de
-   fzr-positioning-result / fzr-level pour ne rien casser côté
-   formations.js / parcours.js / renderCoach, qui restent inchangés.
+   LIKANZA ACADEMY — Ton profil Likanza (premier quiz, 100% déclaratif)
+   Rôle : donner à Likanza une première idée de qui est l'utilisateur, ce
+   qu'il cherche, ce qui l'intéresse et le niveau qu'il PENSE avoir par
+   domaine — jamais un niveau vérifié. Aucune question notée ici (la
+   vérification réelle se fait via les quiz approfondis, quiz-approfondi.html,
+   qui réutilisent le vrai moteur de Défis). 4 étapes courtes, toutes
+   skippables en pratique (chaque écran a un bouton "Continuer" même sans
+   rien cocher). Écrit dans fzr-profile (levels/interests/learningStyle/
+   risque/goals) et fzr-positioning-result (simple marqueur de complétion,
+   plus aucun score noté).
    ============================================================ */
 
 const LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
 
-function positioningQuestions(){
-  const list = [];
-  POSITIONING_DOMAINS.forEach(dom=>{
-    dom.ids.forEach(id=>{
-      const q = QUIZ_BANK_FULL.find(x=>x.id===id);
-      if(q) list.push({...q, _catKey: dom.key, _catLabel: dom.label});
-    });
-  });
-  return list;
-}
-
-function levelFromOverallPct(pct){
-  if(pct >= 80) return 'expert';
-  if(pct >= 60) return 'avance';
-  if(pct >= 35) return 'intermediaire';
-  return 'debutant';
-}
-
-const positioningQuestionsList = positioningQuestions();
-let partAAnswers = {}; // domainKey -> {correct, total}
-
-function startPositioningTest(){
+document.getElementById('posStartBtn').addEventListener('click', () => {
   document.getElementById('posIntro').style.display = 'none';
-  const quizEl = document.getElementById('posQuiz');
-  quizEl.style.display = 'block';
+  startGoals();
+});
 
-  partAAnswers = {};
-  let qIndex = 0;
-
-  function recordCat(catKey, correct){
-    if(!partAAnswers[catKey]) partAAnswers[catKey] = {correct:0, total:0};
-    partAAnswers[catKey].total++;
-    if(correct) partAAnswers[catKey].correct++;
-  }
-
-  function renderQuestion(){
-    if(qIndex >= positioningQuestionsList.length){
-      quizEl.style.display = 'none';
-      startPartB();
-      return;
-    }
-    const item = positioningQuestionsList[qIndex];
-    const pct = Math.round((qIndex/positioningQuestionsList.length)*100);
-    quizEl.innerHTML = `
-      <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span>Partie 1/3 · Question ${qIndex+1} / ${positioningQuestionsList.length}</span><span>${item._catLabel}</span>
-      </div>
-      <div class="dash-weekbar" style="width:100%;margin-bottom:14px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
-      <div style="font-size:15px;margin-bottom:12px;font-weight:500;">${item.question}</div>
-      <div id="posOpts" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
-      <div id="posFeedback" style="font-size:13.5px;color:var(--text-dim);min-height:20px;margin-bottom:12px;"></div>
-      <button class="btn btn-sm btn-gold" id="posNextBtn" style="display:none;">Question suivante</button>`;
-    const opts = document.getElementById('posOpts');
-    item.choix.forEach((opt,i)=>{
-      const btn = document.createElement('button');
-      btn.className = 'pill';
-      btn.style.textAlign = 'left';
-      btn.textContent = opt;
-      btn.addEventListener('click', ()=>{
-        Array.from(opts.children).forEach((c,ci)=>{
-          c.disabled = true;
-          if(ci===item.bonneReponse) c.style.borderColor = 'var(--emerald)';
-          else if(ci===i) c.style.borderColor = 'var(--bordeaux)';
-        });
-        const correct = i===item.bonneReponse;
-        recordCat(item._catKey, correct);
-        document.getElementById('posFeedback').textContent = item.explication;
-        const nextBtn = document.getElementById('posNextBtn');
-        nextBtn.style.display = 'inline-block';
-        nextBtn.addEventListener('click', ()=>{ qIndex++; renderQuestion(); }, {once:true});
-      }, {once:true});
-      opts.appendChild(btn);
-    });
-  }
-
-  renderQuestion();
+// ---------- 1/4 : objectif ----------
+function startGoals(){
+  document.getElementById('posGoals').style.display = 'block';
+  document.getElementById('posGoalsList').innerHTML = POSITIONING_GOALS.map((g, i) => `
+    <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;">
+      <input type="checkbox" class="pos-goal-cb" data-key="${g.key}" data-idx="${i}" style="width:16px;height:16px;flex-shrink:0;">
+      <span>${g.label}</span>
+    </label>`).join('');
 }
+document.getElementById('posGoalsNext').addEventListener('click', () => {
+  document.getElementById('posGoals').style.display = 'none';
+  startInterests();
+});
 
-// ---------- Partie B : centres d'intérêt ----------
-function startPartB(){
-  const el = document.getElementById('posPartB');
-  el.style.display = 'block';
-  document.getElementById('posInterestsList').innerHTML = POSITIONING_INTERESTS.map((it,i)=>`
+// ---------- 2/4 : centres d'intérêt ----------
+function startInterests(){
+  document.getElementById('posInterests').style.display = 'block';
+  document.getElementById('posInterestsList').innerHTML = POSITIONING_INTERESTS.map((it, i) => `
     <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;">
       <input type="checkbox" class="pos-interest-cb" data-key="${it.key}" data-idx="${i}" style="width:16px;height:16px;flex-shrink:0;">
       <span>${it.label}</span>
     </label>`).join('');
 }
-
-document.getElementById('posPartBNext').addEventListener('click', ()=>{
-  document.getElementById('posPartB').style.display = 'none';
-  startPartC();
+document.getElementById('posInterestsNext').addEventListener('click', () => {
+  document.getElementById('posInterests').style.display = 'none';
+  startLevels();
 });
 
-// ---------- Partie C : manière d'apprendre + compréhension légère du risque ----------
-function startPartC(){
-  const el = document.getElementById('posPartC');
-  el.style.display = 'block';
-  document.getElementById('posStylesList').innerHTML = POSITIONING_LEARNING_STYLES.map((s,i)=>`
+// ---------- 3/4 : niveau déclaré par domaine ----------
+function startLevels(){
+  document.getElementById('posLevels').style.display = 'block';
+  document.getElementById('posLevelsList').innerHTML = DOMAINS.map(d => `
+    <div>
+      <span class="smallcaps">${d.icon} ${d.label}</span>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+        ${POSITIONING_LEVEL_CHOICES.map(c => `
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+          <input type="radio" name="posLevel-${d.key}" class="pos-level-radio" data-domain="${d.key}" value="${c.value}" style="width:15px;height:15px;flex-shrink:0;">
+          <span>${c.label}</span>
+        </label>`).join('')}
+      </div>
+    </div>`).join('');
+}
+document.getElementById('posLevelsNext').addEventListener('click', () => {
+  document.getElementById('posLevels').style.display = 'none';
+  startStyle();
+});
+
+// ---------- 4/4 : manière d'apprendre + confort au risque ----------
+function startStyle(){
+  document.getElementById('posStyle').style.display = 'block';
+  document.getElementById('posStylesList').innerHTML = POSITIONING_LEARNING_STYLES.map((s, i) => `
     <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;">
       <input type="checkbox" class="pos-style-cb" data-key="${s.key}" data-idx="${i}" style="width:16px;height:16px;flex-shrink:0;">
       <span>${s.label}</span>
     </label>`).join('');
-  document.getElementById('posRiskList').innerHTML = POSITIONING_RISK_COMFORT.map((r,i)=>`
+  document.getElementById('posRiskList').innerHTML = POSITIONING_RISK_COMFORT.map((r, i) => `
     <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;">
-      <input type="radio" name="posRisk" class="pos-risk-radio" value="${r.value}" ${r.value==='equilibre'?'checked':''} style="width:16px;height:16px;flex-shrink:0;">
+      <input type="radio" name="posRisk" class="pos-risk-radio" value="${r.value}" ${r.value === 'equilibre' ? 'checked' : ''} style="width:16px;height:16px;flex-shrink:0;">
       <span>${r.label}</span>
     </label>`).join('');
 }
-
-document.getElementById('posPartCSubmit').addEventListener('click', ()=>{
+document.getElementById('posStyleSubmit').addEventListener('click', () => {
+  // `goals` est indexé par clé de domaine (plusieurs libellés de
+  // POSITIONING_GOALS peuvent partager la même clé, ex. deux libellés
+  // "stockMarket") : utile pour la personnalisation par domaine. On garde
+  // en parallèle les libellés exacts cochés (goalLabels) pour les réafficher
+  // fidèlement dans le bilan, sans perdre d'information en reconstruisant.
+  const goals = {};
+  const goalLabels = [];
+  document.querySelectorAll('.pos-goal-cb').forEach(cb => {
+    if(cb.checked){ goals[cb.dataset.key] = true; goalLabels.push(POSITIONING_GOALS[+cb.dataset.idx].label); }
+  });
   const interests = {};
-  document.querySelectorAll('.pos-interest-cb').forEach(cb=>{ if(cb.checked) interests[cb.dataset.key] = true; });
+  document.querySelectorAll('.pos-interest-cb').forEach(cb => { if(cb.checked) interests[cb.dataset.key] = true; });
+  const levels = {};
+  document.querySelectorAll('.pos-level-radio:checked').forEach(r => { levels[r.dataset.domain] = r.value; });
   const learningStyle = {};
-  document.querySelectorAll('.pos-style-cb').forEach(cb=>{ if(cb.checked) learningStyle[cb.dataset.key] = true; });
+  document.querySelectorAll('.pos-style-cb').forEach(cb => { if(cb.checked) learningStyle[cb.dataset.key] = true; });
   const riskEl = document.querySelector('.pos-risk-radio:checked');
   const risque = riskEl ? riskEl.value : 'equilibre';
-  document.getElementById('posPartC').style.display = 'none';
-  renderResults(partAAnswers, interests, learningStyle, risque);
+  document.getElementById('posStyle').style.display = 'none';
+  renderResults(goals, goalLabels, interests, levels, learningStyle, risque);
 });
 
-// ---------- Bilan final ----------
-function renderResults(answers, interests, learningStyle, risque){
+// ---------- Bilan : jamais un niveau "vérifié", toujours présenté comme une hypothèse ----------
+function renderResults(goals, goalLabels, interests, levels, learningStyle, risque){
   const resEl = document.getElementById('posResults');
   resEl.style.display = 'block';
 
-  const categoryScores = {};
-  const domainLevels = {};
-  let totalCorrect = 0, totalAnswered = 0;
-  POSITIONING_DOMAINS.forEach(dom=>{
-    const a = answers[dom.key];
-    if(!a) return;
-    const pct = Math.round((a.correct/a.total)*100);
-    categoryScores[dom.key] = {label:dom.label, pct, correct:a.correct, total:a.total};
-    domainLevels[dom.key] = levelFromOverallPct(pct);
-    totalCorrect += a.correct; totalAnswered += a.total;
-  });
-  const overallPct = totalAnswered ? Math.round((totalCorrect/totalAnswered)*100) : 0;
-  const level = levelFromOverallPct(overallPct);
+  // fzr-positioning-result n'est plus qu'un marqueur de complétion : plus
+  // aucune question notée ici, donc plus de score/niveau calculé à stocker.
+  safeSetJSON('fzr-positioning-result', {date: new Date().toISOString(), goals, interests, learningStyle, risque});
 
-  const strong = Object.values(categoryScores).filter(c=>c.pct>=75).map(c=>c.label);
-  const weak = Object.values(categoryScores).filter(c=>c.pct<50).map(c=>c.label);
+  // Même profil que Mon compte (fzr-profile) : age/epargne/horizon/objectif
+  // existants sont préservés, seuls levels/interests/learningStyle/risque/goals
+  // sont mis à jour ici.
+  saveProfile({...getProfile(), levels, interests, learningStyle, risque, goals});
 
-  // Forme historique inchangée : formations.js / parcours.js / renderCoach
-  // (scripts/data.js) lisent tous ce même objet, sans changement nécessaire.
-  safeSetJSON('fzr-positioning-result', {
-    date: new Date().toISOString(),
-    overallPct, categoryScores, level
-  });
-  setLevelStorage(level);
-
-  // Fait évoluer le même profil (fzr-profile) que Mon compte, sans créer de
-  // second système : age/epargne/horizon/objectif existants sont préservés.
-  saveProfile({...getProfile(), levels: domainLevels, interests, learningStyle, risque});
-
-  const interestLabels = [...new Set(POSITIONING_INTERESTS.filter(it=>interests[it.key]).map(it=>it.label))];
-  const styleLabels = POSITIONING_LEARNING_STYLES.filter(s=>learningStyle[s.key]).map(s=>s.label);
+  const declaredRows = DOMAINS.map(d => {
+    const lvl = levels[d.key];
+    const choice = POSITIONING_LEVEL_CHOICES.find(c => c.value === lvl);
+    return `<div class="panel-row"><span>${d.icon} ${d.label}</span><span class="val mono">${choice ? choice.label : '—'}</span></div>`;
+  }).join('');
 
   resEl.innerHTML = `
     <div class="card" style="max-width:640px;margin:0 auto;">
-      <span class="smallcaps">Ton bilan</span>
-      <h2 class="display" style="font-size:24px;font-weight:600;margin:8px 0;">Maîtrise globale : ${overallPct}%</h2>
-      <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Niveau global estimé : <strong style="color:var(--gold-bright);">${LEVEL_LABELS[level]}</strong></p>
-      <div id="posCatBars"></div>
-      ${strong.length ? `<p style="font-size:12.5px;color:var(--emerald);margin-top:14px;">Points forts : ${strong.join(', ')}</p>` : ''}
-      ${weak.length ? `<p style="font-size:12.5px;color:var(--gold-bright);">À renforcer en priorité : ${weak.join(', ')}</p>` : ''}
-      ${interestLabels.length ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Tu veux apprendre :</strong> ${interestLabels.join(' · ')}</p>` : ''}
-      ${styleLabels.length ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;"><strong style="color:var(--text);">Tu apprends mieux avec :</strong> ${styleLabels.join(' · ')}</p>` : ''}
-      <p style="font-size:12px;color:var(--text-dim);margin-top:12px;">Durée estimée du parcours conseillé : environ 6 semaines à raison de quelques minutes par jour.</p>
+      <span class="smallcaps">C'est noté</span>
+      <h2 class="display" style="font-size:24px;font-weight:600;margin:8px 0;">Ton profil est enregistré</h2>
+      <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Ces niveaux sont <strong style="color:var(--text);">déclarés par toi</strong> — une hypothèse de départ, pas encore vérifiée. Fais un quiz approfondi dans Mon Parcours (environ 8 minutes) quand tu veux vraiment savoir où tu en es dans un domaine.</p>
+      <div class="panel">${declaredRows}</div>
+      ${goalLabels.length ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:14px;"><strong style="color:var(--text);">Tu cherches à :</strong> ${goalLabels.join(' · ')}</p>` : ''}
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
-        <a href="parcours.html" class="btn btn-gold">Commencer mon parcours personnalisé</a>
-        <a href="index.html" class="btn btn-sm">Retour à l'exploration libre</a>
+        <a href="parcours.html" class="btn btn-gold">Voir Mon Parcours</a>
+        <a href="index.html" class="btn btn-sm">Explorer le site</a>
       </div>
     </div>`;
 
-  const barsEl = document.getElementById('posCatBars');
-  barsEl.innerHTML = Object.values(categoryScores).map(c=>`
-    <div style="margin-bottom:10px;">
-      <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;"><span>${c.label}</span><span class="mono">${c.pct}%</span></div>
-      <div class="dash-weekbar" style="width:100%;"><div class="dash-weekfill" style="width:${c.pct}%;"></div></div>
-    </div>`).join('');
-
-  awardXP(20, {positioningTestDone:true});
+  awardXP(15, {positioningTestDone: true});
 }
-
-document.getElementById('posStartBtn').addEventListener('click', startPositioningTest);

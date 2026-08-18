@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon parcours · Likanza Academy</title>
-<meta name="description" content="Ton chemin personnalisé : Maîtriser ses finances personnelles, en 6 niveaux progressifs.">
+<meta name="description" content="Ton tableau de bord personnel : niveau déclaré et évalué par domaine, historique de quiz, notions à revoir.">
 <meta property="og:title" content="Mon parcours · Likanza Academy">
-<meta property="og:description" content="Ton chemin personnalisé : Maîtriser ses finances personnelles, en 6 niveaux progressifs.">
+<meta property="og:description" content="Ton tableau de bord personnel : niveau déclaré et évalué par domaine, historique de quiz, notions à revoir.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://likanza-academy.vercel.app/parcours.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -63,7 +63,7 @@
             <h5>Compte</h5>
             <a href="compte.html">Mon compte</a>
             <a href="parcours.html">Mon parcours</a>
-            <a href="test-positionnement.html">Test de positionnement</a>
+            <a href="test-positionnement.html">Ton profil Likanza</a>
             <a href="avenir.html">À venir</a>
             <a href="apropos.html">À propos</a>
           </div>
@@ -80,27 +80,13 @@
 <h1 class="visually-hidden">Mon parcours</h1>
 
 <section class="section">
-  <div id="parcoursLocked" class="card" style="max-width:600px;margin:0 auto;display:none;">
-    <span class="smallcaps">Parcours personnalisé</span>
-    <h2 class="display" style="font-size:24px;font-weight:600;margin:10px 0;">Un parcours réellement adapté à tes connaissances</h2>
-    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;">Pour créer un parcours basé sur ce que tu sais déjà (et pas seulement sur ce que tu déclares), nous devons d'abord évaluer ton niveau avec le test de positionnement.</p>
-    <p class="disclaimer-box">Tu peux toujours utiliser librement le reste du site sans faire ce test : bibliothèque, formations, simulateurs, quiz libres restent ouverts à tous.</p>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
-      <a href="test-positionnement.html" class="btn btn-gold">Faire le test de positionnement</a>
-      <a href="index.html" class="btn btn-sm">Retour à l'accueil</a>
-    </div>
-  </div>
-
-  <div id="parcoursUnlocked" style="display:none;">
-    <div class="section-head"><h2>Maîtriser ses finances personnelles</h2><span class="meta-line" id="parcoursMeta"></span></div>
-    <div id="parcoursConseil" style="margin-bottom:18px;"></div>
-    <div class="parcours-path" id="parcoursPath"></div>
-    <p class="disclaimer-box" style="margin-top:20px;">Le parcours propose un ordre conseillé, pas une obligation : tu peux toujours ouvrir un module plus avancé, ou revenir consulter un module déjà terminé, depuis la bibliothèque ou les formations.</p>
-  </div>
+  <div class="section-head"><h2>Ton niveau, par domaine</h2><span class="meta-line">déclaré = ce que tu dis · évalué = ce que tes quiz montrent réellement</span></div>
+  <p class="disclaimer-box" style="max-width:640px;">Le niveau déclaré vient de <a href="test-positionnement.html" style="color:var(--gold-bright);">ton profil Likanza</a> : une hypothèse de départ, jamais présentée comme vérifiée. Le niveau évalué vient d'un quiz approfondi ou de ton activité réelle (Défis, cours) — et n'apparaît que lorsqu'il y a assez de données pour être honnête.</p>
+  <div id="domainDashboard" style="max-width:640px;margin-top:18px;"></div>
 </section>
 
 <section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Missions du jour &amp; de la semaine</h2><span class="meta-line">se renouvellent, ne s'épuisent jamais — même une fois ton parcours fixe terminé</span></div>
+  <div class="section-head"><h2>Missions du jour &amp; de la semaine</h2><span class="meta-line">se renouvellent, ne s'épuisent jamais</span></div>
   <div class="dual-grid">
     <div>
       <span class="smallcaps">Aujourd'hui</span>
@@ -129,7 +115,7 @@
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
     <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
-    <div><h4>Compte</h4><ul><li><a href="compte.html">Mon compte</a></li><li><a href="test-positionnement.html">Test de positionnement</a></li></ul></div>
+    <div><h4>Compte</h4><ul><li><a href="compte.html">Mon compte</a></li><li><a href="test-positionnement.html">Ton profil Likanza</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
   <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>

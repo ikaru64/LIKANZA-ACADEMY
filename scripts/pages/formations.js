@@ -58,13 +58,13 @@ document.querySelectorAll('.level-pills .pill').forEach(btn=>{
 });
 
 function renderFormationsConseil(){
-  const result = getPositioningResult();
-  if(result && result.categoryScores){
-    const weakest = Object.values(result.categoryScores).sort((a,b)=>a.pct-b.pct)[0];
-    if(weakest && weakest.pct < 60){
-      renderConseilBadge('formationsConseil', {text:`Ton test de positionnement indique une marge de progression en ${weakest.label} (${weakest.pct}%) : une bonne piste pour la suite.`, tone:'warn'});
-      return;
-    }
+  // Basé sur la vraie maîtrise en direct (Défis/cours/quiz approfondis),
+  // pas sur un ancien score noté du premier quiz (retiré : celui-ci est
+  // désormais 100% déclaratif).
+  const weakest = getSkillMastery().find(m => m.niveau === 'faible');
+  if(weakest){
+    renderConseilBadge('formationsConseil', {text:`Tes quiz montrent une marge de progression en ${weakest.categorie} (${weakest.pct}%) : une bonne piste pour la suite.`, tone:'warn'});
+    return;
   }
   renderConseilBadge('formationsConseil', {text:"Explore les missions ci-dessous à ton rythme, dans l'ordre que tu veux : rien n'est obligatoire.", tone:'neutral'});
 }

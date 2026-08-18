@@ -1,0 +1,60 @@
+/* ============================================================
+   LIKANZA ACADEMY — Quiz approfondi (quiz-approfondi.html?domaine=<key>)
+   Vérifie réellement le niveau d'un domaine (8 à 15 questions selon le
+   contenu réellement disponible — jamais rempli de répétitions pour
+   atteindre un chiffre). Réutilise le moteur de Défis (startMixedSession) :
+   ce n'est pas un 7e moteur de quiz, juste un pool plus grand et
+   mono-domaine, lancé avec opts.level/opts.categorie pour que le résultat
+   final s'écrive dans fzr-deep-quiz-results (voir saveDeepQuizResult,
+   scripts/data.js) au lieu de l'historique générique "mixte/mélange".
+   ============================================================ */
+
+const domainKey = new URLSearchParams(location.search).get('domaine');
+const domain = DOMAINS.find(d => d.key === domainKey);
+
+const introEl = document.getElementById('deepQuizIntro');
+const sessionEl = document.getElementById('deepQuizSession');
+const invalidEl = document.getElementById('deepQuizInvalid');
+
+function buildDeepQuizPool(dom){
+  const fromBank = QUIZ_BANK_FULL.filter(q => dom.quizCategories.includes(q.categorie));
+  const fromMental = MENTAL_CHALLENGES.filter(m => m.domain === dom.mentalChallengeDomain);
+  const pool = fromBank.concat(fromMental);
+  for(let i = pool.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, Math.min(pool.length, 15));
+}
+
+if(!domain){
+  introEl.style.display = 'none';
+  invalidEl.style.display = 'block';
+} else {
+  const pool = buildDeepQuizPool(domain);
+  const isShort = pool.length < 8;
+  const estMinutes = Math.max(3, Math.round(pool.length * 0.55));
+
+  introEl.innerHTML = `
+    <span class="smallcaps">${domain.icon} Quiz approfondi · ${domain.label}</span>
+    <h2 class="display" style="font-size:24px;font-weight:600;margin:10px 0;">${domain.label} : où en es-tu vraiment ?</h2>
+    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:8px;">${pool.length} question${pool.length > 1 ? 's' : ''}, environ ${estMinutes} minutes. Raisonnement, cas concrets, calculs simples — pas seulement des définitions.</p>
+    ${isShort ? `<p class="disclaimer-box">Le contenu réel pour ${domain.displayLabel} est encore limité sur Likanza : ce quiz est volontairement plus court, plutôt que rempli de répétitions pour atteindre un chiffre rond.</p>` : ''}
+    <p class="disclaimer-box">Facultatif. Le résultat remplace ton niveau déclaré par un niveau réellement évalué pour ${domain.displayLabel} — visible dans Mon Parcours.</p>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
+      <button class="btn btn-gold" id="deepQuizStart" ${pool.length === 0 ? 'disabled' : ''}>Commencer</button>
+      <a href="parcours.html" class="btn btn-sm">Annuler</a>
+    </div>`;
+
+  if(pool.length > 0){
+    document.getElementById('deepQuizStart').addEventListener('click', () => {
+      introEl.style.display = 'none';
+      sessionEl.style.display = 'block';
+      startMixedSession('deepQuizSession', pool, {
+        level: domain.key,
+        categorie: domain.label,
+        onComplete: (score, total) => { saveDeepQuizResult(domain.key, score, total); }
+      });
+    });
+  }
+}
