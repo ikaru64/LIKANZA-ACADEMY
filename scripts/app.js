@@ -1025,17 +1025,25 @@ const COURS_CATALOG = [
   {id:'entreprise-essentiels', titre:"Comprendre l'entreprise", niveau:'Intermédiaire', libraryTermes:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds'], quizCategories:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds']}
 ];
 
-// ---------- Actions de démonstration (bourse / comparateur) ----------
-// Toutes les données ci-dessous sont FICTIVES, à but pédagogique uniquement.
+// ---------- Actions suivies (bourse / comparateur) ----------
+// ticker/nom/secteur/pays/pea sont des faits réels. prix/variation sont des
+// valeurs de repli affichées le temps que la cotation live (/api/stock-quotes)
+// réponde, remplacées dès qu'elle répond (voir applyLiveStockQuotes, bourse.js).
+// Les fondamentaux (PER, dividende, capitalisation, marges, ROE...) ne sont
+// PLUS stockés ici : ils viennent en direct de /api/company-profile (Yahoo
+// Finance, réels et datés) — voir loadCompanyFundamentals (scripts/data.js).
+// Un ancien champ fictif codé en dur ici a longtemps été affiché comme réel
+// sans avertissement (Comparateur, Scénarios, Dividendes, fiche action) :
+// ne pas réintroduire ce mélange fait/fiction.
 const STOCKS_DEMO = [
-  {ticker:'AI.PA', nom:'Air Liquide', secteur:'Industrie', pays:'France', pea:true, prix:178.4, variation:0.6, cap:'92 Md€', ca:'27,5 Md€', per:22.1, dividende:2.9, dette_ebitda:1.8, marge_nette:11.2, roe:13.5},
-  {ticker:'TTE.PA', nom:'TotalEnergies', secteur:'Énergie', pays:'France', pea:true, prix:61.2, variation:-1.1, cap:'148 Md€', ca:'210 Md€', per:8.4, dividende:5.6, dette_ebitda:0.9, marge_nette:7.8, roe:16.2},
-  {ticker:'SAN.PA', nom:'Sanofi', secteur:'Santé', pays:'France', pea:true, prix:92.7, variation:0.2, cap:'118 Md€', ca:'43 Md€', per:16.8, dividende:3.9, dette_ebitda:1.2, marge_nette:14.1, roe:11.8},
-  {ticker:'SAF.PA', nom:'Safran', secteur:'Aéronautique', pays:'France', pea:true, prix:224.5, variation:1.4, cap:'93 Md€', ca:'27 Md€', per:29.6, dividende:1.4, dette_ebitda:1.5, marge_nette:9.4, roe:18.9},
-  {ticker:'DG.PA', nom:'Vinci', secteur:'Construction', pays:'France', pea:true, prix:118.9, variation:-0.3, cap:'70 Md€', ca:'71 Md€', per:12.9, dividende:4.1, dette_ebitda:2.4, marge_nette:8.1, roe:15.4},
-  {ticker:'OR.PA', nom:"L'Oréal", secteur:'Consommation', pays:'France', pea:true, prix:352.1, variation:0.4, cap:'190 Md€', ca:'44 Md€', per:31.2, dividende:1.7, dette_ebitda:0.6, marge_nette:13.9, roe:19.6},
-  {ticker:'ASML.AS', nom:'ASML', secteur:'Technologie', pays:'Pays-Bas', pea:true, prix:812.3, variation:-2.1, cap:'320 Md€', ca:'32 Md€', per:33.8, dividende:0.9, dette_ebitda:0.4, marge_nette:26.3, roe:28.1},
-  {ticker:'MC.PA', nom:'LVMH', secteur:'Luxe', pays:'France', pea:true, prix:598.7, variation:-0.8, cap:'298 Md€', ca:'86 Md€', per:22.7, dividende:2.1, dette_ebitda:1.1, marge_nette:17.5, roe:16.8},
+  {ticker:'AI.PA', nom:'Air Liquide', secteur:'Industrie', pays:'France', pea:true, prix:178.4, variation:0.6},
+  {ticker:'TTE.PA', nom:'TotalEnergies', secteur:'Énergie', pays:'France', pea:true, prix:61.2, variation:-1.1},
+  {ticker:'SAN.PA', nom:'Sanofi', secteur:'Santé', pays:'France', pea:true, prix:92.7, variation:0.2},
+  {ticker:'SAF.PA', nom:'Safran', secteur:'Aéronautique', pays:'France', pea:true, prix:224.5, variation:1.4},
+  {ticker:'DG.PA', nom:'Vinci', secteur:'Construction', pays:'France', pea:true, prix:118.9, variation:-0.3},
+  {ticker:'OR.PA', nom:"L'Oréal", secteur:'Consommation', pays:'France', pea:true, prix:352.1, variation:0.4},
+  {ticker:'ASML.AS', nom:'ASML', secteur:'Technologie', pays:'Pays-Bas', pea:true, prix:812.3, variation:-2.1},
+  {ticker:'MC.PA', nom:'LVMH', secteur:'Luxe', pays:'France', pea:true, prix:598.7, variation:-0.8},
 ];
 
 // ---------- Glossaire / Bibliothèque ----------

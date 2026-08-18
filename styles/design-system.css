@@ -185,6 +185,7 @@ nav.main-nav a:hover::after, nav.main-nav a.active::after{transform:scaleX(1);}
 .data-badge-hypothese{color:var(--gold-bright);border-color:var(--gold);}
 .data-badge-scenario{color:var(--gold);border-color:var(--gold);}
 .data-badge-exemple{color:var(--text-dim);border-color:var(--hairline);}
+.data-badge-editorial{color:var(--text-dim);border-color:var(--hairline);}
 .data-quality-badge{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim);}
 .data-quality-forte{color:var(--emerald);}
 .data-quality-moyenne{color:var(--gold-bright);}

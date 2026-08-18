@@ -48,6 +48,11 @@ function renderStockGrid(){
   document.getElementById('stockGrid').innerHTML = list.map(entry=>{
     const s = STOCKS_DEMO.find(x=>x.ticker===entry.symbol);
     if(s){
+      const fund = companyFundamentalsCache[s.ticker];
+      const ff = fund && fund.fundamentals ? fund.fundamentals.fields : null;
+      const fundLine = fund === undefined ? 'Chargement des données réelles…'
+        : !ff ? FUNDAMENTALS_UNAVAILABLE_TEXT
+        : `PER ${formatFundamentalValue('trailingPE', ff.trailingPE)} · Rendement ${formatFundamentalValue('dividendYield', ff.dividendYield)} · Cap. ${formatFundamentalValue('marketCap', ff.marketCap)}`;
       return `
       <div class="card" id="${s.ticker}">
         <span class="smallcaps">${s.secteur} · ${s.pays}</span>
@@ -56,7 +61,8 @@ function renderStockGrid(){
           <span class="mono" style="font-size:18px;color:var(--text);">${s.prix.toFixed(1)} €</span>
           <span class="mono ${s.variation>=0?'up':'down'}" style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span>
         </div>
-        <p>PER ${s.per} · Rendement ${s.dividende}% · Cap. ${s.cap} ${s.pea ? '· <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
+        <p style="font-size:13px;color:var(--text-dim);">${fundLine} ${s.pea ? '· <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
+        ${ff ? `<p style="margin-top:2px;">${renderDataBadge('reel')}</p>` : ''}
         ${renderTrendHtml(computeTrendIndicator(s.history))}
         ${s._live ? `<span class="badge status-reel" style="margin-top:6px;">Cotation différée (Yahoo Finance)</span>` : `<span class="demo-flag" style="margin-top:6px;">Donnée de démonstration</span>`}
         <div class="card-footer">
@@ -105,44 +111,59 @@ function toggleMode(btn){
   renderCompare();
 }
 
+// Critères réels : prix/variation viennent de STOCKS_DEMO (cotation live),
+// tous les autres viennent de /api/company-profile (fondamentaux réels,
+// jamais des champs fictifs de STOCKS_DEMO).
 const CRITERIA_BASIC = [
-  {key:'prix', label:'Cours', unit:'€', higherBetter:null},
-  {key:'variation', label:'Variation du jour', unit:'%', higherBetter:null},
-  {key:'per', label:'PER', unit:'×', higherBetter:false},
-  {key:'dividende', label:'Rendement dividende', unit:'%', higherBetter:true},
-  {key:'cap', label:'Capitalisation', unit:'', higherBetter:null},
-  {key:'ca', label:"Chiffre d'affaires", unit:'', higherBetter:null},
+  {key:'prix', label:'Cours', source:'stock', unit:' €', higherBetter:null},
+  {key:'variation', label:'Variation du jour', source:'stock', unit:'%', higherBetter:null},
+  {key:'trailingPE', label:'PER', source:'fundamentals', higherBetter:false},
+  {key:'dividendYield', label:'Rendement dividende', source:'fundamentals', higherBetter:true},
+  {key:'marketCap', label:'Capitalisation', source:'fundamentals', higherBetter:null},
+  {key:'totalRevenue', label:"Chiffre d'affaires", source:'fundamentals', higherBetter:null},
 ];
 const CRITERIA_ADV = [
   ...CRITERIA_BASIC,
-  {key:'marge_nette', label:'Marge nette', unit:'%', higherBetter:true},
-  {key:'roe', label:'ROE', unit:'%', higherBetter:true},
-  {key:'dette_ebitda', label:'Dette / EBITDA', unit:'×', higherBetter:false},
+  {key:'profitMargins', label:'Marge nette', source:'fundamentals', higherBetter:true},
+  {key:'returnOnEquity', label:'ROE', source:'fundamentals', higherBetter:true},
+  {key:'evToEbitda', label:'EV/EBITDA', source:'fundamentals', higherBetter:false},
 ];
+
+function getFundamentalsFields(ticker){
+  const fund = companyFundamentalsCache[ticker];
+  return fund && fund.fundamentals ? fund.fundamentals.fields : null;
+}
 
 function renderCompare(){
   const selected = Array.from(document.querySelectorAll('.compareCheck:checked')).map(c=>c.value);
   const table = document.getElementById('compareTable');
   if(selected.length < 2){
     table.innerHTML = '<tr><td style="padding:16px 0;color:var(--text-dim);">Sélectionne au moins 2 actions pour lancer la comparaison.</td></tr>';
+    const analysisEl = document.getElementById('compareAnalysis');
+    if(analysisEl) analysisEl.innerHTML = '';
     return;
   }
   const stocks = selected.slice(0,5).map(t=>STOCKS_DEMO.find(s=>s.ticker===t));
   const criteria = advancedMode ? CRITERIA_ADV : CRITERIA_BASIC;
   let html = '<tr><th>Critère</th>' + stocks.map(s=>`<th>${s.nom}</th>`).join('') + '</tr>';
   criteria.forEach(c=>{
-    const values = stocks.map(s=> typeof s[c.key] === 'number' ? s[c.key] : null);
+    const values = stocks.map(s => c.source === 'stock'
+      ? (typeof s[c.key] === 'number' ? s[c.key] : null)
+      : (getFundamentalsFields(s.ticker) ? getFundamentalsFields(s.ticker)[c.key] : null));
     let bestIdx = -1;
     if(c.higherBetter !== null){
-      const nums = values.filter(v=>v!==null);
+      const nums = values.map((v,i)=>({v,i})).filter(o=>typeof o.v === 'number');
       if(nums.length){
-        const target = c.higherBetter ? Math.max(...nums) : Math.min(...nums);
-        bestIdx = values.indexOf(target);
+        const target = c.higherBetter ? Math.max(...nums.map(o=>o.v)) : Math.min(...nums.map(o=>o.v));
+        const found = nums.find(o=>o.v===target);
+        bestIdx = found ? found.i : -1;
       }
     }
     html += `<tr><td>${c.label}</td>` + stocks.map((s,i)=>{
-      const raw = s[c.key];
-      const display = typeof raw === 'number' ? raw + c.unit : raw;
+      const raw = values[i];
+      const display = c.source === 'stock'
+        ? (typeof raw === 'number' ? raw.toFixed(1) + c.unit : FUNDAMENTALS_UNAVAILABLE_TEXT)
+        : formatFundamentalValue(c.key, raw);
       return `<td class="${i===bestIdx?'best':''}">${display}</td>`;
     }).join('') + '</tr>';
   });
@@ -150,12 +171,143 @@ function renderCompare(){
   html += '<tr><td>Secteur</td>' + stocks.map(s=>`<td>${s.secteur}</td>`).join('') + '</tr>';
   html += '<tr><td>Pays</td>' + stocks.map(s=>`<td>${s.pays}</td>`).join('') + '</tr>';
   table.innerHTML = html;
+  renderCompareAnalysis(stocks);
+}
+
+// ---------- Analyse complète : résumé, business model, croissance/rentabilité/
+// valorisation expliquées, risques, forces/faiblesses, scénarios, verdict sans
+// gagnant. Limité à exactement 2 valeurs (la structure "A vs B" ne se généralise
+// pas proprement à 5 sans devenir illisible) — le tableau rapide ci-dessus,
+// lui, reste utilisable de 2 à 5. ----------
+function renderCompareAnalysis(stocks){
+  const el = document.getElementById('compareAnalysis');
+  if(!el) return;
+  if(stocks.length !== 2){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Sélectionne exactement 2 valeurs pour voir l'analyse complète (résumé, business model, scénarios...).</p>`;
+    return;
+  }
+  const [sA, sB] = stocks;
+  const fundA = companyFundamentalsCache[sA.ticker], fundB = companyFundamentalsCache[sB.ticker];
+  if(fundA === undefined || fundB === undefined){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Chargement de l'analyse complète…</p>`;
+    return;
+  }
+  const ffA = getFundamentalsFields(sA.ticker), ffB = getFundamentalsFields(sB.ticker);
+  const edA = COMPANY_EDITORIAL[sA.ticker], edB = COMPANY_EDITORIAL[sB.ticker];
+
+  function fieldRow(key){
+    return `<div class="result-row" style="justify-content:space-between;"><span>${FUNDAMENTALS_FIELD_META[key].label}</span><span class="mono">${formatFundamentalValue(key, ffA && ffA[key])} · ${formatFundamentalValue(key, ffB && ffB[key])}</span></div>`;
+  }
+  const swA = ffA ? deriveStrengthsWeaknesses(ffA) : {strengths:[], weaknesses:[]};
+  const swB = ffB ? deriveStrengthsWeaknesses(ffB) : {strengths:[], weaknesses:[]};
+
+  el.innerHTML = `
+    <details open>
+      <summary class="smallcaps" style="cursor:pointer;">Analyse complète : ${sA.nom} vs ${sB.nom}</summary>
+      <div style="margin-top:16px;">
+        <div class="card" style="margin-bottom:14px;">
+          <span class="smallcaps">1. Résumé du business</span> ${renderDataBadge('editorial')}
+          <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+            <div><h4>${sA.nom}</h4><p style="font-size:13px;color:var(--text-dim);margin-top:6px;">${edA ? edA.resume : 'Non disponible.'}</p></div>
+            <div><h4>${sB.nom}</h4><p style="font-size:13px;color:var(--text-dim);margin-top:6px;">${edB ? edB.resume : 'Non disponible.'}</p></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <span class="smallcaps">2. Business model</span> ${renderDataBadge('editorial')}
+          <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+            <div><p style="font-size:13px;color:var(--text-dim);">${edA ? edA.businessModel : 'Non disponible.'}</p></div>
+            <div><p style="font-size:13px;color:var(--text-dim);">${edB ? edB.businessModel : 'Non disponible.'}</p></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <span class="smallcaps">3. Croissance expliquée</span> ${renderDataBadge('reel')}
+          ${fieldRow('revenueGrowth')}${fieldRow('totalRevenue')}
+          <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">${ffA && typeof ffA.revenueGrowth === 'number' ? `${sA.nom} : ${bucketGrowth(ffA.revenueGrowth).label}. ` : ''}${ffB && typeof ffB.revenueGrowth === 'number' ? `${sB.nom} : ${bucketGrowth(ffB.revenueGrowth).label}.` : ''}</p>
+          <p class="source-note">Source : Yahoo Finance (quoteSummary), dernier exercice connu.</p>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <span class="smallcaps">4. Rentabilité expliquée</span> ${renderDataBadge('reel')}
+          ${fieldRow('grossMargins')}${fieldRow('operatingMargins')}${fieldRow('profitMargins')}${fieldRow('returnOnEquity')}
+          <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Une marge nette plus élevée signifie qu'une entreprise conserve davantage de bénéfice par euro de chiffre d'affaires — pas nécessairement qu'elle est "meilleure", cela dépend du secteur et du modèle économique.</p>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <span class="smallcaps">5. Valorisation expliquée</span> ${renderDataBadge('reel')}
+          ${fieldRow('trailingPE')}${fieldRow('priceToSales')}${fieldRow('evToEbitda')}
+          <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Un PER plus élevé peut se justifier par une croissance plus forte, des marges plus élevées ou une position dominante — jamais, à lui seul, la preuve qu'une action est "chère" ou "bon marché".</p>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <span class="smallcaps">6. Risques</span> ${renderDataBadge('editorial')}
+          <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+            <div><h4>${sA.nom}</h4><ul style="font-size:13px;color:var(--text-dim);margin-top:6px;padding-left:18px;">${(edA ? edA.risques : []).map(r=>`<li>${r}</li>`).join('')}</ul></div>
+            <div><h4>${sB.nom}</h4><ul style="font-size:13px;color:var(--text-dim);margin-top:6px;padding-left:18px;">${(edB ? edB.risques : []).map(r=>`<li>${r}</li>`).join('')}</ul></div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <span class="smallcaps">7. Forces et faiblesses (calculées)</span> ${renderDataBadge('reel')}
+          <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+            <div><h4>${sA.nom}</h4>
+              ${swA.strengths.length ? `<p style="font-size:12.5px;color:var(--emerald);margin-top:6px;">Points forts : ${swA.strengths.join(' ')}</p>` : ''}
+              ${swA.weaknesses.length ? `<p style="font-size:12.5px;color:var(--bordeaux);margin-top:6px;">Points de vigilance : ${swA.weaknesses.join(' ')}</p>` : ''}
+            </div>
+            <div><h4>${sB.nom}</h4>
+              ${swB.strengths.length ? `<p style="font-size:12.5px;color:var(--emerald);margin-top:6px;">Points forts : ${swB.strengths.join(' ')}</p>` : ''}
+              ${swB.weaknesses.length ? `<p style="font-size:12.5px;color:var(--bordeaux);margin-top:6px;">Points de vigilance : ${swB.weaknesses.join(' ')}</p>` : ''}
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <span class="smallcaps">8. Scénarios (hypothèses ajustables)</span> ${renderDataBadge('scenario')}
+          <div class="slider-row field"><label>Croissance annuelle du bénéfice <span class="v mono" id="compValGrowth">6 %</span></label><input type="range" id="compGrowth" min="-10" max="25" step="1" value="6"></div>
+          <div class="slider-row field"><label>PER cible <span class="v mono" id="compValPer">18×</span></label><input type="range" id="compPer" min="5" max="40" step="1" value="18"></div>
+          <div class="slider-row field"><label>Horizon <span class="v mono" id="compValHorizon">5 ans</span></label><input type="range" id="compHorizon" min="1" max="15" step="1" value="5"></div>
+          <div id="compScenResults" style="margin-top:12px;"></div>
+          <p class="disclaimer-box">Cette estimation dépend de tes hypothèses et ne constitue pas une prédiction. Estimation basée sur les informations actuellement disponibles ; les marchés peuvent évoluer différemment.</p>
+        </div>
+        <div class="card">
+          <span class="smallcaps">Verdict — selon l'angle</span>
+          <div id="compVerdict" style="margin-top:10px;"></div>
+        </div>
+      </div>
+    </details>`;
+
+  if(ffA && ffB){
+    const angles = computeComparisonAngles({symbol: sA.nom, fields: ffA}, {symbol: sB.nom, fields: ffB});
+    document.getElementById('compVerdict').innerHTML = angles.map(a=>`
+      <div style="margin-bottom:10px;">
+        <p style="font-weight:600;font-size:13px;">${a.label}</p>
+        <p style="font-size:12.5px;color:var(--text-dim);">${a.readings.map(r=>`${r.symbol} : ${r.text}`).join(' · ')}</p>
+        <p style="font-size:12.5px;color:var(--text-dim);margin-top:2px;">${a.framing}</p>
+      </div>`).join('') + `<p class="disclaimer-box">Il n'existe pas forcément une meilleure entreprise universelle. Le résultat dépend des objectifs, du risque accepté et des hypothèses sur l'avenir.</p>`;
+  } else {
+    document.getElementById('compVerdict').innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+  }
+
+  function updateCompScenarios(){
+    const growth = +document.getElementById('compGrowth').value;
+    const perTarget = +document.getElementById('compPer').value;
+    const horizon = +document.getElementById('compHorizon').value;
+    document.getElementById('compValGrowth').textContent = growth + ' %';
+    document.getElementById('compValPer').textContent = perTarget + '×';
+    document.getElementById('compValHorizon').textContent = horizon + ' ans';
+    const {a, b} = computeComparativeScenarios(ffA ? ffA.trailingEps : null, ffB ? ffB.trailingEps : null, {growth, perTarget, horizon});
+    const labels = {defavorable:'Défavorable', central:'Central', favorable:'Favorable'};
+    function renderSide(nom, scenarios){
+      if(!scenarios) return `<div><h4>${nom}</h4><p style="font-size:12.5px;color:var(--text-dim);">${FUNDAMENTALS_UNAVAILABLE_TEXT} (BPA réel indisponible, scénario non calculable)</p></div>`;
+      return `<div><h4>${nom}</h4>${Object.entries(scenarios).map(([k,r])=>`<div class="result-row" style="justify-content:space-between;"><span>${labels[k]}</span><span class="mono">${r.prixCible.toFixed(1)} €</span></div>`).join('')}</div>`;
+    }
+    document.getElementById('compScenResults').innerHTML = `<div class="card-grid" style="grid-template-columns:1fr 1fr;">${renderSide(sA.nom, a)}${renderSide(sB.nom, b)}</div>`;
+  }
+  ['compGrowth','compPer','compHorizon'].forEach(id => document.getElementById(id).addEventListener('input', updateCompScenarios));
+  updateCompScenarios();
 }
 checksEl.addEventListener('change', renderCompare);
 
 // ---------- Scénarios (moteur partagé avec la sélection du jour) ----------
-function computeScenarios(stock, growth, perTarget, horizon){
-  const bpaActuel = stock.prix / stock.per;
+// bpaActuel vient désormais du vrai trailingEps (fondamentaux réels), plus
+// jamais de stock.prix / stock.per fictif — un BPA indisponible renvoie null,
+// jamais un scénario calculé sur une base inventée.
+function computeScenarios(bpaActuel, prixActuel, growth, perTarget, horizon){
+  if(typeof bpaActuel !== 'number') return null;
   const defs = {
     defavorable: {growth: growth - 6, per: perTarget * 0.75},
     central: {growth: growth, per: perTarget},
@@ -165,7 +317,7 @@ function computeScenarios(stock, growth, perTarget, horizon){
   Object.entries(defs).forEach(([key,s])=>{
     const bpaFutur = bpaActuel * Math.pow(1 + s.growth/100, horizon);
     const prixCible = bpaFutur * s.per;
-    const variation = ((prixCible / stock.prix) - 1) * 100;
+    const variation = ((prixCible / prixActuel) - 1) * 100;
     out[key] = {prixCible, variation};
   });
   return out;
@@ -184,13 +336,20 @@ function updateScenario(){
   document.getElementById('valPer').textContent = perTarget + '×';
   document.getElementById('valHorizon').textContent = horizon + ' ans';
 
-  const scenarios = computeScenarios(stock, growth, perTarget, horizon);
+  const ff = getFundamentalsFields(stock.ticker);
+  const scenarios = ff ? computeScenarios(ff.trailingEps, stock.prix, growth, perTarget, horizon) : null;
+  const resultsEl = document.getElementById('scenResults');
+  if(!scenarios){
+    resultsEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (BPA réel indisponible pour ${stock.nom}, scénario non calculable).</p>`;
+    document.getElementById('scenChart').innerHTML = ''; document.getElementById('scenChartLabels').innerHTML = '';
+    return;
+  }
   const labels = {defavorable:'Scénario défavorable', central:'Scénario central', favorable:'Scénario favorable'};
   let html = '';
   Object.entries(scenarios).forEach(([key,r])=>{
     html += `<div class="result-row" style="justify-content:space-between;width:100%;"><span>${labels[key]}</span><span class="mono" style="color:${r.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${r.prixCible.toFixed(1)} € (${r.variation>=0?'+':''}${r.variation.toFixed(0)}%)</span></div>`;
   });
-  document.getElementById('scenResults').innerHTML = `<div class="result-label">Prix théorique estimé dans ${horizon} an(s), cours actuel ${stock.prix} €</div>` + html;
+  resultsEl.innerHTML = `<div class="result-label">Prix théorique estimé dans ${horizon} an(s), cours actuel ${stock.prix} €</div>` + html + `<p style="margin-top:6px;">${renderDataBadge('reel')} BPA de départ : ${formatFundamentalValue('trailingEps', ff.trailingEps)}</p>`;
 
   const chart = document.getElementById('scenChart');
   const labelsEl = document.getElementById('scenChartLabels');
@@ -247,6 +406,13 @@ function updateDividend(){
   document.getElementById('valDivGrowth').textContent = divGrowthEl.value + ' %';
   document.getElementById('valDivYears').textContent = divYearsEl.value + ' ans';
   const stock = STOCKS_DEMO.find(s=>s.ticker===divSelect.value);
+  const resultEl = document.getElementById('divResult');
+  const ff = getFundamentalsFields(stock.ticker);
+  if(!ff || typeof ff.dividendYield !== 'number'){
+    resultEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (rendement du dividende réel indisponible pour ${stock.nom}).</p>`;
+    document.getElementById('divChart').innerHTML = ''; document.getElementById('divChartLabels').innerHTML = '';
+    return;
+  }
   const growth = +divGrowthEl.value/100;
   const years = +divYearsEl.value;
   const reinvest = divReinvestEl.checked;
@@ -255,17 +421,18 @@ function updateDividend(){
   let cumDividends = 0;
   const series = [shareValue*shares];
   for(let y=1;y<=years;y++){
-    const yieldRate = stock.dividende/100 * Math.pow(1+growth, y-1);
+    const yieldRate = ff.dividendYield * Math.pow(1+growth, y-1);
     const dividendPaid = shareValue * shares * yieldRate;
     cumDividends += dividendPaid;
     if(reinvest) shares += dividendPaid/shareValue;
     series.push(shareValue*shares + (reinvest?0:cumDividends));
   }
   const finalValue = series[series.length-1];
-  document.getElementById('divResult').innerHTML = `
+  resultEl.innerHTML = `
     <div class="result-label">Valeur totale estimée après ${years} an(s)</div>
     <div class="result-big">${fmtEUR(finalValue)}</div>
-    <div class="result-row"><span>Dividendes cumulés : ${fmtEUR(cumDividends)}</span><span>Mode : ${reinvest?'réinvestis':'encaissés'}</span></div>`;
+    <div class="result-row"><span>Dividendes cumulés : ${fmtEUR(cumDividends)}</span><span>Mode : ${reinvest?'réinvestis':'encaissés'}</span></div>
+    <p style="margin-top:6px;">${renderDataBadge('reel')} Rendement de départ : ${formatFundamentalValue('dividendYield', ff.dividendYield)}</p>`;
   renderBarChart('divChart','divChartLabels', series, years);
 }
 [divGrowthEl, divYearsEl, divReinvestEl].forEach(el=>el.addEventListener('input', updateDividend));
@@ -313,17 +480,18 @@ function renderMarketOfDay(){
     const picks = idx === idx2 ? [STOCKS_DEMO[idx]] : [STOCKS_DEMO[idx], STOCKS_DEMO[idx2]];
     const labels = {defavorable:'Défavorable', central:'Central', favorable:'Favorable'};
     body.innerHTML = picks.map(s=>{
-      const scenarios = computeScenarios(s, 6, 18, 5);
-      const rows = ['defavorable','central','favorable'].map(key=>{
+      const ff = getFundamentalsFields(s.ticker);
+      const scenarios = ff ? computeScenarios(ff.trailingEps, s.prix, 6, 18, 5) : null;
+      const rows = scenarios ? ['defavorable','central','favorable'].map(key=>{
         const r = scenarios[key];
         return `<div class="result-row" style="justify-content:space-between;width:100%;"><span>${labels[key]}</span><span class="mono" style="color:${r.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${r.prixCible.toFixed(1)} € (${r.variation>=0?'+':''}${r.variation.toFixed(0)}%)</span></div>`;
-      }).join('');
+      }).join('') : `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (BPA réel indisponible, scénario non calculable).</p>`;
       return `<div class="card" style="margin-bottom:14px;">
         <span class="smallcaps">${s.secteur} · ${s.pays}</span>
         <h3>${s.nom} <span class="mono" style="font-size:13px;color:var(--text-dim);">${s.ticker}</span></h3>
         <div class="result-row" style="margin:8px 0;"><span class="mono" style="font-size:16px;">${s.prix.toFixed(1)} €</span><span class="mono" style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span></div>
         ${rows}
-        <p class="disclaimer-box" style="margin-top:10px;">Scénarios pédagogiques basés sur des hypothèses génériques (croissance 6 %, PER cible 18×, horizon 5 ans) : pas une recommandation d'achat ou de vente.</p>
+        <p class="disclaimer-box" style="margin-top:10px;">Scénarios pédagogiques basés sur des hypothèses génériques (croissance 6 %, PER cible 18×, horizon 5 ans) et sur le vrai BPA de départ (Yahoo Finance) : pas une recommandation d'achat ou de vente.</p>
       </div>`;
     }).join('');
   }
@@ -370,6 +538,15 @@ if(location.protocol !== 'file:'){
     })
     .catch(err=>{
       console.info('Likanza Academy — cotations actions en direct indisponibles, valeurs de démonstration affichées :', err.message);
+    });
+
+  // Fondamentaux réels (PER, marges, croissance...) : un seul fetch batch pour
+  // les 8 valeurs suivies, partagé par Fiches actions/Comparateur/Scénarios/
+  // Dividendes — jamais un repli sur un champ fictif en cas d'échec.
+  loadCompanyFundamentals(STOCKS_DEMO.map(s=>s.ticker))
+    .then(() => refreshAllStockViews())
+    .catch(err => {
+      console.info('Likanza Academy — fondamentaux réels indisponibles :', err.message);
     });
 }
 

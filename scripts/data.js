@@ -3392,6 +3392,266 @@ function computeTechnicalIndicators(history){
   };
 }
 
+// ================================================================
+// ---------- Fondamentaux réels (Comparateur, Scénarios, Dividendes, fiche action) ----------
+// ================================================================
+// Toutes les valeurs viennent de /api/company-profile (Yahoo Finance,
+// quoteSummary) — jamais de repli sur un chiffre inventé. Un champ absent
+// (fields.x === null) doit toujours s'afficher comme indisponible, jamais
+// comme zéro ou comme une valeur de STOCKS_DEMO.
+
+function fmtBigNumber(n){
+  if(typeof n !== 'number') return null;
+  if(Math.abs(n) >= 1e9) return (n / 1e9).toFixed(2).replace('.', ',') + ' Md';
+  if(Math.abs(n) >= 1e6) return (n / 1e6).toFixed(1).replace('.', ',') + ' M';
+  return Math.round(n).toLocaleString('fr-FR');
+}
+
+const FUNDAMENTALS_FIELD_META = {
+  trailingPE: {label: 'PER', format: 'multiple'},
+  forwardPE: {label: 'PER prévisionnel', format: 'multiple'},
+  priceToSales: {label: 'P/S (prix / chiffre d\'affaires)', format: 'multiple'},
+  priceToBook: {label: 'Price/Book', format: 'multiple'},
+  evToRevenue: {label: 'EV/CA', format: 'multiple'},
+  evToEbitda: {label: 'EV/EBITDA', format: 'multiple'},
+  dividendYield: {label: 'Rendement du dividende', format: 'percent'},
+  marketCap: {label: 'Capitalisation', format: 'bigEUR'},
+  totalRevenue: {label: "Chiffre d'affaires", format: 'bigEUR'},
+  revenueGrowth: {label: 'Croissance du chiffre d\'affaires', format: 'percent'},
+  grossMargins: {label: 'Marge brute', format: 'percent'},
+  operatingMargins: {label: 'Marge opérationnelle', format: 'percent'},
+  profitMargins: {label: 'Marge nette', format: 'percent'},
+  returnOnEquity: {label: 'ROE (rentabilité des capitaux propres)', format: 'percent'},
+  totalCash: {label: 'Trésorerie', format: 'bigEUR'},
+  totalDebt: {label: 'Dette totale', format: 'bigEUR'},
+  freeCashflow: {label: 'Free cash-flow', format: 'bigEUR'},
+  trailingEps: {label: 'BPA (bénéfice par action)', format: 'eur'},
+  sharesOutstanding: {label: 'Actions en circulation', format: 'bigNumber'}
+};
+const FUNDAMENTALS_UNAVAILABLE_TEXT = 'Donnée indisponible ou non suffisamment fiable';
+
+function formatFundamentalValue(key, value){
+  if(typeof value !== 'number' || !Number.isFinite(value)) return FUNDAMENTALS_UNAVAILABLE_TEXT;
+  const meta = FUNDAMENTALS_FIELD_META[key];
+  if(!meta) return String(value);
+  switch(meta.format){
+    case 'percent': return (value * 100).toFixed(1).replace('.', ',') + ' %';
+    case 'multiple': return value.toFixed(1).replace('.', ',') + '×';
+    case 'eur': return value.toFixed(2).replace('.', ',') + ' €';
+    case 'bigEUR': return fmtBigNumber(value) + ' €';
+    case 'bigNumber': return fmtBigNumber(value);
+    default: return String(value);
+  }
+}
+
+// ---------- Cache en session des fondamentaux réels (partagé entre pages) ----------
+// Un seul fetch batch par visite (jamais une requête par onglet/action) : le
+// crumb Yahoo est un mécanisme fragile et non documenté, on limite les appels.
+let companyFundamentalsCache = {};
+let companyFundamentalsPromise = null;
+function loadCompanyFundamentals(symbols){
+  const missing = symbols.filter(s => !(s in companyFundamentalsCache));
+  if(missing.length === 0) return Promise.resolve(companyFundamentalsCache);
+  if(companyFundamentalsPromise) return companyFundamentalsPromise;
+  companyFundamentalsPromise = fetch('/api/company-profile?symbols=' + encodeURIComponent(missing.join(',')))
+    .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(payload => {
+      (payload.companies || []).forEach(c => { companyFundamentalsCache[c.symbol] = c; });
+      missing.forEach(s => { if(!(s in companyFundamentalsCache)) companyFundamentalsCache[s] = null; });
+      return companyFundamentalsCache;
+    })
+    .catch(() => {
+      missing.forEach(s => { companyFundamentalsCache[s] = null; });
+      return companyFundamentalsCache;
+    })
+    .finally(() => { companyFundamentalsPromise = null; });
+  return companyFundamentalsPromise;
+}
+
+// ---------- Contenu éditorial (résumé business / business model / risques) ----------
+// Rédigé une fois pour les 8 valeurs suivies — pas généré à la volée, pour ne
+// jamais mélanger un contenu qui se veut factuel avec un risque d'IA non
+// relue. Basé sur des faits publics largement documentés (modèle économique
+// de l'entreprise), jamais un chiffre précis inventé.
+const COMPANY_EDITORIAL = {
+  'AI.PA': {
+    resume: "Air Liquide produit et distribue des gaz industriels et médicaux (oxygène, azote, hydrogène...) utilisés par l'industrie, la santé et l'électronique. Ses clients sont principalement des entreprises industrielles, des hôpitaux et des fabricants de semi-conducteurs.",
+    businessModel: "Une large part du chiffre d'affaires vient de contrats de long terme (parfois 10 à 15 ans) avec des usines de production installées chez le client, ce qui donne une forte visibilité sur les revenus. L'activité est diversifiée entre plusieurs secteurs et zones géographiques.",
+    risques: ["Activité capitalistique : les usines de production coûtent cher à construire avant de générer des revenus.", "Exposition à la conjoncture industrielle mondiale.", "Les nouveaux projets (ex. hydrogène) demandent des investissements importants par avance."]
+  },
+  'TTE.PA': {
+    resume: "TotalEnergies est un groupe énergétique intégré : exploration et production de pétrole et de gaz, raffinage, distribution de carburants, et développement croissant dans l'électricité et les renouvelables.",
+    businessModel: "Les revenus dépendent fortement des prix du pétrole et du gaz, très volatils et hors du contrôle de l'entreprise. Le groupe diversifie progressivement vers l'électricité pour réduire cette dépendance sur le long terme.",
+    risques: ["Forte sensibilité aux prix des matières premières énergétiques.", "Risques réglementaires et géopolitiques liés aux zones d'exploration.", "La transition énergétique pourrait peser sur la demande de long terme pour les hydrocarbures."]
+  },
+  'SAN.PA': {
+    resume: "Sanofi est un groupe pharmaceutique qui développe, fabrique et commercialise des médicaments et vaccins dans plusieurs domaines thérapeutiques (immunologie, vaccins, maladies rares...).",
+    businessModel: "Les revenus reposent sur un portefeuille de médicaments protégés par des brevets, avec des marges élevées tant que l'exclusivité dure. La croissance dépend du renouvellement de ce portefeuille avant l'expiration des brevets existants.",
+    risques: ["Expiration de brevets sur des médicaments majeurs (concurrence des génériques).", "Risque d'échec en phase de recherche clinique.", "Pression réglementaire sur les prix des médicaments dans plusieurs pays."]
+  },
+  'SAF.PA': {
+    resume: "Safran conçoit et fabrique des moteurs d'avions (avec General Electric via CFM International), des équipements aéronautiques et des systèmes de défense.",
+    businessModel: "Une grande partie des revenus vient des services après-vente (maintenance, pièces) sur les moteurs déjà en service — un flux récurrent qui grandit avec le nombre d'avions en circulation, pas seulement des ventes de moteurs neufs.",
+    risques: ["Cycles longs et coûteux de développement de nouveaux moteurs.", "Forte dépendance au rythme de production des avionneurs et au trafic aérien mondial.", "Risque de perturbation des chaînes d'approvisionnement."]
+  },
+  'DG.PA': {
+    resume: "Vinci est un groupe de construction et de concessions : il construit des infrastructures (routes, bâtiments) et exploite des concessions de long terme (autoroutes, aéroports).",
+    businessModel: "Deux moteurs distincts : la construction (marges plus faibles, dépendante des chantiers en cours) et les concessions, qui génèrent des revenus récurrents et prévisibles sur plusieurs décennies.",
+    risques: ["Les concessions dépendent du trafic réel (routier, aérien), sensible à la conjoncture.", "Risque réglementaire sur les tarifs des concessions.", "L'activité construction reste cyclique."]
+  },
+  'OR.PA': {
+    resume: "L'Oréal conçoit, fabrique et distribue des produits de beauté et de soin (cosmétiques, parfums, soins capillaires) sous de multiples marques, du grand public au luxe.",
+    businessModel: "La diversification par marque et par zone géographique limite la dépendance à un seul produit ou marché. Les marges dépendent du positionnement (luxe vs grand public) et de l'investissement marketing nécessaire pour maintenir la préférence de marque.",
+    risques: ["Sensibilité aux dépenses discrétionnaires des consommateurs, surtout sur le segment luxe.", "Concurrence intense et coûts marketing élevés pour défendre les parts de marché.", "Exposition aux devises (ventes mondiales, coûts en partie en euros)."]
+  },
+  'ASML.AS': {
+    resume: "ASML conçoit et fabrique les machines de lithographie utilisées pour produire les puces électroniques les plus avancées — un équipement indispensable aux plus grands fabricants de semi-conducteurs mondiaux.",
+    businessModel: "ASML est en position de quasi-monopole sur la lithographie EUV, la technologie la plus avancée, ce qui lui donne un fort pouvoir de fixation des prix. Une partie des revenus vient aussi des services et de la maintenance des machines déjà installées.",
+    risques: ["Très forte concentration de la clientèle (un petit nombre de très grands fabricants de puces).", "Cycles d'investissement des semi-conducteurs marqués par des phases de forte puis de faible demande.", "Restrictions à l'export (tensions géopolitiques) qui peuvent limiter certaines ventes."]
+  },
+  'MC.PA': {
+    resume: "LVMH est un groupe de luxe réunissant de nombreuses maisons (mode, maroquinerie, vins et spiritueux, parfums, horlogerie, distribution sélective) opérant de façon largement indépendante sous un même groupe.",
+    businessModel: "La diversification entre de nombreuses maisons et catégories de produits réduit la dépendance à une seule marque. Le positionnement haut de gamme permet des marges élevées, mais dépend de la capacité à maintenir la désirabilité des marques dans la durée.",
+    risques: ["Sensibilité aux dépenses discrétionnaires des clients aisés, surtout en ralentissement économique.", "Risque de dilution de l'image de marque en cas de sur-expansion.", "Exposition aux devises et aux flux du tourisme international."]
+  }
+};
+
+// ---------- Fonctions pures : lecture des fondamentaux ----------
+
+// Seuils de lecture partagés (mêmes bandes partout sur le site) — une
+// interprétation, jamais un fait en soi : toujours affichée à côté du vrai
+// chiffre qui la justifie, jamais à sa place.
+function bucketGrowth(pct){
+  if(typeof pct !== 'number') return null;
+  if(pct >= 0.10) return {level: 'forte', label: 'croissance forte'};
+  if(pct >= 0.03) return {level: 'moderee', label: 'croissance modérée'};
+  if(pct >= -0.02) return {level: 'stable', label: 'chiffre d\'affaires stable'};
+  return {level: 'baisse', label: 'chiffre d\'affaires en baisse'};
+}
+function bucketMargin(pct){
+  if(typeof pct !== 'number') return null;
+  if(pct >= 0.20) return {level: 'elevee', label: 'marge élevée'};
+  if(pct >= 0.08) return {level: 'moderee', label: 'marge modérée'};
+  return {level: 'faible', label: 'marge faible'};
+}
+function bucketLeverage(totalDebt, totalCash){
+  if(typeof totalDebt !== 'number' || typeof totalCash !== 'number') return null;
+  const net = totalDebt - totalCash;
+  if(net <= 0) return {level: 'faible', label: 'trésorerie nette positive (plus de cash que de dette)'};
+  if(totalCash > 0 && net / totalCash <= 3) return {level: 'modere', label: 'endettement net modéré'};
+  return {level: 'eleve', label: 'endettement net élevé'};
+}
+
+// Synthèse forces/faiblesses dérivée des vraies bandes ci-dessus — aucune
+// nouvelle rédaction par entreprise, purement calculé.
+function deriveStrengthsWeaknesses(fields){
+  const strengths = [], weaknesses = [];
+  const growth = bucketGrowth(fields.revenueGrowth);
+  const margin = bucketMargin(fields.profitMargins);
+  const leverage = bucketLeverage(fields.totalDebt, fields.totalCash);
+  if(growth){ (growth.level === 'forte' || growth.level === 'moderee' ? strengths : weaknesses).push(`Chiffre d'affaires : ${growth.label} (${formatFundamentalValue('revenueGrowth', fields.revenueGrowth)}).`); }
+  if(margin){ (margin.level === 'elevee' ? strengths : margin.level === 'faible' ? weaknesses : strengths).push(`Rentabilité : ${margin.label} (marge nette ${formatFundamentalValue('profitMargins', fields.profitMargins)}).`); }
+  if(leverage){ (leverage.level === 'eleve' ? weaknesses : strengths).push(`Structure financière : ${leverage.label}.`); }
+  return {strengths, weaknesses};
+}
+
+// ---------- Bouclage "Approfondir" (actualités -> Academy/Bibliothèque) ----------
+// Généralise le lien en dur qui n'existait auparavant que pour la catégorie
+// "Économie" (actualites.js) — mêmes vraies catégories Bibliothèque que
+// DOMAINS (app.js), pas une nouvelle taxonomie inventée. Une catégorie sans
+// équivalent réel en Bibliothèque (Géopolitique) ne force aucun lien.
+const NEWS_CATEGORY_LINKS = {
+  'Entreprises': 'Entreprises',
+  'Technologie': 'Technologie',
+  'Bourse': 'Bourse',
+  'Crypto': 'Crypto',
+  'Matières premières': 'Matières premières',
+  'Économie': 'Économie'
+};
+function renderNewsApprofondirLink(categorie){
+  const theme = NEWS_CATEGORY_LINKS[categorie];
+  if(!theme) return '';
+  return `<p style="font-size:12.5px;margin-bottom:14px;"><a href="bibliotheque.html#theme:${encodeURIComponent(theme)}" style="color:var(--gold-bright);">Voir le concept dans la Bibliothèque →</a></p>`;
+}
+
+// ---------- Impact potentiel (v1, volontairement modeste) : proximité thématique
+// entre le secteur réel d'une valeur (STOCKS_DEMO.secteur) et les actualités
+// hebdomadaires déjà réelles — jamais un badge directionnel (🟢/🔴), aucune
+// donnée fiable ne permet une vraie classification sectorielle des actualités
+// aujourd'hui. Une simple proximité de vocabulaire, jamais une affirmation
+// causale ("cette actu va faire bouger ce titre"). ----------
+const SECTOR_KEYWORDS = {
+  'Industrie': ['industrie', 'industriel', 'usine', 'production'],
+  'Énergie': ['pétrole', 'gaz', 'énergie', 'opep', 'baril', 'électricité'],
+  'Santé': ['médicament', 'pharmaceutique', 'santé', 'vaccin', 'clinique'],
+  'Aéronautique': ['aéronautique', 'avion', 'aviation', 'aérien'],
+  'Construction': ['construction', 'btp', 'immobilier', 'infrastructure'],
+  'Consommation': ['consommation', 'consommateur', 'grande distribution', 'détail'],
+  'Technologie': ['technologie', 'semi-conducteur', 'intelligence artificielle', 'puce', 'numérique'],
+  'Luxe': ['luxe', 'mode', 'discrétionnaire']
+};
+function findThematicNews(secteur, weeklyArticles){
+  const keywords = SECTOR_KEYWORDS[secteur];
+  if(!keywords || !Array.isArray(weeklyArticles)) return [];
+  return weeklyArticles.filter(a => {
+    const text = [a.titre, a.resume, a.pourquoi, ...(a.points || [])].join(' ').toLowerCase();
+    return keywords.some(k => text.includes(k));
+  });
+}
+
+// ---------- Comparateur : verdict par angle, jamais de gagnant global ----------
+function computeComparisonAngles(companyA, companyB){
+  const angles = [];
+  const fa = companyA.fields, fb = companyB.fields;
+
+  angles.push({
+    angle: 'croissance', label: 'Pour la croissance',
+    readings: [companyA, companyB].map((c, i) => ({symbol: c.symbol, text: `${formatFundamentalValue('revenueGrowth', (i === 0 ? fa : fb).revenueGrowth)} de croissance du chiffre d'affaires (${(i === 0 ? fa : fb).revenueGrowth != null ? 'donnée réelle, dernier exercice connu' : 'donnée indisponible'})`})),
+    framing: (typeof fa.revenueGrowth === 'number' && typeof fb.revenueGrowth === 'number')
+      ? `Sur ce seul critère, ${(fa.revenueGrowth >= fb.revenueGrowth ? companyA.symbol : companyB.symbol)} pourrait sembler plus adapté selon l'hypothèse que la croissance récente se poursuit — une hypothèse, pas une garantie.`
+      : "Comparaison impossible sur ce critère : au moins une donnée est indisponible."
+  });
+  angles.push({
+    angle: 'stabilite', label: 'Pour la stabilité',
+    readings: [companyA, companyB].map(c => ({symbol: c.symbol, text: `${bucketLeverage(c.fields.totalDebt, c.fields.totalCash) ? bucketLeverage(c.fields.totalDebt, c.fields.totalCash).label : FUNDAMENTALS_UNAVAILABLE_TEXT}`})),
+    framing: "Une trésorerie nette positive ou un endettement net modéré peut mieux absorber un ralentissement — mais la stabilité dépend aussi de facteurs non financiers (position concurrentielle, cycle du secteur)."
+  });
+  angles.push({
+    angle: 'dividendes', label: 'Pour les dividendes',
+    readings: [companyA, companyB].map(c => ({symbol: c.symbol, text: formatFundamentalValue('dividendYield', c.fields.dividendYield)})),
+    framing: (typeof fa.dividendYield === 'number' && typeof fb.dividendYield === 'number')
+      ? `${(fa.dividendYield >= fb.dividendYield ? companyA.symbol : companyB.symbol)} verse aujourd'hui un rendement plus élevé — un rendement passé ne garantit pas son maintien futur.`
+      : "Comparaison impossible sur ce critère : au moins une donnée est indisponible."
+  });
+  angles.push({
+    angle: 'valorisation', label: 'Pour une valorisation prudente',
+    readings: [companyA, companyB].map(c => ({symbol: c.symbol, text: `PER ${formatFundamentalValue('trailingPE', c.fields.trailingPE)}`})),
+    framing: (typeof fa.trailingPE === 'number' && typeof fb.trailingPE === 'number')
+      ? `${(fa.trailingPE <= fb.trailingPE ? companyA.symbol : companyB.symbol)} se paie aujourd'hui un multiple plus faible — un PER plus élevé peut se justifier par une croissance plus forte, des marges plus élevées, ou une position dominante, pas seulement par une survalorisation.`
+      : "Comparaison impossible sur ce critère : au moins une donnée est indisponible."
+  });
+  return angles;
+}
+
+// ---------- Curseur d'hypothèses comparatif (même hypothèse, vrais points de départ) ----------
+function computeComparativeScenarios(epsA, epsB, {growth, perTarget, horizon}){
+  function oneScenario(bpaActuel){
+    if(typeof bpaActuel !== 'number') return null;
+    const defs = {
+      defavorable: {growth: growth - 6, per: perTarget * 0.75},
+      central: {growth, per: perTarget},
+      favorable: {growth: growth + 6, per: perTarget * 1.25}
+    };
+    const out = {};
+    Object.entries(defs).forEach(([key, s]) => {
+      const bpaFutur = bpaActuel * Math.pow(1 + s.growth / 100, horizon);
+      out[key] = {prixCible: bpaFutur * s.per};
+    });
+    return out;
+  }
+  return {a: oneScenario(epsA), b: oneScenario(epsB)};
+}
+
 // ---------- Profil personnel (pré-remplit les simulateurs + test de positionnement) ----------
 // fzr-profile est le seul objet profil du site : le test de positionnement
 // (levels/interests/learningStyle) fait évoluer cette même structure plutôt

@@ -68,14 +68,13 @@ async function renderActionDetail(){
     </div>`;
 
   const fundamentalsHtml = demo ? `
-    <div class="card">
+    <div class="card" id="companyFundamentalsCard">
       <h3>Données fondamentales</h3>
-      <p style="margin-top:8px;">PER ${demo.per} · Rendement ${demo.dividende}% · Capitalisation ${demo.cap} · Chiffre d'affaires ${demo.ca}</p>
-      <p style="margin-top:6px;color:var(--text-dim);font-size:13px;">Marge nette ${demo.marge_nette}% · ROE ${demo.roe}% · Dette/EBITDA ${demo.dette_ebitda}×${demo.pea ? ' · <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
+      <p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement des données réelles…</p>
     </div>` : `
     <div class="card">
       <h3>Données fondamentales</h3>
-      <p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Non disponibles pour cette action : seul le cours en direct est affiché ici. Le Comparateur, les Scénarios et le simulateur de Dividendes (page Bourse) restent réservés aux 8 valeurs à données fondamentales réelles.</p>
+      <p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Non disponibles pour cette action : seul le cours en direct est affiché ici. Le Comparateur, les Scénarios et le simulateur de Dividendes (page Bourse) restent réservés aux 8 valeurs suivies, pour lesquelles Likanza peut récupérer des fondamentaux réels.</p>
     </div>`;
 
   el.innerHTML = `
@@ -88,6 +87,7 @@ async function renderActionDetail(){
       <div class="card" id="companyProfileCard" style="display:none;"></div>
     </div>
     <div class="card" id="technicalCard" style="margin-top:16px;"></div>
+    ${demo ? `<div class="card" id="thematicNewsCard" style="margin-top:16px;display:none;"></div>` : ''}
     <p class="disclaimer-box" style="margin-top:16px;">Ces informations sont fournies à titre pédagogique, en différé. Elles ne constituent ni un conseil en investissement, ni une incitation à acheter ou vendre.</p>`;
 
   initFavButtons();
@@ -106,22 +106,58 @@ async function renderActionDetail(){
     }
   }
 
-  // ---------- Description de la société (asynchrone, dégradation silencieuse) ----------
+  // ---------- Description de la société + fondamentaux réels (asynchrone, un seul appel) ----------
   const profileCard = document.getElementById('companyProfileCard');
-  if(profileCard){
+  const fundCard = document.getElementById('companyFundamentalsCard');
+  if(profileCard || fundCard){
     fetch('/api/company-profile?symbol=' + encodeURIComponent(ticker))
       .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(profile => {
-        profileCard.style.display = '';
-        const meta = [profile.sector, profile.industry, profile.employees ? profile.employees.toLocaleString('fr-FR') + ' employés' : null].filter(Boolean).join(' · ');
-        profileCard.innerHTML = `
-          <h3>À propos de ${nom}</h3>
-          ${meta ? `<p style="font-size:12px;color:var(--text-dim);margin:6px 0 10px;">${meta}</p>` : ''}
-          <p style="font-size:13.5px;color:var(--text-dim);line-height:1.6;">${profile.summary}</p>
-          ${profile.website ? `<a href="${profile.website}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;">Site officiel ↗</a>` : ''}`;
+        if(profileCard){
+          profileCard.style.display = '';
+          const meta = [profile.sector, profile.industry, profile.employees ? profile.employees.toLocaleString('fr-FR') + ' employés' : null].filter(Boolean).join(' · ');
+          profileCard.innerHTML = `
+            <h3>À propos de ${nom}</h3>
+            ${meta ? `<p style="font-size:12px;color:var(--text-dim);margin:6px 0 10px;">${meta}</p>` : ''}
+            <p style="font-size:13.5px;color:var(--text-dim);line-height:1.6;">${profile.summary}</p>
+            ${profile.website ? `<a href="${profile.website}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;">Site officiel ↗</a>` : ''}`;
+        }
+        if(fundCard){
+          const ff = profile.fundamentals ? profile.fundamentals.fields : null;
+          if(!ff){
+            fundCard.innerHTML = `<h3>Données fondamentales</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+            return;
+          }
+          fundCard.innerHTML = `
+            <h3>Données fondamentales</h3>
+            <p style="margin-top:8px;">PER ${formatFundamentalValue('trailingPE', ff.trailingPE)} · Rendement ${formatFundamentalValue('dividendYield', ff.dividendYield)} · Capitalisation ${formatFundamentalValue('marketCap', ff.marketCap)} · Chiffre d'affaires ${formatFundamentalValue('totalRevenue', ff.totalRevenue)}</p>
+            <p style="margin-top:6px;color:var(--text-dim);font-size:13px;">Marge nette ${formatFundamentalValue('profitMargins', ff.profitMargins)} · ROE ${formatFundamentalValue('returnOnEquity', ff.returnOnEquity)} · EV/EBITDA ${formatFundamentalValue('evToEbitda', ff.evToEbitda)}${demo && demo.pea ? ' · <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
+            <p style="margin-top:8px;">${renderDataBadge('reel')}</p>`;
+        }
       })
       .catch(err => {
-        console.info('Likanza Academy — description de société indisponible :', err.message);
+        console.info('Likanza Academy — description/fondamentaux de société indisponibles :', err.message);
+        if(fundCard) fundCard.innerHTML = `<h3>Données fondamentales</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+      });
+  }
+
+  // ---------- Actualités thématiquement liées au secteur (proximité, jamais un badge directionnel) ----------
+  const thematicCard = document.getElementById('thematicNewsCard');
+  if(thematicCard && demo){
+    fetch('/api/weekly-news')
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(payload => {
+        const related = findThematicNews(demo.secteur, payload.articles || []);
+        if(related.length === 0) return;
+        thematicCard.style.display = '';
+        thematicCard.innerHTML = `
+          <h3>Actualités thématiquement liées au secteur "${demo.secteur}"</h3>
+          <p style="font-size:12px;color:var(--text-dim);margin:6px 0 12px;">Simple proximité de thème avec les actualités réelles de la semaine — pas une affirmation que ces actualités vont influencer ce titre précis.</p>
+          ${related.map(a => `<p style="font-size:13px;margin-bottom:8px;"><a href="actualites.html#${a.slug}" style="color:var(--gold-bright);">${a.titre}</a></p>`).join('')}
+          ${renderNewsApprofondirLink(related[0].categorie)}`;
+      })
+      .catch(err => {
+        console.info('Likanza Academy — actualités thématiques indisponibles :', err.message);
       });
   }
 }

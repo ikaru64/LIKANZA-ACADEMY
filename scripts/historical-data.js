@@ -65,7 +65,8 @@ const DATA_BADGE_META = {
   reel:      {emoji: '🟢', label: 'Historique réel', className: 'data-badge-reel'},
   hypothese: {emoji: '🔵', label: 'Hypothèse', className: 'data-badge-hypothese'},
   scenario:  {emoji: '🟡', label: 'Scénario', className: 'data-badge-scenario'},
-  exemple:   {emoji: '⚪', label: 'Exemple pédagogique', className: 'data-badge-exemple'}
+  exemple:   {emoji: '⚪', label: 'Exemple pédagogique', className: 'data-badge-exemple'},
+  editorial: {emoji: '📝', label: 'Rédaction Likanza Academy', className: 'data-badge-editorial'}
 };
 function renderDataBadge(kind){
   const meta = DATA_BADGE_META[kind] || DATA_BADGE_META.hypothese;

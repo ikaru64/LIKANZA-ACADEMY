@@ -60,7 +60,7 @@ function renderFull(cat){
       <ul style="color:var(--text-dim);font-size:13.5px;margin:0 0 14px 18px;">${a.points.map(p=>`<li style="margin-bottom:5px;">${p}</li>`).join('')}</ul>
       <p style="font-size:13.5px;margin-bottom:10px;"><strong>Pourquoi c'est important : </strong><span style="color:var(--text-dim);">${a.pourquoi}</span></p>
       <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;"><strong style="color:var(--text);">Impact potentiel :</strong> ${a.impact.join(' · ')}</p>
-      ${a.categorie === 'Économie' ? `<p style="font-size:12.5px;margin-bottom:14px;"><a href="bibliotheque.html#theme:%C3%89conomie" style="color:var(--gold-bright);">Voir le concept dans la Bibliothèque →</a></p>` : ''}
+      ${renderNewsApprofondirLink(a.categorie)}
       <div class="card-footer">
         <span>${a.lecture} de lecture · semaine du ${new Date(a.weekStart).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})} · Source : ${a.source}</span>
       </div>
