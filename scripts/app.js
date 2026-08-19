@@ -1660,6 +1660,32 @@ const LIBRARY = [
     erreurs:["Sous-estimer l'effet cumulé d'un churn en apparence faible sur plusieurs mois"]
   },
   {
+    terme:"Burn rate",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le burn rate (taux de combustion) mesure la vitesse à laquelle une entreprise dépense sa trésorerie, généralement exprimé en euros par mois.",
+    detail:"Il se calcule en général en comparant la trésorerie disponible à deux dates : la différence, ramenée à un mois, donne le burn rate. Rapporté au montant de trésorerie restante, il permet d'estimer le nombre de mois restants avant d'être à court de liquidités (la « runway »).",
+    avance:"Un burn rate élevé n'est pas automatiquement un problème si la croissance ou la levée de fonds suit un rythme cohérent — mais il devient critique dès que la runway restante passe sous quelques mois sans perspective de financement ou de rentabilité proche.",
+    exemple:"Une entreprise qui commence le mois avec 60 000€ de trésorerie et le termine avec 50 000€ a un burn rate de 10 000€ ce mois-là, soit une runway d'environ 5 mois au même rythme.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Suivre le burn rate sans jamais calculer la runway restante qui en découle"]
+  },
+  {
+    terme:"Product-market fit",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le product-market fit (adéquation produit-marché) désigne le moment où un produit répond enfin à une vraie demande du marché, au point que les clients l'adoptent et le recommandent sans effort marketing disproportionné.",
+    detail:"Avant d'atteindre ce point, une entreprise ajuste souvent son produit, son positionnement ou son client cible par itérations successives. Après l'avoir atteint, la priorité change généralement : passer de la recherche du bon produit à la mise à l'échelle de sa distribution.",
+    avance:"Le product-market fit n'est ni binaire ni définitif : il peut se dégrader si le marché évolue ou si la concurrence change, et certaines entreprises doivent le retrouver plusieurs fois au cours de leur histoire, notamment après un pivot.",
+    exemple:"Une application dont la croissance repose surtout sur le bouche-à-oreille et la rétention des utilisateurs existants, plutôt que sur des dépenses publicitaires croissantes, est souvent citée comme un signe de product-market fit.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Investir massivement dans l'acquisition avant d'avoir vérifié que les premiers clients restent et recommandent le produit"]
+  },
+  {
     terme:"Taux de conversion",
     categorie:"Business",
     niveau:"Débutant",

@@ -90,8 +90,8 @@
       <li>Qui est vraiment mon client idéal ?</li>
     </ul>
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <a href="#business-immobilier" class="btn btn-gold">Explorer les 3 piliers</a>
-      <a href="#business-indicateurs" class="btn btn-sm">Voir la situation actuelle</a>
+      <a href="#business-explorer" class="btn btn-gold">Explorer les 3 piliers</a>
+      <a href="#business-game" class="btn btn-sm">🎮 Aller au Business Game</a>
     </div>
   </div>
 </section>
@@ -100,8 +100,8 @@
   <div class="business-resume" id="businessResume" style="max-width:720px;"></div>
 </section>
 
-<section class="section" id="business-immobilier">
-  <div class="section-head"><h2>Les 3 piliers</h2><span class="meta-line">immobilier, marketing, clients</span></div>
+<section class="section" id="business-explorer">
+  <div class="section-head"><h2>🧠 Explorer — les 3 piliers</h2><span class="meta-line">immobilier, marketing, clients</span></div>
   <div class="card-grid">
     <div class="card" id="businessImmobilier"></div>
     <div class="card" id="businessMarketing"></div>
@@ -124,6 +124,40 @@
   <div class="section-head"><h2>🧪 Business Lab</h2><span class="meta-line">des mises en situation, pas juste des définitions</span></div>
   <div class="card-grid" id="businessLab"></div>
   <div id="businessLab-session" style="margin-top:18px;"></div>
+</section>
+
+<section class="section" id="business-strategy" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
+  <div class="section-head"><h2>🔍 Business Strategy</h2><span class="meta-line">analyse ton projet, obtiens un diagnostic et plusieurs stratégies possibles</span></div>
+  <a href="construire-son-projet.html" class="card play-tile" style="max-width:720px;">
+    <span class="icon" data-icon="compass" style="color:var(--gold-bright);"></span>
+    <h3 style="margin:10px 0 6px;">Analyse ton projet</h3>
+    <p>Un parcours guidé (secteur, problème, client, offre, chiffres) qui débouche sur un diagnostic 🟢🟡🟠🔴 par zone et plusieurs stratégies justifiées (prudente, croissance, niche) — jamais une seule « bonne réponse ».</p>
+    <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
+  </a>
+</section>
+
+<section class="section" id="business-stories">
+  <div class="section-head"><h2>📖 Business Stories</h2><span class="meta-line">de vrais moments de décision d'entreprises réelles</span></div>
+  <div class="card" style="max-width:none;">
+    <div id="businessStories"></div>
+  </div>
+</section>
+
+<section class="section" id="business-game" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
+  <div class="section-head"><h2>🎮 Business Game</h2><span class="meta-line">crée une entreprise, décide, observe les conséquences</span></div>
+  <a href="jeu-business.html" class="card play-tile" style="max-width:720px;">
+    <span class="icon" data-icon="gamepad-2" style="color:var(--gold-bright);"></span>
+    <h3 style="margin:10px 0 6px;">Lancer le Business Game</h3>
+    <p>SaaS B2B, e-commerce ou restaurant, sur 2020, 2022 ou un scénario actuel : chaque décision mensuelle a des effets définis à l'avance, jamais un hasard sans logique.</p>
+    <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Jouer →</span></div>
+  </a>
+</section>
+
+<section class="section" id="business-profil">
+  <div class="section-head"><h2>📊 Ton profil business</h2><span class="meta-line">basé sur tes vraies parties, jamais sur une seule</span></div>
+  <div class="card" style="max-width:720px;">
+    <div id="businessProfile"></div>
+  </div>
 </section>
 
 <section class="section" id="business-indicateurs" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
@@ -158,6 +192,8 @@
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/historical-data.js"></script>
+<script src="scripts/games/business-game-data.js"></script>
+<script src="scripts/games/business-game.js"></script>
 <script src="scripts/pages/business.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">

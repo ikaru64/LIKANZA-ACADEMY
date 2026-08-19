@@ -104,3 +104,5 @@ renderBusinessQuestionDuJour('businessQuestion');
 renderBusinessCasRecommande('businessCasRecommande');
 renderBusinessLab('businessLab');
 renderBusinessNiveau('businessNiveau');
+renderBusinessStories('businessStories');
+renderBusinessProfile('businessProfile');

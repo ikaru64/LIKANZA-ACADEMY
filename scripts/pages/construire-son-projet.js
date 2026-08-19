@@ -11,7 +11,136 @@
    de niveau de l'utilisateur.
    ============================================================ */
 
+// Catégories plus larges que les 3 secteurs simulables du Business Game
+// (§21 MVP) : l'outil de stratégie reste utile pour tout type de projet,
+// seul le passage vers le jeu se limite aux secteurs réellement implémentés.
+const PROJECT_SECTOR_OPTIONS = [
+  {value:'saas', label: (typeof BUSINESS_SECTORS !== 'undefined' && BUSINESS_SECTORS.saas) ? `${BUSINESS_SECTORS.saas.icon} ${BUSINESS_SECTORS.saas.label}` : 'SaaS (logiciel en abonnement)'},
+  {value:'ecommerce', label: (typeof BUSINESS_SECTORS !== 'undefined' && BUSINESS_SECTORS.ecommerce) ? `${BUSINESS_SECTORS.ecommerce.icon} ${BUSINESS_SECTORS.ecommerce.label}` : 'E-commerce'},
+  {value:'app', label:'📱 Application mobile'},
+  {value:'marketplace', label:'🔀 Marketplace'},
+  {value:'agence', label:'🧩 Agence / service professionnel'},
+  {value:'restaurant', label: (typeof BUSINESS_SECTORS !== 'undefined' && BUSINESS_SECTORS.restaurant) ? `${BUSINESS_SECTORS.restaurant.icon} ${BUSINESS_SECTORS.restaurant.label}` : 'Restaurant'},
+  {value:'media', label:'📰 Média / contenu'},
+  {value:'createur', label:'🎨 Activité de créateur / créatrice'},
+  {value:'immobilier', label:'🏠 Immobilier'},
+  {value:'service-local', label:'🧰 Service local'},
+  {value:'autre', label:'✳️ Autre'}
+];
+const PROJECT_SECTOR_LABELS = Object.fromEntries(PROJECT_SECTOR_OPTIONS.map(o=>[o.value, o.label]));
+// Seuls ces 3 secteurs sont aujourd'hui simulables dans le Business Game (§21 MVP).
+const PROJECT_SECTOR_TO_GAME_KEY = {saas:'saas', ecommerce:'ecommerce', restaurant:'restaurant'};
+
+const DIAGNOSTIC_STATUS_META = {
+  vert:   {emoji:'🟢', label:'Complet'},
+  jaune:  {emoji:'🟡', label:'À surveiller'},
+  orange: {emoji:'🟠', label:'À approfondir'},
+  rouge:  {emoji:'🔴', label:'Manquant'}
+};
+
+function wordCount(str){ return (str || '').trim().split(/\s+/).filter(Boolean).length; }
+
+// Diagnostic basé uniquement sur la présence et la précision des réponses
+// réellement saisies par l'utilisateur — jamais un jugement inventé (§4).
+function computeDiagnostic(a){
+  a = a || {};
+  const zones = [];
+
+  const wProbleme = wordCount(a.probleme), wMarche = wordCount(a.marche), wConcurrence = wordCount(a.concurrence);
+  if(wProbleme >= 8 && wMarche >= 5 && wConcurrence >= 5){
+    zones.push({key:'probleme', label:'Problème & marché', status:'vert', justification:`Le problème (${wProbleme} mots), le marché (${wMarche} mots) et la concurrence (${wConcurrence} mots) sont tous les trois décrits avec un niveau de détail correct.`});
+  } else if(wProbleme >= 3 && (wMarche >= 1 || wConcurrence >= 1)){
+    zones.push({key:'probleme', label:'Problème & marché', status:'orange', justification:`Le problème est décrit, mais le marché (${wMarche} mots) ou la concurrence (${wConcurrence} mots) restent peu détaillés — creuse ces deux points.`});
+  } else {
+    zones.push({key:'probleme', label:'Problème & marché', status:'rouge', justification:"Le problème, le marché et la concurrence ne sont pas encore assez renseignés pour évaluer cette zone."});
+  }
+
+  const wClientDetail = wordCount(a.clientDetail);
+  if(a.clientType && wClientDetail >= 6){
+    zones.push({key:'client', label:'Client cible', status:'vert', justification:`Le type de client est choisi et décrit précisément (${wClientDetail} mots).`});
+  } else if(a.clientType && wClientDetail >= 1){
+    zones.push({key:'client', label:'Client cible', status:'orange', justification:`Le type de client est choisi, mais sa description reste courte (${wClientDetail} mot${wClientDetail>1?'s':''}) — précise qui est vraiment ce client.`});
+  } else {
+    zones.push({key:'client', label:'Client cible', status:'rouge', justification:"Le client cible n'est pas encore renseigné."});
+  }
+
+  const wValeur = wordCount(a.valeur), wOffre = wordCount(a.offre);
+  if(wValeur >= 6 && wOffre >= 3 && a.businessModel){
+    zones.push({key:'offre', label:'Offre & business model', status:'vert', justification:`La proposition de valeur (${wValeur} mots), l'offre (${wOffre} mots) et le business model sont tous renseignés.`});
+  } else if(wValeur >= 1 || wOffre >= 1){
+    zones.push({key:'offre', label:'Offre & business model', status:'orange', justification:"La proposition de valeur ou l'offre sont amorcées, mais incomplètes ou sans business model choisi."});
+  } else {
+    zones.push({key:'offre', label:'Offre & business model', status:'rouge', justification:"La proposition de valeur, l'offre et le business model ne sont pas encore renseignés."});
+  }
+
+  const r = computeSeuil(a);
+  const ventesVisees = Number(a.ventesVisees) || 0;
+  if(!r.valid){
+    zones.push({key:'chiffres', label:'Chiffres (seuil de rentabilité)', status:'rouge', justification: r.margeUnitaire <= 0 ? "Le prix indiqué n'est pas supérieur au coût variable par vente : impossible de calculer un seuil de rentabilité." : "Aucune charge fixe mensuelle n'a été indiquée : impossible de calculer un seuil de rentabilité."});
+  } else if(ventesVisees >= r.seuilVentes){
+    zones.push({key:'chiffres', label:'Chiffres (seuil de rentabilité)', status:'vert', justification:`Ton objectif de ${ventesVisees} ventes/mois est au-dessus du seuil de rentabilité calculé (${r.seuilVentes} ventes/mois).`});
+  } else if(ventesVisees > 0){
+    zones.push({key:'chiffres', label:'Chiffres (seuil de rentabilité)', status:'jaune', justification:`Ton objectif de ${ventesVisees} ventes/mois est en dessous du seuil de rentabilité calculé (${r.seuilVentes} ventes/mois) — à surveiller de près au démarrage.`});
+  } else {
+    zones.push({key:'chiffres', label:'Chiffres (seuil de rentabilité)', status:'orange', justification:`Le seuil de rentabilité est calculable (${r.seuilVentes} ventes/mois), mais tu n'as pas encore indiqué d'objectif de ventes visées.`});
+  }
+
+  const wTest = wordCount(a.testIdee), wRisques = wordCount(a.risques), wClients = wordCount(a.premiersClients);
+  if(wTest >= 5 && wRisques >= 5 && wClients >= 3){
+    zones.push({key:'validation', label:'Validation & risques', status:'vert', justification:"Le test de l'idée, les risques et les premiers clients envisagés sont tous décrits."});
+  } else if(wTest >= 1 || wRisques >= 1 || wClients >= 1){
+    zones.push({key:'validation', label:'Validation & risques', status:'orange', justification:"Une partie de la validation (test, risques ou premiers clients) est amorcée, mais incomplète."});
+  } else {
+    zones.push({key:'validation', label:'Validation & risques', status:'rouge', justification:"Le test de l'idée, les risques et les premiers clients ne sont pas encore renseignés."});
+  }
+
+  return zones;
+}
+
+// 3 stratégies génériques (prudente/croissance/niche), chacune justifiée par
+// de vraies réponses saisies — jamais une affirmation qu'une stratégie est
+// objectivement meilleure sans préciser sous quelles conditions (§4).
+function computeStrategies(a){
+  a = a || {};
+  const budget = Number(a.budgetInitial) || 0;
+  const r = computeSeuil(a);
+  const ventesVisees = Number(a.ventesVisees) || 0;
+  const wConcurrence = wordCount(a.concurrence);
+  const wClientDetail = wordCount(a.clientDetail);
+  const budgetLabel = budget > 0 ? fmtEUR(budget) : 'non renseigné';
+
+  return [
+    {
+      id: 'prudente', label: 'Prudente',
+      objectif: "Minimiser le risque : viser la rentabilité rapide plutôt que la croissance rapide.",
+      avantages: ["Moins de capital nécessaire pour démarrer.", "Permet de valider le modèle avant d'investir davantage."],
+      risques: ["Croissance plus lente.", "Risque de laisser une opportunité à la concurrence."],
+      recommandeeSi: `un capital initial limité (ici ${budgetLabel}) et/ou un objectif de ventes proche du seuil de rentabilité calculé`,
+      recommandee: (budget > 0 && budget < 5000) || (r.valid && ventesVisees > 0 && ventesVisees < r.seuilVentes * 1.3)
+    },
+    {
+      id: 'croissance', label: 'Croissance',
+      objectif: "Investir davantage en acquisition et marketing pour croître vite, quitte à retarder la rentabilité.",
+      avantages: ["Prendre position sur le marché avant la concurrence.", "Peut justifier une levée de fonds si le modèle fonctionne."],
+      risques: ["Dépenses plus élevées avant d'être rentable.", "Dépend d'un accès à du financement si la trésorerie se tend."],
+      recommandeeSi: `un capital initial confortable (ici ${budgetLabel}, seuil indicatif : 5 000€)`,
+      recommandee: budget >= 5000
+    },
+    {
+      id: 'niche', label: 'Niche',
+      objectif: "Se concentrer sur un segment de clientèle précis plutôt que sur le marché large.",
+      avantages: ["Moins de concurrence directe sur un segment précis.", "Message marketing plus simple à cibler."],
+      risques: ["Marché adressable plus restreint.", "Croissance plafonnée sans élargissement futur du ciblage."],
+      recommandeeSi: `une concurrence déjà présente sur le marché large (ici décrite en ${wConcurrence} mots) et/ou un client cible décrit précisément (${wClientDetail} mots)`,
+      recommandee: wConcurrence >= 8 || wClientDetail >= 12
+    }
+  ];
+}
+
 const PROJECT_STEPS = [
+  {key:'secteur', title:'Catégorie de projet', category:'Point de départ',
+    fields:[{key:'secteur', type:'select', options: PROJECT_SECTOR_OPTIONS}],
+    prompt:"Dans quelle catégorie se situe ton projet ? Cela oriente le diagnostic et permet, pour certains secteurs, de tester ta stratégie ensuite dans le Business Game."},
   {key:'interets', title:'Tes intérêts', category:'Point de départ',
     fields:[{key:'interets', type:'textarea', placeholder:"Ex : la cuisine, le sport, la technologie, aider les autres..."}],
     prompt:"Quels sujets ou secteurs t'intéressent vraiment ? Un projet tient plus longtemps quand il part de quelque chose qui t'intéresse réellement."},
@@ -73,6 +202,9 @@ const PROJECT_STEPS = [
   {key:'revenus', title:'Revenus visés', category:'Les chiffres',
     fields:[{key:'ventesVisees', type:'number', label:'Ventes visées par mois', placeholder:'Ex : 20'}],
     prompt:"Combien de ventes par mois vises-tu au démarrage ?"},
+  {key:'capital', title:'Capital initial', category:'Les chiffres',
+    fields:[{key:'budgetInitial', type:'number', placeholder:'Ex : 3000 (0 si aucun)', suffix:'€'}],
+    prompt:"De combien de capital disposes-tu pour démarrer (économies, prêt, aide) ? Indique 0 si tu n'en as pas encore."},
   {key:'seuil', title:'Seuil de rentabilité simplifié', category:'Les chiffres', type:'computed',
     prompt:"À partir de tes propres chiffres (prix, coût variable, charges fixes), calcul du nombre de ventes mensuelles nécessaires pour atteindre le seuil de rentabilité.",
     hint:'Seuil de rentabilité'},
@@ -86,6 +218,10 @@ const PROJECT_STEPS = [
   {key:'premiersClients', title:'Premiers clients', category:'Prendre du recul',
     fields:[{key:'premiersClients', type:'textarea', placeholder:"..."}],
     prompt:"Qui pourraient être tes 3 premiers clients réels, même à petite échelle ?"},
+  {key:'diagnostic', title:'Diagnostic de ton projet', category:'Bilan', type:'diagnostic',
+    prompt:"Un diagnostic basé uniquement sur ce que tu as répondu jusqu'ici — jamais un jugement inventé."},
+  {key:'strategie', title:'Choisis une stratégie', category:'Bilan', type:'strategie',
+    prompt:"Plusieurs stratégies sont possibles à partir de tes réponses. Aucune n'est objectivement meilleure dans l'absolu."},
   {key:'synthese', title:'Ta synthèse', category:'Bilan', type:'summary',
     prompt:"Relis l'ensemble de tes réponses avant la fiche finale."},
   {key:'businessplan', title:'Ta fiche projet', category:'Bilan', type:'final',
@@ -102,6 +238,12 @@ function saveAnswers(){ safeSetJSON('fzr-business-project', answers); }
 
 function collectCurrentFields(){
   const step = PROJECT_STEPS[stepIndex];
+  if(step.type === 'strategie'){
+    const checked = document.querySelector('input[name="field-strategieChoisie"]:checked');
+    answers.strategieChoisie = checked ? checked.value : (answers.strategieChoisie || '');
+    saveAnswers();
+    return;
+  }
   if(!step.fields) return;
   step.fields.forEach(f=>{
     if(f.type === 'radio'){
@@ -178,6 +320,40 @@ function renderComputedStep(){
   saveAnswers();
 }
 
+function renderDiagnosticStep(){
+  const el = document.getElementById('wizardStepFields');
+  const zones = computeDiagnostic(answers);
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px;">Ce diagnostic est basé uniquement sur ce que tu as écrit dans les étapes précédentes — jamais un jugement inventé.</p>
+    ${zones.map(z => `
+      <div class="card" style="margin-bottom:10px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;">
+          <strong>${DIAGNOSTIC_STATUS_META[z.status].emoji} ${z.label}</strong>
+          <span style="font-size:11px;color:var(--text-dim);">${DIAGNOSTIC_STATUS_META[z.status].label}</span>
+        </div>
+        <p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${z.justification}</p>
+      </div>`).join('')}`;
+}
+
+function renderStrategieStep(){
+  const el = document.getElementById('wizardStepFields');
+  const strategies = computeStrategies(answers);
+  const chosen = answers.strategieChoisie;
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px;">${typeof renderDataBadge === 'function' ? renderDataBadge('avis') : '💬'} Aucune stratégie n'est objectivement meilleure dans l'absolu : chacune dépend de tes contraintes réelles (capital, marché, tolérance au risque). Choisis celle qui te semble la plus adaptée.</p>
+    ${strategies.map(s => `
+      <label style="display:block;border:1px solid var(--hairline);border-radius:2px;padding:12px 14px;margin-bottom:10px;cursor:pointer;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px;">
+          <input type="radio" name="field-strategieChoisie" value="${s.label}" ${chosen===s.label?'checked':''}>
+          <strong style="color:var(--gold-bright);">${s.label}${s.recommandee ? ' · plutôt indiquée ici' : ''}</strong>
+        </div>
+        <p style="font-size:12.5px;margin-bottom:6px;">${s.objectif}</p>
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:2px;"><strong>Avantages :</strong> ${s.avantages.join(' ')}</p>
+        <p style="font-size:12px;color:var(--text-dim);"><strong>Risques :</strong> ${s.risques.join(' ')}</p>
+        <p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">Plutôt indiquée si : ${s.recommandeeSi}.</p>
+      </label>`).join('')}`;
+}
+
 function fieldSummaryLabel(step){
   return step.title;
 }
@@ -189,6 +365,7 @@ function renderSummaryStep(){
       let v = answers[f.key];
       if(f.type === 'radio' && f.key === 'clientType') v = CLIENT_TYPE_LABELS[v] || v;
       else if(f.key === 'businessModel') v = BUSINESS_MODEL_LABELS[v] || v;
+      else if(f.key === 'secteur') v = PROJECT_SECTOR_LABELS[v] || v;
       else if(f.type === 'number' && v) v = fmtEUR(Number(v));
       else if(v) v = escapeHtml(v);
       return v;
@@ -206,8 +383,13 @@ function renderFinalStep(a){
   el.style.display = 'block';
   const r = computeSeuil(a);
   const revenuVise = (Number(a.prix)||0) * (Number(a.ventesVisees)||0);
+  const zones = computeDiagnostic(a);
+  const strategies = computeStrategies(a);
+  const chosenStrategy = strategies.find(s => s.label === a.strategieChoisie);
+  const gameKey = PROJECT_SECTOR_TO_GAME_KEY[a.secteur];
   const esc = escapeHtml;
   const fiche = [
+    {label:'Catégorie de projet', value: PROJECT_SECTOR_LABELS[a.secteur] || '—'},
     {label:'Projet', value: esc(a.offre) || '—'},
     {label:'Problème', value: esc(a.probleme) || '—'},
     {label:'Client cible', value: [CLIENT_TYPE_LABELS[a.clientType], esc(a.clientDetail)].filter(Boolean).join(' — ') || '—'},
@@ -216,6 +398,7 @@ function renderFinalStep(a){
     {label:'Offre', value: esc(a.offre) || '—'},
     {label:'Business model', value: BUSINESS_MODEL_LABELS[a.businessModel] || '—'},
     {label:'Prix', value: a.prix ? fmtEUR(Number(a.prix)) : '—'},
+    {label:'Capital initial', value: a.budgetInitial ? fmtEUR(Number(a.budgetInitial)) : '—'},
     {label:'Acquisition', value: esc(a.acquisition) || '—'},
     {label:'Marketing', value: esc(a.marketing) || '—'},
     {label:'Coûts principaux', value: (a.chargesFixes || a.coutVariable) ? `${fmtEUR(Number(a.chargesFixes)||0)}/mois fixes, ${fmtEUR(Number(a.coutVariable)||0)} variable par vente` : '—'},
@@ -230,10 +413,17 @@ function renderFinalStep(a){
       <h2 class="display" style="font-size:24px;font-weight:600;margin:8px 0 14px;">Synthèse structurée</h2>
       ${fiche.map(f=>`<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--hairline);"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">${f.label}</strong><p style="font-size:13.5px;margin-top:4px;">${f.value}</p></div>`).join('')}
       ${r.valid ? `<div style="margin-bottom:12px;"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">Seuil de rentabilité simplifié</strong><p style="font-size:13.5px;margin-top:4px;">${r.seuilVentes} ventes/mois environ</p></div>` : ''}
+      <div style="margin-bottom:16px;">
+        <strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">Diagnostic</strong>
+        ${zones.map(z=>`<p style="font-size:12.5px;margin-top:6px;">${DIAGNOSTIC_STATUS_META[z.status].emoji} <strong>${z.label}</strong> — ${z.justification}</p>`).join('')}
+      </div>
+      ${chosenStrategy ? `<div style="margin-bottom:16px;"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">Stratégie choisie</strong><p style="font-size:13.5px;margin-top:4px;">${chosenStrategy.label} — ${chosenStrategy.objectif}</p></div>` : ''}
       <p class="disclaimer-box" style="margin-top:16px;">Cette fiche récapitule tes propres réponses. Elle ne garantit aucun succès et ne constitue ni un conseil financier ni un business plan complet — elle t'aide à structurer une réflexion, pas à la remplacer.</p>
+      ${!gameKey ? `<p class="disclaimer-box" style="margin-top:12px;">La catégorie « ${PROJECT_SECTOR_LABELS[a.secteur] || 'choisie'} » n'est pas encore simulable dans le Business Game. Secteurs disponibles pour l'instant : ${(typeof BUSINESS_SECTOR_ORDER !== 'undefined' ? BUSINESS_SECTOR_ORDER.map(k=>BUSINESS_SECTORS[k].label).join(', ') : 'SaaS B2B, e-commerce, restaurant')}.</p>` : ''}
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
         <button class="btn btn-sm" id="wizardRestartBtn">Recommencer</button>
         <a href="business.html" class="btn btn-sm btn-gold">Retour à Business</a>
+        ${gameKey ? `<button class="btn btn-sm btn-gold" id="wizardTestBtn" type="button">🎮 Tester cette stratégie</button>` : ''}
       </div>
     </div>`;
   document.getElementById('wizardRestartBtn').addEventListener('click', ()=>{
@@ -245,6 +435,19 @@ function renderFinalStep(a){
       document.getElementById('wizardIntro').style.display = 'block';
     }
   });
+  const testBtn = document.getElementById('wizardTestBtn');
+  if(testBtn){
+    testBtn.addEventListener('click', ()=>{
+      safeSetJSON('fzr-business-strategy-transfer', {
+        sectorKey: gameKey,
+        clientCible: a.clientDetail || '',
+        budgetInitial: Number(a.budgetInitial) || 0,
+        businessModel: BUSINESS_MODEL_LABELS[a.businessModel] || '',
+        strategieChoisie: a.strategieChoisie || ''
+      });
+      window.location.href = 'jeu-business.html';
+    });
+  }
   awardXP(15, {businessProjectDone:true});
 }
 
@@ -261,6 +464,8 @@ function renderStep(){
 
   if(step.type === 'computed'){ renderComputedStep(); renderHint(step.hint); }
   else if(step.type === 'summary'){ renderSummaryStep(); renderHint(null); }
+  else if(step.type === 'diagnostic'){ renderDiagnosticStep(); renderHint(null); }
+  else if(step.type === 'strategie'){ renderStrategieStep(); renderHint(null); }
   else { document.getElementById('wizardStepFields').innerHTML = renderFieldsHtml(step); renderHint(step.hint); }
 }
 

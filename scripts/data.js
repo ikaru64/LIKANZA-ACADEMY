@@ -3103,13 +3103,7 @@ function renderBusinessLab(elId){
       <h3 style="margin:10px 0 6px;">Business Cases</h3>
       <p>${casesPool.length} cas sur le chiffre d'affaires, la marge, les levées de fonds…</p>
       <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
-    </button>
-    <a href="construire-son-projet.html" class="card play-tile">
-      <span class="icon" style="color:var(--gold-bright);">${ICONS.compass}</span>
-      <h3 style="margin:10px 0 6px;">Construis ton projet</h3>
-      <p>20 questions guidées pour structurer une réflexion entrepreneuriale : problème, client, offre, chiffres, risques.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
-    </a>`;
+    </button>`;
   document.getElementById(`${elId}-decisions`).addEventListener('click', () => {
     if(!sessionEl) return;
     startMixedSession(`${elId}-session`, shuffleCopy(decisionsPool).slice(0, 6), {level:'business', categorie:'Décisions rapides', onRestart: () => renderBusinessLab(elId)});
@@ -3170,6 +3164,63 @@ function renderTopicWidget(elId, {title, intro, terms, ctaLabel, ctaHref}){
         </a>`).join('')}
     </div>
     ${ctaHref ? `<a href="${ctaHref}" class="btn btn-sm btn-gold" style="margin-top:14px;">${ctaLabel}</a>` : ''}`;
+}
+
+// ---------- Ton profil business (business.html) ----------
+// Agrège l'historique réel du Business Game (fzr-business-game-history,
+// voir scripts/games/business-game.js) : ne conclut jamais sur une seule
+// partie, affiche uniquement des chiffres réellement enregistrés, et ne
+// prétend jamais diagnostiquer une vraie personnalité — toujours cadré
+// comme "dans tes décisions sur Likanza", jamais au-delà.
+function renderBusinessProfile(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(typeof getBusinessGameHistory !== 'function'){ el.style.display = 'none'; return; }
+  const history = getBusinessGameHistory();
+
+  if(history.length < 2){
+    el.innerHTML = `
+      <p style="color:var(--text-dim);font-size:13px;line-height:1.6;">Ton profil business se construit à partir de tes vraies parties du Business Game — il faut au moins 2 parties jouées pour dégager une tendance fiable (${history.length} partie${history.length>1?'s':''} enregistrée${history.length>1?'s':''} pour l'instant).</p>
+      <a href="jeu-business.html" class="btn btn-sm btn-gold" style="margin-top:10px;">🎮 Jouer une partie</a>`;
+    return;
+  }
+
+  const outcomeCounts = {};
+  history.forEach(h => { outcomeCounts[h.outcome] = (outcomeCounts[h.outcome]||0) + 1; });
+  const mostCommonOutcome = Object.entries(outcomeCounts).sort((a,b)=>b[1]-a[1])[0];
+  const sectorCounts = {};
+  history.forEach(h => { sectorCounts[h.sectorKey] = (sectorCounts[h.sectorKey]||0) + 1; });
+  const mostPlayedSector = Object.entries(sectorCounts).sort((a,b)=>b[1]-a[1])[0];
+  const bankruptcyRate = history.filter(h=>h.outcome==='faillite').length / history.length;
+  const avgDecisions = Math.round(history.reduce((s,h)=>s+(h.decisionCount||0),0) / history.length);
+
+  const sectorLabel = (typeof BUSINESS_SECTORS !== 'undefined' && BUSINESS_SECTORS[mostPlayedSector[0]]) ? BUSINESS_SECTORS[mostPlayedSector[0]].label : mostPlayedSector[0];
+  const outcomeMeta = (typeof BUSINESS_GAME_OUTCOME_META !== 'undefined') ? BUSINESS_GAME_OUTCOME_META[mostCommonOutcome[0]] : null;
+  const outcomeLabel = outcomeMeta ? `${outcomeMeta.emoji} ${outcomeMeta.label}` : mostCommonOutcome[0];
+
+  // Recommandations reliées à du vrai contenu existant, jamais un texte inventé
+  // pour l'occasion — construites à partir des vrais chiffres ci-dessus.
+  const recommendations = [];
+  if(bankruptcyRate >= 0.5){
+    recommendations.push({title:'Burn rate', desc:"Plus de la moitié de tes parties se sont terminées en faillite — cette notion explique comment surveiller ta vitesse de dépense de trésorerie.", href:'bibliotheque.html#Burn-rate'});
+  }
+  if(avgDecisions > 0 && avgDecisions < 6){
+    recommendations.push({title:'Business Strategy', desc:"Tes parties se terminent souvent tôt — l'outil d'analyse de projet peut t'aider à préparer un budget et une stratégie avant de rejouer.", href:'construire-son-projet.html'});
+  }
+  recommendations.push({title:'Business Cases', desc:"Continue à t'entraîner sur des mises en situation courtes dans le Business Lab.", href:'business.html#business-lab'});
+
+  el.innerHTML = `
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Basé sur tes ${history.length} dernières parties du Business Game — jamais sur une seule partie isolée.</p>
+    <div class="card-grid" style="margin-bottom:14px;">
+      <div class="card"><span class="smallcaps">Secteur le plus joué</span><div class="result-big" style="font-size:18px;margin-top:4px;">${sectorLabel}</div></div>
+      <div class="card"><span class="smallcaps">Résultat le plus fréquent</span><div class="result-big" style="font-size:18px;margin-top:4px;">${outcomeLabel}</div></div>
+      <div class="card"><span class="smallcaps">Taux de faillite</span><div class="result-big" style="font-size:18px;margin-top:4px;">${Math.round(bankruptcyRate*100)}%</div></div>
+    </div>
+    <p style="font-size:13px;line-height:1.6;margin-bottom:14px;">Dans tes décisions sur Likanza, tu as le plus souvent joué en ${sectorLabel}, avec un résultat le plus fréquent de type « ${outcomeLabel} » sur ${history.length} parties jouées. Ceci décrit ton comportement dans le jeu, jamais un diagnostic de ta personnalité réelle.</p>
+    <span class="smallcaps" style="display:block;margin-bottom:8px;">À retravailler</span>
+    <div class="card-grid">
+      ${recommendations.map(r => `<a href="${r.href}" class="card play-tile"><h3 style="margin:0 0 6px;font-size:15px;">${r.title}</h3><p style="font-size:12.5px;">${r.desc}</p></a>`).join('')}
+    </div>`;
 }
 
 // ---------- Graphique en barres générique ----------
