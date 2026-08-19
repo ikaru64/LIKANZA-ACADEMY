@@ -814,10 +814,10 @@ function renderCourseList(elId, level){
   if(!el || !COURSES[level]) return;
   el.innerHTML = COURSES[level].map((c,i)=>`
     <div class="course-item">
-      <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
+      <button type="button" class="head" style="background:none;border:none;width:100%;text-align:left;font:inherit;" onclick="this.nextElementSibling.classList.toggle('open')">
         <h4>${c.title}</h4>
         <span class="idx">${String(i+1).padStart(2,'0')}</span>
-      </div>
+      </button>
       <div class="course-body"><div class="course-body-inner">${c.body || ''}</div></div>
     </div>`).join('');
 }
@@ -1547,7 +1547,19 @@ function renderMasteryList(elId){
       <span class="smallcaps">${s.categorie}</span>
       <div class="result-big" style="font-size:26px;margin-top:8px;color:${colorFor(s.niveau)};">${s.pct}%</div>
       <p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${s.correct}/${s.total} bonnes réponses · ${s.niveau}</p>
-    </div>`).join('')}</div>`;
+      ${s.niveau !== 'maîtrisé' ? `<button class="btn btn-sm" style="margin-top:10px;" data-mastery-cat="${s.categorie}">S'entraîner →</button>` : ''}
+    </div>`).join('')}</div>
+    <div id="${elId}-session" style="margin-top:18px;"></div>`;
+  el.querySelectorAll('[data-mastery-cat]').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      const cat = btn.dataset.masteryCat;
+      const pool = defisFullPool().filter(i => i.categorie === cat);
+      const sessionEl = document.getElementById(`${elId}-session`);
+      if(!sessionEl || pool.length === 0) return;
+      startMixedSession(`${elId}-session`, pool.slice(0, 6), {level: cat, categorie: cat, onRestart: () => renderMasteryList(elId)});
+      sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+  });
 }
 
 // selectQuizQuestions, renderQuickChallenge et renderQuizSetup ont été
@@ -1626,8 +1638,11 @@ function renderVraiFaux(elId){
     el.innerHTML = `
       <div class="result-big">${score} / ${questions.length}</div>
       <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${pct}% de bonnes réponses.</p>
-      <button class="btn btn-sm btn-gold" id="${elId}-restart">Recommencer</button>`;
+      <button class="btn btn-sm btn-gold" id="${elId}-restart">Recommencer</button>
+      <div id="${elId}-nextstep"></div>`;
     document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderVraiFaux(elId));
+    const touchedCategories = [...new Set(questions.map(q => q.categorie).filter(Boolean))];
+    renderNextStepCard(`${elId}-nextstep`, {categories: touchedCategories});
   }
 
   renderQuestion();
@@ -2238,13 +2253,13 @@ function renderModesEntrainement(elId){
   const pool = defisFullPool();
   const categories = [...new Set(pool.map(i => i.categorie))].sort();
   el.innerHTML = `
-    <div class="field"><label>Thème</label>
+    <div class="field"><label for="${elId}-cat">Thème</label>
       <select id="${elId}-cat">
         <option value="tous">Mélange de thèmes</option>
         ${categories.map(c => `<option value="${c}">${c}</option>`).join('')}
       </select>
     </div>
-    <div class="field"><label>Niveau</label>
+    <div class="field"><label for="${elId}-level">Niveau</label>
       <select id="${elId}-level">
         <option value="tous">Tous niveaux</option>
         <option value="debutant">🟢 Fondamentaux</option>
@@ -2252,7 +2267,7 @@ function renderModesEntrainement(elId){
         <option value="avance">🔴 Avancé</option>
       </select>
     </div>
-    <div class="field"><label>Nombre de questions</label>
+    <div class="field"><label for="${elId}-len">Nombre de questions</label>
       <select id="${elId}-len">
         <option value="5">5 questions</option>
         <option value="10">10 questions</option>
@@ -2493,7 +2508,7 @@ function renderPatternChartSVG(series){
     const yy = padY + (1-y) * innerH;
     return `${x.toFixed(1)},${yy.toFixed(1)}`;
   }).join(' ');
-  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;"><polyline points="${pts}" fill="none" stroke="var(--gold-bright)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;" role="img" aria-label="Courbe d'évolution d'un cours boursier à identifier parmi les figures chartistes proposées ci-dessous"><polyline points="${pts}" fill="none" stroke="var(--gold-bright)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
 }
 
 // Figures visuellement proches, utilisées pour composer des choix plus
@@ -2579,7 +2594,7 @@ function renderChartPatternGame(elId){
   function renderResults(eliminated){
     const attempted = eliminated ? qIndex + 1 : rounds.length;
     const pct = attempted ? Math.round((score/attempted)*100) : 0;
-    if(!eliminated && pct === 100) awardXP(25, {quizPerfect:true});
+    if(!eliminated && pct === 100) tryAwardQuizPoints(`chart-pattern-perfect-${new Date().toDateString()}`, 25, {quizPerfect:true});
     el.innerHTML = `
       ${eliminated ? `<span class="badge status-demo">Manche arrêtée après ${CHART_GAME_MAX_ERRORS} erreurs</span>` : ''}
       <div class="result-big" style="margin-top:${eliminated ? '8px' : '0'};">${score} / ${attempted}</div>
@@ -2869,7 +2884,9 @@ function renderMissionDetail(elId, level, index, onComplete){
     const check = ()=>{
       const val = parseFloat(input.value);
       if(isNaN(val)){ feedback.textContent = "Entre un nombre avant de vérifier."; feedback.style.color = 'var(--text-dim)'; return; }
-      if(Math.abs(val - q.reponse) <= q.tolerance){
+      const correct = Math.abs(val - q.reponse) <= q.tolerance;
+      recordAnswer(q.categorie, correct, isAppliedItem(q));
+      if(correct){
         completeMission(level, index, onComplete);
         renderMissionDetail(elId, level, index, onComplete);
       } else {
@@ -2883,7 +2900,9 @@ function renderMissionDetail(elId, level, index, onComplete){
     const choicesEl = document.getElementById(`${elId}-choices`);
     Array.from(choicesEl.children).forEach((btn, oi)=>{
       btn.addEventListener('click', ()=>{
-        if(oi === q.bonneReponse){
+        const correct = oi === q.bonneReponse;
+        recordAnswer(q.categorie, correct, isAppliedItem(q));
+        if(correct){
           completeMission(level, index, onComplete);
           renderMissionDetail(elId, level, index, onComplete);
         } else {
@@ -3464,7 +3483,7 @@ function computeBuyVsRent(inputs){
 
 // ---------- Graphique multi-lignes générique (SVG, même approche que renderPortfolioBacktestChart) ----------
 // seriesList : [{data:[...nombres ou null...], color:'var(--gold-bright)', dashed:false, width:2}]
-function renderMultiLineChart(seriesList){
+function renderMultiLineChart(seriesList, label){
   const w = 640, h = 220, padX = 12, padY = 14;
   const innerW = w - padX * 2, innerH = h - padY * 2;
   const allValues = seriesList.flatMap(s => s.data.filter(v => typeof v === 'number'));
@@ -3480,7 +3499,7 @@ function renderMultiLineChart(seriesList){
       return `${x.toFixed(1)},${y.toFixed(1)}`;
     }).filter(Boolean).join(' ');
   }
-  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;">
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;" role="img" aria-label="${label || "Graphique d'évolution de la valeur dans le temps"}">
     ${seriesList.map(s => `<polyline points="${toPoints(s.data)}" fill="none" stroke="${s.color}" stroke-width="${s.width || 2}" ${s.dashed ? 'stroke-dasharray="4 3"' : ''} stroke-linejoin="round"/>`).join('')}
   </svg>`;
 }
@@ -3507,10 +3526,10 @@ function renderCashVsCreditTool(elId){
   if(!el) return;
   el.innerHTML = `
     <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px;">Un même achat, deux façons de le financer sur la même durée : payer comptant puis investir chaque mois l'équivalent de la mensualité que tu aurais payée à la banque, ou emprunter et investir tout de suite la somme non dépensée.</p>
-    <div class="slider-row field"><label>Prix de l'achat <span class="v mono" id="${elId}-price-v">15 000 €</span></label><input type="range" id="${elId}-price" min="1000" max="60000" step="500" value="15000"></div>
-    <div class="slider-row field"><label>Taux du crédit <span class="v mono" id="${elId}-creditrate-v">4 %</span></label><input type="range" id="${elId}-creditrate" min="0" max="12" step="0.1" value="4"></div>
-    <div class="slider-row field"><label>Rendement d'investissement espéré <span class="v mono" id="${elId}-investrate-v">6 %</span></label><input type="range" id="${elId}-investrate" min="0" max="12" step="0.1" value="6"></div>
-    <div class="slider-row field"><label>Durée <span class="v mono" id="${elId}-years-v">7 ans</span></label><input type="range" id="${elId}-years" min="1" max="25" step="1" value="7"></div>
+    <div class="slider-row field"><label for="${elId}-price">Prix de l'achat <span class="v mono" id="${elId}-price-v">15 000 €</span></label><input type="range" id="${elId}-price" min="1000" max="60000" step="500" value="15000"></div>
+    <div class="slider-row field"><label for="${elId}-creditrate">Taux du crédit <span class="v mono" id="${elId}-creditrate-v">4 %</span></label><input type="range" id="${elId}-creditrate" min="0" max="12" step="0.1" value="4"></div>
+    <div class="slider-row field"><label for="${elId}-investrate">Rendement d'investissement espéré <span class="v mono" id="${elId}-investrate-v">6 %</span></label><input type="range" id="${elId}-investrate" min="0" max="12" step="0.1" value="6"></div>
+    <div class="slider-row field"><label for="${elId}-years">Durée <span class="v mono" id="${elId}-years-v">7 ans</span></label><input type="range" id="${elId}-years" min="1" max="25" step="1" value="7"></div>
     <div class="result-row" style="margin-top:4px;"><span>Mensualité du crédit : <strong id="${elId}-monthly">—</strong></span><span>Coût total du crédit (intérêts) : <strong id="${elId}-interest">—</strong></span></div>
     <div class="card-grid" style="margin:16px 0;">
       <div class="card"><span class="smallcaps">Cash + investir la mensualité</span><div class="result-big" style="font-size:26px;margin-top:6px;" id="${elId}-cash-final">—</div></div>
@@ -3553,10 +3572,10 @@ function renderPrepayVsInvestTool(elId){
   if(!el) return;
   el.innerHTML = `
     <p style="color:var(--text-dim);font-size:13px;margin-bottom:16px;">Tu as une somme disponible : la mettre sur ton crédit en cours réduit les intérêts que tu paies (gain garanti, contractuel), ou tu peux l'investir (rendement supposé, jamais garanti).</p>
-    <div class="slider-row field"><label>Somme disponible <span class="v mono" id="${elId}-amount-v">5 000 €</span></label><input type="range" id="${elId}-amount" min="500" max="30000" step="500" value="5000"></div>
-    <div class="slider-row field"><label>Taux du crédit en cours <span class="v mono" id="${elId}-creditrate-v">4 %</span></label><input type="range" id="${elId}-creditrate" min="0" max="12" step="0.1" value="4"></div>
-    <div class="slider-row field"><label>Rendement d'investissement espéré <span class="v mono" id="${elId}-investrate-v">6 %</span></label><input type="range" id="${elId}-investrate" min="0" max="12" step="0.1" value="6"></div>
-    <div class="slider-row field"><label>Durée restante du crédit <span class="v mono" id="${elId}-years-v">10 ans</span></label><input type="range" id="${elId}-years" min="1" max="25" step="1" value="10"></div>
+    <div class="slider-row field"><label for="${elId}-amount">Somme disponible <span class="v mono" id="${elId}-amount-v">5 000 €</span></label><input type="range" id="${elId}-amount" min="500" max="30000" step="500" value="5000"></div>
+    <div class="slider-row field"><label for="${elId}-creditrate">Taux du crédit en cours <span class="v mono" id="${elId}-creditrate-v">4 %</span></label><input type="range" id="${elId}-creditrate" min="0" max="12" step="0.1" value="4"></div>
+    <div class="slider-row field"><label for="${elId}-investrate">Rendement d'investissement espéré <span class="v mono" id="${elId}-investrate-v">6 %</span></label><input type="range" id="${elId}-investrate" min="0" max="12" step="0.1" value="6"></div>
+    <div class="slider-row field"><label for="${elId}-years">Durée restante du crédit <span class="v mono" id="${elId}-years-v">10 ans</span></label><input type="range" id="${elId}-years" min="1" max="25" step="1" value="10"></div>
     <div class="card-grid" style="margin:16px 0;">
       <div class="card"><span class="smallcaps">Rembourser par anticipation</span><div class="result-big" style="font-size:26px;margin-top:6px;" id="${elId}-prepay-final">—</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">Gain garanti (contractuel)</p></div>
       <div class="card"><span class="smallcaps">Investir la somme</span><div class="result-big" style="font-size:26px;margin-top:6px;" id="${elId}-invest-final">—</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">Rendement non garanti</p></div>
@@ -4089,17 +4108,17 @@ function renderProfileWidget(elId){
   el.innerHTML = `
     <div class="profile-widget">
       <div class="profile-grid">
-        <div class="field"><label>Âge</label><input type="number" id="profAge" value="${p.age}"></div>
-        <div class="field"><label>Épargne mensuelle possible (€)</label><input type="number" id="profEpargne" value="${p.epargne}"></div>
-        <div class="field"><label>Horizon (années)</label><input type="number" id="profHorizon" value="${p.horizon}"></div>
-        <div class="field"><label>Profil de risque</label>
+        <div class="field"><label for="profAge">Âge</label><input type="number" id="profAge" value="${p.age}"></div>
+        <div class="field"><label for="profEpargne">Épargne mensuelle possible (€)</label><input type="number" id="profEpargne" value="${p.epargne}"></div>
+        <div class="field"><label for="profHorizon">Horizon (années)</label><input type="number" id="profHorizon" value="${p.horizon}"></div>
+        <div class="field"><label for="profRisque">Profil de risque</label>
           <select id="profRisque">
             <option value="prudent" ${p.risque==='prudent'?'selected':''}>Prudent</option>
             <option value="equilibre" ${p.risque==='equilibre'?'selected':''}>Équilibré</option>
             <option value="dynamique" ${p.risque==='dynamique'?'selected':''}>Dynamique</option>
           </select>
         </div>
-        <div class="field" style="grid-column:1/-1;"><label>Quel est ton objectif principal ?</label>
+        <div class="field" style="grid-column:1/-1;"><label for="profObjectif">Quel est ton objectif principal ?</label>
           <select id="profObjectif">
             <option value="">— À définir —</option>
             ${PROFILE_OBJECTIFS.map(o=>`<option value="${o.value}" ${p.objectif===o.value?'selected':''}>${o.label}</option>`).join('')}

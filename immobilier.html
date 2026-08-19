@@ -20,7 +20,7 @@
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
   <span class="sidebar-group-label">Apprendre</span>
   <a href="defis.html"><span class="icon" data-icon="target"></span><span>Défis</span></a>
-  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
+  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Formations</span></a>
   <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
   <a href="laboratoire.html"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
@@ -28,7 +28,7 @@
   <span class="sidebar-group-label">Marchés</span>
   <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
   <a href="crypto.html"><span class="icon" data-icon="bitcoin"></span><span>Crypto</span></a>
-  <a href="business.html" class="active"><span class="icon" data-icon="briefcase"></span><span>Business</span></a>
+  <a href="business.html"><span class="icon" data-icon="briefcase"></span><span>Business</span></a>
   <span class="sidebar-group-label">Compte</span>
   <a href="compte.html"><span class="icon" data-icon="trophy"></span><span>Mon compte</span></a>
 </aside>
@@ -54,7 +54,7 @@
           <div class="nav-dropdown-col">
             <h5>Apprendre</h5>
             <a href="defis.html">Défis</a>
-            <a href="formations.html">Academy</a>
+            <a href="formations.html">Formations</a>
             <a href="bibliotheque.html">Bibliothèque</a>
             <a href="laboratoire.html">Laboratoire financier</a>
             <a href="play.html">Play</a>
@@ -82,13 +82,13 @@
 
 <section class="section">
   <div class="section-head"><h2>Immobilier</h2><span class="meta-line">calculateurs</span></div>
-  <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+  <div class="card-grid">
 
     <div class="card">
       <h3>Capacité d'emprunt</h3>
-      <div class="slider-row field"><label>Mensualité maximale <span class="v mono" id="valMonthlyCap">1 000 €</span></label><input type="range" id="capMonthly" min="200" max="4000" step="50" value="1000"></div>
-      <div class="slider-row field"><label>Taux d'intérêt annuel <span class="v mono" id="valRateCap">3.8 %</span></label><input type="range" id="capRate" min="1" max="7" step="0.1" value="3.8"></div>
-      <div class="slider-row field"><label>Durée <span class="v mono" id="valYearsCap">20 ans</span></label><input type="range" id="capYears" min="5" max="30" step="1" value="20"></div>
+      <div class="slider-row field"><label for="capMonthly">Mensualité maximale <span class="v mono" id="valMonthlyCap">1 000 €</span></label><input type="range" id="capMonthly" min="200" max="4000" step="50" value="1000"></div>
+      <div class="slider-row field"><label for="capRate">Taux d'intérêt annuel <span class="v mono" id="valRateCap">3.8 %</span></label><input type="range" id="capRate" min="1" max="7" step="0.1" value="3.8"></div>
+      <div class="slider-row field"><label for="capYears">Durée <span class="v mono" id="valYearsCap">20 ans</span></label><input type="range" id="capYears" min="5" max="30" step="1" value="20"></div>
       <div class="result-label">Capacité d'emprunt estimée</div>
       <div class="result-big" id="capResult">— €</div>
       <p class="disclaimer-box">Estimation simplifiée hors assurance, frais de dossier et taux d'endettement réglementaire (35% maximum en France). Un courtier ou une banque affinera ce calcul.</p>
@@ -103,9 +103,9 @@
 
     <div class="card">
       <h3>Rendement locatif</h3>
-      <div class="field"><label>Prix d'achat (€)</label><input type="number" id="rentPrice" value="200000"></div>
-      <div class="field"><label>Loyer mensuel (€)</label><input type="number" id="rentMonthly" value="850"></div>
-      <div class="field"><label>Charges annuelles (€) : taxe foncière, gestion, copropriété</label><input type="number" id="rentCharges" value="1800"></div>
+      <div class="field"><label for="rentPrice">Prix d'achat (€)</label><input type="number" id="rentPrice" value="200000"></div>
+      <div class="field"><label for="rentMonthly">Loyer mensuel (€)</label><input type="number" id="rentMonthly" value="850"></div>
+      <div class="field"><label for="rentCharges">Charges annuelles (€) : taxe foncière, gestion, copropriété</label><input type="number" id="rentCharges" value="1800"></div>
       <div class="result-row" id="rentResult" style="margin-top:16px;"></div>
       <p class="disclaimer-box">Le rendement net ci-dessus ne tient pas compte de la fiscalité personnelle ni du crédit éventuel : le cash-flow réel peut différer sensiblement.</p>
     </div>
@@ -137,9 +137,9 @@
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
-  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
+  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Formations</a>
   <a href="defis.html"><span class="icon" data-icon="swords"></span>Défis</a>
-  <a href="laboratoire.html" class="active"><span class="icon" data-icon="calculator"></span>Labo</a>
+  <a href="laboratoire.html"><span class="icon" data-icon="calculator"></span>Labo</a>
   <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>
 </nav>
 </body>

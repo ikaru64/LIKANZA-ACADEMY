@@ -20,7 +20,7 @@
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
   <span class="sidebar-group-label">Apprendre</span>
   <a href="defis.html"><span class="icon" data-icon="target"></span><span>Défis</span></a>
-  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
+  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Formations</span></a>
   <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
   <a href="laboratoire.html"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
@@ -54,7 +54,7 @@
           <div class="nav-dropdown-col">
             <h5>Apprendre</h5>
             <a href="defis.html">Défis</a>
-            <a href="formations.html">Academy</a>
+            <a href="formations.html">Formations</a>
             <a href="bibliotheque.html">Bibliothèque</a>
             <a href="laboratoire.html">Laboratoire financier</a>
             <a href="play.html">Play</a>
@@ -90,7 +90,7 @@
       <h3>Progression Academy</h3>
       <p>Niveau actuel : <strong id="profLevel"></strong></p>
       <div id="profProgress"></div>
-      <div class="field" style="margin-top:12px;max-width:280px;"><label>Quel niveau te correspond le mieux ?</label>
+      <div class="field" style="margin-top:12px;max-width:280px;"><label for="manualLevelSelect">Quel niveau te correspond le mieux ?</label>
         <select id="manualLevelSelect">
           <option value="debutant">Je découvre complètement la finance</option>
           <option value="intermediaire">Je connais quelques bases</option>
@@ -122,13 +122,13 @@
   <div class="section-head"><h2>Ma watchlist</h2><span class="meta-line">seuils d'alerte, en local</span></div>
   <div id="watchlistDemoBanner"></div>
   <div class="card" style="max-width:640px;margin-bottom:20px;">
-    <div class="field"><label>Actif à suivre</label>
+    <div class="field"><label for="wlAsset">Actif à suivre</label>
       <select id="wlAsset"></select>
     </div>
-    <div class="field"><label>Seuil d'alerte (optionnel : te prévient visuellement si la valeur le franchit)</label>
+    <div class="field"><label for="wlThreshold">Seuil d'alerte (optionnel : te prévient visuellement si la valeur le franchit)</label>
       <input type="number" id="wlThreshold" placeholder="Ex : 8000">
     </div>
-    <div class="field"><label>Note personnelle (optionnel)</label>
+    <div class="field"><label for="wlNote">Note personnelle (optionnel)</label>
       <input type="text" id="wlNote" placeholder="Pourquoi tu suis cet actif...">
     </div>
     <button class="btn btn-gold btn-sm" id="wlAddBtn">Ajouter à la watchlist</button>
@@ -161,7 +161,7 @@
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
-  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
+  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Formations</a>
   <a href="defis.html"><span class="icon" data-icon="swords"></span>Défis</a>
   <a href="laboratoire.html"><span class="icon" data-icon="calculator"></span>Labo</a>
   <a href="compte.html" class="active"><span class="icon" data-icon="user"></span>Profil</a>

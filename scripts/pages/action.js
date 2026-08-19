@@ -9,9 +9,16 @@
    même convention que marche.html/marche.js.
    ============================================================ */
 
+// Le ticker vient du hash de l'URL, donc potentiellement contrôlé par un
+// tiers (lien partagé) : on le valide contre le format réel des symboles
+// Yahoo déjà utilisés sur le site (AAPL, MC.PA, ^FCHI, GC=F...) avant de
+// jamais l'injecter dans du HTML — jamais de valeur brute non validée.
+const ACTION_TICKER_PATTERN = /^[A-Za-z0-9.\-^=]{1,15}$/;
 function actionCurrentSymbol(){
-  try { return decodeURIComponent(location.hash.slice(1)); }
-  catch(e){ return location.hash.slice(1); }
+  let sym = '';
+  try { sym = decodeURIComponent(location.hash.slice(1)); }
+  catch(e){ sym = location.hash.slice(1); }
+  return ACTION_TICKER_PATTERN.test(sym) ? sym : '';
 }
 
 async function renderActionDetail(){
@@ -78,11 +85,11 @@ async function renderActionDetail(){
     </div>`;
 
   el.innerHTML = `
-    <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+    <div class="card-grid">
       ${headerHtml}
       ${chartHtml}
     </div>
-    <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:16px;">
+    <div class="card-grid" style="margin-top:16px;">
       ${fundamentalsHtml}
       <div class="card" id="companyProfileCard" style="display:none;"></div>
     </div>

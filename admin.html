@@ -21,7 +21,7 @@
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
   <span class="sidebar-group-label">Apprendre</span>
   <a href="defis.html"><span class="icon" data-icon="target"></span><span>Défis</span></a>
-  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
+  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Formations</span></a>
   <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
   <a href="laboratoire.html"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
@@ -55,7 +55,7 @@
           <div class="nav-dropdown-col">
             <h5>Apprendre</h5>
             <a href="defis.html">Défis</a>
-            <a href="formations.html">Academy</a>
+            <a href="formations.html">Formations</a>
             <a href="bibliotheque.html">Bibliothèque</a>
             <a href="laboratoire.html">Laboratoire financier</a>
             <a href="play.html">Play</a>
@@ -86,8 +86,8 @@
     Cette connexion est une protection locale de démonstration, pas une vraie sécurité : le mot de passe est lisible dans le code de cette page par quiconque sait l'inspecter. Une vraie protection nécessiterait un backend, un mot de passe haché côté serveur et une session sécurisée (voir <code>ARCHITECTURE.md</code>).
   </div>
   <div class="card">
-    <div class="field"><label>Identifiant</label><input type="text" id="adminUser" value="admin"></div>
-    <div class="field"><label>Mot de passe</label><input type="password" id="adminPass" placeholder="Mot de passe de démonstration"></div>
+    <div class="field"><label for="adminUser">Identifiant</label><input type="text" id="adminUser" value="admin"></div>
+    <div class="field"><label for="adminPass">Mot de passe</label><input type="password" id="adminPass" placeholder="Mot de passe de démonstration"></div>
     <button class="btn btn-gold" id="adminLoginBtn">Se connecter</button>
     <p id="adminLoginMsg" style="font-size:12px;color:var(--bordeaux);margin-top:10px;"></p>
     <p style="font-size:11.5px;color:var(--text-dim);margin-top:14px;">Mot de passe de démonstration : <code>likanza2026</code> (à changer dans le code avant de partager ce lien, voir README.md).</p>
@@ -116,9 +116,9 @@
   <div class="course-list" id="coursesEditList"></div>
   <div class="card" style="max-width:640px;margin-top:20px;margin-bottom:40px;">
     <h3>Ajouter une mission</h3>
-    <div class="field"><label>Niveau</label><select id="newMissionLevel"></select></div>
-    <div class="field"><label>Titre</label><input type="text" id="newMissionTitle"></div>
-    <div class="field"><label>Contenu</label><textarea id="newMissionBody"></textarea></div>
+    <div class="field"><label for="newMissionLevel">Niveau</label><select id="newMissionLevel"></select></div>
+    <div class="field"><label for="newMissionTitle">Titre</label><input type="text" id="newMissionTitle"></div>
+    <div class="field"><label for="newMissionBody">Contenu</label><textarea id="newMissionBody"></textarea></div>
     <button class="btn btn-sm btn-gold" id="addMissionBtn">Ajouter la mission</button>
   </div>
 
@@ -126,7 +126,7 @@
   <div class="disclaimer-box" style="margin-bottom:16px;">
     Les actualités ne se modifient pas depuis cet espace : elles sont générées automatiquement, chaque jour (7h30 UTC) et chaque semaine (lundi 6h UTC), par un pipeline qui lit de vraies actus financières (flux RSS) et les fait résumer par une IA, sans relecture humaine avant mise en ligne. Ce panneau affiche l'état réel de ce pipeline — jamais une date ou un statut inventés.
   </div>
-  <div class="card-grid" id="newsPipelineStatus" style="grid-template-columns:1fr 1fr;"></div>
+  <div class="card-grid" id="newsPipelineStatus"></div>
 </section>
 
 </div>
@@ -146,7 +146,7 @@
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
-  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
+  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Formations</a>
   <a href="defis.html"><span class="icon" data-icon="swords"></span>Défis</a>
   <a href="laboratoire.html"><span class="icon" data-icon="calculator"></span>Labo</a>
   <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>

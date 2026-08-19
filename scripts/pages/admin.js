@@ -65,7 +65,7 @@ function renderMissionsList(){
   const mods = draftCourses[currentEditLevel] || [];
   el.innerHTML = mods.map((m,i)=>`
     <div class="course-item">
-      <div class="field"><label>Titre</label><input type="text" class="mission-title" data-idx="${i}" value="${m.title.replace(/"/g,'&quot;')}"></div>
+      <div class="field"><label>Titre <input type="text" class="mission-title" data-idx="${i}" value="${m.title.replace(/"/g,'&quot;')}"></label></div>
       <p style="font-size:12px;color:var(--text-dim);margin:6px 0 10px;">Mission scénarisée (${(m.story||[]).length} chapitre${(m.story||[]).length>1?'s':''} + question) ; l'édition du scénario complet depuis cet outil n'est pas encore disponible, modifie <code>scripts/app.js</code> directement pour l'instant.</p>
       <button class="del-btn" data-idx="${i}">Supprimer cette mission</button>
     </div>`).join('') || '<p class="empty-note" style="padding:16px;">Aucune mission pour ce niveau.</p>';

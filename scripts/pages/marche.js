@@ -62,7 +62,7 @@ function renderMarcheDetail(){
     : `Source : ${it.source}`;
 
   el.innerHTML = `
-    <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+    <div class="card-grid">
       <div class="card">
         <span class="smallcaps">${MARCHE_TYPE_LABELS[it.assetType] || 'Marché'}</span>
         <h3 style="margin-top:6px;">${it.nom} <span class="mono" style="font-size:13px;color:var(--text-dim);">${it.symbol}</span></h3>

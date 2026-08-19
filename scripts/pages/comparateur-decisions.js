@@ -1,5 +1,4 @@
-let comparateurUsed = false;
-function markComparateurUsed(){ if(!comparateurUsed){ comparateurUsed = true; awardXP(5, {usedSimulator:true}); } }
+function markComparateurUsed(){ tryAwardQuizPoints(`comparateur-decisions-${new Date().toDateString()}`, 5, {usedSimulator:true}); }
 
 renderCashVsCreditTool('cashVsCredit');
 renderPrepayVsInvestTool('prepayVsInvest');

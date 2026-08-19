@@ -136,5 +136,5 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
       </div>
     </div>`;
 
-  awardXP(15, {positioningTestDone: true});
+  tryAwardQuizPoints('positioning-test-completed', 15, {positioningTestDone: true});
 }

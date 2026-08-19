@@ -24,10 +24,10 @@ function renderLeafCards(container, items){
   const bodyKey = bibliothequeBodyKey();
   container.innerHTML = items.map((l,i) => `
     <div class="kt-leaf-card" id="leaf-${l.terme.replace(/\s+/g,'-')}">
-      <div class="kt-leaf-head" data-idx="${i}">
+      <button type="button" class="kt-leaf-head" style="background:none;border:none;width:100%;text-align:left;font:inherit;" data-idx="${i}">
         <h4>${l.terme}</h4>
         <span class="kt-leaf-meta">${l.niveau} · ${l.lecture}</span>
-      </div>
+      </button>
       <div class="kt-leaf-body">
         <div id="ktConseil-${i}"></div>
         <p>${l[bodyKey]}</p>

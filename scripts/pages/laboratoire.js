@@ -522,7 +522,6 @@ updateInflation();
 const capitalEl = document.getElementById('capital'), monthlyEl = document.getElementById('monthly'), rateEl = document.getElementById('rate'), yearsEl = document.getElementById('years');
 const simFraisEl = document.getElementById('simFrais'), simShowRealEl = document.getElementById('simShowReal');
 let simMode = 'central';
-let simUsed = false;
 let historicalRateInfo = null; // rempli uniquement par une vraie donnée Yahoo Finance, jamais inventé
 
 async function fetchHistoricalReturn(){
@@ -617,12 +616,12 @@ function updateSim(){
 }
 [capitalEl, monthlyEl, yearsEl, simFraisEl].forEach(el=>el.addEventListener('input', ()=>{
   updateSim();
-  if(!simUsed){ simUsed = true; awardXP(5, {usedSimulator:true}); }
+  tryAwardQuizPoints(`lab-sim-${new Date().toDateString()}`, 5, {usedSimulator:true});
 }));
 rateEl.addEventListener('input', ()=>{
   if(simMode !== 'personnalise') return;
   updateSim();
-  if(!simUsed){ simUsed = true; awardXP(5, {usedSimulator:true}); }
+  tryAwardQuizPoints(`lab-sim-${new Date().toDateString()}`, 5, {usedSimulator:true});
 });
 simShowRealEl.addEventListener('change', updateSim);
 rateEl.disabled = true;
@@ -644,8 +643,7 @@ renderWhatIf('simWhatIf', [
 
 // DCA — prix moyen d'achat
 let dcaCount = 0;
-let dcaUsed = false;
-function markDcaUsed(){ if(!dcaUsed){ dcaUsed = true; awardXP(5, {usedDCA:true}); } }
+function markDcaUsed(){ tryAwardQuizPoints(`lab-dca-${new Date().toDateString()}`, 5, {usedDCA:true}); }
 function addDcaRow(qty=10, price=100){
   dcaCount++;
   const row = document.createElement('div');

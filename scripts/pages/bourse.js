@@ -207,14 +207,14 @@ function renderCompareAnalysis(stocks){
       <div style="margin-top:16px;">
         <div class="card" style="margin-bottom:14px;">
           <span class="smallcaps">1. Résumé du business</span> ${renderDataBadge('editorial')}
-          <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+          <div class="card-grid" style="margin-top:10px;">
             <div><h4>${sA.nom}</h4><p style="font-size:13px;color:var(--text-dim);margin-top:6px;">${edA ? edA.resume : 'Non disponible.'}</p></div>
             <div><h4>${sB.nom}</h4><p style="font-size:13px;color:var(--text-dim);margin-top:6px;">${edB ? edB.resume : 'Non disponible.'}</p></div>
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;">
           <span class="smallcaps">2. Business model</span> ${renderDataBadge('editorial')}
-          <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+          <div class="card-grid" style="margin-top:10px;">
             <div><p style="font-size:13px;color:var(--text-dim);">${edA ? edA.businessModel : 'Non disponible.'}</p></div>
             <div><p style="font-size:13px;color:var(--text-dim);">${edB ? edB.businessModel : 'Non disponible.'}</p></div>
           </div>
@@ -237,14 +237,14 @@ function renderCompareAnalysis(stocks){
         </div>
         <div class="card" style="margin-bottom:14px;">
           <span class="smallcaps">6. Risques</span> ${renderDataBadge('editorial')}
-          <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+          <div class="card-grid" style="margin-top:10px;">
             <div><h4>${sA.nom}</h4><ul style="font-size:13px;color:var(--text-dim);margin-top:6px;padding-left:18px;">${(edA ? edA.risques : []).map(r=>`<li>${r}</li>`).join('')}</ul></div>
             <div><h4>${sB.nom}</h4><ul style="font-size:13px;color:var(--text-dim);margin-top:6px;padding-left:18px;">${(edB ? edB.risques : []).map(r=>`<li>${r}</li>`).join('')}</ul></div>
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;">
           <span class="smallcaps">7. Forces et faiblesses (calculées)</span> ${renderDataBadge('reel')}
-          <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:10px;">
+          <div class="card-grid" style="margin-top:10px;">
             <div><h4>${sA.nom}</h4>
               ${swA.strengths.length ? `<p style="font-size:12.5px;color:var(--emerald);margin-top:6px;">Points forts : ${swA.strengths.join(' ')}</p>` : ''}
               ${swA.weaknesses.length ? `<p style="font-size:12.5px;color:var(--bordeaux);margin-top:6px;">Points de vigilance : ${swA.weaknesses.join(' ')}</p>` : ''}
@@ -257,7 +257,7 @@ function renderCompareAnalysis(stocks){
         </div>
         <div class="card" style="margin-bottom:14px;">
           <span class="smallcaps">8. Scénarios (cibles réelles des analystes)</span> ${renderDataBadge('reel')}
-          <div class="field" style="max-width:260px;margin-top:10px;margin-bottom:0;"><label>Montant investi aujourd'hui (€)</label><input type="number" id="compInvestAmount" min="1" step="1" value="300"></div>
+          <div class="field" style="max-width:260px;margin-top:10px;margin-bottom:0;"><label for="compInvestAmount">Montant investi aujourd'hui (€)</label><input type="number" id="compInvestAmount" min="1" step="1" value="300"></div>
           <div id="compConsensus" style="margin:14px 0;"></div>
           <div id="compScenResults"></div>
           <p class="disclaimer-box">Cibles de cours réelles des analystes qui suivent chaque titre (Yahoo Finance), horizon type d'environ 12 mois (convention courante du secteur) — des estimations professionnelles, pas des garanties. Ceci ne constitue jamais une recommandation d'achat ou de vente personnalisée.</p>
@@ -265,9 +265,9 @@ function renderCompareAnalysis(stocks){
           <details style="margin-top:16px;">
             <summary class="smallcaps" style="cursor:pointer;font-size:11px;">Explorer mes propres hypothèses (plutôt que les cibles des analystes)</summary>
             <div style="margin-top:12px;">
-              <div class="slider-row field"><label>Croissance annuelle du bénéfice <span class="v mono" id="compValGrowth">6 %</span></label><input type="range" id="compGrowth" min="-10" max="25" step="1" value="6"></div>
-              <div class="slider-row field"><label>PER cible <span class="v mono" id="compValPer">18×</span></label><input type="range" id="compPer" min="5" max="40" step="1" value="18"></div>
-              <div class="slider-row field"><label>Horizon <span class="v mono" id="compValHorizon">5 ans</span></label><input type="range" id="compHorizon" min="1" max="15" step="1" value="5"></div>
+              <div class="slider-row field"><label for="compGrowth">Croissance annuelle du bénéfice <span class="v mono" id="compValGrowth">6 %</span></label><input type="range" id="compGrowth" min="-10" max="25" step="1" value="6"></div>
+              <div class="slider-row field"><label for="compPer">PER cible <span class="v mono" id="compValPer">18×</span></label><input type="range" id="compPer" min="5" max="40" step="1" value="18"></div>
+              <div class="slider-row field"><label for="compHorizon">Horizon <span class="v mono" id="compValHorizon">5 ans</span></label><input type="range" id="compHorizon" min="1" max="15" step="1" value="5"></div>
               <div id="compFreeScenResults" style="margin-top:12px;"></div>
               <p class="disclaimer-box">Cette estimation dépend des hypothèses que tu as saisies ci-dessus — pas les cibles des analystes. Elle ne constitue pas une prédiction.</p>
             </div>
@@ -303,7 +303,7 @@ function renderCompareAnalysis(stocks){
       if(!c) return `<div class="card"><h4>${nom}</h4><p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p></div>`;
       return `<div class="card"><h4>${nom}</h4><p style="font-size:13px;margin-top:4px;">${c.label}</p><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">${c.total} analyste${c.total>1?'s':''} · ${c.breakdown.strongBuy} achat fort · ${c.breakdown.buy} achat · ${c.breakdown.hold} conserver · ${c.breakdown.sell} vente · ${c.breakdown.strongSell} vente forte</p></div>`;
     }
-    consensusEl.innerHTML = `<div class="card-grid" style="grid-template-columns:1fr 1fr;">${consensusCard(sA.nom, fundA)}${consensusCard(sB.nom, fundB)}</div>`;
+    consensusEl.innerHTML = `<div class="card-grid">${consensusCard(sA.nom, fundA)}${consensusCard(sB.nom, fundB)}</div>`;
 
     if(investAmount <= 0){
       resultsEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Indique un montant investi supérieur à 0 pour voir la projection.</p>`;
@@ -328,7 +328,7 @@ function renderCompareAnalysis(stocks){
       }).join('');
       return `<div class="card"><h4>${nom}</h4>${rows}</div>`;
     }
-    resultsEl.innerHTML = `<p style="font-size:12px;color:var(--text-dim);">${fmtEUR(investAmount)} investis aujourd'hui dans chaque entreprise →</p><div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:8px;">${renderCasesForCompany(sA.nom, ffA, sA.prix, edA)}${renderCasesForCompany(sB.nom, ffB, sB.prix, edB)}</div>`;
+    resultsEl.innerHTML = `<p style="font-size:12px;color:var(--text-dim);">${fmtEUR(investAmount)} investis aujourd'hui dans chaque entreprise →</p><div class="card-grid" style="margin-top:8px;">${renderCasesForCompany(sA.nom, ffA, sA.prix, edA)}${renderCasesForCompany(sB.nom, ffB, sB.prix, edB)}</div>`;
   }
   document.getElementById('compInvestAmount').addEventListener('input', renderCompAnalystScenarios);
   renderCompAnalystScenarios();
@@ -347,7 +347,7 @@ function renderCompareAnalysis(stocks){
       if(!scenarios) return `<div class="card"><h4>${nom}</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (BPA réel indisponible, scénario non calculable)</p></div>`;
       return `<div class="card"><h4>${nom}</h4>${Object.entries(scenarios).map(([k,r])=>`<div class="result-row" style="justify-content:space-between;"><span>${labels[k]}</span><span class="mono">${r.prixCible.toFixed(1)} €</span></div>`).join('')}</div>`;
     }
-    document.getElementById('compFreeScenResults').innerHTML = `<div class="card-grid" style="grid-template-columns:1fr 1fr;">${renderSide(sA.nom, a)}${renderSide(sB.nom, b)}</div>`;
+    document.getElementById('compFreeScenResults').innerHTML = `<div class="card-grid">${renderSide(sA.nom, a)}${renderSide(sB.nom, b)}</div>`;
   }
   ['compGrowth','compPer','compHorizon'].forEach(id => document.getElementById(id).addEventListener('input', updateCompFreeScenarios));
   updateCompFreeScenarios();
@@ -501,9 +501,8 @@ const dcaPricesRowsEl = document.getElementById('dcaPriceRows');
 const dcaPeriods = ['Aujourd\'hui', 'Dans 3 mois', 'Dans 6 mois', 'Dans 9 mois'];
 const defaultPrices = [100, 92, 108, 97];
 dcaPricesRowsEl.innerHTML = dcaPeriods.map((p,i)=>`
-  <div class="field"><label>${p} : prix (€)</label><input type="number" class="dcaPrice" data-idx="${i}" value="${defaultPrices[i]}"></div>`).join('');
+  <div class="field"><label>${p} : prix (€) <input type="number" class="dcaPrice" data-idx="${i}" value="${defaultPrices[i]}"></label></div>`).join('');
 
-let dcaUsed = false;
 function updateDcaVsLump(){
   const total = +dcaTotalEl.value;
   const prices = Array.from(document.querySelectorAll('.dcaPrice')).map(i=>+i.value);
@@ -521,7 +520,7 @@ function updateDcaVsLump(){
       <div class="whatif-col"><div class="lab">Tout en une fois</div><div class="val" style="color:${best==='lump'?'var(--emerald)':'var(--text)'}">${fmtEUR(lumpValue)}</div></div>
     </div>
     <p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">Avec ces prix, la stratégie ${best==='dca'?'DCA':'investissement unique'} aurait donné le meilleur résultat sur cette période précise, un résultat qui dépend entièrement des prix saisis, pas d'une règle générale.</p>`;
-  if(!dcaUsed){ dcaUsed = true; awardXP(5, {usedDCA:true}); }
+  tryAwardQuizPoints(`bourse-dca-${new Date().toDateString()}`, 5, {usedDCA:true});
 }
 [dcaTotalEl].forEach(el=>el.addEventListener('input', updateDcaVsLump));
 dcaPricesRowsEl.addEventListener('input', updateDcaVsLump);

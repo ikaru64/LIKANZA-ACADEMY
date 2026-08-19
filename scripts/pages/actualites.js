@@ -25,10 +25,10 @@ async function renderDailyRecap(){
       <h3 style="font-size:22px;margin-bottom:10px;">${data.title}</h3>
       <p style="color:var(--text-dim);">${data.summary}</p>
       <div class="course-item" style="background:none;padding:0;margin-top:16px;">
-        <div class="head" onclick="this.nextElementSibling.classList.toggle('open')">
+        <button type="button" class="head" style="background:none;border:none;width:100%;text-align:left;font:inherit;" onclick="this.nextElementSibling.classList.toggle('open')">
           <h4 style="font-size:14px;">Sources (${(data.sources || []).length})</h4>
           <span class="idx">Voir →</span>
-        </div>
+        </button>
         <div class="course-body">
           <div class="course-body-inner">
             <ul style="font-size:13px;margin:0 0 0 18px;">${sourcesHtml}</ul>

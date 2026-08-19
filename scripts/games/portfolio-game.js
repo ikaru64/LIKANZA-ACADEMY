@@ -344,7 +344,7 @@ function renderPortfolioGame(elId){
         <span>Trimestre ${g.currentTurnIndex + 1} / ${g.difficulty.turnCount}</span><span>Valeur actuelle : ${fmtEUR(g.portfolioValueSeries[g.portfolioValueSeries.length - 1])}</span>
       </div>
       <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
-      <div class="pattern-chart">${renderMultiLineChart(series)}</div>
+      <div class="pattern-chart">${renderMultiLineChart(series, `Évolution de la valeur du portefeuille sur les ${g.currentTurnIndex + 1} trimestres joués`)}</div>
       ${lastNarration ? `<p class="disclaimer-box" style="margin-top:12px;">📰 ${lastNarration.statement}</p>` : ''}
       <span class="smallcaps" style="display:block;margin:16px 0 8px;">${g.currentTurnIndex === 0 ? 'Ta répartition de départ' : 'Rééquilibrer pour le tour suivant'}</span>
       <div class="portfolio-alloc-list">
@@ -435,7 +435,7 @@ function renderPortfolioGame(elId){
       <div class="pattern-chart">${renderMultiLineChart([
         {data: g.portfolioValueSeries, color: 'var(--gold-bright)', width: 2},
         {data: g.benchmarkValueSeries, color: 'var(--text-dim)', dashed: true, width: 1.5}
-      ])}</div>
+      ], `Comparaison de l'évolution de ton portefeuille (trait plein) et de ${PORTFOLIO_BENCHMARK_NAME} (trait pointillé)`)}</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin:14px 0;font-size:12px;color:var(--text-dim);">
         <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-bright);border-radius:50%;margin-right:6px;"></span>Ton portefeuille</span>
         <span><span style="display:inline-block;width:10px;height:2px;background:var(--text-dim);margin-right:6px;vertical-align:middle;"></span>${PORTFOLIO_BENCHMARK_NAME}</span>

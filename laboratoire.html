@@ -20,7 +20,7 @@
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
   <span class="sidebar-group-label">Apprendre</span>
   <a href="defis.html"><span class="icon" data-icon="target"></span><span>Défis</span></a>
-  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Academy</span></a>
+  <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Formations</span></a>
   <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
   <a href="laboratoire.html" class="active"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
@@ -54,7 +54,7 @@
           <div class="nav-dropdown-col">
             <h5>Apprendre</h5>
             <a href="defis.html">Défis</a>
-            <a href="formations.html">Academy</a>
+            <a href="formations.html">Formations</a>
             <a href="bibliotheque.html">Bibliothèque</a>
             <a href="laboratoire.html">Laboratoire financier</a>
             <a href="play.html">Play</a>
@@ -97,19 +97,19 @@
       </div>
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Applique les vrais cours mensuels d'un support pour reconstituer ce qui se serait réellement passé — rétrospectif uniquement, jamais une prédiction.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:200px;"><label>Support</label>
+        <div class="field" style="flex:1;min-width:200px;"><label for="labInvestSupport">Support</label>
           <select id="labInvestSupport">
             <option value="URTH">Actions monde (MSCI World, ETF URTH)</option>
             <option value="^GSPC">Actions US (S&amp;P 500)</option>
             <option value="^FCHI">Actions France (CAC 40)</option>
           </select>
         </div>
-        <div class="field" style="flex:1;min-width:120px;"><label>Capital initial (€)</label><input type="number" id="labInvestCapital" value="1000" min="0"></div>
-        <div class="field" style="flex:1;min-width:120px;"><label>Versement mensuel (€)</label><input type="number" id="labInvestMonthly" value="200" min="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="labInvestCapital">Capital initial (€)</label><input type="number" id="labInvestCapital" value="1000" min="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="labInvestMonthly">Versement mensuel (€)</label><input type="number" id="labInvestMonthly" value="200" min="0"></div>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:140px;"><label>Date de départ</label><select id="labInvestStart"></select></div>
-        <div class="field" style="flex:1;min-width:140px;"><label>Date de fin</label><select id="labInvestEnd"></select></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="labInvestStart">Date de départ</label><select id="labInvestStart"></select></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="labInvestEnd">Date de fin</label><select id="labInvestEnd"></select></div>
       </div>
       <p id="labInvestPartialNote" class="source-note"></p>
       <div id="labInvestOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
@@ -122,15 +122,15 @@
       </div>
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Un versement mensuel régulier appliqué aux vrais cours historiques : prix moyen d'achat réel, et combien de fois tu aurais acheté pendant une baisse.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:200px;"><label>Support</label>
+        <div class="field" style="flex:1;min-width:200px;"><label for="labDcaSupport">Support</label>
           <select id="labDcaSupport">
             <option value="URTH">Actions monde (MSCI World, ETF URTH)</option>
             <option value="^GSPC">Actions US (S&amp;P 500)</option>
             <option value="^FCHI">Actions France (CAC 40)</option>
           </select>
         </div>
-        <div class="field" style="flex:1;min-width:120px;"><label>Versement mensuel (€)</label><input type="number" id="labDcaMonthly" value="150" min="1"></div>
-        <div class="field" style="flex:1;min-width:140px;"><label>Depuis</label><select id="labDcaStart"></select></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="labDcaMonthly">Versement mensuel (€)</label><input type="number" id="labDcaMonthly" value="150" min="1"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="labDcaStart">Depuis</label><select id="labDcaStart"></select></div>
       </div>
       <div id="labDcaOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
     </div>
@@ -145,12 +145,12 @@
         <button class="pill" data-mode="personnalise">Personnalisé</button>
       </div>
       <p id="simModeDesc" style="font-size:12px;color:var(--text-dim);margin-bottom:12px;"></p>
-      <div class="slider-row field"><label>Capital de départ <span class="v mono" id="valCapital">500 €</span></label><input type="range" id="capital" min="0" max="10000" step="100" value="500"></div>
-      <div class="slider-row field"><label>Versement mensuel <span class="v mono" id="valMonthly">100 €</span></label><input type="range" id="monthly" min="0" max="1000" step="10" value="100"></div>
-      <div class="slider-row field" id="simRateRow"><label>Rendement annuel moyen <span class="v mono" id="valRate">6 %</span></label><input type="range" id="rate" min="0" max="20" step="0.5" value="6" disabled></div>
+      <div class="slider-row field"><label for="capital">Capital de départ <span class="v mono" id="valCapital">500 €</span></label><input type="range" id="capital" min="0" max="10000" step="100" value="500"></div>
+      <div class="slider-row field"><label for="monthly">Versement mensuel <span class="v mono" id="valMonthly">100 €</span></label><input type="range" id="monthly" min="0" max="1000" step="10" value="100"></div>
+      <div class="slider-row field" id="simRateRow"><label for="rate">Rendement annuel moyen <span class="v mono" id="valRate">6 %</span></label><input type="range" id="rate" min="0" max="20" step="0.5" value="6" disabled></div>
       <div id="simRateAlert"></div>
-      <div class="slider-row field"><label>Durée <span class="v mono" id="valYears">15 ans</span></label><input type="range" id="years" min="1" max="40" step="1" value="15"></div>
-      <div class="field"><label>Frais de gestion annuels (optionnel)</label><input type="number" id="simFrais" value="0" min="0" max="5" step="0.1"></div>
+      <div class="slider-row field"><label for="years">Durée <span class="v mono" id="valYears">15 ans</span></label><input type="range" id="years" min="1" max="40" step="1" value="15"></div>
+      <div class="field"><label for="simFrais">Frais de gestion annuels (optionnel)</label><input type="number" id="simFrais" value="0" min="0" max="5" step="0.1"></div>
       <div class="result-label">Capital estimé au terme</div>
       <div class="result-big" id="simTotal">— €</div>
       <div class="result-row"><span>Versé : <span id="simInvested">—</span></span><span>Gains : <span id="simGains" style="color:var(--emerald)">—</span></span></div>
@@ -186,14 +186,14 @@
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Tableau d'amortissement complet, comparaison des durées et des taux — pas seulement une mensualité.</p>
       <p id="labCreditRateSource" class="source-note"></p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:140px;"><label>Prix du bien (€)</label><input type="number" id="labCreditPrice" value="250000" min="0"></div>
-        <div class="field" style="flex:1;min-width:120px;"><label>Apport (€)</label><input type="number" id="labCreditApport" value="25000" min="0"></div>
-        <div class="field" style="flex:1;min-width:100px;"><label>Taux (%)</label><input type="number" id="labCreditRate" value="3.2" min="0" max="15" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="labCreditPrice">Prix du bien (€)</label><input type="number" id="labCreditPrice" value="250000" min="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="labCreditApport">Apport (€)</label><input type="number" id="labCreditApport" value="25000" min="0"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="labCreditRate">Taux (%)</label><input type="number" id="labCreditRate" value="3.2" min="0" max="15" step="0.05"></div>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:100px;"><label>Durée (ans)</label><input type="number" id="labCreditYears" value="20" min="1" max="30" step="1"></div>
-        <div class="field" style="flex:1;min-width:120px;"><label>Assurance (%/an)</label><input type="number" id="labCreditInsurance" value="0.3" min="0" max="2" step="0.05"></div>
-        <div class="field" style="flex:1;min-width:140px;"><label>Frais annexes (dossier + garantie + notaire, €)</label><input type="number" id="labCreditFrais" value="18000" min="0"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="labCreditYears">Durée (ans)</label><input type="number" id="labCreditYears" value="20" min="1" max="30" step="1"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="labCreditInsurance">Assurance (%/an)</label><input type="number" id="labCreditInsurance" value="0.3" min="0" max="2" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="labCreditFrais">Frais annexes (dossier + garantie + notaire, €)</label><input type="number" id="labCreditFrais" value="18000" min="0"></div>
       </div>
       <div id="labCreditOutput"></div>
     </div>
@@ -206,30 +206,30 @@
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Patrimoine net comparé sur plusieurs horizons, en tenant compte du coût d'opportunité de l'apport — pas juste "mensualité vs loyer".</p>
       <p id="labBuyRentPriceSource" class="source-note"></p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:140px;"><label>Prix du bien (€)</label><input type="number" id="labBrPrice" value="250000" min="0"></div>
-        <div class="field" style="flex:1;min-width:120px;"><label>Apport (€)</label><input type="number" id="labBrApport" value="30000" min="0"></div>
-        <div class="field" style="flex:1;min-width:100px;"><label>Taux crédit (%)</label><input type="number" id="labBrRate" value="3.2" min="0" max="15" step="0.05"></div>
-        <div class="field" style="flex:1;min-width:100px;"><label>Durée (ans)</label><input type="number" id="labBrYears" value="20" min="1" max="30" step="1"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="labBrPrice">Prix du bien (€)</label><input type="number" id="labBrPrice" value="250000" min="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="labBrApport">Apport (€)</label><input type="number" id="labBrApport" value="30000" min="0"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="labBrRate">Taux crédit (%)</label><input type="number" id="labBrRate" value="3.2" min="0" max="15" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="labBrYears">Durée (ans)</label><input type="number" id="labBrYears" value="20" min="1" max="30" step="1"></div>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:110px;"><label>Assurance (%/an)</label><input type="number" id="labBrInsurance" value="0.3" min="0" max="2" step="0.05"></div>
-        <div class="field" style="flex:1;min-width:110px;"><label>Frais dossier (€)</label><input type="number" id="labBrFraisDossier" value="1000" min="0"></div>
-        <div class="field" style="flex:1;min-width:110px;"><label>Frais garantie (€)</label><input type="number" id="labBrFraisGarantie" value="2500" min="0"></div>
-        <div class="field" style="flex:1;min-width:110px;"><label>Frais de notaire (%)</label><input type="number" id="labBrFraisNotaire" value="7.5" min="0" max="15" step="0.1"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="labBrInsurance">Assurance (%/an)</label><input type="number" id="labBrInsurance" value="0.3" min="0" max="2" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="labBrFraisDossier">Frais dossier (€)</label><input type="number" id="labBrFraisDossier" value="1000" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="labBrFraisGarantie">Frais garantie (€)</label><input type="number" id="labBrFraisGarantie" value="2500" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="labBrFraisNotaire">Frais de notaire (%)</label><input type="number" id="labBrFraisNotaire" value="7.5" min="0" max="15" step="0.1"></div>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:130px;"><label>Charges copro (€/an)</label><input type="number" id="labBrCharges" value="1200" min="0"></div>
-        <div class="field" style="flex:1;min-width:130px;"><label>Taxe foncière (€/an)</label><input type="number" id="labBrTaxe" value="1000" min="0"></div>
-        <div class="field" style="flex:1;min-width:130px;"><label>Entretien (%/an du bien)</label><input type="number" id="labBrEntretien" value="0.5" min="0" max="3" step="0.1"></div>
-        <div class="field" style="flex:1;min-width:130px;"><label>Travaux éventuels (€, ponctuel)</label><input type="number" id="labBrTravaux" value="0" min="0"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="labBrCharges">Charges copro (€/an)</label><input type="number" id="labBrCharges" value="1200" min="0"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="labBrTaxe">Taxe foncière (€/an)</label><input type="number" id="labBrTaxe" value="1000" min="0"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="labBrEntretien">Entretien (%/an du bien)</label><input type="number" id="labBrEntretien" value="0.5" min="0" max="3" step="0.1"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="labBrTravaux">Travaux éventuels (€, ponctuel)</label><input type="number" id="labBrTravaux" value="0" min="0"></div>
       </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:110px;"><label>Loyer initial (€/mois)</label><input type="number" id="labBrLoyer" value="850" min="0"></div>
-        <div class="field" style="flex:1;min-width:110px;"><label>Charges locataire (€/mois)</label><input type="number" id="labBrChargesLoc" value="50" min="0"></div>
-        <div class="field" style="flex:1;min-width:130px;"><label>Hausse loyer (%/an)</label><input type="number" id="labBrLoyerHausse" value="1.5" min="0" max="10" step="0.1"></div>
-        <div class="field" style="flex:1;min-width:150px;"><label>Rendement si apport investi (%/an)</label><input type="number" id="labBrOpportunity" value="6" min="0" max="15" step="0.1"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="labBrLoyer">Loyer initial (€/mois)</label><input type="number" id="labBrLoyer" value="850" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="labBrChargesLoc">Charges locataire (€/mois)</label><input type="number" id="labBrChargesLoc" value="50" min="0"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="labBrLoyerHausse">Hausse loyer (%/an)</label><input type="number" id="labBrLoyerHausse" value="1.5" min="0" max="10" step="0.1"></div>
+        <div class="field" style="flex:1;min-width:150px;"><label for="labBrOpportunity">Rendement si apport investi (%/an)</label><input type="number" id="labBrOpportunity" value="6" min="0" max="15" step="0.1"></div>
       </div>
-      <div class="field" style="max-width:360px;"><label>Scénario</label>
+      <div class="field" style="max-width:360px;"><label for="labBrScenario">Scénario</label>
         <select id="labBrScenario">
           <option value="standard">Standard (hypothèses ci-dessus)</option>
           <option value="prix-10">Prix immobilier -10% à la revente</option>
@@ -262,17 +262,17 @@
       </div>
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Inflation française réellement mesurée (indice harmonisé des prix à la consommation, BCE), pas une hypothèse constante.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
-        <div class="field" style="flex:1;min-width:120px;"><label>Montant (€)</label><input type="number" id="labInflAmount" value="10000" min="0"></div>
-        <div class="field" style="flex:1;min-width:140px;"><label>Depuis</label><select id="labInflStart"></select></div>
-        <div class="field" style="flex:1;min-width:140px;"><label>Jusqu'à</label><select id="labInflEnd"></select></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="labInflAmount">Montant (€)</label><input type="number" id="labInflAmount" value="10000" min="0"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="labInflStart">Depuis</label><select id="labInflStart"></select></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="labInflEnd">Jusqu'à</label><select id="labInflEnd"></select></div>
       </div>
       <div id="labInflationOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
       <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--hairline);">
         <span class="smallcaps">Et pour l'avenir ? <span class="data-badge data-badge-hypothese">🔵 Scénarios, pas une prévision</span></span>
-        <div class="field" style="max-width:260px;margin-top:10px;"><label>Montant épargné aujourd'hui (€)</label><input type="number" id="inflAmount" value="10000"></div>
-        <div class="slider-row field"><label>Rendement de ton épargne <span class="v mono" id="valInflReturn">1 %</span></label><input type="range" id="inflReturn" min="0" max="10" step="0.5" value="1"></div>
-        <div class="slider-row field"><label>Inflation annuelle supposée <span class="v mono" id="valInflRate">2.1 %</span></label><input type="range" id="inflRate" min="0" max="8" step="0.1" value="2.1"></div>
-        <div class="slider-row field"><label>Durée <span class="v mono" id="valInflYears">10 ans</span></label><input type="range" id="inflYears" min="1" max="30" step="1" value="10"></div>
+        <div class="field" style="max-width:260px;margin-top:10px;"><label for="inflAmount">Montant épargné aujourd'hui (€)</label><input type="number" id="inflAmount" value="10000"></div>
+        <div class="slider-row field"><label for="inflReturn">Rendement de ton épargne <span class="v mono" id="valInflReturn">1 %</span></label><input type="range" id="inflReturn" min="0" max="10" step="0.5" value="1"></div>
+        <div class="slider-row field"><label for="inflRate">Inflation annuelle supposée <span class="v mono" id="valInflRate">2.1 %</span></label><input type="range" id="inflRate" min="0" max="8" step="0.1" value="2.1"></div>
+        <div class="slider-row field"><label for="inflYears">Durée <span class="v mono" id="valInflYears">10 ans</span></label><input type="range" id="inflYears" min="1" max="30" step="1" value="10"></div>
         <div class="result-row" id="inflResult" style="margin-top:14px;"></div>
         <div id="inflAssumptionAlert"></div>
         <div class="bar-chart" id="inflChart"></div>
@@ -282,10 +282,10 @@
 
     <div class="card">
       <h3>Calculateur de budget <span class="data-badge data-badge-exemple" style="margin-left:6px;">⚪ Exemple pédagogique</span></h3>
-      <div class="field"><label>Revenus mensuels nets (€)</label><input type="number" id="budgetRevenu" value="2200"></div>
-      <div class="field"><label>Loyer / crédit (€)</label><input type="number" id="budgetLoyer" value="750"></div>
-      <div class="field"><label>Charges fixes : assurances, abonnements, transport (€)</label><input type="number" id="budgetFixe" value="400"></div>
-      <div class="field"><label>Dépenses variables : courses, sorties (€)</label><input type="number" id="budgetVariable" value="600"></div>
+      <div class="field"><label for="budgetRevenu">Revenus mensuels nets (€)</label><input type="number" id="budgetRevenu" value="2200"></div>
+      <div class="field"><label for="budgetLoyer">Loyer / crédit (€)</label><input type="number" id="budgetLoyer" value="750"></div>
+      <div class="field"><label for="budgetFixe">Charges fixes : assurances, abonnements, transport (€)</label><input type="number" id="budgetFixe" value="400"></div>
+      <div class="field"><label for="budgetVariable">Dépenses variables : courses, sorties (€)</label><input type="number" id="budgetVariable" value="600"></div>
       <div class="result-label">Capacité d'épargne mensuelle</div>
       <div class="result-big" id="budgetResult">— €</div>
       <p class="disclaimer-box">Une capacité d'épargne négative signale un budget à revoir avant tout projet d'investissement.</p>
@@ -293,17 +293,17 @@
 
     <div class="card">
       <h3>Objectif d'épargne <span class="data-badge data-badge-exemple" style="margin-left:6px;">⚪ Exemple pédagogique</span></h3>
-      <div class="field"><label>Montant visé (€)</label><input type="number" id="goalAmount" value="5000"></div>
-      <div class="field"><label>Épargne mensuelle possible (€)</label><input type="number" id="goalMonthly" value="150"></div>
+      <div class="field"><label for="goalAmount">Montant visé (€)</label><input type="number" id="goalAmount" value="5000"></div>
+      <div class="field"><label for="goalMonthly">Épargne mensuelle possible (€)</label><input type="number" id="goalMonthly" value="150"></div>
       <div class="result-label">Temps nécessaire pour atteindre l'objectif</div>
       <div class="result-big" id="goalResult">—</div>
     </div>
 
     <div class="card">
       <h3>Coût futur d'un abonnement <span class="data-badge data-badge-hypothese" style="margin-left:6px;">🔵 Hypothèse</span></h3>
-      <div class="field"><label>Coût mensuel de l'abonnement (€)</label><input type="number" id="subCost" value="15"></div>
-      <div class="slider-row field"><label>Sur une durée de <span class="v mono" id="valSubYears">5 ans</span></label><input type="range" id="subYears" min="1" max="20" step="1" value="5"></div>
-      <div class="slider-row field"><label>Si investi à la place, rendement annuel <span class="v mono" id="valSubRate">6 %</span></label><input type="range" id="subRate" min="0" max="10" step="0.5" value="6"></div>
+      <div class="field"><label for="subCost">Coût mensuel de l'abonnement (€)</label><input type="number" id="subCost" value="15"></div>
+      <div class="slider-row field"><label for="subYears">Sur une durée de <span class="v mono" id="valSubYears">5 ans</span></label><input type="range" id="subYears" min="1" max="20" step="1" value="5"></div>
+      <div class="slider-row field"><label for="subRate">Si investi à la place, rendement annuel <span class="v mono" id="valSubRate">6 %</span></label><input type="range" id="subRate" min="0" max="10" step="0.5" value="6"></div>
       <div class="result-row" id="subResult" style="margin-top:10px;"></div>
       <div id="subRateAlert"></div>
     </div>
@@ -354,7 +354,7 @@
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
-  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Apprendre</a>
+  <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Formations</a>
   <a href="defis.html"><span class="icon" data-icon="swords"></span>Défis</a>
   <a href="laboratoire.html" class="active"><span class="icon" data-icon="calculator"></span>Labo</a>
   <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>
