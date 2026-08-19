@@ -122,22 +122,11 @@
     <button class="btn btn-sm btn-gold" id="addMissionBtn">Ajouter la mission</button>
   </div>
 
-  <div class="section-head"><h2>Actualités</h2><span class="meta-line" id="newsCountLabel"></span></div>
-  <div class="card-grid" id="newsEditList" style="grid-template-columns:1fr;"></div>
-  <div class="card" style="max-width:640px;margin-top:20px;">
-    <h3>Ajouter une actualité</h3>
-    <div class="field"><label>Titre</label><input type="text" id="newNewsTitre"></div>
-    <div class="field"><label>Catégorie</label><input type="text" id="newNewsCat" placeholder="Ex : Marchés"></div>
-    <div class="field"><label>Résumé</label><textarea id="newNewsResume"></textarea></div>
-    <div class="field"><label>Points clés (un par ligne)</label><textarea id="newNewsPoints"></textarea></div>
-    <div class="field"><label>Pourquoi c'est important</label><textarea id="newNewsPourquoi"></textarea></div>
-    <div class="field"><label>Impact potentiel (séparé par des virgules)</label><input type="text" id="newNewsImpact"></div>
-    <div class="field"><label>Source</label><input type="text" id="newNewsSource"></div>
-    <div class="field"><label>Lien original</label><input type="text" id="newNewsLien" placeholder="https://..."></div>
-    <div class="field"><label>Date</label><input type="text" id="newNewsDate" placeholder="JJ/MM/AAAA"></div>
-    <div class="field"><label>Temps de lecture</label><input type="text" id="newNewsLecture" placeholder="Ex : 2 min"></div>
-    <button class="btn btn-sm btn-gold" id="addNewsBtn">Ajouter l'actualité</button>
+  <div class="section-head"><h2>Actualités</h2><span class="meta-line">état du pipeline automatique · lecture seule</span></div>
+  <div class="disclaimer-box" style="margin-bottom:16px;">
+    Les actualités ne se modifient pas depuis cet espace : elles sont générées automatiquement, chaque jour (7h30 UTC) et chaque semaine (lundi 6h UTC), par un pipeline qui lit de vraies actus financières (flux RSS) et les fait résumer par une IA, sans relecture humaine avant mise en ligne. Ce panneau affiche l'état réel de ce pipeline — jamais une date ou un statut inventés.
   </div>
+  <div class="card-grid" id="newsPipelineStatus" style="grid-template-columns:1fr 1fr;"></div>
 </section>
 
 </div>

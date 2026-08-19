@@ -440,7 +440,7 @@ function renderPortfolioGame(elId){
         <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-bright);border-radius:50%;margin-right:6px;"></span>Ton portefeuille</span>
         <span><span style="display:inline-block;width:10px;height:2px;background:var(--text-dim);margin-right:6px;vertical-align:middle;"></span>${PORTFOLIO_BENCHMARK_NAME}</span>
       </div>
-      <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card-grid">
         <div class="card">
           <span class="smallcaps">Ton portefeuille</span>
           <div class="result-big" style="margin-top:6px;">${fmtEUR(g.portfolioValueSeries[g.portfolioValueSeries.length - 1])}</div>
@@ -456,8 +456,10 @@ function renderPortfolioGame(elId){
       <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">${narrative.decisionProcessText}</p>
       <p class="disclaimer-box">${narrative.scenarioFitText}</p>
       <p class="disclaimer-box" style="margin-top:10px;">Partie basée sur de vrais cours passés (Yahoo Finance, cotations différées), sur ${result.turnsPlayed} trimestres réels. Les performances passées ne préjugent jamais des performances futures.</p>
-      <button class="btn btn-sm btn-gold" id="${elId}-restart" style="margin-top:6px;">Nouvelle partie</button>`;
+      <button class="btn btn-sm btn-gold" id="${elId}-restart" style="margin-top:6px;">Nouvelle partie</button>
+      <div id="${elId}-nextstep"></div>`;
     document.getElementById(`${elId}-restart`).addEventListener('click', renderSetup);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'stockMarket'});
   }
 
   renderSetup();

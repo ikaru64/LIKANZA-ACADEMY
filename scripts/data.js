@@ -556,6 +556,91 @@ function renderNextStepRecommendation(elId){
     </details>`;
 }
 
+// ---------- Moteur "prochaine étape" universel ----------
+// Une seule recommandation concrète et réelle, jamais une CTA générique.
+// Ordre de priorité : (1) notion faible tout juste travaillée dans cette
+// session (ctx.categories, écrite par recordAnswer avant l'appel — jamais
+// une supposition), (2) erreurs non résolues du site entier, (3) notion
+// faible dans le domaine concerné, (4) généralise pickPrimaryDomainRecommendation
+// (réutilisée par référence, jamais dupliquée), (5) repli honnête vers Mon
+// Parcours. Lit la maîtrise par concept, ne recalcule jamais sa propre
+// détection de faiblesse en parallèle.
+function getNextStepSuggestion(ctx){
+  ctx = ctx || {};
+
+  if(Array.isArray(ctx.categories) && ctx.categories.length){
+    const weakTouched = ctx.categories
+      .map(getConceptMastery)
+      .filter(m => m && (m.stage === 'decouvert' || m.stage === 'compris'))
+      .sort((a, b) => a.pct - b.pct)[0];
+    if(weakTouched){
+      return {
+        label: `S'entraîner sur ${weakTouched.categorie} →`,
+        url: `defis.html?cat=${encodeURIComponent(weakTouched.categorie)}`,
+        reason: weakTouched.stage === 'decouvert'
+          ? `Tu découvres tout juste "${weakTouched.categorie}" — quelques exercices de plus pour bien comprendre.`
+          : `Tu comprends "${weakTouched.categorie}", mais pas encore sur des cas concrets.`
+      };
+    }
+  }
+
+  const unresolved = getMistakes().filter(m => !m.resolved);
+  if(unresolved.length){
+    const counts = {};
+    unresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie] || 0) + 1; });
+    const [cat] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+    return {
+      label: `Revoir ${cat} →`,
+      url: `defis.html?cat=${encodeURIComponent(cat)}`,
+      reason: `Des notions en attente de révision, surtout en ${cat}.`
+    };
+  }
+
+  const domain = ctx.domainKey
+    ? DOMAINS.find(d => d.key === ctx.domainKey)
+    : (Array.isArray(ctx.categories) && ctx.categories.length ? DOMAINS.find(d => d.quizCategories.includes(ctx.categories[0])) : null);
+  if(domain){
+    const weakInDomain = getAllConceptMastery().find(m => domain.quizCategories.includes(m.categorie) && m.stage !== 'maitrise');
+    if(weakInDomain){
+      return {
+        label: `Continuer en ${weakInDomain.categorie} →`,
+        url: `defis.html?cat=${encodeURIComponent(weakInDomain.categorie)}`,
+        reason: `Encore à consolider en ${domain.label}.`
+      };
+    }
+  }
+
+  const primary = pickPrimaryDomainRecommendation();
+  if(primary){
+    const hook = primary.deepQuizHook || {title: `Évaluer mon niveau en ${primary.displayLabel}`};
+    return {
+      label: 'Évaluer mon niveau →',
+      url: `quiz-approfondi.html?domaine=${primary.key}`,
+      reason: hook.title
+    };
+  }
+
+  return {
+    label: 'Voir mon parcours →',
+    url: 'parcours.html',
+    reason: "Continue d'explorer : ton profil continue de s'affiner."
+  };
+}
+
+// Composant réutilisable : un bloc "prochaine étape" à brancher sur n'importe
+// quel écran de résultat (Défis, quiz approfondi, cours, mission, jeux...).
+function renderNextStepCard(elId, ctx){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const step = getNextStepSuggestion(ctx);
+  el.innerHTML = `
+    <div class="card" style="margin-top:16px;">
+      <span class="smallcaps">🎯 Prochaine étape</span>
+      <p style="font-size:13.5px;color:var(--text-dim);margin:8px 0 12px;">${step.reason}</p>
+      <a href="${step.url}" class="btn btn-sm btn-gold">${step.label}</a>
+    </div>`;
+}
+
 const LEVEL_TIPS = {
   debutant: "Pas besoin de retenir tous les chiffres pour l'instant. Comprends d'abord le principe.",
   intermediaire: "Tu connais déjà ce principe : regarde maintenant ce qui peut modifier le résultat.",
@@ -826,6 +911,7 @@ function renderLeagueBoard(elId){
 function getGamification(){
   const g = safeGetJSON('fzr-gamification', {xp:0, financePoints:0, streak:0, lastVisit:null, badges:[]});
   if(g.financePoints === undefined) g.financePoints = g.xp; // migration en douceur depuis l'ancien système à monnaie unique
+  if(g.streakFreezes === undefined) g.streakFreezes = 0; // migration en douceur : tolérance de série (voir checkDailyStreak)
   return g;
 }
 function saveGamification(g){ safeSetJSON('fzr-gamification', g); }
@@ -846,12 +932,26 @@ function streakMultiplier(streak){
   return 1;
 }
 
+// ---------- Tolérance de série : jusqu'ici, un seul jour manqué remettait
+// la série à 1, sans aucune marge. g.streakFreezes se régénère +1 tous les
+// 7 jours de série réelle (plafonné à 2) et se consomme automatiquement
+// quand exactement un jour a été manqué (pas plus) — au-delà, la série
+// repart bien à 1 comme avant. ----------
 function checkDailyStreak(){
   const g = getGamification();
   const today = new Date().toDateString();
   if(g.lastVisit === today){ logActivity(); return g; }
   const yesterday = new Date(Date.now() - 86400000).toDateString();
-  g.streak = (g.lastVisit === yesterday) ? g.streak + 1 : 1;
+  const twoDaysAgo = new Date(Date.now() - 2*86400000).toDateString();
+  if(g.lastVisit === yesterday){
+    g.streak += 1;
+  } else if(g.lastVisit === twoDaysAgo && g.streakFreezes > 0){
+    g.streakFreezes -= 1;
+    g.streak += 1;
+  } else {
+    g.streak = 1;
+  }
+  if(g.streak > 0 && g.streak % 7 === 0) g.streakFreezes = Math.min(2, g.streakFreezes + 1);
   g.lastVisit = today;
   const bonus = Math.round(15 * streakMultiplier(g.streak));
   g.xp += bonus;
@@ -1023,10 +1123,10 @@ const MISSION_TEMPLATES = [
     const n = pool[dayOfYear() % pool.length];
     return {title:'Découvrir un sujet hors de ta zone habituelle', desc:`Explore « ${n.terme} » (${n.categorie}), un thème différent de tes habitudes.`, href:`bibliotheque.html#${encodeURIComponent(n.terme.replace(/\s+/g,'-'))}`};
   }},
-  {id:'etape-business', xp:8, build(){
+  {id:'etape-business', xp:8, domainKey:'business', build(){
     return {title:'Compléter une étape Business', desc:'Avance d\'une étape dans « Construis ton projet ».', href:'construire-son-projet.html'};
   }},
-  {id:'comparer-actifs', xp:5, build(){
+  {id:'comparer-actifs', xp:5, domainKey:'stockMarket', build(){
     return {title:'Comparer deux actifs', desc:'Utilise le comparateur pour comparer deux actions ou ETF entre eux.', href:'bourse.html'};
   }},
   {id:'revoir-notion', xp:8, build(){
@@ -1036,13 +1136,21 @@ const MISSION_TEMPLATES = [
     return {title:'Revoir une notion mal comprise', desc:`Retravaille « ${m.categorie} » dans les Défis, d'après tes vraies erreurs de quiz.`, href:`defis.html?cat=${encodeURIComponent(m.categorie)}`};
   }}
 ];
-function pickMissions(count, seed, excludeIds){
+// themeDomainKey (optionnel) : biais léger de sélection, pas une nouvelle
+// mécanique — les gabarits déjà tagués d'un domainKey correspondant passent
+// juste en tête de la rotation déterministe existante (voir
+// getWeeklyThemeDomain). Sans thème (missions du jour), le comportement est
+// strictement inchangé.
+function pickMissions(count, seed, excludeIds, themeDomainKey){
   const applicable = MISSION_TEMPLATES.filter(t => !(excludeIds||[]).includes(t.id));
+  const ordered = themeDomainKey
+    ? [...applicable].sort((a, b) => (b.domainKey === themeDomainKey ? 1 : 0) - (a.domainKey === themeDomainKey ? 1 : 0))
+    : applicable;
   const results = [];
   const tried = new Set();
   let i = seed;
-  while(results.length < count && tried.size < applicable.length){
-    const t = applicable[i % applicable.length];
+  while(results.length < count && tried.size < ordered.length){
+    const t = ordered[i % ordered.length];
     if(!tried.has(t.id)){
       tried.add(t.id);
       const built = t.build();
@@ -1051,6 +1159,14 @@ function pickMissions(count, seed, excludeIds){
     i++;
   }
   return results;
+}
+// ---------- Thème hebdomadaire (priorité 6) : même rotation déterministe
+// que les missions elles-mêmes (dayOfYear/7), un domaine réel de DOMAINS —
+// jamais un thème inventé. Purement une couche de présentation + biais de
+// sélection ci-dessus, aucune nouvelle donnée utilisateur stockée. ----------
+function getWeeklyThemeDomain(){
+  const weekSeed = Math.floor(dayOfYear()/7);
+  return DOMAINS[weekSeed % DOMAINS.length];
 }
 function isoWeekStart(){
   const now = new Date();
@@ -1117,9 +1233,19 @@ function renderDailyMissions(elId){
   });
 }
 function renderWeeklyMissions(elId){
-  const missions = pickMissions(3, Math.floor(dayOfYear()/7), []);
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const theme = getWeeklyThemeDomain();
+  const missions = pickMissions(3, Math.floor(dayOfYear()/7), [], theme.key);
   const log = getWeeklyMissionsLog();
-  renderMissionsBlock(elId, missions, log.doneIds, (id, xp)=>{
+  const doneCount = missions.filter(m => log.doneIds.includes(m.id)).length;
+  el.innerHTML = `
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px;">
+      <span class="smallcaps">${theme.icon} Semaine ${theme.label}</span>
+      <span class="mono" style="font-size:11px;color:var(--text-dim);">${doneCount}/${missions.length} complétées</span>
+    </div>
+    <div id="${elId}-list"></div>`;
+  renderMissionsBlock(`${elId}-list`, missions, log.doneIds, (id, xp)=>{
     completeWeeklyMission(id, xp);
     renderWeeklyMissions(elId);
   });
@@ -1214,13 +1340,32 @@ function getQuizPointsLedger(){
   if(ledger.date !== today) return {date:today, ids:[]};
   return ledger;
 }
+// Anti-farming au-delà du quotidien : répondre juste à la même question
+// chaque jour donnait l'XP plein indéfiniment (le ledger ci-dessus ne
+// protège que dans la même journée). fzr-xp-repeat-counts compte, à vie,
+// combien de fois chaque question a déjà rapporté des points — borné par
+// construction : au plus ~172 questions existent sur tout le site, donc
+// cette table ne grossit jamais au-delà de cette taille, peu importe le
+// nombre de jours écoulés. 1ère réussite = XP plein, 2e = moitié, au-delà
+// = 0 XP (mais recordAnswer/isAppliedItem restent appelés séparément par
+// chaque site d'appel, donc la maîtrise par concept continue de progresser
+// même quand l'XP n'est plus versé).
+function getXPRepeatCounts(){ return safeGetJSON('fzr-xp-repeat-counts', {}); }
+function saveXPRepeatCounts(counts){ safeSetJSON('fzr-xp-repeat-counts', counts); }
+
 function tryAwardQuizPoints(questionId, amount, ctx){
   const ledger = getQuizPointsLedger();
-  if(ledger.ids.includes(questionId)) return false;
+  if(ledger.ids.includes(questionId)) return 0;
   ledger.ids.push(questionId);
   safeSetJSON('fzr-quiz-points-ledger', ledger);
-  awardXP(amount, ctx);
-  return true;
+  const counts = getXPRepeatCounts();
+  const timesAwarded = counts[questionId] || 0;
+  counts[questionId] = timesAwarded + 1;
+  saveXPRepeatCounts(counts);
+  const multiplier = timesAwarded === 0 ? 1 : timesAwarded === 1 ? 0.5 : 0;
+  const finalAmount = Math.round(amount * multiplier);
+  if(finalAmount > 0) awardXP(finalAmount, ctx);
+  return finalAmount;
 }
 
 // ---------- Statistiques de quiz (par catégorie, historique) ----------
@@ -1228,11 +1373,40 @@ function getQuizStats(){
   return safeGetJSON('fzr-quiz-stats', {categoryStats:{}, history:[]});
 }
 function saveQuizStats(stats){ safeSetJSON('fzr-quiz-stats', stats); }
-function recordAnswer(categorie, correct){
+
+// Un item "appliqué" demande de raisonner sur un cas, jamais un simple rappel
+// de définition — condition nécessaire pour progresser au-delà du palier
+// "Compris" dans la maîtrise par concept (voir getConceptMastery ci-dessous).
+// Les formats Défis (cas/vraimais/calcul/séquence/infomanquante/classe) sont
+// toujours du raisonnement ; dans QUIZ_BANK_FULL, seuls les types "situation"
+// et "calcul" le sont — "qcm"/"vraifaux" restent du rappel.
+function isAppliedItem(item){
+  if(!item) return false;
+  if(item.format) return true;
+  return item.type === 'situation' || item.type === 'calcul';
+}
+
+// applied (3e paramètre, optionnel, rétrocompatible) : vrai si la réponse
+// vient d'un item de raisonnement (voir isAppliedItem). Alimente uniquement
+// getConceptMastery — categoryStats[cat].correct/total restent la même
+// source de vérité qu'avant pour getSkillMastery, aucune dérive possible.
+function recordAnswer(categorie, correct, applied){
   const stats = getQuizStats();
-  if(!stats.categoryStats[categorie]) stats.categoryStats[categorie] = {correct:0, total:0};
-  stats.categoryStats[categorie].total++;
-  if(correct) stats.categoryStats[categorie].correct++;
+  const c = stats.categoryStats[categorie] || (stats.categoryStats[categorie] = {correct:0, total:0});
+  if(c.appliedCorrect === undefined) c.appliedCorrect = 0;
+  if(c.appliedTotal === undefined) c.appliedTotal = 0;
+  if(!c.correctDates) c.correctDates = [];
+  c.total++;
+  if(applied) c.appliedTotal++;
+  if(correct){
+    c.correct++;
+    if(applied) c.appliedCorrect++;
+    const today = new Date().toDateString();
+    if(!c.correctDates.includes(today)){
+      c.correctDates.unshift(today);
+      c.correctDates = c.correctDates.slice(0, 12); // jours distincts récents, jamais un journal illimité
+    }
+  }
   saveQuizStats(stats);
 }
 function recordQuizCompletion(level, categorie, length, score){
@@ -1257,6 +1431,36 @@ function getSkillMastery(){
       return {categorie, pct, correct: s.correct, total: s.total, niveau};
     })
     .sort((a, b) => a.pct - b.pct);
+}
+
+// ---------- Maîtrise par concept, 4 paliers (Découvert → Compris → Appliqué → Maîtrisé) ----------
+// Même source de vérité que getSkillMastery (fzr-quiz-stats.categoryStats) —
+// jamais un second système qui pourrait diverger. "Concept" = les mêmes ~50
+// catégories déjà partagées par les quiz, les Défis et DOMAINS[].quizCategories
+// (app.js) — pas une nouvelle taxonomie. Chaque palier est un sur-ensemble
+// strict du précédent, jamais un score fabriqué pour une notion jamais
+// touchée : sans donnée réelle, la fonction renvoie null.
+const CONCEPT_STAGE_ORDER = {decouvert: 0, compris: 1, applique: 2, maitrise: 3};
+const CONCEPT_STAGE_LABELS = {decouvert: 'Découvert', compris: 'Compris', applique: 'Appliqué', maitrise: 'Maîtrisé'};
+function getConceptMastery(categorie){
+  const stats = getQuizStats().categoryStats[categorie];
+  if(!stats || stats.total < 1) return null;
+  const pct = Math.round((stats.correct / stats.total) * 100);
+  const appliedCorrect = stats.appliedCorrect || 0;
+  const distinctDays = (stats.correctDates || []).length;
+
+  const comprisOk = stats.total >= 2 && pct >= 50;
+  const appliqueOk = comprisOk && appliedCorrect >= 1;
+  const maitriseOk = appliqueOk && pct >= 75 && appliedCorrect >= 2 && distinctDays >= 3 && stats.total >= 6;
+
+  const stage = maitriseOk ? 'maitrise' : appliqueOk ? 'applique' : comprisOk ? 'compris' : 'decouvert';
+  return {categorie, stage, label: CONCEPT_STAGE_LABELS[stage], pct, correct: stats.correct, total: stats.total, appliedCorrect, distinctDays};
+}
+function getAllConceptMastery(){
+  return Object.keys(getQuizStats().categoryStats)
+    .map(getConceptMastery)
+    .filter(Boolean)
+    .sort((a, b) => CONCEPT_STAGE_ORDER[a.stage] - CONCEPT_STAGE_ORDER[b.stage] || a.pct - b.pct);
 }
 
 // ---------- Banque d'erreurs (persistée, dédoublonnée par question) ----------
@@ -1398,12 +1602,12 @@ function renderVraiFaux(elId){
         const choice = +btn.dataset.choice;
         el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
         const correct = choice === item.bonneReponse;
-        recordAnswer(item.categorie, correct);
+        recordAnswer(item.categorie, correct, isAppliedItem(item));
         let xpMsg = '';
         if(correct){
           btn.classList.add('vf-correct'); score++;
           const got = tryAwardQuizPoints(item.id, 10);
-          if(got) xpMsg = '+10 XP · +10 Finance Points';
+          if(got) xpMsg = `+${got} XP · +${got} Finance Points`;
           resolveMistake(item.id);
         } else {
           btn.classList.add('vf-wrong');
@@ -1470,12 +1674,12 @@ function renderChoiceItem(elId, introHtml, item, onAnswered){
         else if(ci === i) c.style.borderColor = 'var(--bordeaux)';
       });
       const correct = i === item.bonneReponse;
-      recordAnswer(item.categorie, correct);
+      recordAnswer(item.categorie, correct, isAppliedItem(item));
       const xp = item.xp || 10;
       let xpMsg = '';
       if(correct){
         const got = tryAwardQuizPoints(item.id, xp);
-        if(got) xpMsg = `+${xp} XP · +${xp} Finance Points`;
+        if(got) xpMsg = `+${got} XP · +${got} Finance Points`;
         resolveMistake(item.id);
       } else {
         recordMistake(item);
@@ -1509,13 +1713,13 @@ function renderVraiFauxItem(elId, item, onAnswered){
       const choice = +btn.dataset.choice;
       host.querySelectorAll('.vf-btn').forEach(b => b.disabled = true);
       const correct = choice === item.bonneReponse;
-      recordAnswer(item.categorie, correct);
+      recordAnswer(item.categorie, correct, isAppliedItem(item));
       const xp = item.xp || 10;
       let xpMsg = '';
       if(correct){
         btn.classList.add('vf-correct');
         const got = tryAwardQuizPoints(item.id, xp);
-        if(got) xpMsg = `+${xp} XP · +${xp} Finance Points`;
+        if(got) xpMsg = `+${got} XP · +${got} Finance Points`;
         resolveMistake(item.id);
       } else {
         btn.classList.add('vf-wrong');
@@ -1587,7 +1791,7 @@ function renderCalculItem(elId, item, onAnswered){
     btn.disabled = true;
     input.disabled = true;
     const correct = Math.abs(val - item.reponse) <= item.tolerance;
-    recordAnswer(item.categorie, correct);
+    recordAnswer(item.categorie, correct, isAppliedItem(item));
     const xp = item.xp || 10;
     let xpMsg = '';
     if(correct){
@@ -1654,7 +1858,7 @@ function renderSequenceItem(elId, item, onAnswered){
     host.querySelectorAll('.defi-seq-row').forEach((row, pos) => {
       row.classList.add(order[pos] === pos ? 'defi-seq-correct' : 'defi-seq-wrong');
     });
-    recordAnswer(item.categorie, correct);
+    recordAnswer(item.categorie, correct, isAppliedItem(item));
     const xp = item.xp || 12;
     let xpMsg = '';
     if(correct){
@@ -1698,7 +1902,7 @@ function renderInfoManquanteItem(elId, item, onAnswered){
     const notes = item.options.map(o => `<li>• <strong>${o.label}</strong> — ${o.note}</li>`).join('');
     const xp = item.xp || 8;
     const got = tryAwardQuizPoints(item.id, xp);
-    const xpMsg = got ? `+${xp} XP · +${xp} Finance Points` : '';
+    const xpMsg = got ? `+${got} XP · +${got} Finance Points` : '';
     document.getElementById(`${elId}-feedback`).innerHTML = `
       <p class="feedback-verdict feedback-correct"><span aria-hidden="true">✓</span> Bonne question à se poser.</p>
       <p class="feedback-explanation">${item.explication}</p>
@@ -1744,7 +1948,7 @@ function renderClasseItem(elId, item, onAnswered){
     });
     document.getElementById(`${elId}-validate`).disabled = true;
     const correct = (correctCount / item.items.length) >= 0.7;
-    recordAnswer(item.categorie, correct);
+    recordAnswer(item.categorie, correct, isAppliedItem(item));
     const xp = item.xp || 12;
     let xpMsg = '';
     if(correct){
@@ -1841,8 +2045,12 @@ function startMixedSession(elId, items, opts){
       <p style="font-size:11.5px;color:var(--text-dim);">Temps passé : ${seconds}s${totalXp > 0 ? ` · +${totalXp} XP au total` : ''}</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
         ${opts.onRestart ? `<button class="btn btn-sm btn-gold" id="${elId}-restart">Nouveau défi</button>` : ''}
-      </div>`;
+        ${opts.showParcoursLink ? `<a href="parcours.html" class="btn btn-sm">Voir mon parcours →</a>` : ''}
+      </div>
+      <div id="${elId}-nextstep"></div>`;
     if(opts.onRestart) document.getElementById(`${elId}-restart`).addEventListener('click', opts.onRestart);
+    const touchedCategories = [...new Set(items.map(i => i.categorie).filter(Boolean))];
+    renderNextStepCard(`${elId}-nextstep`, {categories: touchedCategories, domainKey: opts.level});
     // Distinct de onRestart (qui ne se déclenche que sur un clic explicite) :
     // onComplete se déclenche à chaque fois que la session arrive naturellement
     // à son résultat — nécessaire pour suivre la progression des Parcours
@@ -2191,8 +2399,10 @@ function renderMemoryFinance(elId, difficultyId){
       <span class="badge ${success ? 'status-reel' : 'status-demo'}">${success ? 'Réussi' : 'À retenter'}</span>
       <div class="result-big" style="margin-top:8px;">${moves} coup${moves>1?'s':''}</div>
       <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${totalPairs} paires trouvées, ${errors} erreur${errors>1?'s':''}, objectif : ${movesBudget} coups.${perfect ? ' Sans-faute !' : ''}</p>
-      <button class="btn btn-sm btn-gold" id="${elId}-restart">Nouvelle partie</button>`;
+      <button class="btn btn-sm btn-gold" id="${elId}-restart">Nouvelle partie</button>
+      <div id="${elId}-nextstep"></div>`;
     document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderMemoryFinance(elId));
+    renderNextStepCard(`${elId}-nextstep`, {});
   }
 
   Array.from(el.querySelectorAll('.mem-card')).forEach(btn=>{
@@ -2374,8 +2584,10 @@ function renderChartPatternGame(elId){
       ${eliminated ? `<span class="badge status-demo">Manche arrêtée après ${CHART_GAME_MAX_ERRORS} erreurs</span>` : ''}
       <div class="result-big" style="margin-top:${eliminated ? '8px' : '0'};">${score} / ${attempted}</div>
       <p style="color:var(--text-dim);font-size:13px;margin:8px 0 16px;">${pct}% de figures reconnues${eliminated ? `, sur ${attempted} tentées avant l'arrêt` : ''}.</p>
-      <button class="btn btn-sm btn-gold" id="${elId}-restart">Recommencer</button>`;
+      <button class="btn btn-sm btn-gold" id="${elId}-restart">Recommencer</button>
+      <div id="${elId}-nextstep"></div>`;
     document.getElementById(`${elId}-restart`).addEventListener('click', ()=>renderChartPatternGame(elId));
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'stockMarket'});
   }
 
   renderRound();
@@ -2522,7 +2734,7 @@ function renderCoursQuiz(elId, cours, onComplete){
           else if(ci===i) c.style.borderColor = 'var(--bordeaux)';
         });
         const correct = i===item.bonneReponse;
-        recordAnswer(item.categorie, correct);
+        recordAnswer(item.categorie, correct, isAppliedItem(item));
         if(correct){ score++; resolveMistake(item.id); }
         else recordMistake(item);
         document.getElementById(`${elId}-feedback`).textContent = item.explication;
@@ -2552,8 +2764,10 @@ function renderCoursQuiz(elId, cours, onComplete){
       <p style="color:${passed?'var(--emerald)':'var(--bordeaux)'};font-size:13.5px;margin:8px 0 16px;">
         ${passed ? `Cours validé (${Math.round(pct*100)}%)${rewardMsg}` : `Pas encore validé (${Math.round(pct*100)}%, ${Math.round(COURS_PASS_THRESHOLD*100)}% requis) — relis le cours et réessaie.`}
       </p>
-      <button class="btn btn-sm btn-gold" id="${elId}-retry">${passed ? 'Repasser le quiz' : 'Réessayer'}</button>`;
+      <button class="btn btn-sm btn-gold" id="${elId}-retry">${passed ? 'Repasser le quiz' : 'Réessayer'}</button>
+      <div id="${elId}-nextstep"></div>`;
     document.getElementById(`${elId}-retry`).addEventListener('click', ()=>renderCoursQuiz(elId, cours, onComplete));
+    renderNextStepCard(`${elId}-nextstep`, {categories: cours.quizCategories});
   }
 
   renderQuestion();
@@ -2619,7 +2833,8 @@ function renderMissionDetail(elId, level, index, onComplete){
       <div class="mission-question">
         <p class="mission-q-prompt">${q.prompt}</p>
         <p class="mission-solved">${ICONS.check} Mission validée : ${q.explication}</p>
-      </div>`;
+      </div>
+      <div id="${elId}-nextstep"></div>`;
   } else if(q.type === 'calcul'){
     questionHtml = `
       <div class="mission-question">
@@ -2642,7 +2857,10 @@ function renderMissionDetail(elId, level, index, onComplete){
   }
 
   el.innerHTML = storyHtml + questionHtml;
-  if(done) return;
+  if(done){
+    renderNextStepCard(`${elId}-nextstep`, {});
+    return;
+  }
 
   const feedback = document.getElementById(`${elId}-feedback`);
   if(q.type === 'calcul'){
@@ -2741,7 +2959,7 @@ function renderBusinessQuestionDuJour(elId){
       const choice = +btn.dataset.choice;
       el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
       const correct = choice === item.bonneReponse;
-      recordAnswer(item.categorie, correct);
+      recordAnswer(item.categorie, correct, isAppliedItem(item));
       if(correct){ btn.classList.add('vf-correct'); tryAwardQuizPoints(item.id, 10); resolveMistake(item.id); }
       else {
         btn.classList.add('vf-wrong');

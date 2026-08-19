@@ -55,6 +55,7 @@ if(!domain){
       startMixedSession('deepQuizSession', pool, {
         level: domain.key,
         categorie: domain.label,
+        showParcoursLink: true,
         onComplete: (score, total) => { saveDeepQuizResult(domain.key, score, total); }
       });
     });

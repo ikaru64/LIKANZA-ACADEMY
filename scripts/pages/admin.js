@@ -43,14 +43,7 @@ function getDraftCourses(){
   return saved || JSON.parse(JSON.stringify(COURSES));
 }
 function saveDraftCourses(c){ safeSetJSON('fzr-draft-courses', c); }
-function getDraftNews(){
-  const saved = safeGetJSON('fzr-draft-news', null);
-  return saved || JSON.parse(JSON.stringify(NEWS_DATA));
-}
-function saveDraftNews(n){ safeSetJSON('fzr-draft-news', n); }
-
 let draftCourses = getDraftCourses();
-let draftNews = getDraftNews();
 const LEVEL_LABELS_ADMIN = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
 let currentEditLevel = 'debutant';
 
@@ -107,77 +100,49 @@ if(addMissionBtn) addMissionBtn.addEventListener('click', ()=>{
   renderMissionsList();
 });
 
-// ================= Actualités =================
-function slugify(str){
-  return str.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'').slice(0,40) || ('actu-'+Date.now());
-}
-function renderNewsList(){
-  const el = document.getElementById('newsEditList');
-  const countEl = document.getElementById('newsCountLabel');
+// ================= Actualités : panneau d'état du pipeline (lecture seule) =================
+// Il n'y a volontairement plus d'éditeur ici : l'ancien formulaire écrivait
+// dans fzr-draft-news / NEWS_DATA, une structure que scripts/pages/actualites.js
+// ne lit jamais (le vrai contenu vient exclusivement de /api/daily-news et
+// /api/weekly-news, alimentées par le pipeline Cron+IA). Modifier NEWS_DATA
+// donnait donc l'illusion d'un contrôle éditorial qui n'existait pas.
+async function renderNewsPipelineStatus(){
+  const el = document.getElementById('newsPipelineStatus');
   if(!el) return;
-  if(countEl) countEl.textContent = draftNews.length + ' actualité(s)';
-  el.innerHTML = draftNews.map((a,i)=>`
-    <div class="card">
-      <div class="field"><label>Titre</label><input type="text" class="news-f" data-idx="${i}" data-field="titre" value="${(a.titre||'').replace(/"/g,'&quot;')}"></div>
-      <div class="field"><label>Catégorie</label><input type="text" class="news-f" data-idx="${i}" data-field="categorie" value="${(a.categorie||'').replace(/"/g,'&quot;')}"></div>
-      <div class="field"><label>Résumé</label><textarea class="news-f" data-idx="${i}" data-field="resume">${a.resume||''}</textarea></div>
-      <div class="field"><label>Points clés (un par ligne)</label><textarea class="news-f" data-idx="${i}" data-field="points">${(a.points||[]).join('\n')}</textarea></div>
-      <div class="field"><label>Pourquoi c'est important</label><textarea class="news-f" data-idx="${i}" data-field="pourquoi">${a.pourquoi||''}</textarea></div>
-      <div class="field"><label>Impact potentiel (séparé par des virgules)</label><input type="text" class="news-f" data-idx="${i}" data-field="impact" value="${(a.impact||[]).join(', ')}"></div>
-      <div class="field"><label>Source</label><input type="text" class="news-f" data-idx="${i}" data-field="source" value="${(a.source||'').replace(/"/g,'&quot;')}"></div>
-      <div class="field"><label>Lien original</label><input type="text" class="news-f" data-idx="${i}" data-field="lien" value="${(a.lien||'').replace(/"/g,'&quot;')}"></div>
-      <div style="display:flex;gap:12px;">
-        <div class="field" style="flex:1;"><label>Date</label><input type="text" class="news-f" data-idx="${i}" data-field="date" value="${a.date||''}"></div>
-        <div class="field" style="flex:1;"><label>Lecture</label><input type="text" class="news-f" data-idx="${i}" data-field="lecture" value="${a.lecture||''}"></div>
-      </div>
-      <button class="del-btn" data-idx="${i}">Supprimer cette actualité</button>
-    </div>`).join('') || '<p class="empty-note" style="padding:16px;">Aucune actualité.</p>';
+  el.innerHTML = `<div class="card"><p style="color:var(--text-dim);font-size:13px;">Vérification de l'état du pipeline…</p></div>`;
 
-  el.querySelectorAll('.news-f').forEach(field=>{
-    field.addEventListener('input', ()=>{
-      const idx = +field.dataset.idx;
-      const key = field.dataset.field;
-      if(key === 'points') draftNews[idx].points = field.value.split('\n').map(s=>s.trim()).filter(Boolean);
-      else if(key === 'impact') draftNews[idx].impact = field.value.split(',').map(s=>s.trim()).filter(Boolean);
-      else draftNews[idx][key] = field.value;
-      saveDraftNews(draftNews);
-    });
+  const fetchStatus = (url) => fetch(url).then(r => {
+    if(r.status === 404) return null;
+    if(!r.ok) throw new Error('HTTP ' + r.status);
+    return r.json();
   });
-  el.querySelectorAll('.del-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      if(!confirm('Supprimer cette actualité ?')) return;
-      draftNews.splice(+btn.dataset.idx, 1);
-      saveDraftNews(draftNews);
-      renderNewsList();
-    });
-  });
+  const [dailyResult, weeklyResult] = await Promise.allSettled([fetchStatus('/api/daily-news'), fetchStatus('/api/weekly-news')]);
+
+  const dailyCard = (() => {
+    if(dailyResult.status === 'rejected') return `<div class="card"><span class="smallcaps">Récap du jour</span><p style="color:var(--bordeaux);font-size:13px;margin-top:8px;">État impossible à vérifier (erreur réseau ou API).</p></div>`;
+    const daily = dailyResult.value;
+    if(!daily) return `<div class="card"><span class="smallcaps">Récap du jour</span><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Aucun récap encore généré. Prévu chaque jour à 7h30 UTC.</p></div>`;
+    return `<div class="card">
+      <span class="smallcaps">Récap du jour</span>
+      <h4 style="margin-top:8px;font-size:15px;">${daily.title}</h4>
+      <p style="color:var(--text-dim);font-size:12.5px;margin-top:6px;">Date : ${new Date(daily.date).toLocaleDateString('fr-FR')} · ${(daily.sources||[]).length} source(s) réelle(s) · généré le ${new Date(daily.generatedAt).toLocaleString('fr-FR')}</p>
+    </div>`;
+  })();
+
+  const weeklyCard = (() => {
+    if(weeklyResult.status === 'rejected') return `<div class="card"><span class="smallcaps">Articles de la semaine</span><p style="color:var(--bordeaux);font-size:13px;margin-top:8px;">État impossible à vérifier (erreur réseau ou API).</p></div>`;
+    const weekly = weeklyResult.value;
+    if(!weekly) return `<div class="card"><span class="smallcaps">Articles de la semaine</span><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Aucun article encore généré. Prévu chaque lundi à 6h UTC.</p></div>`;
+    const list = (weekly.articles||[]).map(a=>`<li>${a.categorie} — ${a.titre}</li>`).join('');
+    return `<div class="card">
+      <span class="smallcaps">Articles de la semaine</span>
+      <p style="color:var(--text-dim);font-size:12.5px;margin:8px 0;">Semaine du ${new Date(weekly.weekStart).toLocaleDateString('fr-FR')} · ${(weekly.articles||[]).length} article(s)</p>
+      <ul style="font-size:12.5px;color:var(--text-dim);margin:0 0 0 18px;">${list}</ul>
+    </div>`;
+  })();
+
+  el.innerHTML = dailyCard + weeklyCard;
 }
-const addNewsBtn = document.getElementById('addNewsBtn');
-if(addNewsBtn) addNewsBtn.addEventListener('click', ()=>{
-  const titre = document.getElementById('newNewsTitre').value.trim();
-  const resume = document.getElementById('newNewsResume').value.trim();
-  if(!titre || !resume){ alert('Titre et résumé sont obligatoires.'); return; }
-  const entry = {
-    id: slugify(titre),
-    titre,
-    categorie: document.getElementById('newNewsCat').value.trim() || 'Actualité',
-    lecture: document.getElementById('newNewsLecture').value.trim() || '2 min',
-    date: document.getElementById('newNewsDate').value.trim() || new Date().toLocaleDateString('fr-FR'),
-    statut: 'manuel',
-    resume,
-    points: document.getElementById('newNewsPoints').value.split('\n').map(s=>s.trim()).filter(Boolean),
-    pourquoi: document.getElementById('newNewsPourquoi').value.trim(),
-    impact: document.getElementById('newNewsImpact').value.split(',').map(s=>s.trim()).filter(Boolean),
-    source: document.getElementById('newNewsSource').value.trim() || 'Rédaction Likanza Academy',
-    lien: document.getElementById('newNewsLien').value.trim() || '#'
-  };
-  draftNews.unshift(entry);
-  saveDraftNews(draftNews);
-  ['newNewsTitre','newNewsCat','newNewsResume','newNewsPoints','newNewsPourquoi','newNewsImpact','newNewsSource','newNewsLien','newNewsDate','newNewsLecture'].forEach(id=>{
-    const f = document.getElementById(id); if(f) f.value = '';
-  });
-  renderNewsList();
-});
 
 // ================= Export data.js =================
 function jsIndent(obj){
@@ -188,11 +153,7 @@ function exportDataJs(){
     const scripts = document.querySelectorAll('script');
     const originalDataJs = scripts[0].textContent;
     const coursesBlock = 'const COURSES = ' + jsIndent(draftCourses) + ';';
-    const newsBlock = 'const NEWS_DATA = ' + jsIndent(draftNews) + ';';
-    let out = originalDataJs.replace(
-      /\/\/ ===EXPORT:NEWS_DATA:START===[\s\S]*?\/\/ ===EXPORT:NEWS_DATA:END===/,
-      '// ===EXPORT:NEWS_DATA:START===\n' + newsBlock + '\n// ===EXPORT:NEWS_DATA:END==='
-    );
+    let out = originalDataJs;
     out = out.replace(
       /\/\/ ===EXPORT:COURSES:START===[\s\S]*?\/\/ ===EXPORT:COURSES:END===/,
       '// ===EXPORT:COURSES:START===\n' + coursesBlock + '\n// ===EXPORT:COURSES:END==='
@@ -221,16 +182,14 @@ const resetBtn = document.getElementById('resetBtn');
 if(resetBtn) resetBtn.addEventListener('click', ()=>{
   if(!confirm('Réinitialiser tous tes changements non exportés ?')) return;
   draftCourses = JSON.parse(JSON.stringify(COURSES));
-  draftNews = JSON.parse(JSON.stringify(NEWS_DATA));
   saveDraftCourses(draftCourses);
-  saveDraftNews(draftNews);
   renderLevelTabs();
   renderMissionsList();
-  renderNewsList();
+  renderNewsPipelineStatus();
 });
 
 // ================= Initialisation =================
 safeRun('onglets niveaux (init)', renderLevelTabs);
 safeRun('liste missions (init)', renderMissionsList);
-safeRun('liste actualités (init)', renderNewsList);
+safeRun('état pipeline actualités (init)', renderNewsPipelineStatus);
 

@@ -457,6 +457,16 @@ updateGoal();
 
 // Coût futur d'un abonnement
 const subCost = document.getElementById('subCost'), subYears = document.getElementById('subYears'), subRate = document.getElementById('subRate');
+// Même seuil que le scénario "Optimiste" des intérêts composés (RETURN_ASSUMPTIONS,
+// scripts/data.js) : au-delà, ce n'est plus une hypothèse par défaut raisonnable
+// mais un scénario favorable qu'il ne faut jamais présenter comme acquis.
+function updateSubAlert(){
+  const alertEl = document.getElementById('subRateAlert');
+  const rate = +subRate.value;
+  alertEl.innerHTML = rate > RETURN_ASSUMPTIONS.optimiste.rate
+    ? `<p class="disclaimer-box" style="margin-top:8px;">${rate}% par an suppose un rendement proche des meilleures décennies boursières historiques (voir le simulateur d'intérêts composés) — un placement réel n'offre jamais ce rendement de façon garantie chaque année, contrairement à l'argent économisé en annulant l'abonnement.</p>`
+    : '';
+}
 function updateSub(){
   document.getElementById('valSubYears').textContent = subYears.value + ' ans';
   document.getElementById('valSubRate').textContent = subRate.value + ' %';
@@ -464,12 +474,28 @@ function updateSub(){
   const series = compoundSeries(0, +subCost.value, +subRate.value, +subYears.value);
   const invested = series[series.length-1];
   document.getElementById('subResult').innerHTML = `<span>Total payé : ${fmtEUR(totalPaid)}</span><span>Si investi à la place : <strong style="color:var(--emerald)">${fmtEUR(invested)}</strong></span>`;
+  updateSubAlert();
 }
 [subCost, subYears, subRate].forEach(el=>el.addEventListener('input', updateSub));
 updateSub();
 
 // Scénarios futurs d'inflation (hypothèses, panneau secondaire de la carte inflation réelle)
 const inflAmount = document.getElementById('inflAmount'), inflReturn = document.getElementById('inflReturn'), inflRate = document.getElementById('inflRate'), inflYears = document.getElementById('inflYears');
+// Deux hypothèses distinctes peuvent devenir irréalistes ici : un rendement
+// d'épargne trop optimiste (même seuil que RETURN_ASSUMPTIONS.optimiste,
+// scripts/data.js) et une inflation annuelle soutenue rare historiquement hors
+// période de crise (au-delà de 5%, à comparer à l'inflation réelle IPCH France
+// affichée juste au-dessus, autour de DEFAULT_INFLATION_ASSUMPTION).
+const UNREALISTIC_SUSTAINED_INFLATION = 5;
+function updateInflationAlert(ret, inflation){
+  const alertEl = document.getElementById('inflAssumptionAlert');
+  const msgs = [];
+  if(ret > RETURN_ASSUMPTIONS.optimiste.rate) msgs.push(`un rendement d'épargne de ${ret}%/an proche des meilleures décennies boursières historiques`);
+  if(inflation > UNREALISTIC_SUSTAINED_INFLATION) msgs.push(`une inflation de ${inflation}%/an maintenue sur toute la période, rare historiquement hors épisode de crise (l'inflation réelle mesurée ci-dessus tourne plutôt autour de ${DEFAULT_INFLATION_ASSUMPTION}%)`);
+  alertEl.innerHTML = msgs.length
+    ? `<p class="disclaimer-box" style="margin-top:8px;">Hypothèse à prendre avec précaution : ${msgs.join(' et ')}.</p>`
+    : '';
+}
 function updateInflation(){
   document.getElementById('valInflReturn').textContent = inflReturn.value + ' %';
   document.getElementById('valInflRate').textContent = inflRate.value + ' %';
@@ -487,6 +513,7 @@ function updateInflation(){
     realSeries.push(amount*Math.pow(1+ret,y)/Math.pow(1+inflation,y));
   }
   renderBarChart('inflChart','inflChartLabels', realSeries, years);
+  updateInflationAlert(+inflReturn.value, +inflRate.value);
 }
 [inflAmount, inflReturn, inflRate, inflYears].forEach(el=>el.addEventListener('input', updateInflation));
 updateInflation();
