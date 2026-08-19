@@ -59,17 +59,22 @@ const HISTORICAL_SERIES = {
   }
 };
 
-// ---------- Badges "type de donnée" (section 4 de la spec utilisateur) ----------
-// Toujours l'un des quatre, jamais mélangés dans le même chiffre affiché.
+// ---------- Likanza Truth Framework : les 6 catégories d'information ----------
+// Toute affirmation importante appartient à l'une de ces 6 catégories,
+// jamais mélangées dans un même chiffre affiché. Distinction volontaire
+// entre FAIT (vérifiable, daté, sourcé) et CALCUL (résultat dérivé d'une
+// formule + d'hypothèses) : un ratio ou une projection calculée à partir
+// d'une vraie donnée n'est pas elle-même un fait.
 const DATA_BADGE_META = {
-  reel:      {emoji: '🟢', label: 'Historique réel', className: 'data-badge-reel'},
-  hypothese: {emoji: '🔵', label: 'Hypothèse', className: 'data-badge-hypothese'},
-  scenario:  {emoji: '🟡', label: 'Scénario', className: 'data-badge-scenario'},
-  exemple:   {emoji: '⚪', label: 'Exemple pédagogique', className: 'data-badge-exemple'},
-  editorial: {emoji: '📝', label: 'Rédaction Likanza Academy', className: 'data-badge-editorial'}
+  fait:       {emoji: '📊', label: 'Fait', className: 'data-badge-fait'},
+  calcul:     {emoji: '🧮', label: 'Calcul', className: 'data-badge-calcul'},
+  analyse:    {emoji: '🔍', label: 'Analyse', className: 'data-badge-analyse'},
+  scenario:   {emoji: '🔮', label: 'Scénario', className: 'data-badge-scenario'},
+  avis:       {emoji: '💬', label: 'Avis', className: 'data-badge-avis'},
+  simulation: {emoji: '🎮', label: 'Simulation', className: 'data-badge-simulation'}
 };
 function renderDataBadge(kind){
-  const meta = DATA_BADGE_META[kind] || DATA_BADGE_META.hypothese;
+  const meta = DATA_BADGE_META[kind] || DATA_BADGE_META.calcul;
   return `<span class="data-badge ${meta.className}"><span aria-hidden="true">${meta.emoji}</span> ${meta.label}</span>`;
 }
 

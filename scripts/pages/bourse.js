@@ -62,7 +62,7 @@ function renderStockGrid(){
           <span class="mono ${s.variation>=0?'up':'down'}" style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span>
         </div>
         <p style="font-size:13px;color:var(--text-dim);">${fundLine} ${s.pea ? '· <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
-        ${ff ? `<p style="margin-top:2px;">${renderDataBadge('reel')}</p>` : ''}
+        ${ff ? `<p style="margin-top:2px;">${renderDataBadge('fait')}</p>` : ''}
         ${renderTrendHtml(computeTrendIndicator(s.history))}
         ${s._live ? `<span class="badge status-reel" style="margin-top:6px;">Cotation différée (Yahoo Finance)</span>` : `<span class="demo-flag" style="margin-top:6px;">Donnée de démonstration</span>`}
         <div class="card-footer">
@@ -206,44 +206,44 @@ function renderCompareAnalysis(stocks){
       <summary class="smallcaps" style="cursor:pointer;">Analyse complète : ${sA.nom} vs ${sB.nom}</summary>
       <div style="margin-top:16px;">
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">1. Résumé du business</span> ${renderDataBadge('editorial')}
+          <span class="smallcaps">1. Résumé du business</span> ${renderDataBadge('avis')}
           <div class="card-grid" style="margin-top:10px;">
             <div><h4>${sA.nom}</h4><p style="font-size:13px;color:var(--text-dim);margin-top:6px;">${edA ? edA.resume : 'Non disponible.'}</p></div>
             <div><h4>${sB.nom}</h4><p style="font-size:13px;color:var(--text-dim);margin-top:6px;">${edB ? edB.resume : 'Non disponible.'}</p></div>
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">2. Business model</span> ${renderDataBadge('editorial')}
+          <span class="smallcaps">2. Business model</span> ${renderDataBadge('avis')}
           <div class="card-grid" style="margin-top:10px;">
             <div><p style="font-size:13px;color:var(--text-dim);">${edA ? edA.businessModel : 'Non disponible.'}</p></div>
             <div><p style="font-size:13px;color:var(--text-dim);">${edB ? edB.businessModel : 'Non disponible.'}</p></div>
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">3. Croissance expliquée</span> ${renderDataBadge('reel')}
+          <span class="smallcaps">3. Croissance expliquée</span> ${renderDataBadge('analyse')}
           ${fieldRow('revenueGrowth')}${fieldRow('totalRevenue')}
           <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">${ffA && typeof ffA.revenueGrowth === 'number' ? `${sA.nom} : ${bucketGrowth(ffA.revenueGrowth).label}. ` : ''}${ffB && typeof ffB.revenueGrowth === 'number' ? `${sB.nom} : ${bucketGrowth(ffB.revenueGrowth).label}.` : ''}</p>
           <p class="source-note">Source : Yahoo Finance (quoteSummary), dernier exercice connu.</p>
         </div>
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">4. Rentabilité expliquée</span> ${renderDataBadge('reel')}
+          <span class="smallcaps">4. Rentabilité expliquée</span> ${renderDataBadge('analyse')}
           ${fieldRow('grossMargins')}${fieldRow('operatingMargins')}${fieldRow('profitMargins')}${fieldRow('returnOnEquity')}
           <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Une marge nette plus élevée signifie qu'une entreprise conserve davantage de bénéfice par euro de chiffre d'affaires — pas nécessairement qu'elle est "meilleure", cela dépend du secteur et du modèle économique.</p>
         </div>
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">5. Valorisation expliquée</span> ${renderDataBadge('reel')}
+          <span class="smallcaps">5. Valorisation expliquée</span> ${renderDataBadge('analyse')}
           ${fieldRow('trailingPE')}${fieldRow('priceToSales')}${fieldRow('evToEbitda')}
           <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Un PER plus élevé peut se justifier par une croissance plus forte, des marges plus élevées ou une position dominante — jamais, à lui seul, la preuve qu'une action est "chère" ou "bon marché".</p>
         </div>
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">6. Risques</span> ${renderDataBadge('editorial')}
+          <span class="smallcaps">6. Risques</span> ${renderDataBadge('avis')}
           <div class="card-grid" style="margin-top:10px;">
             <div><h4>${sA.nom}</h4><ul style="font-size:13px;color:var(--text-dim);margin-top:6px;padding-left:18px;">${(edA ? edA.risques : []).map(r=>`<li>${r}</li>`).join('')}</ul></div>
             <div><h4>${sB.nom}</h4><ul style="font-size:13px;color:var(--text-dim);margin-top:6px;padding-left:18px;">${(edB ? edB.risques : []).map(r=>`<li>${r}</li>`).join('')}</ul></div>
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">7. Forces et faiblesses (calculées)</span> ${renderDataBadge('reel')}
+          <span class="smallcaps">7. Forces et faiblesses (calculées)</span> ${renderDataBadge('calcul')}
           <div class="card-grid" style="margin-top:10px;">
             <div><h4>${sA.nom}</h4>
               ${swA.strengths.length ? `<p style="font-size:12.5px;color:var(--emerald);margin-top:6px;">Points forts : ${swA.strengths.join(' ')}</p>` : ''}
@@ -256,7 +256,7 @@ function renderCompareAnalysis(stocks){
           </div>
         </div>
         <div class="card" style="margin-bottom:14px;">
-          <span class="smallcaps">8. Scénarios (cibles réelles des analystes)</span> ${renderDataBadge('reel')}
+          <span class="smallcaps">8. Scénarios (cibles réelles des analystes)</span> ${renderDataBadge('scenario')}
           <div class="field" style="max-width:260px;margin-top:10px;margin-bottom:0;"><label for="compInvestAmount">Montant investi aujourd'hui (€)</label><input type="number" id="compInvestAmount" min="1" step="1" value="300"></div>
           <div id="compConsensus" style="margin:14px 0;"></div>
           <div id="compScenResults"></div>
@@ -408,7 +408,7 @@ function renderAnalystScenarios(){
   const consensus = formatAnalystConsensus(fund.fundamentals);
   consensusEl.innerHTML = consensus ? `
     <div class="card">
-      <span class="smallcaps">Consensus actuel des analystes</span> ${renderDataBadge('reel')}
+      <span class="smallcaps">Consensus actuel des analystes</span> ${renderDataBadge('fait')}
       <h3 style="margin-top:6px;">${consensus.label}</h3>
       <p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${consensus.total} analyste${consensus.total>1?'s':''} · ${consensus.breakdown.strongBuy} achat fort · ${consensus.breakdown.buy} achat · ${consensus.breakdown.hold} conserver · ${consensus.breakdown.sell} vente · ${consensus.breakdown.strongSell} vente forte</p>
     </div>` : '';
@@ -447,7 +447,7 @@ function renderAnalystScenarios(){
       </div>`;
   }).join('');
 
-  disclaimerEl.innerHTML = `${renderDataBadge('reel')} Cibles de cours de ${ff.numberOfAnalystOpinions || '?'} analyste(s) suivant ce titre, Yahoo Finance, récupérées le ${new Date(fund.fundamentals.asOfDate).toLocaleDateString('fr-FR')}. Les cibles de cours reflètent généralement un horizon d'environ 12 mois (convention courante du secteur) — ce sont des estimations professionnelles, pas des garanties : les analystes peuvent se tromper, et le consensus peut changer. Ceci ne constitue jamais une recommandation d'achat ou de vente personnalisée.`;
+  disclaimerEl.innerHTML = `${renderDataBadge('fait')} Cibles de cours de ${ff.numberOfAnalystOpinions || '?'} analyste(s) suivant ce titre, Yahoo Finance, récupérées le ${new Date(fund.fundamentals.asOfDate).toLocaleDateString('fr-FR')}. Les cibles de cours reflètent généralement un horizon d'environ 12 mois (convention courante du secteur) — ce sont des estimations professionnelles, pas des garanties : les analystes peuvent se tromper, et le consensus peut changer. Ceci ne constitue jamais une recommandation d'achat ou de vente personnalisée.`;
 }
 scenSelect.addEventListener('change', renderAnalystScenarios);
 document.getElementById('scenInvestAmount').addEventListener('input', renderAnalystScenarios);
@@ -477,7 +477,7 @@ function updateScenario(){
   Object.entries(scenarios).forEach(([key,r])=>{
     html += `<div class="result-row" style="justify-content:space-between;width:100%;"><span>${labels[key]}</span><span class="mono" style="color:${r.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${r.prixCible.toFixed(1)} € (${r.variation>=0?'+':''}${r.variation.toFixed(0)}%)</span></div>`;
   });
-  resultsEl.innerHTML = `<div class="result-label">Prix théorique estimé dans ${horizon} an(s), cours actuel ${stock.prix} €</div>` + html + `<p style="margin-top:6px;">${renderDataBadge('reel')} BPA de départ : ${formatFundamentalValue('trailingEps', ff.trailingEps)}</p>`;
+  resultsEl.innerHTML = `<div class="result-label">Prix théorique estimé dans ${horizon} an(s), cours actuel ${stock.prix} € ${renderDataBadge('scenario')}</div>` + html + `<p style="margin-top:6px;">${renderDataBadge('fait')} BPA de départ : ${formatFundamentalValue('trailingEps', ff.trailingEps)}</p>`;
 
   const chart = document.getElementById('scenChart');
   const labelsEl = document.getElementById('scenChartLabels');
@@ -559,7 +559,7 @@ function updateDividend(){
     <div class="result-label">Valeur totale estimée après ${years} an(s)</div>
     <div class="result-big">${fmtEUR(finalValue)}</div>
     <div class="result-row"><span>Dividendes cumulés : ${fmtEUR(cumDividends)}</span><span>Mode : ${reinvest?'réinvestis':'encaissés'}</span></div>
-    <p style="margin-top:6px;">${renderDataBadge('reel')} Rendement de départ : ${formatFundamentalValue('dividendYield', ff.dividendYield)}</p>`;
+    <p style="margin-top:6px;">${renderDataBadge('fait')} Rendement de départ : ${formatFundamentalValue('dividendYield', ff.dividendYield)}</p>`;
   renderBarChart('divChart','divChartLabels', series, years);
 }
 [divGrowthEl, divYearsEl, divReinvestEl].forEach(el=>el.addEventListener('input', updateDividend));

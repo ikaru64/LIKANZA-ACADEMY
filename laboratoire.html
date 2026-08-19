@@ -82,7 +82,7 @@
 
 <section class="section" style="padding-bottom:20px;">
   <div class="section-head"><h2>Laboratoire financier</h2><span class="meta-line">données réelles, pas des hypothèses arbitraires</span></div>
-  <p style="font-size:12.5px;color:var(--text-dim);max-width:80ch;">Ce laboratoire ne prédit pas l'avenir : il montre ce qui s'est réellement passé historiquement (marchés, inflation, crédit, immobilier), et comment des hypothèses différentes changent un résultat. Chaque chiffre porte un badge indiquant sa nature : <span class="data-badge data-badge-reel">🟢 Historique réel</span> <span class="data-badge data-badge-hypothese">🔵 Hypothèse</span> <span class="data-badge data-badge-scenario">🟡 Scénario</span> <span class="data-badge data-badge-exemple">⚪ Exemple pédagogique</span> — jamais mélangés dans un même chiffre.</p>
+  <p style="font-size:12.5px;color:var(--text-dim);max-width:80ch;">Ce laboratoire ne prédit pas l'avenir : il montre ce qui s'est réellement passé historiquement (marchés, inflation, crédit, immobilier), et comment des hypothèses différentes changent un résultat. Chaque chiffre porte un badge indiquant sa nature : <span class="data-badge data-badge-fait">📊 Fait</span> <span class="data-badge data-badge-calcul">🧮 Calcul</span> <span class="data-badge data-badge-scenario">🔮 Scénario</span> <span class="data-badge data-badge-simulation">🎮 Simulation</span> — jamais mélangés dans un même chiffre.</p>
 </section>
 
 <!-- ================= INVESTISSEMENT ================= -->
@@ -163,7 +163,7 @@
     </div>
 
     <div class="card">
-      <h3>Prix moyen d'achat <span class="data-badge data-badge-exemple" style="margin-left:6px;">⚪ Exemple pédagogique</span></h3>
+      <h3>Prix moyen d'achat <span class="data-badge data-badge-simulation" style="margin-left:6px;">🎮 Simulation</span></h3>
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Ajoute tes achats successifs pour voir ton prix moyen d'achat.</p>
       <div id="dcaRows"></div>
       <button class="btn btn-sm" id="dcaAdd" style="margin-top:10px;">+ Ajouter un achat</button>
@@ -268,7 +268,7 @@
       </div>
       <div id="labInflationOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
       <div style="margin-top:18px;padding-top:16px;border-top:1px solid var(--hairline);">
-        <span class="smallcaps">Et pour l'avenir ? <span class="data-badge data-badge-hypothese">🔵 Scénarios, pas une prévision</span></span>
+        <span class="smallcaps">Et pour l'avenir ? <span class="data-badge data-badge-scenario">🔮 Scénarios, pas une prévision</span></span>
         <div class="field" style="max-width:260px;margin-top:10px;"><label for="inflAmount">Montant épargné aujourd'hui (€)</label><input type="number" id="inflAmount" value="10000"></div>
         <div class="slider-row field"><label for="inflReturn">Rendement de ton épargne <span class="v mono" id="valInflReturn">1 %</span></label><input type="range" id="inflReturn" min="0" max="10" step="0.5" value="1"></div>
         <div class="slider-row field"><label for="inflRate">Inflation annuelle supposée <span class="v mono" id="valInflRate">2.1 %</span></label><input type="range" id="inflRate" min="0" max="8" step="0.1" value="2.1"></div>
@@ -281,7 +281,7 @@
     </div>
 
     <div class="card">
-      <h3>Calculateur de budget <span class="data-badge data-badge-exemple" style="margin-left:6px;">⚪ Exemple pédagogique</span></h3>
+      <h3>Calculateur de budget <span class="data-badge data-badge-simulation" style="margin-left:6px;">🎮 Simulation</span></h3>
       <div class="field"><label for="budgetRevenu">Revenus mensuels nets (€)</label><input type="number" id="budgetRevenu" value="2200"></div>
       <div class="field"><label for="budgetLoyer">Loyer / crédit (€)</label><input type="number" id="budgetLoyer" value="750"></div>
       <div class="field"><label for="budgetFixe">Charges fixes : assurances, abonnements, transport (€)</label><input type="number" id="budgetFixe" value="400"></div>
@@ -292,7 +292,7 @@
     </div>
 
     <div class="card">
-      <h3>Objectif d'épargne <span class="data-badge data-badge-exemple" style="margin-left:6px;">⚪ Exemple pédagogique</span></h3>
+      <h3>Objectif d'épargne <span class="data-badge data-badge-simulation" style="margin-left:6px;">🎮 Simulation</span></h3>
       <div class="field"><label for="goalAmount">Montant visé (€)</label><input type="number" id="goalAmount" value="5000"></div>
       <div class="field"><label for="goalMonthly">Épargne mensuelle possible (€)</label><input type="number" id="goalMonthly" value="150"></div>
       <div class="result-label">Temps nécessaire pour atteindre l'objectif</div>
@@ -300,7 +300,7 @@
     </div>
 
     <div class="card">
-      <h3>Coût futur d'un abonnement <span class="data-badge data-badge-hypothese" style="margin-left:6px;">🔵 Hypothèse</span></h3>
+      <h3>Coût futur d'un abonnement <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span></h3>
       <div class="field"><label for="subCost">Coût mensuel de l'abonnement (€)</label><input type="number" id="subCost" value="15"></div>
       <div class="slider-row field"><label for="subYears">Sur une durée de <span class="v mono" id="valSubYears">5 ans</span></label><input type="range" id="subYears" min="1" max="20" step="1" value="5"></div>
       <div class="slider-row field"><label for="subRate">Si investi à la place, rendement annuel <span class="v mono" id="valSubRate">6 %</span></label><input type="range" id="subRate" min="0" max="10" step="0.5" value="6"></div>

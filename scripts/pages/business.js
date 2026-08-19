@@ -34,7 +34,7 @@ async function renderBusinessIndicators(){
     const payload = await resp.json();
     const bySymbol = {};
     (payload.quotes || []).forEach(q => { bySymbol[q.symbol] = q; });
-    el.innerHTML = `<span class="smallcaps">Marchés</span>` + BUSINESS_INDICATORS.map(ind => {
+    el.innerHTML = `<span class="smallcaps">Marchés</span> ${renderDataBadge('fait')}` + BUSINESS_INDICATORS.map(ind => {
       const q = bySymbol[ind.symbol];
       if(!q) return `<div class="panel-row"><span>${ind.name}</span><span class="val mono" style="color:var(--text-dim);">Donnée temporairement indisponible</span></div>`;
       const sens = q.changePercent >= 0 ? 'up' : 'down';
@@ -55,10 +55,10 @@ async function renderBusinessRate(){
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const data = await resp.json();
     el.innerHTML = `
-      <span class="smallcaps">Taux de dépôt BCE</span>
+      <span class="smallcaps">Taux de dépôt BCE</span> ${renderDataBadge('fait')}
       <div class="business-rate-value">${data.rate.toFixed(2)} %</div>
       <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">${data.source} · au ${new Date(data.asOf).toLocaleDateString('fr-FR')}</p>
-      <p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;line-height:1.5;">C'est l'un des taux directeurs de la BCE : il influence, entre autres, le coût du crédit dans la zone euro. Historiquement, une hausse peut peser sur le crédit et l'immobilier, une baisse peut au contraire les soutenir — jamais de façon automatique ni garantie.</p>
+      <p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;line-height:1.5;">${renderDataBadge('analyse')} C'est l'un des taux directeurs de la BCE : il influence, entre autres, le coût du crédit dans la zone euro. Historiquement, une hausse peut peser sur le crédit et l'immobilier, une baisse peut au contraire les soutenir — jamais de façon automatique ni garantie.</p>
       <div class="business-tags">
         <span class="business-tag">Épargne</span><span class="business-tag">Crédit</span><span class="business-tag">Immobilier</span><span class="business-tag">Actions</span><span class="business-tag">Pouvoir d'achat</span>
       </div>`;

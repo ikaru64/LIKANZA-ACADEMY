@@ -137,7 +137,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       const periods = currentHistory.map(p => p.period);
       populatePeriodSelect(startEl, periods, periods[0]);
       populatePeriodSelect(endEl, periods, periods[periods.length - 1]);
-      badgeEl.innerHTML = renderDataBadge('reel');
+      badgeEl.innerHTML = renderDataBadge('fait');
       const lastPeriod = periods[periods.length - 1];
       partialNoteEl.textContent = formatPartialYearNote(lastPeriod) + ` Source : ${HISTORICAL_SERIES[LAB_SUPPORT_SERIES_KEY[supportEl.value]].source}.`;
       renderOutput();
@@ -194,7 +194,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       currentHistory = await fetchLabMonthlyHistory(supportEl.value);
       const periods = currentHistory.map(p => p.period);
       populatePeriodSelect(startEl, periods, periods[0]);
-      badgeEl.innerHTML = renderDataBadge('reel');
+      badgeEl.innerHTML = renderDataBadge('fait');
       renderOutput();
     } catch(err){
       outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : historique temporairement indisponible (${err.message}).</p>`;
@@ -261,10 +261,10 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       const data = await resp.json();
       const last = data.points[data.points.length - 1];
       rateEl.value = last.value.toFixed(2);
-      badgeEl.innerHTML = renderDataBadge('reel');
+      badgeEl.innerHTML = renderDataBadge('fait');
       rateSourceEl.innerHTML = `Taux prérempli avec le taux moyen réel des nouveaux crédits à l'habitat des ménages en France, ${last.period} (${data.source}). ${formatPartialYearNote(last.period)} Modifie-le librement pour tester une autre hypothèse.`;
     } catch(err){
-      badgeEl.innerHTML = renderDataBadge('hypothese');
+      badgeEl.innerHTML = renderDataBadge('calcul');
       rateSourceEl.innerHTML = `⚠️ Donnée manquante : taux réel temporairement indisponible, valeur de départ laissée en hypothèse éditable.`;
       console.info('Likanza Academy — Laboratoire, taux crédit indisponible :', err.message);
     }
@@ -273,7 +273,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
 
   [priceEl, apportEl, rateEl, yearsEl, insuranceEl, fraisEl].forEach(el => el.addEventListener('input', () => {
     render();
-    badgeEl.innerHTML = renderDataBadge('hypothese');
+    badgeEl.innerHTML = renderDataBadge('calcul');
   }));
   loadLiveRate();
 })();
@@ -321,7 +321,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       const periods = points.map(p => p.period);
       populatePeriodSelect(startEl, periods, periods[0]);
       populatePeriodSelect(endEl, periods, periods[periods.length - 1]);
-      badgeEl.innerHTML = renderDataBadge('reel');
+      badgeEl.innerHTML = renderDataBadge('fait');
       render();
     } catch(err){
       outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : série d'inflation temporairement indisponible (${err.message}).</p>`;
@@ -384,7 +384,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       {data: result.yearly.map(y => y.renterNetWorth), color: 'var(--text-dim)', dashed: true, width: 1.5}
     ]);
 
-    const scenarioBadge = scenarioEl.value === 'standard' ? '' : `<span class="data-badge data-badge-scenario">🟡 Scénario : ${scenarioEl.options[scenarioEl.selectedIndex].text}</span>`;
+    const scenarioBadge = scenarioEl.value === 'standard' ? '' : `<span class="data-badge data-badge-scenario">🔮 Scénario : ${scenarioEl.options[scenarioEl.selectedIndex].text}</span>`;
 
     outputEl.innerHTML = `
       <div class="pattern-chart" style="margin-top:12px;">${chart}</div>
@@ -412,11 +412,11 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       const first = data.points[0], last = data.points[data.points.length - 1];
       const yearsSpan = (parseInt(last.period.slice(0,4),10) - parseInt(first.period.slice(0,4),10)) + (parseInt(last.period.slice(6),10) - parseInt(first.period.slice(6),10)) / 4;
       appreciationAnnualPct = yearsSpan > 0 ? (Math.pow(last.value / first.value, 1 / yearsSpan) - 1) * 100 : 0;
-      badgeEl.innerHTML = renderDataBadge('reel');
+      badgeEl.innerHTML = renderDataBadge('fait');
       priceSourceEl.innerHTML = `Appréciation immobilière préremplie avec l'évolution réelle observée (${first.period} → ${last.period}, France entière) : ${appreciationAnnualPct >= 0 ? '+' : ''}${appreciationAnnualPct.toFixed(1)} %/an en moyenne. ${data.source}. Niveau géographique : France entière (pas de donnée locale/ville disponible pour l'instant).`;
     } catch(err){
       appreciationAnnualPct = 0;
-      badgeEl.innerHTML = renderDataBadge('hypothese');
+      badgeEl.innerHTML = renderDataBadge('calcul');
       priceSourceEl.innerHTML = `⚠️ Donnée manquante : indice immobilier réel temporairement indisponible, appréciation laissée à 0% (hypothèse neutre, modifiable).`;
       console.info('Likanza Academy — Laboratoire, indice immobilier indisponible :', err.message);
     }

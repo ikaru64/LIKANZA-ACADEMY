@@ -578,8 +578,8 @@ function getNextStepSuggestion(ctx){
         label: `S'entraîner sur ${weakTouched.categorie} →`,
         url: `defis.html?cat=${encodeURIComponent(weakTouched.categorie)}`,
         reason: weakTouched.stage === 'decouvert'
-          ? `Tu découvres tout juste "${weakTouched.categorie}" — quelques exercices de plus pour bien comprendre.`
-          : `Tu comprends "${weakTouched.categorie}", mais pas encore sur des cas concrets.`
+          ? `Tu découvres tout juste "${weakTouched.categorie}" (${weakTouched.pct}% de bonnes réponses) — quelques exercices de plus pour bien comprendre.`
+          : `Tu comprends "${weakTouched.categorie}" (${weakTouched.pct}% de bonnes réponses), mais pas encore sur des cas concrets.`
       };
     }
   }

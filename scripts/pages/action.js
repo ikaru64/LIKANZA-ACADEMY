@@ -139,7 +139,7 @@ async function renderActionDetail(){
             <h3>Données fondamentales</h3>
             <p style="margin-top:8px;">PER ${formatFundamentalValue('trailingPE', ff.trailingPE)} · Rendement ${formatFundamentalValue('dividendYield', ff.dividendYield)} · Capitalisation ${formatFundamentalValue('marketCap', ff.marketCap)} · Chiffre d'affaires ${formatFundamentalValue('totalRevenue', ff.totalRevenue)}</p>
             <p style="margin-top:6px;color:var(--text-dim);font-size:13px;">Marge nette ${formatFundamentalValue('profitMargins', ff.profitMargins)} · ROE ${formatFundamentalValue('returnOnEquity', ff.returnOnEquity)} · EV/EBITDA ${formatFundamentalValue('evToEbitda', ff.evToEbitda)}${demo && demo.pea ? ' · <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
-            <p style="margin-top:8px;">${renderDataBadge('reel')}</p>`;
+            <p style="margin-top:8px;">${renderDataBadge('fait')}</p>`;
         }
       })
       .catch(err => {
