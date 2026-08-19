@@ -3006,6 +3006,103 @@ function renderBusinessNiveau(elId){
     <div style="margin-top:14px;">${ctaHtml}</div>`;
 }
 
+// ---------- Cas recommandé pour toi (Business) : même logique que
+// renderRecommandePourToi (Défis), restreinte au périmètre déjà utilisé par
+// "Ton niveau" (BUSINESS_SKILL_CATEGORIES) — pas une nouvelle taxonomie,
+// la même liste que celle affichée juste à côté. ----------
+function renderBusinessCasRecommande(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const pool = defisFullPool().filter(i => BUSINESS_SKILL_CATEGORIES.includes(i.categorie));
+  if(pool.length === 0){ el.style.display = 'none'; return; }
+  const mastery = getSkillMastery().filter(m => BUSINESS_SKILL_CATEGORIES.includes(m.categorie));
+  const weakest = mastery.find(m => m.niveau === 'faible');
+  let categorie, reason;
+  if(weakest){
+    categorie = weakest.categorie;
+    reason = `Tu as récemment eu du mal avec ${categorie} (${weakest.pct}% de bonnes réponses).`;
+  } else {
+    const exploredCats = new Set(mastery.map(m => m.categorie));
+    const poolCats = [...new Set(pool.map(i => i.categorie))];
+    const unexplored = poolCats.filter(c => !exploredCats.has(c));
+    if(unexplored.length > 0){
+      categorie = unexplored[dayOfYear() % unexplored.length];
+      reason = "Une notion Business que tu n'as pas encore explorée.";
+    } else {
+      categorie = poolCats[dayOfYear() % poolCats.length];
+      reason = "Un thème à revoir pour varier tes révisions Business.";
+    }
+  }
+  el.innerHTML = `
+    <span class="smallcaps">🎯 Cas recommandé pour toi</span>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${reason}</p>
+    <h3 style="margin-bottom:10px;font-size:17px;">${categorie}</h3>
+    <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
+  document.getElementById(`${elId}-start`).addEventListener('click', () => {
+    const catPool = pool.filter(i => i.categorie === categorie);
+    startMixedSession(elId, catPool.slice(0, 5), {level:'business', categorie, onRestart: () => renderBusinessCasRecommande(elId)});
+  });
+}
+
+// ---------- Business Lab : décisions rapides + business cases, réutilise
+// les vraies données déjà écrites (MENTAL_CHALLENGES domain "Business" et
+// QUIZ_BANK_FULL sur les 6 catégories Business de DOMAINS) — aucune donnée
+// inventée. "Construis ton projet" (outil déjà existant, réflexion guidée)
+// est présenté ici comme 3e module plutôt que dupliqué ailleurs sur la
+// page. Volontairement pas de 4e module "Construis ton entreprise avec
+// conséquences" : ça demanderait un vrai moteur de décisions/conséquences
+// économiques (comme le jeu de portefeuille, mais pour un business), hors
+// scope de cette passe. ----------
+function businessLabDecisionsPool(){ return MENTAL_CHALLENGES.filter(m => m.domain === 'Business'); }
+function businessLabCasesPool(){
+  const domain = DOMAINS.find(d => d.key === 'business');
+  return QUIZ_BANK_FULL.filter(q => domain.quizCategories.includes(q.categorie));
+}
+function shuffleCopy(arr){
+  const copy = arr.slice();
+  for(let i = copy.length - 1; i > 0; i--){
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+function renderBusinessLab(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const decisionsPool = businessLabDecisionsPool();
+  const casesPool = businessLabCasesPool();
+  const sessionEl = document.getElementById(`${elId}-session`);
+  el.innerHTML = `
+    <button type="button" class="card play-tile" id="${elId}-decisions" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.lightbulb}</span>
+      <h3 style="margin:10px 0 6px;">Décisions rapides</h3>
+      <p>${decisionsPool.length} situations business à trancher en 2 minutes chacune.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-cases" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.scale}</span>
+      <h3 style="margin:10px 0 6px;">Business Cases</h3>
+      <p>${casesPool.length} cas sur le chiffre d'affaires, la marge, les levées de fonds…</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
+    </button>
+    <a href="construire-son-projet.html" class="card play-tile">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.compass}</span>
+      <h3 style="margin:10px 0 6px;">Construis ton projet</h3>
+      <p>20 questions guidées pour structurer une réflexion entrepreneuriale : problème, client, offre, chiffres, risques.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
+    </a>`;
+  document.getElementById(`${elId}-decisions`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    startMixedSession(`${elId}-session`, shuffleCopy(decisionsPool).slice(0, 6), {level:'business', categorie:'Décisions rapides', onRestart: () => renderBusinessLab(elId)});
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  document.getElementById(`${elId}-cases`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    startMixedSession(`${elId}-session`, shuffleCopy(casesPool).slice(0, 6), {level:'business', categorie:'Business Cases', onRestart: () => renderBusinessLab(elId)});
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+}
+
 // 30 secondes / 2 minutes / Approfondir — réutilise les champs déjà existants
 // de LIBRARY (simple/detail), zéro contenu dupliqué. "Approfondir" pointe
 // vers la fiche complète de la Bibliothèque (exemple, avantages, erreurs...).

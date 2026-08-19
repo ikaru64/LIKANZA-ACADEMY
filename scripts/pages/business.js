@@ -4,7 +4,8 @@
    + taux de dépôt BCE en direct (via /api/eco-rate, voir lib/ecb.js),
    et plusieurs widgets qui réutilisent la vraie progression déjà
    existante (renderBusinessResume/renderBusinessNiveau/
-   renderBusinessQuestionDuJour/renderConceptLevels/renderTopicWidget,
+   renderBusinessQuestionDuJour/renderBusinessCasRecommande/
+   renderBusinessLab/renderConceptLevels/renderTopicWidget,
    tous dans scripts/data.js). L'actualité économique/entreprises réelle
    vit uniquement sur actualites.html (pas de duplication ici, juste un
    lien de renvoi). Aucune donnée inventée : en cas d'échec,
@@ -100,4 +101,6 @@ renderConceptLevels('businessLevelPib', 'PIB (Produit intérieur brut)');
 renderConceptLevels('businessLevelTaux', "Taux d'intérêt directeur");
 renderConceptLevels('businessLevelLevier', "Effet de levier");
 renderBusinessQuestionDuJour('businessQuestion');
+renderBusinessCasRecommande('businessCasRecommande');
+renderBusinessLab('businessLab');
 renderBusinessNiveau('businessNiveau');
