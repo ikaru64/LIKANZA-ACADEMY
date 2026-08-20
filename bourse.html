@@ -123,7 +123,12 @@
 
   <div class="home-tab-panel" id="tab-comparateur">
     <div class="section-head"><h2>Comparateur d'actions</h2><span class="meta-line">2 à 5 titres</span></div>
-    <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Sélectionne entre 2 et 5 actions à comparer.</p>
+    <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Sélectionne entre 2 et 5 actions à comparer, parmi tes valeurs suivies ci-dessous — ou ajoute-en une nouvelle directement ici.</p>
+    <div class="field" style="max-width:420px;margin-bottom:14px;">
+      <label for="compareSearchInput">Ajouter une action à comparer (nom ou ticker)</label>
+      <input type="text" id="compareSearchInput" placeholder="Ex : Apple, Microsoft, TSLA...">
+    </div>
+    <div id="compareSearchResults" style="margin-bottom:14px;"></div>
     <div id="compareChecks" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px;"></div>
     <div class="mode-toggle">
       <button class="pill active" id="modeDebutant">Vue débutant</button>
