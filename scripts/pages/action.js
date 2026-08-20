@@ -84,15 +84,31 @@ async function renderActionDetail(){
       <p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Non disponibles pour cette action : seul le cours en direct est affiché ici. Le Comparateur, les Scénarios et le simulateur de Dividendes (page Bourse) restent réservés aux 8 valeurs suivies, pour lesquelles Likanza peut récupérer des fondamentaux réels.</p>
     </div>`;
 
+  const editorial = demo ? COMPANY_EDITORIAL[ticker] : null;
+  // Résumé/business model : contenu déjà rédigé (COMPANY_EDITORIAL), disponible
+  // immédiatement sans attendre le fetch — jusqu'ici affiché uniquement dans le
+  // Comparateur à 2 titres de bourse.html, jamais sur la fiche individuelle.
+  const editorialHtml = editorial ? `
+    <div class="card">
+      <h3>Résumé & business model</h3>
+      <p style="font-size:13.5px;color:var(--text-dim);line-height:1.6;margin-top:8px;">${editorial.resume}</p>
+      <p style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-top:10px;">${editorial.businessModel}</p>
+    </div>` : '';
+
   el.innerHTML = `
     <div class="card-grid">
       ${headerHtml}
       ${chartHtml}
     </div>
+    ${editorialHtml}
     <div class="card-grid" style="margin-top:16px;">
       ${fundamentalsHtml}
       <div class="card" id="companyProfileCard" style="display:none;"></div>
     </div>
+    ${demo ? `<div class="card-grid" style="margin-top:16px;">
+      <div class="card" id="thesisCard" style="display:none;"></div>
+      <div class="card" id="consensusCard" style="display:none;"></div>
+    </div>` : ''}
     <div class="card" id="technicalCard" style="margin-top:16px;"></div>
     ${demo ? `<div class="card" id="thematicNewsCard" style="margin-top:16px;display:none;"></div>` : ''}
     <p class="disclaimer-box" style="margin-top:16px;">Ces informations sont fournies à titre pédagogique, en différé. Elles ne constituent ni un conseil en investissement, ni une incitation à acheter ou vendre.</p>`;
@@ -116,10 +132,17 @@ async function renderActionDetail(){
   // ---------- Description de la société + fondamentaux réels (asynchrone, un seul appel) ----------
   const profileCard = document.getElementById('companyProfileCard');
   const fundCard = document.getElementById('companyFundamentalsCard');
+  const thesisCard = document.getElementById('thesisCard');
+  const consensusCard = document.getElementById('consensusCard');
   if(profileCard || fundCard){
     fetch('/api/company-profile?symbol=' + encodeURIComponent(ticker))
       .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(profile => {
+        // Alimente le même cache partagé que bourse.js (companyFundamentalsCache,
+        // scripts/data.js) : renderWhyDrawer ci-dessous s'appuie dessus, jamais
+        // sur une copie locale qui pourrait diverger.
+        companyFundamentalsCache[ticker] = profile;
+
         if(profileCard){
           profileCard.style.display = '';
           const meta = [profile.sector, profile.industry, profile.employees ? profile.employees.toLocaleString('fr-FR') + ' employés' : null].filter(Boolean).join(' · ');
@@ -129,22 +152,67 @@ async function renderActionDetail(){
             <p style="font-size:13.5px;color:var(--text-dim);line-height:1.6;">${profile.summary}</p>
             ${profile.website ? `<a href="${profile.website}" target="_blank" rel="noopener" class="btn btn-sm" style="margin-top:12px;">Site officiel ↗</a>` : ''}`;
         }
+        const ff = profile.fundamentals ? profile.fundamentals.fields : null;
         if(fundCard){
-          const ff = profile.fundamentals ? profile.fundamentals.fields : null;
           if(!ff){
             fundCard.innerHTML = `<h3>Données fondamentales</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
-            return;
+          } else {
+            fundCard.innerHTML = `
+              <h3>Données fondamentales</h3>
+              <p style="margin-top:8px;">PER ${formatFundamentalValue('trailingPE', ff.trailingPE)} · Rendement ${formatFundamentalValue('dividendYield', ff.dividendYield)} · Capitalisation ${formatFundamentalValue('marketCap', ff.marketCap)} · Chiffre d'affaires ${formatFundamentalValue('totalRevenue', ff.totalRevenue)}</p>
+              <p style="margin-top:6px;color:var(--text-dim);font-size:13px;">Marge nette ${formatFundamentalValue('profitMargins', ff.profitMargins)} · ROE ${formatFundamentalValue('returnOnEquity', ff.returnOnEquity)} · EV/EBITDA ${formatFundamentalValue('evToEbitda', ff.evToEbitda)}${demo && demo.pea ? ' · <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
+              <p style="margin-top:8px;">${renderDataBadge('fait')}</p>
+              <div id="whyPER" style="margin-top:10px;"></div>
+              <div id="whyDividend" style="margin-top:6px;"></div>
+              <div id="whyROE" style="margin-top:6px;"></div>`;
+            renderWhyDrawer('whyPER', {fieldKey: 'trailingPE', companySymbol: ticker});
+            renderWhyDrawer('whyDividend', {fieldKey: 'dividendYield', companySymbol: ticker});
+            renderWhyDrawer('whyROE', {fieldKey: 'returnOnEquity', companySymbol: ticker});
           }
-          fundCard.innerHTML = `
-            <h3>Données fondamentales</h3>
-            <p style="margin-top:8px;">PER ${formatFundamentalValue('trailingPE', ff.trailingPE)} · Rendement ${formatFundamentalValue('dividendYield', ff.dividendYield)} · Capitalisation ${formatFundamentalValue('marketCap', ff.marketCap)} · Chiffre d'affaires ${formatFundamentalValue('totalRevenue', ff.totalRevenue)}</p>
-            <p style="margin-top:6px;color:var(--text-dim);font-size:13px;">Marge nette ${formatFundamentalValue('profitMargins', ff.profitMargins)} · ROE ${formatFundamentalValue('returnOnEquity', ff.returnOnEquity)} · EV/EBITDA ${formatFundamentalValue('evToEbitda', ff.evToEbitda)}${demo && demo.pea ? ' · <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
-            <p style="margin-top:8px;">${renderDataBadge('fait')}</p>`;
+        }
+
+        // ---------- Thèse favorable / prudente : réorganise des données déjà
+        // calculées (deriveStrengthsWeaknesses, même primitive que le
+        // Comparateur) et déjà rédigées (COMPANY_EDITORIAL.risques) — jamais
+        // une thèse inventée pour l'occasion. ----------
+        if(thesisCard && editorial){
+          thesisCard.style.display = '';
+          const sw = ff ? deriveStrengthsWeaknesses(ff) : {strengths: [], weaknesses: []};
+          thesisCard.innerHTML = `
+            <h3>Thèses</h3>
+            <div style="margin-top:10px;">
+              <p style="font-weight:600;font-size:13px;color:var(--emerald);">🐂 Thèse favorable</p>
+              ${sw.strengths.length ? `<ul style="font-size:12.5px;color:var(--text-dim);margin:6px 0 0 16px;">${sw.strengths.map(s=>`<li>${s}</li>`).join('')}</ul>` : `<p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`}
+            </div>
+            <div style="margin-top:14px;">
+              <p style="font-weight:600;font-size:13px;color:var(--bordeaux);">🐻 Thèse prudente</p>
+              <ul style="font-size:12.5px;color:var(--text-dim);margin:6px 0 0 16px;">${editorial.risques.map(r=>`<li>${r}</li>`).join('')}</ul>
+            </div>
+            <p style="font-size:11px;color:var(--text-dim);margin-top:12px;font-style:italic;">${renderDataBadge('avis')} Deux lectures possibles des mêmes faits — ni l'une ni l'autre n'est "la vérité" sur cette entreprise.</p>`;
+        }
+
+        // ---------- Consensus analystes : même primitive que l'onglet Scénarios
+        // de bourse.html (formatAnalystConsensus), jamais affichée jusqu'ici sur
+        // la fiche individuelle d'un titre. ----------
+        if(consensusCard){
+          const consensus = profile.fundamentals ? formatAnalystConsensus(profile.fundamentals) : null;
+          consensusCard.style.display = '';
+          if(!consensus){
+            consensusCard.innerHTML = `<h3>Consensus analystes</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+          } else {
+            consensusCard.innerHTML = `
+              <h3>Consensus analystes</h3> ${renderDataBadge('fait')}
+              <p style="font-size:15px;margin-top:8px;">${consensus.label}</p>
+              <p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${consensus.total} analyste${consensus.total>1?'s':''} · ${consensus.breakdown.strongBuy} achat fort · ${consensus.breakdown.buy} achat · ${consensus.breakdown.hold} conserver · ${consensus.breakdown.sell} vente · ${consensus.breakdown.strongSell} vente forte</p>
+              <p style="font-size:11px;color:var(--text-dim);margin-top:10px;">Estimations professionnelles réelles, pas une garantie — voir l'onglet Scénarios de la page Bourse pour une projection chiffrée.</p>`;
+          }
         }
       })
       .catch(err => {
         console.info('Likanza Academy — description/fondamentaux de société indisponibles :', err.message);
         if(fundCard) fundCard.innerHTML = `<h3>Données fondamentales</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+        if(thesisCard) thesisCard.style.display = 'none';
+        if(consensusCard) consensusCard.style.display = 'none';
       });
   }
 

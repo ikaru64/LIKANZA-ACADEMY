@@ -83,7 +83,7 @@
   <div class="quick-access-grid" id="bourseTabsGrid"></div>
 
   <div class="home-tab-panel" id="tab-marche-jour">
-    <div class="section-head"><h2>Marché du jour</h2><span class="meta-line">cotations différées, Yahoo Finance</span></div>
+    <div class="section-head"><h2>📈 Marchés aujourd'hui</h2><span class="meta-line">cotations différées, Yahoo Finance</span></div>
     <div class="mode-toggle">
       <button class="pill active" data-mjtab="hausses"><span data-icon="flame"></span> Hausses du jour</button>
       <button class="pill" data-mjtab="baisses"><span data-icon="trending-down"></span> Baisses du jour</button>
@@ -91,6 +91,12 @@
     </div>
     <div id="marketOfDayBody" style="margin-top:16px;"></div>
     <div id="marketLevelTip" style="margin-top:16px;"></div>
+
+    <div class="section-head" style="margin-top:32px;"><h2>🔥 Ce qui bouge réellement</h2><span class="meta-line">les plus fortes variations parmi tes valeurs suivies</span></div>
+    <div id="marketMoversBody"></div>
+
+    <div class="section-head" style="margin-top:32px;"><h2>📅 À surveiller</h2><span class="meta-line">le type d'événement, pas un calendrier daté</span></div>
+    <div id="marketWatchBody"></div>
   </div>
 
   <div class="home-tab-panel" id="tab-fiches">
@@ -105,6 +111,13 @@
     </div>
     <p class="disclaimer-box" style="max-width:70ch;">Les actions ajoutées par recherche affichent un cours en direct réel (Yahoo Finance) et un indicateur de tendance basé sur les prix réels — jamais un conseil d'achat ou de vente. Sans les données fondamentales (PER, dividende...) des 8 valeurs de départ, elles ne participent pas au Comparateur, aux Scénarios ni au simulateur de Dividendes.</p>
     <div class="card-grid" id="stockGrid"></div>
+  </div>
+
+  <div class="home-tab-panel" id="tab-screener">
+    <div class="section-head"><h2>Filtre parmi tes valeurs suivies</h2><span class="meta-line">pas un screener de marché complet</span></div>
+    <p class="disclaimer-box" style="max-width:70ch;">Ceci filtre uniquement les valeurs que tu suis déjà (les 8 valeurs de départ, plus celles que tu ajoutes par recherche) — pas l'ensemble du marché. Un filtrage sur des milliers de titres nécessiterait un fournisseur de données de screening que Likanza n'utilise pas aujourd'hui.</p>
+    <div id="screenerFilters" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;"></div>
+    <div id="screenerResults"></div>
   </div>
 
   <div class="home-tab-panel" id="tab-comparateur">

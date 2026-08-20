@@ -5,7 +5,10 @@
    ici). Utilisée par la page Actualités et le teaser accueil.
 
    Réponse : { weekStart, articles: [{categorie, slug, titre, resume,
-   points, pourquoi, impact, lecture, source, lien, sources}, ...] }
+   points, pourquoi, impact, lecture, source, lien, sources, aSurveiller,
+   accordSources}, ...] } — aSurveiller/accordSources absents des articles
+   générés avant ce champ : toujours un tableau vide / null par défaut,
+   jamais undefined (voir lib/db.js pour la migration ALTER TABLE).
    ============================================================ */
 
 const { getSql, ensureWeeklyNewsTable } = require('../lib/db');
@@ -25,7 +28,7 @@ module.exports = async (req, res) => {
     }
 
     const rows = await sql`
-      SELECT categorie, slug, titre, resume, points, pourquoi, impact, lecture, source, lien, sources, created_at
+      SELECT categorie, slug, titre, resume, points, pourquoi, impact, lecture, source, lien, sources, a_surveiller, accord_sources, created_at
       FROM weekly_news
       WHERE week_start = ${weekStart}
       ORDER BY categorie ASC
@@ -39,6 +42,7 @@ module.exports = async (req, res) => {
         categorie: r.categorie, slug: r.slug, titre: r.titre, resume: r.resume,
         points: r.points, pourquoi: r.pourquoi, impact: r.impact,
         lecture: r.lecture, source: r.source, lien: r.lien, sources: r.sources,
+        aSurveiller: r.a_surveiller || [], accordSources: r.accord_sources || null,
         generatedAt: r.created_at
       }))
     });

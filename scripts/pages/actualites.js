@@ -60,9 +60,13 @@ function renderFull(cat){
       <ul style="color:var(--text-dim);font-size:13.5px;margin:0 0 14px 18px;">${a.points.map(p=>`<li style="margin-bottom:5px;">${p}</li>`).join('')}</ul>
       <p style="font-size:13.5px;margin-bottom:10px;"><strong>Pourquoi c'est important : </strong><span style="color:var(--text-dim);">${a.pourquoi}</span></p>
       <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;"><strong style="color:var(--text);">Impact potentiel :</strong> ${a.impact.join(' · ')}</p>
+      ${Array.isArray(a.aSurveiller) && a.aSurveiller.length ? `
+      <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:4px;"><strong style="color:var(--text);">👀 À surveiller</strong> <span style="font-style:italic;">— pas une prédiction, des éléments qui confirmeront ou infirmeront cette synthèse</span></p>
+      <ul style="color:var(--text-dim);font-size:13px;margin:0 0 14px 18px;">${a.aSurveiller.map(p=>`<li style="margin-bottom:4px;">${p}</li>`).join('')}</ul>` : ''}
+      ${a.accordSources ? `<p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('analyse')} ${a.accordSources}</p>` : ''}
       ${renderNewsApprofondirLink(a.categorie)}
       <div class="card-footer">
-        <span>${a.lecture} de lecture · semaine du ${new Date(a.weekStart).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})} · Source : ${a.source}</span>
+        <span>${a.lecture} de lecture · semaine du ${new Date(a.weekStart).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})} · Source${Array.isArray(a.sources) && new Set(a.sources.map(s=>s.source)).size > 1 ? 's' : ''} : ${a.source}</span>
       </div>
       <div class="card-footer" style="margin-top:10px;">
         <a href="${a.lien}" target="_blank" rel="noopener" class="btn btn-sm">Lire l'article original ↗</a>

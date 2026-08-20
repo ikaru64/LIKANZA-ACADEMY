@@ -4124,6 +4124,74 @@ function formatAnalystConsensus(fundamentals){
   };
 }
 
+// ---------- « Pourquoi ? » : explique une métrique déjà affichée, sans jamais
+// faire de nouvel appel réseau — uniquement des données déjà en cache
+// (companyFundamentalsCache) et les primitives déjà utilisées par le
+// Comparateur (bucketGrowth/bucketMargin/bucketLeverage,
+// deriveStrengthsWeaknesses, COMPANY_EDITORIAL). Si la donnée sous-jacente est
+// absente, le composant le dit — jamais un texte de remplissage inventé. ----------
+const WHY_FIELD_DEFINITIONS = {
+  trailingPE: "Le PER (price-to-earnings ratio) compare le cours de l'action au bénéfice par action : il indique combien d'années de bénéfice actuel le marché est prêt à payer pour posséder l'action.",
+  forwardPE: "Le PER prévisionnel utilise le bénéfice attendu (estimation, pas un fait) plutôt que le bénéfice déjà publié — il reflète les anticipations du marché, pas une garantie.",
+  priceToSales: "Le P/S compare le cours au chiffre d'affaires par action : utile pour valoriser des entreprises pas encore rentables, où le PER n'a pas de sens.",
+  priceToBook: "Le Price/Book compare le cours à la valeur comptable des actifs de l'entreprise : un repère surtout pertinent pour des secteurs à fort actif tangible (banques, industrie lourde).",
+  evToRevenue: "L'EV/CA compare la valeur d'entreprise (capitalisation + dette − trésorerie) à son chiffre d'affaires, sans être affecté par la rentabilité ou la structure de dette.",
+  evToEbitda: "L'EV/EBITDA compare la valeur d'entreprise à son excédent brut d'exploitation : une mesure de valorisation qui, contrairement au PER, n'est pas affectée par la structure de dette ou la fiscalité.",
+  dividendYield: "Le rendement du dividende rapporte le dividende annuel versé au cours actuel de l'action : il mesure le revenu régulier généré par l'action, indépendamment de sa variation de cours.",
+  marketCap: "La capitalisation boursière est la valeur totale de l'entreprise sur les marchés (cours × nombre d'actions) : elle situe la taille de l'entreprise, pas sa qualité.",
+  totalRevenue: "Le chiffre d'affaires est le total des ventes réalisées par l'entreprise sur la période, avant toute charge.",
+  revenueGrowth: "La croissance du chiffre d'affaires mesure l'évolution des ventes d'une année sur l'autre : un indicateur de dynamique commerciale, pas de rentabilité.",
+  grossMargins: "La marge brute est ce qu'il reste du chiffre d'affaires après le seul coût direct de production — avant les autres charges de l'entreprise.",
+  operatingMargins: "La marge opérationnelle est ce qu'il reste après les charges d'exploitation courantes, avant intérêts et impôts : une mesure de la rentabilité de l'activité elle-même.",
+  profitMargins: "La marge nette est la part du chiffre d'affaires qui reste en bénéfice après toutes les charges : elle mesure la capacité de l'entreprise à transformer ses ventes en profit réel.",
+  returnOnEquity: "Le ROE mesure le bénéfice généré par rapport aux capitaux propres de l'entreprise : il indique l'efficacité avec laquelle l'entreprise transforme les fonds de ses actionnaires en profit.",
+  totalCash: "La trésorerie est l'argent immédiatement disponible pour l'entreprise — un coussin de sécurité face aux imprévus ou aux opportunités d'investissement.",
+  totalDebt: "La dette totale correspond à l'ensemble des emprunts de l'entreprise, à comparer à sa trésorerie pour juger de sa solidité financière.",
+  freeCashflow: "Le free cash-flow est la trésorerie générée par l'activité après les investissements nécessaires : ce qui reste réellement disponible pour l'entreprise (dividendes, rachats, désendettement).",
+  trailingEps: "Le BPA (bénéfice par action) répartit le bénéfice total de l'entreprise sur chaque action existante — la base de calcul du PER et des scénarios de cours.",
+  targetLowPrice: "La cible basse est l'estimation la plus prudente parmi les analystes qui suivent ce titre — un scénario possible, pas une prédiction garantie.",
+  targetMeanPrice: "La cible moyenne résume l'ensemble des estimations des analystes qui suivent ce titre — une moyenne peut masquer un fort désaccord entre eux.",
+  targetHighPrice: "La cible haute est l'estimation la plus optimiste parmi les analystes qui suivent ce titre — un scénario possible, pas une prédiction garantie."
+};
+
+// Réutilise les mêmes bandes de lecture que le Comparateur — jamais une
+// nouvelle interprétation créée pour ce composant.
+function whyBucketReading(fieldKey, fields){
+  if(fieldKey === 'revenueGrowth') return bucketGrowth(fields.revenueGrowth);
+  if(fieldKey === 'grossMargins' || fieldKey === 'operatingMargins' || fieldKey === 'profitMargins') return bucketMargin(fields[fieldKey]);
+  if(fieldKey === 'totalDebt' || fieldKey === 'totalCash') return bucketLeverage(fields.totalDebt, fields.totalCash);
+  return null;
+}
+
+function renderWhyDrawer(elId, {fieldKey, companySymbol}){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const definition = WHY_FIELD_DEFINITIONS[fieldKey];
+  const meta = FUNDAMENTALS_FIELD_META[fieldKey];
+  if(!definition || !meta){ el.innerHTML = ''; return; }
+
+  const fund = companyFundamentalsCache[companySymbol];
+  const fields = fund && fund.fundamentals ? fund.fundamentals.fields : null;
+  const value = fields ? fields[fieldKey] : null;
+  const reading = fields ? whyBucketReading(fieldKey, fields) : null;
+  const sw = fields ? deriveStrengthsWeaknesses(fields) : {strengths: [], weaknesses: []};
+  const editorial = COMPANY_EDITORIAL[companySymbol];
+
+  el.innerHTML = `
+    <details class="why-drawer">
+      <summary class="smallcaps" style="cursor:pointer;">Pourquoi ? — ${meta.label}</summary>
+      <div style="margin-top:10px;font-size:12.5px;color:var(--text-dim);line-height:1.6;">
+        <p>${definition}</p>
+        ${typeof value === 'number'
+          ? `<p style="margin-top:8px;">${renderDataBadge('fait')} Valeur actuelle : <strong style="color:var(--text);">${formatFundamentalValue(fieldKey, value)}</strong>${reading ? ` — ${reading.label}.` : ''}</p>`
+          : `<p style="margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}.</p>`}
+        ${sw.strengths.length ? `<p style="margin-top:8px;color:var(--emerald);">${renderDataBadge('calcul')} Ce qui pourrait justifier ce niveau : ${sw.strengths.join(' ')}</p>` : ''}
+        ${editorial && editorial.risques.length ? `<p style="margin-top:8px;color:var(--bordeaux);">${renderDataBadge('avis')} Risques à garder en tête : ${editorial.risques.join(' ')}</p>` : ''}
+        <p style="margin-top:8px;font-style:italic;">Un chiffre isolé ne résume jamais une entreprise à lui seul — à lire avec le reste de la fiche.</p>
+      </div>
+    </details>`;
+}
+
 // ---------- Profil personnel (pré-remplit les simulateurs + test de positionnement) ----------
 // fzr-profile est le seul objet profil du site : le test de positionnement
 // (levels/interests/learningStyle) fait évoluer cette même structure plutôt

@@ -2,6 +2,7 @@
 const BOURSE_TABS = [
   {id:'tab-marche-jour', title:'Marché du jour', desc:'Hausses, baisses, sélection', icon:'star'},
   {id:'tab-fiches', title:'Fiches actions', desc:'8 valeurs suivies', icon:'list'},
+  {id:'tab-screener', title:'Filtrer', desc:'Parmi tes valeurs suivies', icon:'search'},
   {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale'},
   {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
   {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
@@ -354,6 +355,67 @@ function renderCompareAnalysis(stocks){
 }
 checksEl.addEventListener('change', renderCompare);
 
+// ---------- Filtre parmi les valeurs suivies (screener « mode simple ») ----------
+// Ne porte que sur l'univers réellement suivi (STOCKS_DEMO + ajouts par
+// recherche) — jamais présenté comme un screener de marché complet (voir
+// disclaimer dans bourse.html). Un titre n'est retenu que si sa donnée
+// sous-jacente est réellement vérifiable, jamais par défaut sur une donnée
+// manquante. Chaque filtre explique pourquoi il compte (title = tooltip).
+const SCREENER_FILTERS = [
+  {id:'rentable', label:'Rentable', why:"Une marge nette positive et significative signifie que l'entreprise conserve du bénéfice après toutes ses charges.",
+    test(s, ff){ return !!(ff && typeof ff.profitMargins === 'number' && ff.profitMargins > 0.05); }},
+  {id:'croissance', label:'En croissance', why:"Chiffre d'affaires en croissance modérée ou forte sur le dernier exercice connu.",
+    test(s, ff){ const g = ff ? bucketGrowth(ff.revenueGrowth) : null; return !!(g && (g.level === 'forte' || g.level === 'moderee')); }},
+  {id:'dividende', label:'Verse un dividende', why:"Rendement de dividende réel et positif — un revenu régulier, jamais garanti pour l'avenir.",
+    test(s, ff){ return !!(ff && typeof ff.dividendYield === 'number' && ff.dividendYield > 0); }},
+  {id:'bilan-solide', label:'Bilan solide', why:"Trésorerie nette positive ou endettement net modéré, qui peut mieux absorber un ralentissement.",
+    test(s, ff){ const l = ff ? bucketLeverage(ff.totalDebt, ff.totalCash) : null; return !!(l && l.level !== 'eleve'); }},
+  {id:'pea', label:'Éligible PEA', why:"Peut être logé dans un PEA, avec le cadre fiscal associé après 5 ans — ne dit rien sur la qualité de l'entreprise.",
+    test(s){ return !!s.pea; }}
+];
+const screenerActiveFilters = new Set();
+function renderScreenerFilters(){
+  const el = document.getElementById('screenerFilters');
+  if(!el) return;
+  el.innerHTML = SCREENER_FILTERS.map(f => `
+    <label class="pill" style="display:flex;gap:6px;align-items:center;cursor:pointer;" title="${f.why}">
+      <input type="checkbox" class="screenerCheck" value="${f.id}" style="accent-color:var(--gold);"> ${f.label}
+    </label>`).join('');
+  el.querySelectorAll('.screenerCheck').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if(cb.checked) screenerActiveFilters.add(cb.value); else screenerActiveFilters.delete(cb.value);
+      renderScreener();
+    });
+  });
+}
+function screenerUniverse(){
+  return getFollowedStocks().map(entry => STOCKS_DEMO.find(s => s.ticker === entry.symbol)).filter(Boolean);
+}
+function renderScreener(){
+  const el = document.getElementById('screenerResults');
+  if(!el) return;
+  const universe = screenerUniverse();
+  const activeFilters = SCREENER_FILTERS.filter(f => screenerActiveFilters.has(f.id));
+  const list = activeFilters.length === 0 ? universe : universe.filter(s => {
+    const ff = getFundamentalsFields(s.ticker);
+    return activeFilters.every(f => f.test(s, ff));
+  });
+  const summary = activeFilters.length === 0
+    ? `${universe.length} valeur${universe.length>1?'s':''} suivie${universe.length>1?'s':''} au total (aucun filtre actif).`
+    : `${list.length} valeur${list.length>1?'s':''} sur ${universe.length} correspond${list.length>1?'ent':''} à ces critères.`;
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px;">${summary}</p>
+    ${list.length === 0
+      ? `<p style="color:var(--text-dim);font-size:13px;">Aucune de tes valeurs suivies ne correspond à cette combinaison de critères.</p>`
+      : `<div class="card-grid">${list.map(s => `
+        <a href="action.html#${encodeURIComponent(s.ticker)}" class="card play-tile">
+          <span class="smallcaps">${s.secteur} · ${s.pays}</span>
+          <h4 style="margin:6px 0;">${s.nom} <span class="mono" style="font-size:12px;color:var(--text-dim);">${s.ticker}</span></h4>
+          <p style="font-size:12.5px;color:var(--text-dim);">${s.prix.toFixed(1)} € <span style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span></p>
+        </a>`).join('')}</div>`}`;
+}
+renderScreenerFilters();
+
 // ---------- Scénarios (moteur partagé avec la sélection du jour) ----------
 // bpaActuel vient désormais du vrai trailingEps (fondamentaux réels), plus
 // jamais de stock.prix / stock.per fictif — un BPA indisponible renvoie null,
@@ -629,6 +691,60 @@ function renderMarketOfDay(){
   }
 }
 
+// ---------- 🔥 Ce qui bouge réellement : les plus fortes variations, jamais
+// une causalité inventée. Une actualité liée n'est affichée qu'en cas de
+// proximité de vocabulaire réelle (findThematicNews, déjà utilisé sur
+// action.js) — jamais présentée comme la cause confirmée du mouvement. ----------
+let weeklyArticlesForMovers = null;
+function renderMarketMovers(){
+  const body = document.getElementById('marketMoversBody');
+  if(!body) return;
+  const movers = STOCKS_DEMO.slice().sort((a,b) => Math.abs(b.variation) - Math.abs(a.variation)).slice(0,3);
+  body.innerHTML = movers.map(s=>{
+    const related = weeklyArticlesForMovers ? findThematicNews(s.secteur, weeklyArticlesForMovers) : [];
+    return `<div class="card" style="margin-bottom:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;">
+        <div><strong>${s.nom}</strong> <span class="mono" style="font-size:11px;color:var(--text-dim);">${s.ticker}</span> · <span style="font-size:12px;color:var(--text-dim);">${s.secteur}</span></div>
+        <span class="mono" style="font-size:15px;color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'};">${s.variation>=0?'+':''}${s.variation}%</span>
+      </div>
+      <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">${renderDataBadge('fait')} Variation du jour, cotation différée Yahoo Finance.</p>
+      ${related.length
+        ? `<p style="font-size:12.5px;margin-top:6px;">${renderDataBadge('analyse')} Actualité de la semaine sur le même secteur (proximité de thème, pas une cause confirmée) : <a href="actualites.html#${related[0].slug}" style="color:var(--gold-bright);">${related[0].titre}</a></p>`
+        : `<p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${renderDataBadge('avis')} Aucun facteur unique ne peut être confirmé à partir des informations disponibles ici.</p>`}
+    </div>`;
+  }).join('');
+}
+// Chargé une fois (pas de nouvel appel réseau à chaque rafraîchissement de
+// cotation) : /api/weekly-news est déjà utilisé ailleurs sur le site
+// (actualites.html, action.js), aucune nouvelle fonction serverless.
+if(location.protocol !== 'file:'){
+  fetch('/api/weekly-news')
+    .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(payload => { weeklyArticlesForMovers = payload.articles || []; renderMarketMovers(); })
+    .catch(err => { console.info('Likanza Academy — actualités liées indisponibles pour "Ce qui bouge" :', err.message); });
+}
+
+// ---------- 📅 À surveiller : contenu pédagogique évergreen (types
+// d'événements qui peuvent influencer un marché), explicitement PAS un
+// calendrier daté — aucune source de calendrier financier n'est
+// actuellement intégrée au site (voir rapport final du chantier). ----------
+const MARKET_WATCH_ITEMS = [
+  {label: 'Publication de résultats trimestriels', desc: "Peut faire varier fortement un cours si les chiffres surprennent, en bien ou en mal, par rapport aux attentes du marché."},
+  {label: 'Décision de taux d\'une banque centrale', desc: "Influence le coût du crédit dans toute l'économie : peut peser sur l'ensemble des marchés, pas seulement un titre précis."},
+  {label: 'Publication de l\'inflation', desc: "Peut influencer les anticipations sur les décisions futures des banques centrales."},
+  {label: 'Révision de la guidance par une entreprise', desc: "Un changement de prévisions peut avoir plus d'impact sur le cours que les résultats du trimestre eux-mêmes."},
+  {label: 'Rapport sur l\'emploi', desc: "Indicateur suivi de près pour juger de la santé économique générale."}
+];
+function renderMarketWatch(){
+  const body = document.getElementById('marketWatchBody');
+  if(!body) return;
+  body.innerHTML = `
+    <p class="disclaimer-box" style="margin-bottom:14px;">Ceci n'est pas un calendrier daté (aucune date de publication réelle n'est actuellement récupérée par Likanza) — une explication du type d'événement qui peut influencer un marché, à consulter avec l'actualité réelle de la page <a href="actualites.html" style="color:var(--gold-bright);">Actualités</a>.</p>
+    <div class="card-grid">${MARKET_WATCH_ITEMS.map(i => `
+      <div class="card"><h4>${i.label}</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${i.desc}</p></div>`).join('')}
+    </div>`;
+}
+
 // ---------- Cotations live (/api/stock-quotes) : fusion sur STOCKS_DEMO, repli silencieux ----------
 function applyLiveStockQuotes(quotes){
   let applied = 0;
@@ -650,11 +766,14 @@ function refreshAllStockViews(){
   updateScenario();
   updateDividend();
   renderMarketOfDay();
+  renderMarketMovers();
+  renderScreener();
 }
 
 // ================= Rendu initial (données de démonstration) =================
 refreshAllStockViews();
 updateDcaVsLump();
+renderMarketWatch();
 
 // ================= Cotations réelles (dégradation silencieuse si indisponibles) =================
 if(location.protocol !== 'file:'){
