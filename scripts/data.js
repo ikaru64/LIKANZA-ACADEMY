@@ -1306,6 +1306,11 @@ function renderDashboardHeader(elId){
   }
   const weekDays = getWeeklyActivityDays();
   const weekPct = Math.min(100, Math.round((weekDays/WEEKLY_GOAL_DAYS)*100));
+  // Sans test de positionnement complété, "Débutant" ci-dessus n'est qu'un
+  // repli silencieux (voir getLevel()), pas un niveau réellement déclaré —
+  // ce bandeau invite explicitement à combler ça, une seule fois, jusqu'à
+  // ce que le test soit fait (jamais réaffiché après, voir getPositioningResult).
+  const showOnboardingNudge = !getPositioningResult();
   el.innerHTML = `
     <div class="dash-header">
       <div class="dash-greeting">
@@ -1322,7 +1327,15 @@ function renderDashboardHeader(elId){
           <div class="dash-weekbar"><div class="dash-weekfill" id="dashWeekFill" style="width:0%;"></div></div>
         </div>
       </div>
-    </div>`;
+    </div>
+    ${showOnboardingNudge ? `
+    <div class="today-card" style="margin-top:4px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+      <div>
+        <span class="eyebrow">Nouveau sur Likanza ?</span>
+        <p style="font-size:13.5px;margin-top:4px;max-width:52ch;">2 minutes pour indiquer ce qui t'intéresse, ton niveau et tes objectifs — Likanza personnalise ensuite ses recommandations à partir de ça, jamais au hasard.</p>
+      </div>
+      <a href="test-positionnement.html" class="btn btn-sm btn-gold" style="white-space:nowrap;">Faire le test →</a>
+    </div>` : ''}`;
   animateNumber(document.getElementById('dashNumXP'), g.xp, {suffix:' XP'});
   animateNumber(document.getElementById('dashNumFP'), g.financePoints);
   animateWidthIn(document.getElementById('dashWeekFill'), weekPct);

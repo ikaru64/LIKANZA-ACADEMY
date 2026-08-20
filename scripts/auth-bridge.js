@@ -44,12 +44,20 @@
     `;
   }
 
+  // Accès localStorage protégés : certains navigateurs (navigation privée,
+  // stockage désactivé/plein) lèvent une exception synchrone même sur un
+  // simple getItem — sans ce garde-fou, tout le module planterait et
+  // compte.html afficherait une zone vide sans explication.
+  function safeStorageGet(key){ try { return localStorage.getItem(key); } catch (e) { return null; } }
+  function safeStorageSet(key, value){ try { localStorage.setItem(key, value); } catch (e) { /* silencieux : rien à persister n'est pas critique ici */ } }
+  function safeStorageRemove(key){ try { localStorage.removeItem(key); } catch (e) { /* idem */ } }
+
   // 1. Retour tout juste connecté : les infos sont dans le fragment de l'URL.
   const hashMatch = location.hash.match(/la_user=([^&]+)/);
   if (hashMatch) {
     try {
       const user = JSON.parse(atob(decodeURIComponent(hashMatch[1])));
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      safeStorageSet(STORAGE_KEY, JSON.stringify(user));
       history.replaceState(null, '', location.pathname + location.search);
       renderConnected(user);
       return;
@@ -60,7 +68,7 @@
 
   // 2. Retour tout juste déconnecté.
   if (/[?&]la_signedout=1/.test(location.search)) {
-    localStorage.removeItem(STORAGE_KEY);
+    safeStorageRemove(STORAGE_KEY);
     const cleanSearch = location.search.replace(/[?&]la_signedout=1/, '').replace(/^&/, '?');
     history.replaceState(null, '', location.pathname + (cleanSearch === '?' ? '' : cleanSearch));
     renderDisconnected();
@@ -68,13 +76,13 @@
   }
 
   // 3. Visite normale : on se fie au dernier statut connu en local.
-  const cached = localStorage.getItem(STORAGE_KEY);
+  const cached = safeStorageGet(STORAGE_KEY);
   if (cached) {
     try {
       renderConnected(JSON.parse(cached));
       return;
     } catch (e) {
-      localStorage.removeItem(STORAGE_KEY);
+      safeStorageRemove(STORAGE_KEY);
     }
   }
   renderDisconnected();
