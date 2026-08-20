@@ -3847,27 +3847,59 @@ function formatFundamentalValue(key, value){
 }
 
 // ---------- Cache en session des fondamentaux réels (partagé entre pages) ----------
-// Un seul fetch batch par visite (jamais une requête par onglet/action) : le
-// crumb Yahoo est un mécanisme fragile et non documenté, on limite les appels.
+// Découpe en lots de 8 : limite réelle du batch Yahoo quoteSummary derrière
+// /api/company-profile (voir api/company-profile.js, symbols.slice(0,8)) — au
+// départ pensée pour les 8 valeurs STOCKS_DEMO, mais s'applique maintenant à
+// n'importe quelle liste de valeurs suivies (jusqu'à 20, FOLLOWED_STOCKS_MAX),
+// jamais un choix arbitraire du code. Un seul lot de requêtes en vol à la fois
+// (jamais une explosion de requêtes) : le crumb Yahoo est un mécanisme fragile
+// et non documenté.
 let companyFundamentalsCache = {};
 let companyFundamentalsPromise = null;
 function loadCompanyFundamentals(symbols){
-  const missing = symbols.filter(s => !(s in companyFundamentalsCache));
+  const missing = [...new Set(symbols)].filter(s => !(s in companyFundamentalsCache));
   if(missing.length === 0) return Promise.resolve(companyFundamentalsCache);
-  if(companyFundamentalsPromise) return companyFundamentalsPromise;
-  companyFundamentalsPromise = fetch('/api/company-profile?symbols=' + encodeURIComponent(missing.join(',')))
-    .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
-    .then(payload => {
-      (payload.companies || []).forEach(c => { companyFundamentalsCache[c.symbol] = c; });
-      missing.forEach(s => { if(!(s in companyFundamentalsCache)) companyFundamentalsCache[s] = null; });
-      return companyFundamentalsCache;
-    })
-    .catch(() => {
-      missing.forEach(s => { companyFundamentalsCache[s] = null; });
-      return companyFundamentalsCache;
-    })
+  if(companyFundamentalsPromise) return companyFundamentalsPromise.then(() => loadCompanyFundamentals(symbols));
+  const chunks = [];
+  for(let i = 0; i < missing.length; i += 8) chunks.push(missing.slice(i, i + 8));
+  companyFundamentalsPromise = Promise.all(chunks.map(chunk =>
+    fetch('/api/company-profile?symbols=' + encodeURIComponent(chunk.join(',')))
+      .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(payload => {
+        (payload.companies || []).forEach(c => { companyFundamentalsCache[c.symbol] = c; });
+        chunk.forEach(s => { if(!(s in companyFundamentalsCache)) companyFundamentalsCache[s] = null; });
+      })
+      .catch(() => {
+        chunk.forEach(s => { companyFundamentalsCache[s] = null; });
+      })
+  )).then(() => companyFundamentalsCache)
     .finally(() => { companyFundamentalsPromise = null; });
   return companyFundamentalsPromise;
+}
+
+// ---------- Descripteur générique d'une valeur suivie (dépasse les 8 valeurs
+// curatées STOCKS_DEMO) — remplace les lookups STOCKS_DEMO.find dispersés
+// dans bourse.js/action.js. secteur/pays/pea restent explicitement `null`
+// quand non curatés (jamais une valeur par défaut inventée) : permet de
+// distinguer "non éligible confirmé" de "non déterminé" côté affichage. ----------
+let followedQuotesCache = {};
+function resolveFollowedStock(symbol){
+  const demo = STOCKS_DEMO.find(s => s.ticker === symbol);
+  if(demo){
+    return {
+      ticker: demo.ticker, nom: demo.nom, secteur: demo.secteur, pays: demo.pays,
+      pea: demo.pea, prix: demo.prix, variation: demo.variation, history: demo.history,
+      curated: true
+    };
+  }
+  const followed = getFollowedStocks().find(s => s.symbol === symbol);
+  const q = followedQuotesCache[symbol];
+  return {
+    ticker: symbol, nom: followed ? followed.name : symbol,
+    secteur: null, pays: null, pea: null,
+    prix: q ? q.price : null, variation: q ? q.changePercent : null, history: q ? q.history : null,
+    curated: false
+  };
 }
 
 // ---------- Contenu éditorial (résumé business / business model / risques) ----------

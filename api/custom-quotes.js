@@ -16,11 +16,21 @@
                                   sans imposer un payload quotidien énorme, cf. le
                                   Laboratoire financier / simulateurs historiques)
    Réponse  : { updatedAt, quotes, errors }
+
+   ALLOWED_RANGES étendu et vérifié en direct contre l'endpoint Yahoo chart
+   réel (1d/5d/1mo/3mo/6mo/1y/2y/5y/10y/max répondent tous avec de vraies
+   données datées) — 1d/3mo/2y/max ajoutés pour le sélecteur de période de la
+   fiche action (action.html), 10y déjà utilisé par le jeu de portefeuille et
+   le Laboratoire financier (ne pas retirer). Pas de "3y" : absent des ranges
+   natifs Yahoo, remplacé par 3mo/2y dans le sélecteur plutôt que d'inventer
+   une valeur non supportée. "max" peut renvoyer une granularité plus large
+   que demandée (comportement du fournisseur pour les très longs historiques,
+   pas un choix du code).
    ============================================================ */
 
 const { fetchYahooQuote } = require('../lib/yahoo');
 
-const ALLOWED_RANGES = new Set(['5d', '1mo', '6mo', '1y', '5y', '10y']);
+const ALLOWED_RANGES = new Set(['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'max']);
 const ALLOWED_INTERVALS = new Set(['1d', '1wk', '1mo']);
 
 module.exports = async (req, res) => {

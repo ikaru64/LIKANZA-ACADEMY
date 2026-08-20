@@ -1,7 +1,7 @@
 // ================= Navigation par onglets (même pattern que index.html) =================
 const BOURSE_TABS = [
   {id:'tab-marche-jour', title:'Marché du jour', desc:'Hausses, baisses, sélection', icon:'star'},
-  {id:'tab-fiches', title:'Fiches actions', desc:'8 valeurs suivies', icon:'list'},
+  {id:'tab-fiches', title:'Fiches actions', desc:'liste modifiable, 20 max', icon:'list'},
   {id:'tab-screener', title:'Filtrer', desc:'Parmi tes valeurs suivies', icon:'search'},
   {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale'},
   {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
@@ -97,11 +97,24 @@ function renderStockGrid(){
 }
 
 // ---------- Comparateur ----------
+// Ouvert à toute valeur suivie (getFollowedStocks), pas seulement aux 8
+// valeurs de démonstration — coeur du chantier "supprimer la logique 8
+// actions premium + le reste au prix seul". La sélection déjà cochée est
+// préservée d'un rafraîchissement à l'autre (ex. après ajout d'une nouvelle
+// valeur suivie), jamais réinitialisée silencieusement.
 const checksEl = document.getElementById('compareChecks');
-checksEl.innerHTML = STOCKS_DEMO.map((s,i)=>`
-  <label class="pill" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
-    <input type="checkbox" class="compareCheck" value="${s.ticker}" ${i<3?'checked':''} style="accent-color:var(--gold);"> ${s.nom}
-  </label>`).join('');
+function renderCompareChecks(){
+  const previouslyChecked = new Set(Array.from(document.querySelectorAll('.compareCheck:checked')).map(c=>c.value));
+  const list = getFollowedStocks();
+  checksEl.innerHTML = list.map((entry,i)=>{
+    const s = resolveFollowedStock(entry.symbol);
+    const checked = previouslyChecked.size ? previouslyChecked.has(entry.symbol) : i < 3;
+    return `<label class="pill" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
+    <input type="checkbox" class="compareCheck" value="${entry.symbol}" ${checked?'checked':''} style="accent-color:var(--gold);"> ${s.nom}
+  </label>`;
+  }).join('');
+}
+renderCompareChecks();
 
 let advancedMode = false;
 document.getElementById('modeDebutant').addEventListener('click', e=>{ advancedMode=false; toggleMode(e.target); });
@@ -144,7 +157,7 @@ function renderCompare(){
     if(analysisEl) analysisEl.innerHTML = '';
     return;
   }
-  const stocks = selected.slice(0,5).map(t=>STOCKS_DEMO.find(s=>s.ticker===t));
+  const stocks = selected.slice(0,5).map(t=>resolveFollowedStock(t));
   const criteria = advancedMode ? CRITERIA_ADV : CRITERIA_BASIC;
   let html = '<tr><th>Critère</th>' + stocks.map(s=>`<th>${s.nom}</th>`).join('') + '</tr>';
   criteria.forEach(c=>{
@@ -168,9 +181,13 @@ function renderCompare(){
       return `<td class="${i===bestIdx?'best':''}">${display}</td>`;
     }).join('') + '</tr>';
   });
-  html += '<tr><td>Éligible PEA</td>' + stocks.map(s=>`<td>${s.pea?'Oui':'Non'}</td>`).join('') + '</tr>';
-  html += '<tr><td>Secteur</td>' + stocks.map(s=>`<td>${s.secteur}</td>`).join('') + '</tr>';
-  html += '<tr><td>Pays</td>' + stocks.map(s=>`<td>${s.pays}</td>`).join('') + '</tr>';
+  // pea/secteur/pays restent des champs curatés (8 valeurs STOCKS_DEMO) :
+  // "Non déterminé" pour toute autre valeur suivie, jamais une valeur
+  // inventée ou un "Non" par défaut qui laisserait croire à une exclusion
+  // PEA confirmée alors qu'elle n'a simplement jamais été vérifiée.
+  html += '<tr><td>Éligible PEA</td>' + stocks.map(s=>`<td>${s.pea===true?'Oui':s.pea===false?'Non':'Non déterminé'}</td>`).join('') + '</tr>';
+  html += '<tr><td>Secteur</td>' + stocks.map(s=>`<td>${s.secteur || 'Non déterminé'}</td>`).join('') + '</tr>';
+  html += '<tr><td>Pays</td>' + stocks.map(s=>`<td>${s.pays || 'Non déterminé'}</td>`).join('') + '</tr>';
   table.innerHTML = html;
   renderCompareAnalysis(stocks);
 }
@@ -389,7 +406,7 @@ function renderScreenerFilters(){
   });
 }
 function screenerUniverse(){
-  return getFollowedStocks().map(entry => STOCKS_DEMO.find(s => s.ticker === entry.symbol)).filter(Boolean);
+  return getFollowedStocks().map(entry => resolveFollowedStock(entry.symbol));
 }
 function renderScreener(){
   const el = document.getElementById('screenerResults');
@@ -409,10 +426,11 @@ function renderScreener(){
       ? `<p style="color:var(--text-dim);font-size:13px;">Aucune de tes valeurs suivies ne correspond à cette combinaison de critères.</p>`
       : `<div class="card-grid">${list.map(s => `
         <a href="action.html#${encodeURIComponent(s.ticker)}" class="card play-tile">
-          <span class="smallcaps">${s.secteur} · ${s.pays}</span>
+          <span class="smallcaps">${s.secteur || 'Non déterminé'} · ${s.pays || 'Non déterminé'}</span>
           <h4 style="margin:6px 0;">${s.nom} <span class="mono" style="font-size:12px;color:var(--text-dim);">${s.ticker}</span></h4>
-          <p style="font-size:12.5px;color:var(--text-dim);">${s.prix.toFixed(1)} € <span style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span></p>
-        </a>`).join('')}</div>`}`;
+          <p style="font-size:12.5px;color:var(--text-dim);">${typeof s.prix === 'number' ? s.prix.toFixed(1) + ' €' : 'Cours indisponible'} ${typeof s.variation === 'number' ? `<span style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span>` : ''}</p>
+        </a>`).join('')}</div>`}
+    ${activeFilters.some(f => f.id === 'pea') ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:12px;">Le filtre « Éligible PEA » ne retient que les valeurs dont l'éligibilité est confirmée — une valeur suivie hors des 8 démo n'apparaît pas ici tant que cette information n'est pas vérifiée, jamais parce qu'elle est explicitement non éligible.</p>` : ''}`;
 }
 renderScreenerFilters();
 
@@ -421,7 +439,7 @@ renderScreenerFilters();
 // jamais de stock.prix / stock.per fictif — un BPA indisponible renvoie null,
 // jamais un scénario calculé sur une base inventée.
 function computeScenarios(bpaActuel, prixActuel, growth, perTarget, horizon){
-  if(typeof bpaActuel !== 'number') return null;
+  if(typeof bpaActuel !== 'number' || typeof prixActuel !== 'number' || prixActuel <= 0) return null;
   const defs = {
     defavorable: {growth: growth - 6, per: perTarget * 0.75},
     central: {growth: growth, per: perTarget},
@@ -437,8 +455,19 @@ function computeScenarios(bpaActuel, prixActuel, growth, perTarget, horizon){
   return out;
 }
 
+// Ouvert à toute valeur suivie (voir renderCompareChecks ci-dessus pour la
+// même logique) — préserve la sélection courante d'un rafraîchissement à
+// l'autre plutôt que de revenir silencieusement au premier ticker.
 const scenSelect = document.getElementById('scenStock');
-scenSelect.innerHTML = STOCKS_DEMO.map(s=>`<option value="${s.ticker}">${s.nom}</option>`).join('');
+function renderScenSelect(){
+  const previous = scenSelect.value;
+  scenSelect.innerHTML = getFollowedStocks().map(entry => {
+    const s = resolveFollowedStock(entry.symbol);
+    return `<option value="${entry.symbol}">${s.nom}</option>`;
+  }).join('');
+  if(previous && getFollowedStocks().some(e => e.symbol === previous)) scenSelect.value = previous;
+}
+renderScenSelect();
 
 // ---------- Scénarios ancrés sur de vraies cibles de cours d'analystes (contenu principal de l'onglet) ----------
 const CASE_META = {
@@ -447,8 +476,9 @@ const CASE_META = {
   bull: {label: 'Scénario haut', sub: 'cible haute des analystes'}
 };
 function renderAnalystScenarios(){
-  const stock = STOCKS_DEMO.find(s=>s.ticker===scenSelect.value) || STOCKS_DEMO[0];
-  if(!stock) return;
+  const symbol = scenSelect.value || (getFollowedStocks()[0] && getFollowedStocks()[0].symbol);
+  if(!symbol) return;
+  const stock = resolveFollowedStock(symbol);
   const investAmount = +document.getElementById('scenInvestAmount').value || 0;
   const consensusEl = document.getElementById('scenConsensus');
   const gridEl = document.getElementById('scenCasesGrid');
@@ -517,8 +547,9 @@ document.getElementById('scenInvestAmount').addEventListener('input', renderAnal
 // ---------- Explorer mes propres hypothèses (outil secondaire, replié) ----------
 const scenInputs = ['scenGrowth','scenPer','scenHorizon'].map(id=>document.getElementById(id));
 function updateScenario(){
-  const stock = STOCKS_DEMO.find(s=>s.ticker===scenSelect.value) || STOCKS_DEMO[0];
-  if(!stock) return;
+  const symbol = scenSelect.value || (getFollowedStocks()[0] && getFollowedStocks()[0].symbol);
+  if(!symbol) return;
+  const stock = resolveFollowedStock(symbol);
   const growth = +document.getElementById('scenGrowth').value;
   const perTarget = +document.getElementById('scenPer').value;
   const horizon = +document.getElementById('scenHorizon').value;
@@ -588,17 +619,28 @@ function updateDcaVsLump(){
 dcaPricesRowsEl.addEventListener('input', updateDcaVsLump);
 
 // ---------- Simulateur de dividendes ----------
+// Ouvert à toute valeur suivie (même logique que Scénarios ci-dessus).
 const divSelect = document.getElementById('divStock');
-divSelect.innerHTML = STOCKS_DEMO.map(s=>`<option value="${s.ticker}">${s.nom}</option>`).join('');
+function renderDivSelect(){
+  const previous = divSelect.value;
+  divSelect.innerHTML = getFollowedStocks().map(entry => {
+    const s = resolveFollowedStock(entry.symbol);
+    return `<option value="${entry.symbol}">${s.nom}</option>`;
+  }).join('');
+  if(previous && getFollowedStocks().some(e => e.symbol === previous)) divSelect.value = previous;
+}
+renderDivSelect();
 const divGrowthEl = document.getElementById('divGrowth'), divYearsEl = document.getElementById('divYears'), divReinvestEl = document.getElementById('divReinvest');
 function updateDividend(){
   document.getElementById('valDivGrowth').textContent = divGrowthEl.value + ' %';
   document.getElementById('valDivYears').textContent = divYearsEl.value + ' ans';
-  const stock = STOCKS_DEMO.find(s=>s.ticker===divSelect.value);
+  const symbol = divSelect.value || (getFollowedStocks()[0] && getFollowedStocks()[0].symbol);
+  if(!symbol) return;
+  const stock = resolveFollowedStock(symbol);
   const resultEl = document.getElementById('divResult');
   const ff = getFundamentalsFields(stock.ticker);
-  if(!ff || typeof ff.dividendYield !== 'number'){
-    resultEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (rendement du dividende réel indisponible pour ${stock.nom}).</p>`;
+  if(!ff || typeof ff.dividendYield !== 'number' || typeof stock.prix !== 'number'){
+    resultEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (rendement du dividende réel ou cours indisponible pour ${stock.nom}).</p>`;
     document.getElementById('divChart').innerHTML = ''; document.getElementById('divChartLabels').innerHTML = '';
     return;
   }
@@ -761,13 +803,29 @@ function applyLiveStockQuotes(quotes){
 }
 function refreshAllStockViews(){
   renderStockGrid();
+  renderCompareChecks();
   renderCompare();
+  renderScenSelect();
   renderAnalystScenarios();
   updateScenario();
+  renderDivSelect();
   updateDividend();
   renderMarketOfDay();
   renderMarketMovers();
   renderScreener();
+}
+
+// Charge les fondamentaux réels de TOUTE valeur suivie (pas seulement les 8
+// démo, coeur du chantier "supprimer la logique 8 actions premium + le reste
+// au prix seul") puis rafraîchit — jamais un repli sur un champ fictif en cas
+// d'échec (loadCompanyFundamentals laisse `null` en cache, voir data.js).
+function loadFundamentalsAndRefresh(){
+  if(location.protocol === 'file:') return Promise.resolve();
+  return loadCompanyFundamentals(getFollowedStocks().map(s => s.symbol))
+    .then(() => refreshAllStockViews())
+    .catch(err => {
+      console.info('Likanza Academy — fondamentaux réels indisponibles :', err.message);
+    });
 }
 
 // ================= Rendu initial (données de démonstration) =================
@@ -787,24 +845,26 @@ if(location.protocol !== 'file:'){
       console.info('Likanza Academy — cotations actions en direct indisponibles, valeurs de démonstration affichées :', err.message);
     });
 
-  // Fondamentaux réels (PER, marges, croissance...) : un seul fetch batch pour
-  // les 8 valeurs suivies, partagé par Fiches actions/Comparateur/Scénarios/
-  // Dividendes — jamais un repli sur un champ fictif en cas d'échec.
-  loadCompanyFundamentals(STOCKS_DEMO.map(s=>s.ticker))
-    .then(() => refreshAllStockViews())
-    .catch(err => {
-      console.info('Likanza Academy — fondamentaux réels indisponibles :', err.message);
-    });
+  loadFundamentalsAndRefresh();
 }
 
 // ---------- Cours en direct des actions ajoutées par recherche (/api/custom-quotes) ----------
+// Alimente aussi followedQuotesCache (scripts/data.js), partagé avec
+// resolveFollowedStock : Comparateur/Scénarios/Dividendes/action.js peuvent
+// ainsi lire le prix/historique de n'importe quelle valeur suivie non-démo,
+// pas seulement l'afficher une fois dans cette grille.
 function loadCustomQuotesForGrid(list){
   const liteSymbols = list.filter(e => !STOCKS_DEMO.find(s=>s.ticker===e.symbol)).map(e=>e.symbol);
   if(liteSymbols.length === 0 || location.protocol === 'file:') return;
   fetch('/api/custom-quotes?symbols=' + encodeURIComponent(liteSymbols.join(',')))
     .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(payload=>{
+      let appliedAny = false;
       (payload.quotes || []).forEach(q=>{
+        if(typeof q.price === 'number'){
+          followedQuotesCache[q.symbol] = {price: q.price, changePercent: q.changePercent, history: q.history};
+          appliedAny = true;
+        }
         const quoteEl = document.getElementById(`quote-${q.symbol}`);
         if(quoteEl && typeof q.price === 'number'){
           quoteEl.innerHTML = `<span class="mono" style="font-size:18px;color:var(--text);">${q.price.toFixed(2)} ${q.currency==='EUR'?'€':q.currency}</span><span class="mono" style="color:${q.changePercent>=0?'var(--emerald)':'var(--bordeaux)'}">${q.changePercent>=0?'+':''}${q.changePercent.toFixed(2)}%</span>`;
@@ -812,6 +872,9 @@ function loadCustomQuotesForGrid(list){
         const trendEl = document.getElementById(`trend-${q.symbol}`);
         if(trendEl) trendEl.innerHTML = renderTrendHtml(computeTrendIndicator(q.history));
       });
+      // Une fois les cotations en cache, le Comparateur/Scénarios/Dividendes
+      // peuvent afficher un vrai prix pour ces valeurs (pas seulement la grille).
+      if(appliedAny){ renderCompare(); renderAnalystScenarios(); updateScenario(); updateDividend(); renderScreener(); }
     })
     .catch(err=>{
       console.info('Likanza Academy — cours en direct indisponibles pour les actions suivies :', err.message);
@@ -849,6 +912,7 @@ if(stockSearchInput){
               stockSearchInput.value = '';
               stockSearchResults.innerHTML = '';
               refreshAllStockViews();
+              loadFundamentalsAndRefresh();
             });
           });
         })
