@@ -683,17 +683,29 @@ document.querySelectorAll('[data-mjtab]').forEach(btn=>{
 function stocksByChange(){
   return STOCKS_DEMO.slice().sort((a,b)=>b.variation-a.variation);
 }
+// La couleur du mini-graphique reflète la tendance sur TOUT l'historique
+// affiché (premier point vs dernier, voir renderSparklineHTML) — pas la
+// variation du jour affichée à droite. Un titre en hausse aujourd'hui peut
+// très bien avoir un mini-graphique rouge s'il reste net en baisse sur les
+// dernières séances (et inversement) : les deux chiffres sont réels, mais
+// mesurent deux périodes différentes. Sans le préciser, ça peut ressembler
+// à une incohérence ou à un bug — d'où la légende de période sous le graphique.
 function renderStockRow(s){
   const spark = renderSparklineHTML(s.history, {compact:true});
+  const points = Array.isArray(s.history) ? s.history.length : 0;
   return `<a class="market-row" href="bourse.html#${s.ticker}">
     <div>
       <strong>${s.nom}</strong> <span class="mono" style="font-size:11px;color:var(--text-dim);">${s.ticker}</span>
       <div style="font-size:11.5px;color:var(--text-dim);">${s.secteur}</div>
     </div>
-    <div class="market-row-spark">${spark}</div>
+    <div class="market-row-spark">
+      ${spark}
+      ${points > 1 ? `<span style="display:block;text-align:center;font-size:9px;color:var(--text-dim);margin-top:2px;">${points} séances</span>` : ''}
+    </div>
     <div class="mono market-row-value">
       <div>${s.prix.toFixed(1)} €</div>
       <div style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</div>
+      <div style="font-size:9px;color:var(--text-dim);font-weight:400;">aujourd'hui</div>
     </div>
   </a>`;
 }
@@ -701,10 +713,11 @@ const BOURSE_LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire
 function renderMarketOfDay(){
   const body = document.getElementById('marketOfDayBody');
   if(!body) return;
-  if(marketOfDayView === 'hausses'){
-    body.innerHTML = `<div class="market-row-list">${stocksByChange().slice(0,5).map(renderStockRow).join('')}</div>`;
-  } else if(marketOfDayView === 'baisses'){
-    body.innerHTML = `<div class="market-row-list">${stocksByChange().slice(-5).reverse().map(renderStockRow).join('')}</div>`;
+  if(marketOfDayView === 'hausses' || marketOfDayView === 'baisses'){
+    const list = marketOfDayView === 'hausses' ? stocksByChange().slice(0,5) : stocksByChange().slice(-5).reverse();
+    body.innerHTML = `
+      <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:10px;">Le classement et le pourcentage à droite portent sur la variation du jour ; le mini-graphique montre la tendance sur les dernières séances (voir la légende sous chaque graphique) — les deux peuvent diverger, par exemple un titre en hausse aujourd'hui après avoir baissé les jours précédents.</p>
+      <div class="market-row-list">${list.map(renderStockRow).join('')}</div>`;
   } else {
     const idx = dayOfYear() % STOCKS_DEMO.length;
     const idx2 = (idx + 4) % STOCKS_DEMO.length;
