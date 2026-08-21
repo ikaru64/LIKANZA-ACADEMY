@@ -52,6 +52,19 @@ function setDivTab(tabId){
   document.querySelectorAll('#divContent .home-tab-panel').forEach(p => p.classList.toggle('active', p.id === tabId));
 }
 
+// ---------- Bloc pédagogique réutilisable : explique la MÉTHODE de calcul
+// d'un chiffre déjà affiché juste au-dessus (jamais un nouveau chiffre en
+// soi) — même esprit et même balisage <details> que renderWhyDrawer
+// (scripts/data.js), replié par défaut pour ne jamais alourdir la lecture
+// de ceux qui n'en ont pas besoin, mais toujours accessible pour un
+// débutant qui veut comprendre le "comment", pas seulement le résultat.
+function renderCalcNote(title, bodyHtml){
+  return `<details class="why-drawer" style="margin-top:8px;">
+    <summary class="smallcaps" style="cursor:pointer;color:var(--text-dim);">🧮 ${title}</summary>
+    <div style="margin-top:8px;font-size:12px;color:var(--text-dim);line-height:1.6;">${bodyHtml}</div>
+  </details>`;
+}
+
 function populateDivTickerSelect(){
   const sel = document.getElementById('divTickerSelect');
   if(!sel) return;
@@ -174,13 +187,24 @@ function renderApercuTab(){
           <div><span class="smallcaps">Prochaine date de détachement</span><br>${formatFundamentalValue('exDividendDate', ff.exDividendDate)}</div>
           <div><span class="smallcaps">Prochaine date de paiement</span><br>${formatFundamentalValue('dividendDate', ff.dividendDate)}</div>
         </div>
-        ${latestYear ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">${renderDataBadge('calcul')} Dernière année civile complète (${latestYear.year}) : ${latestYear.total.toFixed(2)} € versés au total${typeof latestYear.growthPct === 'number' ? `, ${latestYear.growthPct >= 0 ? '+' : ''}${latestYear.growthPct.toFixed(1)}% vs l'année précédente` : ''}.</p>` : ''}
+        ${renderCalcNote("D'où viennent ces chiffres ?", `
+          <p><strong>Dividende annuel</strong> et <strong>rendement actuel</strong> viennent directement de Yahoo Finance, déjà calculés par le fournisseur de données — Likanza ne les recalcule pas, seulement le formule ici pour que tu comprennes ce qu'ils représentent :</p>
+          <p style="margin-top:6px;">Rendement (%) = Dividende annuel ÷ Cours actuel de l'action × 100.</p>
+          <p style="margin-top:6px;"><strong>Payout ratio</strong> (%) = Dividende total versé ÷ Bénéfice net de l'entreprise × 100 — indique quelle part des bénéfices part en dividendes plutôt que d'être réinvestie dans l'entreprise (voir l'onglet Soutenabilité pour ce que ce chiffre implique).</p>`)}
+        ${latestYear ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">${renderDataBadge('calcul')} Dernière année civile complète (${latestYear.year}) : ${latestYear.total.toFixed(2)} € versés au total${typeof latestYear.growthPct === 'number' ? `, ${latestYear.growthPct >= 0 ? '+' : ''}${latestYear.growthPct.toFixed(1)}% vs l'année précédente` : ''}.
+          ${renderCalcNote("Comment cette évolution est calculée", `
+            <p>Le total de chaque année = la somme de tous les versements RÉELLEMENT reçus cette année-là (jamais une estimation).</p>
+            <p style="margin-top:6px;">Évolution (%) = (Total de l'année ÷ Total de l'année précédente − 1) × 100${typeof latestYear.growthPct === 'number' && DIV.yearlyHistory ? `.<br>Ici : (${latestYear.total.toFixed(2)} € ÷ ${(latestYear.total / (1 + latestYear.growthPct / 100)).toFixed(2)} € − 1) × 100 = ${latestYear.growthPct >= 0 ? '+' : ''}${latestYear.growthPct.toFixed(1)}%.` : '.'}</p>`)}
+        </p>` : ''}
       </div>
       <div class="card">
         <h3>⚠️ Le piège du rendement élevé</h3>
-        <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Un rendement élevé n'est pas automatiquement une bonne nouvelle : il peut venir d'un dividende plus généreux, mais aussi d'un cours qui a baissé (le rendement = dividende ÷ cours augmente mécaniquement quand le cours chute).</p>
+        <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Un rendement élevé n'est pas automatiquement une bonne nouvelle : il peut venir d'un dividende plus généreux, mais aussi d'un cours qui a baissé (le rendement = dividende ÷ cours augmente mécaniquement quand le cours chute, même si l'entreprise ne verse pas un centime de plus).</p>
         ${typeof ff.fiveYearAvgDividendYield === 'number' ? `<p style="font-size:12.5px;margin-top:10px;">${renderDataBadge('fait')} Rendement actuel ${formatFundamentalValue('dividendYield', ff.dividendYield)} vs moyenne 5 ans ${formatFundamentalValue('fiveYearAvgDividendYield', ff.fiveYearAvgDividendYield)}.</p>` : `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (moyenne 5 ans).</p>`}
         ${trap ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">${renderDataBadge('analyse')} ${trap.explanation}</p>` : `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;font-style:italic;">Pas d'écart notable entre le rendement actuel et sa moyenne 5 ans pour cette valeur.</p>`}
+        ${renderCalcNote('Comment ce constat est établi', `
+          <p>Likanza compare deux faits réels, jamais une supposition : le rendement actuel (Yahoo) et sa moyenne sur 5 ans (Yahoo). Un écart n'est signalé que s'il dépasse 20% de la moyenne — pour éviter une fausse alerte sur une variation normale.</p>
+          <p style="margin-top:6px;">Pour expliquer d'où vient l'écart (dividende en hausse ou cours en baisse), Likanza regarde deux données réelles supplémentaires : l'évolution du dividende par action sur la dernière année complète (onglet Historique), et l'évolution du cours de l'action sur les 12 derniers mois. Ce n'est jamais une supposition inventée — seulement ce que ces deux chiffres réels indiquent ensemble.</p>`)}
         <p style="margin-top:12px;"><a href="bibliotheque.html#Rendement-du-dividende" style="color:var(--gold-bright);font-size:12px;">Voir la définition dans la Bibliothèque →</a></p>
       </div>
     </div>`;
@@ -215,6 +239,11 @@ function renderHistoriqueTab(){
       <p style="font-size:12px;color:var(--text-dim);margin:8px 0 12px;">Total réellement versé par année civile — jamais une baisse ou un gel masqué, y compris quand le résultat est négatif.</p>
       <div style="overflow-x:auto;"><table class="compare-table"><tr><th>Année</th><th>Dividende versé</th><th>Évolution</th><th>Tendance</th></tr>${rows}</table></div>
       <p style="font-size:12.5px;color:var(--text-dim);margin-top:14px;">${renderDataBadge('calcul')} Sur les années complètes : ${h.increases} hausse(s), ${h.freezes} gel(s), ${h.decreases} baisse(s).${typeof h.cagr5y === 'number' ? ` Croissance annuelle moyenne sur 5 ans : ${h.cagr5y >= 0 ? '+' : ''}${h.cagr5y.toFixed(1)}%.` : ''}${typeof h.cagr10y === 'number' ? ` Sur 10 ans : ${h.cagr10y >= 0 ? '+' : ''}${h.cagr10y.toFixed(1)}%.` : ''}</p>
+      ${renderCalcNote('Comment ce tableau est construit', `
+        <p><strong>Dividende versé</strong> = la somme de tous les versements réellement effectués cette année civile-là (jamais une moyenne ou une estimation). L'année en cours est marquée « (en cours) » et n'est jamais comparée à une année complète, pour ne pas afficher une fausse baisse juste parce qu'elle n'est pas encore terminée.</p>
+        <p style="margin-top:6px;"><strong>Évolution</strong> (%) = (Dividende versé cette année ÷ Dividende versé l'année précédente − 1) × 100.</p>
+        <p style="margin-top:6px;"><strong>Tendance</strong> : 🟢 Hausse si l'évolution dépasse +0,5% · 🟡 Gel si elle reste entre −0,5% et +0,5% · 🔴 Baisse si elle descend sous −0,5%. Ces seuils évitent de qualifier d'arrondi de calcul (quelques centimes) une vraie hausse ou une vraie baisse.</p>
+        <p style="margin-top:6px;"><strong>Croissance annuelle moyenne (CAGR)</strong> sur N ans = (Dividende de la dernière année complète ÷ Dividende d'il y a N années)^(1 ÷ N) − 1. C'est le taux de croissance constant qui, répété chaque année, aurait produit exactement la même évolution totale sur la période — utile pour comparer des entreprises sur des durées différentes.</p>`)}
     </div>`;
 }
 
@@ -227,6 +256,16 @@ function renderSoutenabiliteTab(){
     el.innerHTML = `<div class="card"><h3>Soutenabilité</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p></div>`;
     return;
   }
+  // Grilles de lecture exposées ici pour être pédagogiques — mêmes seuils
+  // EXACTS que ceux utilisés par computeDividendSafetyScore (scripts/data.js),
+  // jamais une reformulation approximative : si les seuils changent d'un
+  // côté, ils doivent changer de l'autre.
+  const CALC_EXPLAIN_BY_LABEL = {
+    'Couverture par les bénéfices (payout ratio)': `<p>Payout ratio = part du bénéfice net reversée en dividendes.</p><p style="margin-top:4px;">≤ 60% → 85/100 (large marge) · 60-80% → 55/100 (correct) · 80-100% → 25/100 (tendu) · > 100% → 5/100 (l'entreprise verse plus qu'elle ne gagne).</p>`,
+    'Couverture par le free cash-flow': `<p>Part du free cash-flow (trésorerie réellement dégagée après investissements) absorbée par le dividende = (Dividende annuel × Nombre d'actions) ÷ Free cash-flow.</p><p style="margin-top:4px;">≤ 60% → 85/100 · 60-80% → 55/100 · 80-100% → 25/100 · > 100% → 5/100 (l'entreprise puise dans sa trésorerie ou s'endette pour payer).</p>`,
+    'Endettement net': `<p>Endettement net = Dette totale − Trésorerie.</p><p style="margin-top:4px;">Trésorerie nette positive (plus de cash que de dette) → 90/100 · Endettement net ≤ 3× la trésorerie → 55/100 · Au-delà → 20/100.</p>`,
+    'Stabilité historique du dividende': `<p>Calculé sur les années civiles complètes de l'onglet Historique (jamais l'année en cours, encore incomplète).</p><p style="margin-top:4px;">Aucune baisse → 90/100 · Au moins 70% des années en hausse ou stables → 60/100 · Sinon → 25/100.</p>`
+  };
   el.innerHTML = `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;"><h3>Score de soutenabilité</h3><span class="mono" style="font-size:20px;color:var(--gold-bright);">${score.overall}/100</span></div>
@@ -235,7 +274,12 @@ function renderSoutenabiliteTab(){
         <div style="margin-bottom:12px;">
           <div style="display:flex;justify-content:space-between;font-size:13px;"><span>${c.label}</span><span class="mono">${c.points}/100</span></div>
           <p style="font-size:11.5px;color:var(--text-dim);margin-top:2px;">${c.formatted}</p>
+          ${CALC_EXPLAIN_BY_LABEL[c.label] ? renderCalcNote('Comment ces points sont attribués', CALC_EXPLAIN_BY_LABEL[c.label]) : ''}
         </div>`).join('')}
+      ${renderCalcNote('Comment le score global est obtenu', `
+        <p>Le score global = la moyenne (arrondie) des points de tous les composants qui ont pu être calculés ci-dessus.</p>
+        <p style="margin-top:6px;">Un composant sans donnée disponible (par exemple le free cash-flow, pas toujours communiqué) est simplement exclu du calcul — jamais compté comme 0/100, ce qui pénaliserait injustement une valeur juste parce qu'une donnée manque.</p>
+        <p style="margin-top:6px;">Ici : ${score.components.map(c => `${c.label.split(' ')[0]}…=${c.points}`).join(', ')} → moyenne = ${score.overall}/100.</p>`)}
       <p class="disclaimer-box">Ce score résume des données réelles disponibles aujourd'hui. Il ne garantit ni le maintien, ni la hausse, ni l'absence de baisse future du dividende — la situation d'une entreprise peut changer.</p>
     </div>`;
 }
@@ -265,7 +309,11 @@ function renderPrevisionsTab(){
     return `
       <p style="font-size:13px;">${renderDataBadge('scenario')} 🧮 Scénario Likanza — ${horizon} an(s)</p>
       <p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Hypothèse : la croissance annuelle moyenne réelle observée (${cagr >= 0 ? '+' : ''}${cagr.toFixed(1)}%/an) se maintient à l'identique. Ce n'est pas une garantie — une simple projection mathématique.</p>
-      <p style="font-size:15px;margin-top:8px;">Dividende annuel projeté : <strong>${projected.toFixed(2)} €</strong></p>`;
+      <p style="font-size:15px;margin-top:8px;">Dividende annuel projeté : <strong>${projected.toFixed(2)} €</strong></p>
+      ${renderCalcNote('Comment ce chiffre est obtenu', `
+        <p>Formule : Dividende actuel × (1 + Croissance annuelle moyenne réelle)<sup>Nombre d'années</sup>.</p>
+        <p style="margin-top:6px;">Avec les vraies données de cette valeur : ${base.toFixed(2)} € × (1 + ${(cagr / 100).toFixed(4).replace('.', ',')})<sup>${horizon}</sup> = <strong>${projected.toFixed(2)} €</strong>.</p>
+        <p style="margin-top:6px;">La croissance annuelle moyenne (CAGR) vient de l'onglet Historique — calculée sur les vrais versements des 5 (ou 10) dernières années, pas une hypothèse choisie librement. Elle suppose que le futur ressemblera au passé, ce qui n'est jamais garanti : plus l'horizon est long, plus l'incertitude grandit.</p>`)}`;
   }
 
   el.innerHTML = `
@@ -288,6 +336,9 @@ function renderPrevisionsTab(){
           const flag = c.points >= 70 ? '🟢' : c.points >= 40 ? '🟡' : '🔴';
           return `<p style="font-size:12.5px;margin-bottom:8px;">${flag} ${c.label} : ${c.formatted}</p>`;
         }).join('') : `<p style="font-size:12.5px;color:var(--text-dim);">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`}
+        ${DIV.safetyScore ? renderCalcNote('Comment ces couleurs sont attribuées', `
+          <p>Reprend directement les points déjà calculés dans l'onglet Soutenabilité (voir son détail pour chaque formule) : 🟢 favorable si ≥ 70/100 · 🟡 à surveiller si entre 40 et 69/100 · 🔴 signal de risque si < 40/100.</p>
+          <p style="margin-top:6px;">Jamais un pourcentage de risque de baisse inventé : personne ne peut honnêtement calculer une vraie probabilité à partir de données publiques — seulement des signaux qualitatifs, réels et vérifiables.</p>`) : ''}
       </div>
     </div>`;
 
@@ -358,8 +409,17 @@ function runDivSimulation(){
       <p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Effet du seul cours de l'action : ${sim.priceOnlyValue.toFixed(0)} € (${sim.cagrPriceOnly >= 0 ? '+' : ''}${sim.cagrPriceOnly.toFixed(1)}%/an)</p>
       <p style="font-size:12.5px;color:var(--text-dim);">Effet des dividendes (${sim.paymentsUsed} versement${sim.paymentsUsed > 1 ? 's' : ''} réel${sim.paymentsUsed > 1 ? 's' : ''}) : ${sim.dividendEffect >= 0 ? '+' : ''}${sim.dividendEffect.toFixed(0)} €</p>
       <p style="font-size:12.5px;color:var(--text-dim);">Dividendes reçus au total : ${sim.cashDividendsReceived.toFixed(0)} €${sim.reinvest ? ` (dont ${sim.dividendsReinvestedValue.toFixed(0)} € réinvestis)` : ' (non réinvestis)'}</p>
+      ${renderCalcNote('Comment cette décomposition est calculée', `
+        <p><strong>Effet du seul cours</strong> = ce qu'aurait donné le même investissement initial (${sim.initial.toFixed(0)} €) SI l'entreprise n'avait versé aucun dividende — juste en suivant l'évolution réelle du cours de l'action sur la période.</p>
+        <p style="margin-top:6px;"><strong>Effet des dividendes</strong> = Valeur totale réelle obtenue (${sim.finalValue.toFixed(0)} €) − Effet du seul cours (${sim.priceOnlyValue.toFixed(0)} €) = ${sim.dividendEffect >= 0 ? '+' : ''}${sim.dividendEffect.toFixed(0)} € — la part de la performance qui vient uniquement des dividendes reçus (et, si réinvestis, des actions supplémentaires qu'ils ont permis d'acheter).</p>
+        ${sim.reinvest ? `<p style="margin-top:6px;"><strong>Réinvestissement</strong> : à chaque versement réel, le montant reçu (unités déjà détenues × dividende par action) est utilisé pour acheter des unités supplémentaires au premier cours de clôture mensuel disponible à la date du versement ou après — jamais un cours intra-mensuel supposé connu à l'avance.</p>` : ''}`)}
     </div>
-    ${typeof yieldOnCost === 'number' ? `<p style="font-size:12.5px;margin-top:12px;">${renderDataBadge('calcul')} Yield on Cost : <strong>${yieldOnCost.toFixed(2).replace('.', ',')} %</strong> — le dividende annuel actuel rapporté au prix d'achat du début de période, pas au cours actuel.</p>` : ''}
+    ${typeof yieldOnCost === 'number' ? `<p style="font-size:12.5px;margin-top:12px;">${renderDataBadge('calcul')} Yield on Cost : <strong>${yieldOnCost.toFixed(2).replace('.', ',')} %</strong> — le dividende annuel actuel rapporté au prix d'achat du début de période, pas au cours actuel.
+      ${renderCalcNote('Comment ce chiffre est calculé', `
+        <p>Formule : Yield on Cost (%) = Dividende annuel actuel ÷ Prix d'achat historique × 100.</p>
+        <p style="margin-top:6px;">Ici : ${DIV.fields && typeof DIV.fields.dividendRate === 'number' ? DIV.fields.dividendRate.toFixed(2) : '?'} € ÷ ${points[0].close.toFixed(2)} € (cours du début de la période choisie) × 100 = ${yieldOnCost.toFixed(2).replace('.', ',')} %.</p>
+        <p style="margin-top:6px;">Ce chiffre n'a de sens que pour évaluer une position déjà détenue depuis cette date — il ne représente jamais le rendement qu'obtiendrait quelqu'un achetant l'action aujourd'hui (voir le "Rendement actuel" de l'onglet Aperçu pour ça).</p>`)}
+    </p>` : ''}
     <p class="disclaimer-box">Simulation basée sur les cours et dividendes réellement observés sur cette période — elle ne prédit pas la performance future et ne prend pas en compte la fiscalité ni les frais de courtage.</p>`;
 }
 
@@ -443,6 +503,9 @@ async function runDivComparison(){
     <p style="font-size:12px;color:var(--text-dim);margin:6px 0 12px;">${renderDataBadge('fait')} Données réelles, mêmes conditions pour toutes les valeurs — jamais un vainqueur global désigné.</p>
     <div style="overflow-x:auto;">${table}</div>
     ${narration.length ? `<div style="margin-top:14px;">${narration.map(n => `<p style="font-size:12.5px;color:var(--text-dim);margin-bottom:8px;">${renderDataBadge('analyse')} ${n}</p>`).join('')}</div>` : ''}
+    ${renderCalcNote('Comment ces critères sont calculés', `
+      <p>Chaque critère est calculé exactement de la même façon que sur la fiche individuelle de chaque valeur : rendement et payout ratio dans l'onglet Aperçu, croissance moyenne réelle dans l'onglet Historique, score de soutenabilité dans l'onglet Soutenabilité (formules détaillées là-bas, pour ne pas les répéter ici).</p>
+      <p style="margin-top:6px;">Aucun critère n'est pondéré ni combiné en une seule note globale ici — Likanza ne désigne jamais un "gagnant" entre plusieurs entreprises réelles, car le meilleur choix dépend de ton propre objectif (revenu régulier, croissance, sécurité...).</p>`)}
     <p class="disclaimer-box">Cette comparaison décrit ce qui différencie ces valeurs sur des critères réels liés au dividende — elle ne constitue jamais un classement global ni une recommandation d'achat.</p>`;
 }
 
