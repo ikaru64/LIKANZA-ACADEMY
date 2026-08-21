@@ -3073,6 +3073,31 @@ function renderBusinessToolsProgress(elId){
     <div style="margin-top:10px;">${rows.map(r => `<a href="${r.href}" class="panel-row" style="text-decoration:none;color:inherit;"><span>${r.label}</span><span class="val mono">${r.value}</span></a>`).join('')}</div>`}`;
 }
 
+// ---------- Ta progression Bourse V2 : mêmes principes que
+// renderBusinessToolsProgress — uniquement des comptes réels tirés de
+// fzr-xp-repeat-counts et fzr-investor-profile, jamais un pourcentage
+// inventé. ----------
+function renderBourseToolsProgress(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const claimedIds = Object.keys(getXPRepeatCounts());
+  const scenariosViewed = claimedIds.some(id => id.startsWith('allocation-scenarios-'));
+  const portfolioSimulated = claimedIds.some(id => id.startsWith('portfolio-simulator-'));
+  const profile = safeGetJSON('fzr-investor-profile', null);
+
+  const rows = [
+    {label: 'Profil investisseur rempli', value: profile ? 'Oui' : 'Pas encore', href: 'bourse-allocation.html'},
+    {label: "Scénarios d'allocation consultés", value: scenariosViewed ? 'Oui' : 'Pas encore', href: 'bourse-allocation.html'},
+    {label: 'Portefeuille simulé', value: portfolioSimulated ? 'Oui' : 'Pas encore', href: 'bourse-allocation.html'}
+  ];
+  const allZero = !profile && !scenariosViewed && !portfolioSimulated;
+
+  el.innerHTML = `
+    <span class="smallcaps">Ta progression Bourse</span>
+    ${allZero ? `<p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Tu n'as pas encore commencé — <a href="bourse-allocation.html" style="color:var(--gold-bright);">définis ton profil investisseur</a> pour démarrer.</p>` : `
+    <div style="margin-top:10px;">${rows.map(r => `<a href="${r.href}" class="panel-row" style="text-decoration:none;color:inherit;"><span>${r.label}</span><span class="val mono">${r.value}</span></a>`).join('')}</div>`}`;
+}
+
 // ---------- Cas recommandé pour toi (Business) : même logique que
 // renderRecommandePourToi (Défis), restreinte au périmètre déjà utilisé par
 // "Ton niveau" (BUSINESS_SKILL_CATEGORIES) — pas une nouvelle taxonomie,
@@ -3476,6 +3501,40 @@ function computePrepayVsInvestComparison(amount, creditRate, investRate, years){
 // ne fabriquent jamais une valeur manquante.
 // ============================================================
 
+// ---------- Historique mensuel réel, partagé entre pages (Bourse V2) ----------
+// Même logique que fetchLabMonthlyHistory (scripts/pages/laboratoire.js), mais
+// centralisée dans data.js pour être réutilisable sur les pages Bourse
+// (allocation par risque, portefeuille) sans dupliquer la conversion EUR/USD.
+// Conserve la version spécifique du Laboratoire intacte (zéro risque de
+// régression sur une page déjà testée) — celle-ci sert les nouvelles pages.
+let sharedFxCache = null;
+async function fetchEurUsdRate(){
+  if(sharedFxCache) return sharedFxCache;
+  const resp = await fetch('/api/custom-quotes?symbols=' + encodeURIComponent('EURUSD=X') + '&range=10y&interval=1mo');
+  if(!resp.ok) throw new Error('HTTP ' + resp.status);
+  const payload = await resp.json();
+  const q = (payload.quotes || [])[0];
+  if(!q || !Array.isArray(q.history) || q.history.length < 2) throw new Error('Taux de change EUR/USD indisponible');
+  const map = {};
+  q.history.forEach(h => { map[h.date.slice(0, 7)] = h.close; });
+  sharedFxCache = map;
+  return map;
+}
+async function fetchSymbolMonthlyHistory(symbol, range){
+  const resp = await fetch('/api/custom-quotes?symbols=' + encodeURIComponent(symbol) + '&range=' + (range || '5y') + '&interval=1mo');
+  if(!resp.ok) throw new Error('HTTP ' + resp.status);
+  const payload = await resp.json();
+  const q = (payload.quotes || [])[0];
+  if(!q || !Array.isArray(q.history) || q.history.length < 2) throw new Error('Historique indisponible');
+  let points = q.history.map(h => ({period: h.date.slice(0, 7), close: h.close}));
+  if(q.currency === 'USD'){
+    const fx = await fetchEurUsdRate();
+    points = points.filter(p => typeof fx[p.period] === 'number').map(p => ({period: p.period, close: p.close / fx[p.period]}));
+    if(points.length < 2) throw new Error('Conversion EUR/USD insuffisante sur cette période');
+  }
+  return points;
+}
+
 // ---------- Investissement historique réel (P0-1 "Et si j'avais investi ?" / P0-2 DCA historique) ----------
 // monthlyPoints : [{period:'2016-09', close:72.66}, ...] triés chronologiquement,
 // une vraie série mensuelle (Yahoo Finance via /api/custom-quotes?interval=1mo).
@@ -3551,6 +3610,208 @@ function computeHistoricalInvestment(monthlyPoints, initial, monthlyContribution
     bestYear, worstYear, negativeYears, yearlyReturns,
     maxDrawdownPct: maxDD * 100,
     recoveryMonths
+  };
+}
+
+// Volatilité réelle : écart-type des variations mensuelles en %, calculée sur
+// de vrais cours (même format que computeHistoricalInvestment — {period, close}).
+// Seule brique de calcul manquante pour évaluer un risque relatif entre
+// plusieurs valeurs suivies ; jamais une estimation qualitative inventée.
+function computeMonthlyReturnVolatility(monthlyPoints){
+  if(!Array.isArray(monthlyPoints) || monthlyPoints.length < 3) return null;
+  const returns = [];
+  for(let i = 1; i < monthlyPoints.length; i++){
+    const prev = monthlyPoints[i - 1].close, curr = monthlyPoints[i].close;
+    if(typeof prev === 'number' && typeof curr === 'number' && prev > 0) returns.push((curr / prev - 1) * 100);
+  }
+  if(returns.length < 2) return null;
+  const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+  const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (returns.length - 1);
+  return {monthlyStdevPct: Math.sqrt(variance), monthsUsed: returns.length};
+}
+
+// Bandes de volatilité réelles, jamais "sans risque" — toujours relatif aux
+// autres valeurs analysées (consigne explicite reçue).
+function bucketVolatility(monthlyStdevPct){
+  if(typeof monthlyStdevPct !== 'number') return null;
+  if(monthlyStdevPct < 4) return {level: 'faible', label: 'volatilité mensuelle plus faible que la moyenne des valeurs analysées'};
+  if(monthlyStdevPct < 7) return {level: 'moderee', label: 'volatilité mensuelle modérée'};
+  return {level: 'elevee', label: 'volatilité mensuelle plus élevée que la moyenne des valeurs analysées'};
+}
+
+// ---------- Profil investisseur : score de tolérance au risque ----------
+// Somme des poids réellement choisis par l'utilisateur (INVESTOR_RISK_QUESTIONS,
+// investor-profile-data.js), jamais un diagnostic psychologique — un "profil
+// de risque ESTIMÉ", explicitement qualifié comme tel dans le rendu.
+function computeInvestorRiskProfile(answers){
+  if(typeof INVESTOR_RISK_QUESTIONS === 'undefined') return null;
+  let score = 0, maxScore = 0, answered = 0;
+  INVESTOR_RISK_QUESTIONS.forEach(q => {
+    const maxWeight = Math.max(...q.options.map(o => o.weight));
+    maxScore += maxWeight;
+    const chosen = q.options.find(o => o.value === answers[q.id]);
+    if(chosen){ score += chosen.weight; answered++; }
+  });
+  if(answered < INVESTOR_RISK_QUESTIONS.length) return {score, maxScore, answered, total: INVESTOR_RISK_QUESTIONS.length, profile: null};
+  const ratio = maxScore > 0 ? score / maxScore : 0;
+  const profile = ratio < 0.35 ? 'prudent' : ratio < 0.7 ? 'equilibre' : 'dynamique';
+  return {score, maxScore, answered, total: INVESTOR_RISK_QUESTIONS.length, ratio, profile};
+}
+
+// ---------- Classement d'une valeur suivie en tier de risque relatif ----------
+// Combine la volatilité réelle (bucketVolatility) et l'endettement net
+// (bucketLeverage, déjà utilisé par le Comparateur) — jamais "sans risque",
+// toujours relatif aux autres valeurs analysées. `volatility` peut être null
+// (historique indisponible) : dans ce cas le classement se rabat sur le seul
+// endettement, jamais un tier inventé faute de donnée.
+function computeRiskTier(fundamentalFields, monthlyStdevPct){
+  const vol = bucketVolatility(monthlyStdevPct);
+  const lev = bucketLeverage(fundamentalFields ? fundamentalFields.totalDebt : null, fundamentalFields ? fundamentalFields.totalCash : null);
+  if(!vol && !lev) return null;
+  if(vol){
+    if(vol.level === 'faible' && (!lev || lev.level !== 'eleve')) return 'prudent';
+    if(vol.level === 'elevee' || (lev && lev.level === 'eleve')) return 'dynamique';
+    return 'equilibre';
+  }
+  // Pas de volatilité disponible : classement plus prudent, basé uniquement sur l'endettement.
+  return lev.level === 'eleve' ? 'dynamique' : lev.level === 'modere' ? 'equilibre' : 'prudent';
+}
+
+// ---------- Score transparent (Qualité / Valorisation / Risque) ----------
+// Chaque sous-score s'appuie sur les mêmes bandes réelles que le reste du
+// site (bucketGrowth/bucketMargin/bucketLeverage/bucketVolatility) — jamais
+// un chiffre global opaque : chaque composant est retourné avec sa vraie
+// valeur ET le nombre de points qu'elle rapporte, pour un affichage
+// entièrement décomposable. Un composant sans donnée est explicitement
+// `null` et exclu de la moyenne, jamais remplacé par une valeur inventée.
+function computeStockScore(fields, monthlyStdevPct, maxDrawdownPct){
+  fields = fields || {};
+
+  function sub(label, value, formatted, points){
+    return {label, value, formatted, points};
+  }
+
+  // Qualité : croissance + marge + endettement, mêmes bandes que le Comparateur.
+  const qualityComponents = [];
+  const growth = bucketGrowth(fields.revenueGrowth);
+  if(growth) qualityComponents.push(sub('Croissance du chiffre d\'affaires', fields.revenueGrowth, formatFundamentalValue('revenueGrowth', fields.revenueGrowth),
+    growth.level === 'forte' ? 90 : growth.level === 'moderee' ? 65 : growth.level === 'stable' ? 40 : 15));
+  const margin = bucketMargin(fields.profitMargins);
+  if(margin) qualityComponents.push(sub('Marge nette', fields.profitMargins, formatFundamentalValue('profitMargins', fields.profitMargins),
+    margin.level === 'elevee' ? 90 : margin.level === 'moderee' ? 60 : 25));
+  const leverage = bucketLeverage(fields.totalDebt, fields.totalCash);
+  if(leverage) qualityComponents.push(sub('Endettement net', null, leverage.label,
+    leverage.level === 'faible' ? 90 : leverage.level === 'modere' ? 55 : 20));
+
+  // Valorisation : PER par rapport à des repères généraux — pas un comparable
+  // sectoriel précis (donnée non disponible), explicitement qualifié comme tel.
+  const valuationComponents = [];
+  if(typeof fields.trailingPE === 'number' && fields.trailingPE > 0){
+    const per = fields.trailingPE;
+    const perPoints = per < 15 ? 80 : per < 25 ? 55 : per < 40 ? 30 : 10;
+    valuationComponents.push(sub('PER (par rapport à des repères généraux)', per, formatFundamentalValue('trailingPE', per), perPoints));
+  }
+
+  // Risque : volatilité + drawdown réels — score orienté "moins de risque",
+  // jamais "sans risque".
+  const riskComponents = [];
+  const vol = bucketVolatility(monthlyStdevPct);
+  if(vol) riskComponents.push(sub('Volatilité mensuelle (5 ans)', monthlyStdevPct, `${monthlyStdevPct.toFixed(1)}%/mois`,
+    vol.level === 'faible' ? 85 : vol.level === 'moderee' ? 55 : 25));
+  if(typeof maxDrawdownPct === 'number'){
+    const ddPoints = maxDrawdownPct < 20 ? 85 : maxDrawdownPct < 40 ? 55 : 20;
+    riskComponents.push(sub('Pire baisse historique observée', maxDrawdownPct, `-${maxDrawdownPct.toFixed(1)}%`, ddPoints));
+  }
+
+  function avg(components){
+    if(!components.length) return null;
+    return Math.round(components.reduce((s, c) => s + c.points, 0) / components.length);
+  }
+
+  const quality = {score: avg(qualityComponents), components: qualityComponents};
+  const valuation = {score: avg(valuationComponents), components: valuationComponents};
+  const risk = {score: avg(riskComponents), components: riskComponents};
+  const available = [quality.score, valuation.score, risk.score].filter(s => typeof s === 'number');
+  const overall = available.length ? Math.round(available.reduce((a, b) => a + b, 0) / available.length) : null;
+
+  return {quality, valuation, risk, overall};
+}
+
+// Verdict à 3 états dérivé du score — jamais un simple BUY/SELL. Toujours
+// accompagné de facteurs réels qui pourraient faire évoluer l'analyse,
+// dérivés des mêmes bandes déjà calculées (même esprit que
+// buildAnalystScenarioFactors, sans dépendre de cibles d'analystes qui ne
+// couvrent pas tous les titres).
+function computeStockVerdict(score, riskTier, investorProfile){
+  if(typeof score.overall !== 'number') return {level: 'indetermine', label: 'Données insuffisantes', reason: "Pas assez de données réelles disponibles pour former une analyse."};
+
+  let mismatch = false;
+  if(investorProfile && investorProfile.riskProfile && riskTier){
+    const order = {prudent: 0, equilibre: 1, dynamique: 2};
+    if(order[riskTier] > order[investorProfile.riskProfile]) mismatch = true;
+  }
+
+  if(mismatch){
+    return {level: 'risque', label: 'Risqué ou inadapté au profil', reason: `Cette valeur est classée "${riskTier}" alors que ton profil de risque estimé est "${investorProfile.riskProfile}" — elle pourrait ne pas correspondre à ta tolérance au risque actuelle, indépendamment de son score.`};
+  }
+  if(score.overall >= 65) return {level: 'etudier', label: 'À étudier selon ton profil', reason: `Score global de ${score.overall}/100 sur les critères disponibles (qualité, valorisation, risque) — cela ne garantit aucune performance future.`};
+  if(score.overall >= 40) return {level: 'surveiller', label: 'À surveiller', reason: `Score global de ${score.overall}/100 : certains critères sont favorables, d'autres moins — la situation mérite d'être suivie avant toute décision.`};
+  return {level: 'risque', label: 'Risqué ou inadapté au profil', reason: `Score global de ${score.overall}/100 sur les critères disponibles — plusieurs indicateurs sont défavorables relativement aux autres valeurs analysées.`};
+}
+
+// "Ce qui pourrait changer cette analyse" — dérivé des composants du score
+// eux-mêmes, jamais une prédiction de ce qui va se passer.
+function buildScoreChangeFactors(score){
+  const factors = [];
+  score.quality.components.forEach(c => { if(c.points < 60) factors.push(`Une amélioration de "${c.label.toLowerCase()}" renforcerait le score de qualité.`); });
+  score.valuation.components.forEach(c => { if(c.points < 60) factors.push(`Une baisse de la valorisation (${c.label.toLowerCase()}) rendrait le prix d'entrée plus favorable.`); });
+  score.risk.components.forEach(c => { if(c.points < 60) factors.push(`Une baisse de "${c.label.toLowerCase()}" réduirait le risque relatif de cette valeur.`); });
+  if(!factors.length) factors.push("Les critères disponibles sont déjà globalement favorables — une dégradation de l'un d'eux (croissance, marge, endettement, valorisation, volatilité) referait évoluer cette analyse.");
+  return factors;
+}
+
+// ---------- Simulateur de portefeuille : agrégation pondérée réelle ----------
+// entries: [{symbol, weight, monthlyPoints:[{period,close}]}]. N'agrège que
+// sur les périodes communes à TOUTES les valeurs (jamais une extrapolation
+// pour combler l'historique manquant d'une valeur plus récente) — si moins
+// de 12 mois communs, le renvoie explicitement plutôt que de forcer un calcul
+// peu fiable. L'indice repart à 1 (comme une part de portefeuille), permet de
+// réutiliser computeHistoricalInvestment pour CAGR/drawdown sur ce même indice.
+function computePortfolioSeries(entries){
+  const totalWeight = entries.reduce((s, e) => s + (e.weight || 0), 0);
+  if(totalWeight <= 0 || entries.length === 0) return null;
+  const norm = entries.map(e => ({...e, weight: e.weight / totalWeight}));
+
+  const periodSets = norm.map(e => new Set(e.monthlyPoints.map(p => p.period)));
+  const commonPeriods = norm[0].monthlyPoints.map(p => p.period).filter(p => periodSets.every(s => s.has(p))).sort();
+  if(commonPeriods.length < 12) return {insufficientHistory: true, commonMonths: commonPeriods.length};
+
+  const closeMaps = norm.map(e => { const m = {}; e.monthlyPoints.forEach(p => { m[p.period] = p.close; }); return m; });
+  const portfolioIndex = [{period: commonPeriods[0], close: 1}];
+  for(let i = 1; i < commonPeriods.length; i++){
+    const prevP = commonPeriods[i - 1], curP = commonPeriods[i];
+    let weightedReturn = 0;
+    norm.forEach((e, idx) => {
+      const prevClose = closeMaps[idx][prevP], curClose = closeMaps[idx][curP];
+      weightedReturn += e.weight * (curClose / prevClose - 1);
+    });
+    portfolioIndex.push({period: curP, close: portfolioIndex[i - 1].close * (1 + weightedReturn)});
+  }
+  return {insufficientHistory: false, commonMonths: commonPeriods.length, portfolioIndex, weights: norm.map(e => ({symbol: e.symbol, weight: e.weight}))};
+}
+
+// 2 fenêtres réelles prédéfinies, jamais un pourcentage de krach inventé —
+// le vrai recalcul se fait toujours sur les données déjà fetchées.
+const PORTFOLIO_STRESS_WINDOWS = [
+  {id: 'covid2020', label: 'Krach Covid (février à avril 2020)', start: '2020-02', end: '2020-04'},
+  {id: 'baisse2022', label: 'Baisse des marchés 2022 (janvier à octobre 2022)', start: '2022-01', end: '2022-10'}
+];
+function computeStressWindowReturn(portfolioIndex, start, end){
+  const slice = portfolioIndex.filter(p => p.period >= start && p.period <= end);
+  if(slice.length < 2) return null;
+  return {
+    startPeriod: slice[0].period, endPeriod: slice[slice.length - 1].period, months: slice.length,
+    changePct: (slice[slice.length - 1].close / slice[0].close - 1) * 100
   };
 }
 

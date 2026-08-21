@@ -29,6 +29,7 @@ function setBourseTab(tabId){
 }
 renderBourseTabs();
 setBourseTab(bourseActiveTab);
+renderBourseToolsProgress('bourseToolsProgress');
 window.addEventListener('hashchange', ()=>{
   const tab = location.hash.slice(1);
   const target = document.getElementById(tab);

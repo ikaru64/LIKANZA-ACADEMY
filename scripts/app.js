@@ -1166,6 +1166,58 @@ const LIBRARY = [
     erreurs:["Confondre volatilité et risque de perte définitive"]
   },
   {
+    terme:"Drawdown",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le drawdown est la baisse subie entre le plus haut niveau atteint par un investissement et le point le plus bas qui a suivi, avant une éventuelle remontée.",
+    detail:"Le drawdown maximal (souvent noté \"max drawdown\") est la plus forte de ces baisses observée sur toute la période étudiée — il donne une idée concrète de la pire chute qu'un investisseur aurait réellement vécue en détenant cet actif, contrairement à une simple moyenne de rendement qui lisse les à-coups.",
+    avance:"Deux placements peuvent avoir le même rendement moyen sur 10 ans avec des drawdowns très différents — celui au drawdown le plus faible aura généralement été plus facile à conserver psychologiquement pendant la traversée d'une baisse.",
+    exemple:"Un investissement qui passe de 100 à 60 avant de remonter à 120 a connu un drawdown de 40%, même si sa valeur finale est supérieure à son point de départ.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Ne regarder que le rendement final d'un placement sans jamais vérifier l'ampleur de ses baisses intermédiaires"]
+  },
+  {
+    terme:"Horizon de placement",
+    categorie:"Gestion du risque",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"L'horizon de placement est la durée pendant laquelle une personne prévoit de laisser son argent investi avant d'en avoir besoin.",
+    detail:"Un horizon court (moins de 2 ans) laisse peu de temps pour se remettre d'une baisse de marché ; un horizon long (plus de 5 ans) permet historiquement d'absorber davantage de fluctuations. L'horizon de placement influence directement le niveau de risque qu'il est raisonnable d'accepter.",
+    avance:"L'horizon réel n'est pas toujours celui qu'on croit : un besoin imprévu (perte d'emploi, urgence) peut raccourcir brutalement un horizon initialement prévu comme long.",
+    exemple:"Un capital destiné à un achat immobilier dans 18 mois a un horizon court, même si la personne qui investit se sent par ailleurs à l'aise avec le risque.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Investir une somme dont on sait qu'on aura besoin à court terme sur un support dont la valeur peut fortement fluctuer entre-temps"]
+  },
+  {
+    terme:"Tolérance au risque",
+    categorie:"Gestion du risque",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"La tolérance au risque désigne la capacité, à la fois financière et psychologique, d'une personne à supporter des fluctuations ou des pertes potentielles sur ses investissements.",
+    detail:"Elle combine deux dimensions distinctes : la capacité réelle à supporter une perte (horizon, situation financière, besoin de liquidités) et la capacité émotionnelle à ne pas paniquer face à une baisse. Les deux peuvent diverger : quelqu'un peut avoir les moyens financiers d'attendre une remontée, sans pour autant le supporter psychologiquement.",
+    avance:"La tolérance au risque déclarée avant une baisse de marché et le comportement réel pendant cette baisse peuvent différer fortement — c'est pourquoi elle reste toujours une estimation, jamais une certitude, tant qu'elle n'a pas été testée en conditions réelles.",
+    exemple:"Deux personnes avec la même situation financière peuvent avoir des tolérances au risque très différentes selon leur expérience passée des marchés.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Présenter un profil de risque estimé (via un questionnaire) comme un diagnostic psychologique fiable et définitif"]
+  },
+  {
+    terme:"Profil investisseur",
+    categorie:"Gestion du risque",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Le profil investisseur résume la situation d'une personne face à l'investissement : son capital disponible, son horizon de placement, son objectif et sa tolérance au risque.",
+    detail:"Il sert de repère pour orienter des choix d'investissement cohérents avec la situation réelle de la personne, plutôt que de choisir des placements au hasard ou en copiant ce que fait quelqu'un d'autre dans une situation différente.",
+    avance:"Un profil investisseur n'est pas figé : il évolue avec l'âge, la situation financière, l'expérience et les objectifs — le refaire périodiquement a du sens, surtout après un changement de situation important.",
+    exemple:"Une même personne peut avoir un profil plus prudent pour l'épargne destinée à un projet dans 2 ans, et un profil plus dynamique pour une épargne retraite à 30 ans.",
+    avantages:["Aide à choisir des placements cohérents avec sa propre situation plutôt qu'avec celle de quelqu'un d'autre"],
+    inconvenients:[],
+    erreurs:["Appliquer le même profil investisseur à tous ses objectifs financiers, alors que l'horizon et le besoin diffèrent selon chaque objectif"]
+  },
+  {
     terme:"Blockchain",
     categorie:"Crypto",
     niveau:"Débutant",

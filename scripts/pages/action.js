@@ -28,6 +28,76 @@ function actionCurrentSymbol(){
   return ACTION_TICKER_PATTERN.test(sym) ? sym : '';
 }
 
+const ACTION_VERDICT_META = {
+  etudier: {emoji: '🟢', color: 'var(--emerald)'},
+  surveiller: {emoji: '🟡', color: 'var(--gold-bright)'},
+  risque: {emoji: '🔴', color: 'var(--bordeaux)'},
+  indetermine: {emoji: '⚪', color: 'var(--text-dim)'}
+};
+
+// Emphase par horizon : ne récupère AUCUNE nouvelle donnée, sélectionne
+// seulement lesquels des composants du score déjà calculés (Phase 4) sont
+// les plus pertinents à mettre en avant pour cet horizon — jamais une
+// fausse précision sur ce qui va se passer.
+const ACTION_HORIZON_OPTIONS = [
+  {value: 'court', label: 'Court terme', detail: 'moins de 2 ans', pick: s => s.risk.components, reminder: "Les mouvements à court terme sont particulièrement difficiles à prévoir — la volatilité et les événements proches comptent ici davantage que les fondamentaux de long terme."},
+  {value: 'moyen', label: 'Moyen terme', detail: '2 à 5 ans', pick: s => [...s.quality.components.filter(c => c.label.includes('Croissance')), ...s.valuation.components], reminder: "Sur cet horizon, la croissance récente et le prix payé aujourd'hui (valorisation) pèsent particulièrement sur le résultat probable."},
+  {value: 'long', label: 'Long terme', detail: 'plus de 5 ans', pick: s => s.quality.components.filter(c => !c.label.includes('Croissance')), reminder: "Sur cet horizon, la structure financière (endettement, marge) compte souvent davantage que la performance récente du cours."}
+];
+
+function renderScoreVerdictCard(el, ff, volatility, drawdown){
+  const score = computeStockScore(ff, volatility, drawdown);
+  const tier = computeRiskTier(ff, volatility);
+  const investorProfile = safeGetJSON('fzr-investor-profile', null);
+  const verdict = computeStockVerdict(score, tier, investorProfile);
+  const factors = typeof score.overall === 'number' ? buildScoreChangeFactors(score) : [];
+  const vmeta = ACTION_VERDICT_META[verdict.level];
+
+  function scoreBlock(title, sub){
+    if(!sub.components.length) return `<div style="margin-bottom:12px;"><strong style="font-size:13px;">${title}</strong><p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p></div>`;
+    return `<div style="margin-bottom:12px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;"><strong style="font-size:13px;">${title}</strong><span class="mono" style="font-size:13px;color:var(--gold-bright);">${sub.score}/100</span></div>
+      ${sub.components.map(c => `<div style="display:flex;justify-content:space-between;font-size:11.5px;color:var(--text-dim);margin-top:4px;"><span>${c.label} (${c.formatted})</span><span>${c.points}/100</span></div>`).join('')}
+    </div>`;
+  }
+
+  function render(horizonValue){
+    const horizon = ACTION_HORIZON_OPTIONS.find(h => h.value === horizonValue) || ACTION_HORIZON_OPTIONS[1];
+    const picked = typeof score.overall === 'number' ? horizon.pick(score) : [];
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Score &amp; analyse</h3>
+        ${renderDataBadge('calcul')}
+      </div>
+      <div style="margin-top:12px;padding:12px;border-left:3px solid ${vmeta.color};background:var(--bg-alt);border-radius:2px;">
+        <strong style="color:${vmeta.color};">${vmeta.emoji} ${verdict.label}</strong>
+        <p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${verdict.reason}</p>
+      </div>
+      ${typeof score.overall === 'number' ? `
+      <div style="margin-top:14px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;"><strong style="font-size:14px;">Score global</strong><span class="mono" style="font-size:16px;color:var(--gold-bright);">${score.overall}/100</span></div>
+        ${scoreBlock('Qualité', score.quality)}
+        ${scoreBlock('Valorisation', score.valuation)}
+        ${scoreBlock('Risque (relatif aux autres valeurs analysées)', score.risk)}
+      </div>
+      <div style="margin-top:14px;">
+        <strong style="font-size:13px;">⚠️ Ce qui pourrait changer cette analyse</strong>
+        <ul style="font-size:12px;color:var(--text-dim);margin:8px 0 0 16px;">${factors.map(f => `<li style="margin-bottom:4px;">${f}</li>`).join('')}</ul>
+      </div>
+      <div style="margin-top:14px;">
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;">
+          ${ACTION_HORIZON_OPTIONS.map(h => `<button type="button" class="pill ${h.value===horizon.value?'active':''}" data-horizon="${h.value}">${h.label}</button>`).join('')}
+        </div>
+        <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">${horizon.reminder}</p>
+        ${picked.length ? picked.map(c => `<p style="font-size:12px;color:var(--text-dim);">• ${c.label} : ${c.formatted}</p>`).join('') : ''}
+      </div>` : `<p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`}
+      <p class="disclaimer-box" style="margin-top:14px;">Ce score et ce verdict sont calculés à partir de données réelles disponibles aujourd'hui — ils ne constituent ni une garantie de performance, ni un conseil personnalisé.</p>`;
+
+    el.querySelectorAll('[data-horizon]').forEach(btn => btn.addEventListener('click', () => render(btn.dataset.horizon)));
+  }
+  render('moyen');
+}
+
 async function renderActionDetail(){
   const ticker = actionCurrentSymbol();
   const el = document.getElementById('actionDetail');
@@ -122,6 +192,7 @@ async function renderActionDetail(){
       <div class="card" id="thesisCard" style="display:none;"></div>
       <div class="card" id="consensusCard" style="display:none;"></div>
     </div>
+    <div class="card" id="scoreVerdictCard" style="margin-top:16px;display:none;"></div>
     <div class="card" id="technicalCard" style="margin-top:16px;"></div>
     <div class="card" id="thematicNewsCard" style="margin-top:16px;display:none;"></div>
     <p class="disclaimer-box" style="margin-top:16px;">Ces informations sont fournies à titre pédagogique, en différé. Elles ne constituent ni un conseil en investissement, ni une incitation à acheter ou vendre.</p>`;
@@ -279,12 +350,39 @@ async function renderActionDetail(){
               <p style="font-size:11px;color:var(--text-dim);margin-top:10px;">Estimations professionnelles réelles, pas une garantie — voir l'onglet Scénarios de la page Bourse pour une projection chiffrée.</p>`;
           }
         }
+
+        // ---------- Score transparent, verdict et analyse par horizon (Bourse V2) ----------
+        // Nécessite un historique mensuel réel en plus des fondamentaux déjà
+        // chargés — fetch séparé (computeMonthlyReturnVolatility/
+        // computeHistoricalInvestment attendent des points mensuels, pas la
+        // série journalière déjà utilisée pour le graphique).
+        const scoreCard = document.getElementById('scoreVerdictCard');
+        if(scoreCard && ff){
+          scoreCard.style.display = '';
+          scoreCard.innerHTML = `<h3>Score &amp; analyse</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Calcul en cours…</p>`;
+          fetchSymbolMonthlyHistory(ticker, '5y')
+            .then(monthlyHistory => {
+              const volResult = computeMonthlyReturnVolatility(monthlyHistory);
+              const volatility = volResult ? volResult.monthlyStdevPct : null;
+              const invest = computeHistoricalInvestment(monthlyHistory, 1000, 0);
+              const drawdown = invest ? invest.maxDrawdownPct : null;
+              renderScoreVerdictCard(scoreCard, ff, volatility, drawdown);
+            })
+            .catch(err => {
+              console.info('Likanza Academy — historique mensuel indisponible pour le score :', err.message);
+              renderScoreVerdictCard(scoreCard, ff, null, null);
+            });
+        } else if(scoreCard){
+          scoreCard.style.display = 'none';
+        }
       })
       .catch(err => {
         console.info('Likanza Academy — description/fondamentaux de société indisponibles :', err.message);
         if(fundCard) fundCard.innerHTML = `<h3>Données fondamentales</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
         if(thesisCard) thesisCard.style.display = 'none';
         if(consensusCard) consensusCard.style.display = 'none';
+        const scoreCardEl = document.getElementById('scoreVerdictCard');
+        if(scoreCardEl) scoreCardEl.style.display = 'none';
       });
   }
 
