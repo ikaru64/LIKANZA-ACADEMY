@@ -46,9 +46,13 @@ module.exports = async (req, res) => {
   const range = ALLOWED_RANGES.has(requestedRange) ? requestedRange : '5d';
   const requestedInterval = req.query && req.query.interval;
   const interval = ALLOWED_INTERVALS.has(requestedInterval) ? requestedInterval : '1d';
+  // Optionnel (Dividend Intelligence) : &events=div inclut l'historique réel
+  // des versements de dividendes dans la réponse (voir parseYahooDividendEvents,
+  // lib/yahoo.js) — comportement par défaut inchangé sans ce paramètre.
+  const events = (req.query && req.query.events) === 'div';
 
   const entries = symbols.map(s => ({symbol: s, yahoo: s, name: s, assetType: 'stock'}));
-  const settled = await Promise.allSettled(entries.map(entry => fetchYahooQuote(entry, {range, interval})));
+  const settled = await Promise.allSettled(entries.map(entry => fetchYahooQuote(entry, {range, interval, events})));
   const quotes = [];
   const errors = [];
   settled.forEach(r => {
