@@ -36,6 +36,41 @@ const HISTORICAL_SERIES = {
     frequency: 'Mensuelle',
     kind: 'live'
   },
+  euroStoxx50: {
+    label: 'Actions Europe (Euro Stoxx 50)',
+    source: 'Yahoo Finance — indice Euro Stoxx 50 (^STOXX50E)',
+    sourceUrl: 'https://finance.yahoo.com/quote/%5ESTOXX50E',
+    frequency: 'Mensuelle',
+    kind: 'live'
+  },
+  nasdaq100: {
+    label: 'Actions technologie US (Nasdaq 100, ETF QQQ)',
+    source: 'Yahoo Finance — Invesco QQQ Trust (QQQ)',
+    sourceUrl: 'https://finance.yahoo.com/quote/QQQ',
+    frequency: 'Mensuelle',
+    kind: 'live'
+  },
+  emergingMarkets: {
+    label: 'Actions émergents (MSCI Emerging Markets, ETF EEM)',
+    source: 'Yahoo Finance — iShares MSCI Emerging Markets ETF (EEM)',
+    sourceUrl: 'https://finance.yahoo.com/quote/EEM',
+    frequency: 'Mensuelle',
+    kind: 'live'
+  },
+  gold: {
+    label: 'Or (cours au comptant, futures)',
+    source: 'Yahoo Finance — Gold futures (GC=F)',
+    sourceUrl: 'https://finance.yahoo.com/quote/GC=F',
+    frequency: 'Mensuelle',
+    kind: 'live'
+  },
+  bondsUS: {
+    label: 'Obligations US (ETF AGG, toutes échéances)',
+    source: 'Yahoo Finance — iShares Core U.S. Aggregate Bond ETF (AGG)',
+    sourceUrl: 'https://finance.yahoo.com/quote/AGG',
+    frequency: 'Mensuelle',
+    kind: 'live'
+  },
   inflationFR: {
     label: 'Inflation France (IPCH)',
     source: 'Banque centrale européenne (BCE) — statistiques HICP',

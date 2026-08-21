@@ -12,8 +12,15 @@
 
 renderLevelTip('levelTip', 'personalFinance');
 
-const LAB_SUPPORT_LABELS = {URTH: 'Actions monde (MSCI World, ETF URTH)', '^GSPC': 'Actions US (S&P 500)', '^FCHI': 'Actions France (CAC 40)'};
-const LAB_SUPPORT_SERIES_KEY = {URTH: 'urthWorld', '^GSPC': 'sp500', '^FCHI': 'cac40'};
+const LAB_SUPPORT_LABELS = {
+  URTH: 'Actions monde (MSCI World, ETF URTH)', '^GSPC': 'Actions US (S&P 500)', '^FCHI': 'Actions France (CAC 40)',
+  '^STOXX50E': 'Actions Europe (Euro Stoxx 50)', QQQ: 'Actions technologie US (Nasdaq 100, ETF QQQ)',
+  EEM: 'Actions émergents (MSCI Emerging Markets, ETF EEM)', 'GC=F': 'Or (cours au comptant, futures)', AGG: 'Obligations US (ETF AGG)'
+};
+const LAB_SUPPORT_SERIES_KEY = {
+  URTH: 'urthWorld', '^GSPC': 'sp500', '^FCHI': 'cac40',
+  '^STOXX50E': 'euroStoxx50', QQQ: 'nasdaq100', EEM: 'emergingMarkets', 'GC=F': 'gold', AGG: 'bondsUS'
+};
 
 // URTH et ^GSPC cotent en USD, ^FCHI en EUR — pour que "Capital initial (€)"
 // et le résultat final représentent réellement les mêmes euros tout du long,
