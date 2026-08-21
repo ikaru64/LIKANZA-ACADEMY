@@ -27,9 +27,15 @@
           <p style="font-size:12px;color:var(--text-dim);">${esc(user.email)}</p>
         </div>
       </div>
-      <p style="font-size:11.5px;color:var(--text-dim);border-left:2px solid var(--hairline);padding-left:10px;margin-bottom:12px;">Seule cette connexion (nom, e-mail) est sauvegardée sur un vrai compte. Ta progression (XP, missions, quiz, profil) reste pour l'instant locale à cet appareil — elle ne te suivra pas si tu changes de navigateur ou d'appareil.</p>
+      <p id="progressSyncStatus" style="font-size:11.5px;color:var(--text-dim);border-left:2px solid var(--hairline);padding-left:10px;margin-bottom:12px;">Vérification de la synchronisation…</p>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <button type="button" class="btn btn-sm" id="restoreProgressBtn" style="display:none;">Restaurer depuis mon compte</button>
+      </div>
       <a class="btn btn-sm" href="${AUTH_BASE}/?action=signout&callbackUrl=${encodeURIComponent(location.origin + location.pathname)}">Se déconnecter</a>
     `;
+    const restoreBtn = document.getElementById('restoreProgressBtn');
+    if (restoreBtn && window.forceRestoreProgress) restoreBtn.addEventListener('click', window.forceRestoreProgress);
+    if (window.refreshProgressSyncStatus) window.refreshProgressSyncStatus();
   }
 
   function renderDisconnected() {
@@ -38,8 +44,8 @@
     if (statusLine) statusLine.textContent = 'non connecté';
     if (!body) return;
     body.innerHTML = `
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Connecte-toi pour associer un vrai compte (nom, e-mail) à cet appareil.</p>
-      <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:12px;">Ta progression (XP, missions, quiz, profil) reste locale à cet appareil, connecté ou non — la synchronisation complète est prévue mais pas encore disponible.</p>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:8px;">Connecte-toi pour sauvegarder ta progression (XP, missions, quiz, profil) sur un vrai compte et la retrouver sur un autre appareil.</p>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:12px;">Tant que tu n'es pas connecté, ta progression reste uniquement locale à cet appareil.</p>
       <a class="btn btn-gold btn-sm" href="${AUTH_BASE}/?callbackUrl=${encodeURIComponent(location.origin + location.pathname)}">Se connecter avec Google</a>
     `;
   }

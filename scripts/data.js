@@ -4195,6 +4195,171 @@ function wireStockSearch(inputEl, resultsEl, onAdded){
   });
 }
 
+// ================================================================
+// ---------- Synchronisation de la progression sur un vrai compte ----------
+// ================================================================
+// Le jeton de synchronisation (signé HMAC, voir likanza-auth-app/lib/sync-
+// token.js) est mis en cache par auth-bridge.js dans le MÊME objet que
+// likanza-auth-user (champ syncToken), reçu une seule fois via le fragment
+// d'URL au retour de connexion — jamais un cookie cross-site, bloqué par
+// défaut sur Safari/Firefox (voir le commit "Evite le cookie cross-site" de
+// likanza-auth). Sans jeton (non connecté, ou jeton expiré et jamais
+// renouvelé), toute cette section reste silencieuse : le site continue de
+// fonctionner entièrement en local, comme avant.
+// Fonction plutôt que constante top-level : évite de dépendre de `location`
+// dès le chargement du script (absent des harnais de test Node existants,
+// qui ne l'exécutent jamais dans un navigateur) — seulement résolu au moment
+// réel de la synchronisation.
+function progressSyncApiUrl(){
+  return (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'http://localhost:3000/api/progress'
+    : 'https://likanza-auth.vercel.app/api/progress';
+}
+
+// Whitelist explicite : seule une vraie progression est synchronisée, jamais
+// des préférences d'affichage locales (thème, langue) ni des données
+// sensibles (session admin) ou de contenu éditorial (brouillons admin) — voir
+// le plan de ce chantier pour le détail de chaque exclusion.
+const PROGRESS_SYNC_KEYS = [
+  'fzr-profile', 'fzr-investor-profile', 'fzr-followed-stocks', 'fzr-gamification',
+  'fzr-level', 'fzr-progress', 'fzr-xp-repeat-counts', 'fzr-quiz-points-ledger',
+  'fzr-quiz-stats', 'fzr-deep-quiz-results', 'fzr-mistakes', 'fzr-favorites',
+  'fzr-cours-progress', 'fzr-defis-parcours-progress', 'fzr-daily-missions-log',
+  'fzr-weekly-missions-log', 'fzr-activity-log', 'fzr-positioning-result',
+  'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
+  'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist'
+];
+// Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
+// jamais synchronisé" (première visite -> on restaure depuis le compte) de
+// "cet appareil synchronise déjà" (il devient la source de vérité).
+const PROGRESS_SYNC_MARKER = 'fzr-sync-last-at';
+
+function getSyncToken(){
+  const cached = safeGetJSON('likanza-auth-user', null);
+  return cached && typeof cached.syncToken === 'string' ? cached.syncToken : null;
+}
+
+// Ne conserve que les clés réellement définies sur cet appareil — un
+// utilisateur tout juste arrivé n'envoie pas 24 valeurs nulles.
+function snapshotProgress(){
+  const snap = {};
+  PROGRESS_SYNC_KEYS.forEach(key => {
+    const value = safeGetJSON(key, undefined);
+    if(value !== undefined) snap[key] = value;
+  });
+  return snap;
+}
+
+// N'écrase que les clés présentes dans le snapshot reçu — une clé absente du
+// compte (ex. ajoutée à la whitelist après coup) ne supprime jamais une
+// donnée locale existante.
+function applyProgressSnapshot(data){
+  if(!data || typeof data !== 'object') return;
+  PROGRESS_SYNC_KEYS.forEach(key => {
+    if(Object.prototype.hasOwnProperty.call(data, key)) safeSetJSON(key, data[key]);
+  });
+}
+
+function setProgressSyncStatus(text){
+  const el = document.getElementById('progressSyncStatus');
+  if(el) el.textContent = text;
+  const btn = document.getElementById('restoreProgressBtn');
+  if(btn) btn.style.display = getSyncToken() ? '' : 'none';
+}
+
+async function pushProgressSnapshot(token){
+  try{
+    const resp = await fetch(progressSyncApiUrl(), {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
+      body: JSON.stringify(snapshotProgress())
+    });
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    return true;
+  } catch(e){
+    console.info('Likanza Academy — sauvegarde de la progression momentanément indisponible :', e.message);
+    return false;
+  }
+}
+
+// Point d'entrée principal, appelé une fois par chargement de page (voir le
+// bloc DOMContentLoaded en fin de fichier) : décide s'il faut RESTAURER
+// depuis le compte (premier appareil à se connecter après une inscription
+// sur un autre appareil) ou POUSSER l'état local (cet appareil a déjà
+// synchronisé au moins une fois, il devient la source de vérité). Jamais de
+// fusion champ par champ — voir le disclaimer affiché dans compte.html.
+async function syncProgressWithAccount(){
+  const token = getSyncToken();
+  if(!token){ setProgressSyncStatus('Connecte-toi pour synchroniser ta progression.'); return; }
+
+  setProgressSyncStatus('Synchronisation…');
+  let resp;
+  try{
+    resp = await fetch(progressSyncApiUrl(), {headers: {'Authorization': 'Bearer ' + token}});
+  } catch(e){
+    setProgressSyncStatus('Synchronisation momentanément indisponible (hors ligne ?).');
+    return;
+  }
+  if(resp.status === 401){
+    setProgressSyncStatus('Session de synchronisation expirée — reconnecte-toi pour reprendre la synchronisation.');
+    return;
+  }
+  if(!resp.ok){
+    setProgressSyncStatus('Synchronisation momentanément indisponible.');
+    return;
+  }
+  const payload = await resp.json().catch(() => null);
+  if(!payload){ setProgressSyncStatus('Synchronisation momentanément indisponible.'); return; }
+
+  const hasSyncedBefore = !!safeGetJSON(PROGRESS_SYNC_MARKER, null);
+  if(payload.data && !hasSyncedBefore){
+    applyProgressSnapshot(payload.data);
+  } else {
+    await pushProgressSnapshot(token);
+  }
+  safeSetJSON(PROGRESS_SYNC_MARKER, new Date().toISOString());
+  setProgressSyncStatus('Synchronisé à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) + '.');
+}
+
+// Bouton de secours (compte.html) : force une restauration depuis le compte,
+// même si cet appareil a déjà synchronisé — le garde-fou explicite face à
+// l'absence de fusion fine (voir le disclaimer affiché à côté du bouton).
+async function forceRestoreProgress(){
+  const token = getSyncToken();
+  if(!token) return;
+  setProgressSyncStatus('Restauration…');
+  try{
+    const resp = await fetch(progressSyncApiUrl(), {headers: {'Authorization': 'Bearer ' + token}});
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    const payload = await resp.json();
+    if(payload.data) applyProgressSnapshot(payload.data);
+    safeSetJSON(PROGRESS_SYNC_MARKER, new Date().toISOString());
+    setProgressSyncStatus('Restauré à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) + ' — recharge la page pour voir les changements.');
+  } catch(e){
+    setProgressSyncStatus('Restauration impossible pour le moment.');
+  }
+}
+window.refreshProgressSyncStatus = syncProgressWithAccount;
+
+// Repousse l'état local pendant que l'onglet reste ouvert, sans attendre un
+// rechargement de page — jamais de nouvelle décision pull-vs-push ici
+// (seulement au chargement, voir syncProgressWithAccount) pour ne jamais
+// écraser une modification en cours par une donnée serveur plus ancienne.
+// pagehide/beforeunload ne sont volontairement pas utilisés : un fetch()
+// déclenché à ce moment est fréquemment annulé avant d'aboutir.
+function initProgressSyncHeartbeat(){
+  setInterval(() => {
+    if(document.visibilityState !== 'visible') return;
+    const token = getSyncToken();
+    if(token) pushProgressSnapshot(token);
+  }, 2 * 60 * 1000);
+  document.addEventListener('visibilitychange', () => {
+    if(document.visibilityState !== 'hidden') return;
+    const token = getSyncToken();
+    if(token) pushProgressSnapshot(token);
+  });
+}
+
 // Indicateur factuel de tendance, calculé uniquement à partir de vraies
 // données de prix (Yahoo Finance) — décrit la situation, ne recommande
 // jamais d'acheter, vendre ou renforcer une position.
@@ -5001,6 +5166,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   safeRun('ticker', ()=>renderTicker('tickerTrack'));
   safeRun('cotations réelles', initLiveMarketData);
   safeRun('série quotidienne', checkDailyStreak);
+  safeRun('synchronisation du compte', syncProgressWithAccount);
+  safeRun('synchronisation du compte (relances périodiques)', initProgressSyncHeartbeat);
   // Laisse le temps aux scripts de page de peupler les cartes avant d'observer
   setTimeout(()=>safeRun('animations au scroll', initReveal), 60);
 });
