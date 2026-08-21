@@ -245,6 +245,11 @@ function initHomeSim(){
     if(el) el.addEventListener('input', ()=>safeRun('laboratoire intérêts composés', updateHomeSim));
   });
   updateHomeSim();
+  // RETURN_ASSUMPTIONS.central démarre sur un repli (6%, jamais présenté
+  // comme un fait) — remplacé par le vrai CAGR sourcé du S&P 500 dès qu'il
+  // est disponible (même fonction partagée que laboratoire.js, propre appel
+  // réseau : chaque page charge sa propre donnée réelle).
+  enrichReturnAssumptionsFromRealHistory().then(() => safeRun('laboratoire intérêts composés (donnée réelle)', updateHomeSim));
 }
 function renderSimPreviews(){
   const el = document.getElementById('simPreviewGrid');

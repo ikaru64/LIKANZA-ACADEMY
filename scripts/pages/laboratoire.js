@@ -67,6 +67,21 @@ async function fetchLabInflationFR(){
   return data;
 }
 
+// Partagé entre la carte Crédit ("Combien coûte réellement mon crédit ?") et
+// la carte Acheter ou louer, qui ont toutes les deux besoin du même vrai
+// taux de crédit immobilier français — un seul appel réseau, jamais deux
+// appels dupliqués pour la même donnée sur la même page.
+let labMortgageRateCache = null;
+async function fetchLabMortgageRate(){
+  if(labMortgageRateCache) return labMortgageRateCache;
+  const resp = await fetch('/api/eco-rate?series=mortgage-rate-fr');
+  if(!resp.ok) throw new Error('HTTP ' + resp.status);
+  const data = await resp.json();
+  if(!Array.isArray(data.points) || data.points.length < 1) throw new Error('Taux crédit indisponible');
+  labMortgageRateCache = data;
+  return data;
+}
+
 function populatePeriodSelect(selectEl, periods, defaultValue){
   selectEl.innerHTML = periods.map(p => `<option value="${p}">${p}</option>`).join('');
   if(defaultValue && periods.includes(defaultValue)) selectEl.value = defaultValue;
@@ -263,9 +278,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   async function loadLiveRate(){
     badgeEl.innerHTML = '';
     try {
-      const resp = await fetch('/api/eco-rate?series=mortgage-rate-fr');
-      if(!resp.ok) throw new Error('HTTP ' + resp.status);
-      const data = await resp.json();
+      const data = await fetchLabMortgageRate();
       const last = data.points[data.points.length - 1];
       rateEl.value = last.value.toFixed(2);
       badgeEl.innerHTML = renderDataBadge('fait');
@@ -330,6 +343,18 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       populatePeriodSelect(endEl, periods, periods[periods.length - 1]);
       badgeEl.innerHTML = renderDataBadge('fait');
       render();
+
+      // Remplace la constante figée (repli honnête, jamais présentée comme
+      // un fait) par le vrai taux d'inflation glissant sur 12 mois, calculé
+      // sur cette même série réelle qu'on vient de charger — puis ré-exécute
+      // les widgets déjà rendus une première fois avec le repli, pour qu'ils
+      // reflètent immédiatement la vraie donnée sans action de l'utilisateur.
+      const realRate = computeRealInflationRate(points);
+      if(typeof realRate === 'number'){
+        DEFAULT_INFLATION_ASSUMPTION = Math.round(realRate * 10) / 10;
+        if(typeof updateInflation === 'function') updateInflation();
+        if(typeof updateSim === 'function') updateSim();
+      }
     } catch(err){
       outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : série d'inflation temporairement indisponible (${err.message}).</p>`;
       console.info('Likanza Academy — Laboratoire, inflation indisponible :', err.message);
@@ -412,21 +437,42 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
 
   async function loadAppreciation(){
     badgeEl.innerHTML = '';
+    let priceNote, priceOk = false;
     try {
-      const resp = await fetch('/api/eco-rate?series=home-price-fr');
-      if(!resp.ok) throw new Error('HTTP ' + resp.status);
-      const data = await resp.json();
+      const data = await fetch('/api/eco-rate?series=home-price-fr').then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
       const first = data.points[0], last = data.points[data.points.length - 1];
       const yearsSpan = (parseInt(last.period.slice(0,4),10) - parseInt(first.period.slice(0,4),10)) + (parseInt(last.period.slice(6),10) - parseInt(first.period.slice(6),10)) / 4;
       appreciationAnnualPct = yearsSpan > 0 ? (Math.pow(last.value / first.value, 1 / yearsSpan) - 1) * 100 : 0;
-      badgeEl.innerHTML = renderDataBadge('fait');
-      priceSourceEl.innerHTML = `Appréciation immobilière préremplie avec l'évolution réelle observée (${first.period} → ${last.period}, France entière) : ${appreciationAnnualPct >= 0 ? '+' : ''}${appreciationAnnualPct.toFixed(1)} %/an en moyenne. ${data.source}. Niveau géographique : France entière (pas de donnée locale/ville disponible pour l'instant).`;
+      priceNote = `Appréciation immobilière préremplie avec l'évolution réelle observée (${first.period} → ${last.period}, France entière) : ${appreciationAnnualPct >= 0 ? '+' : ''}${appreciationAnnualPct.toFixed(1)} %/an en moyenne. ${data.source}. Niveau géographique : France entière (pas de donnée locale/ville disponible pour l'instant).`;
+      priceOk = true;
     } catch(err){
       appreciationAnnualPct = 0;
-      badgeEl.innerHTML = renderDataBadge('calcul');
-      priceSourceEl.innerHTML = `⚠️ Donnée manquante : indice immobilier réel temporairement indisponible, appréciation laissée à 0% (hypothèse neutre, modifiable).`;
+      priceNote = `⚠️ Donnée manquante : indice immobilier réel temporairement indisponible, appréciation laissée à 0% (hypothèse neutre, modifiable).`;
       console.info('Likanza Academy — Laboratoire, indice immobilier indisponible :', err.message);
     }
+
+    // Même vrai taux crédit que la carte "Combien coûte réellement mon
+    // crédit ?" juste au-dessus (fetchLabMortgageRate, mise en cache
+    // partagée) — auparavant laissé sur un défaut statique (3.2) jamais
+    // rafraîchi, incohérent avec la carte voisine.
+    let rateNote, rateOk = false;
+    try {
+      const data = await fetchLabMortgageRate();
+      const last = data.points[data.points.length - 1];
+      els.labBrRate.value = last.value.toFixed(2);
+      rateNote = `Taux crédit préempli avec le taux moyen réel des nouveaux crédits à l'habitat des ménages en France, ${last.period} (${data.source}).`;
+      rateOk = true;
+    } catch(err){
+      rateNote = `⚠️ Taux crédit réel temporairement indisponible, valeur de départ laissée en hypothèse éditable.`;
+      console.info('Likanza Academy — Laboratoire, taux crédit (Acheter ou louer) indisponible :', err.message);
+    }
+
+    // "Fait" seulement si les DEUX données réelles ont bien été chargées —
+    // sinon "calcul" (au moins une hypothèse de repli reste dans le calcul),
+    // jamais un badge qui prétendrait tout être réel alors que ce n'est
+    // qu'en partie le cas.
+    badgeEl.innerHTML = renderDataBadge(priceOk && rateOk ? 'fait' : 'calcul');
+    priceSourceEl.innerHTML = `${priceNote} ${rateNote} Modifie librement l'un ou l'autre pour tester une autre hypothèse.`;
     render();
   }
 
@@ -530,6 +576,10 @@ const capitalEl = document.getElementById('capital'), monthlyEl = document.getEl
 const simFraisEl = document.getElementById('simFrais'), simShowRealEl = document.getElementById('simShowReal');
 let simMode = 'central';
 let historicalRateInfo = null; // rempli uniquement par une vraie donnée Yahoo Finance, jamais inventé
+// Clés (prudent/central/optimiste) réellement enrichies avec un vrai CAGR —
+// par clé, pas un seul booléen global : un échec réseau isolé sur UN
+// scénario ne doit jamais faire croire que les 3 sont devenus des faits.
+let returnAssumptionsEnrichedKeys = new Set();
 
 async function fetchHistoricalReturn(){
   const resp = await fetch('/api/custom-quotes?symbols=URTH&range=5y');
@@ -557,11 +607,23 @@ function currentGrossRate(){
 
 function updateModeDesc(){
   const descEl = document.getElementById('simModeDesc');
-  if(simMode === 'personnalise') descEl.textContent = "Choisis librement un rendement — une hypothèse trop élevée est signalée ci-dessous.";
-  else if(simMode === 'historique') descEl.textContent = historicalRateInfo
-    ? `Rendement annualisé réel constaté : ${historicalRateInfo.rate.toFixed(1)} %. Source : ${historicalRateInfo.source}, du ${historicalRateInfo.startLabel} au ${historicalRateInfo.endLabel}.`
-    : "Chargement de la donnée historique réelle…";
-  else descEl.textContent = RETURN_ASSUMPTIONS[simMode].desc;
+  const badgeEl = document.getElementById('simModeBadge');
+  if(simMode === 'personnalise'){
+    descEl.textContent = "Choisis librement un rendement — une hypothèse trop élevée est signalée ci-dessous.";
+    if(badgeEl) badgeEl.innerHTML = '';
+  } else if(simMode === 'historique'){
+    descEl.textContent = historicalRateInfo
+      ? `Rendement annualisé réel constaté : ${historicalRateInfo.rate.toFixed(1)} %. Source : ${historicalRateInfo.source}, du ${historicalRateInfo.startLabel} au ${historicalRateInfo.endLabel}.`
+      : "Chargement de la donnée historique réelle…";
+    if(badgeEl) badgeEl.innerHTML = historicalRateInfo ? renderDataBadge('fait') : '';
+  } else {
+    descEl.textContent = RETURN_ASSUMPTIONS[simMode].desc;
+    // Tant que enrichReturnAssumptionsFromRealHistory() n'a pas résolu, ces 3
+    // scénarios restent des repères pédagogiques (🔮), pas un fait — une fois
+    // enrichis avec le vrai CAGR sourcé, ils deviennent 📊 Fait comme le mode
+    // Historique, jamais avant.
+    if(badgeEl) badgeEl.innerHTML = returnAssumptionsEnrichedKeys.has(simMode) ? renderDataBadge('fait') : renderDataBadge('scenario');
+  }
 }
 
 function updateRateAlert(){
@@ -634,6 +696,17 @@ simShowRealEl.addEventListener('change', updateSim);
 rateEl.disabled = true;
 updateModeDesc();
 updateSim();
+
+// Remplace les 3 ronds chiffres de repli (Prudente/Centrale/Optimiste) par
+// un vrai CAGR sourcé dès qu'il est disponible, sans action de l'utilisateur
+// — voir enrichReturnAssumptionsFromRealHistory (scripts/data.js).
+enrichReturnAssumptionsFromRealHistory().then((updatedKeys) => {
+  returnAssumptionsEnrichedKeys = new Set(updatedKeys);
+  if(simMode !== 'historique' && simMode !== 'personnalise'){
+    updateModeDesc();
+    updateSim();
+  }
+});
 
 renderWhatIf('simWhatIf', [
   {label:"Et si tu commençais 10 ans plus tôt ?", change:{years: +yearsEl.value + 10}},

@@ -3407,18 +3407,85 @@ function renderBarChart(chartId, labelsId, series, years){
 
 // ---------- Hypothèses de rendement centralisées ----------
 // Source unique pour les scénarios "prudent/central/optimiste" proposés par
-// le simulateur d'intérêts composés (laboratoire.html) — évite d'avoir des
-// pourcentages différents éparpillés dans plusieurs fichiers. Ce sont des
-// hypothèses pédagogiques, jamais une prévision ni un rendement garanti.
+// le simulateur d'intérêts composés (laboratoire.html, et index.html onglet
+// Simuler) — évite d'avoir des pourcentages différents éparpillés dans
+// plusieurs fichiers.
+//
+// Les 3 valeurs ci-dessous ne sont QUE des replis affichés avant que la
+// vraie donnée arrive (enrichReturnAssumptionsFromRealHistory, plus bas) —
+// jamais présentées comme un fait tant qu'elles n'ont pas été remplacées par
+// un vrai CAGR sourcé et daté. Avant cette refonte, ces trois pourcentages
+// étaient inventés (ronds, habillés d'une description plausible mais jamais
+// reliés à un vrai chiffre) : exactement le problème signalé.
 const RETURN_ASSUMPTIONS = {
-  prudent: {rate: 3, label: 'Prudente', desc: "Proche d'un support à capital garanti (fonds euro, obligations d'État) : rendement plus stable, mais plus limité."},
-  central: {rate: 6, label: 'Centrale', desc: "Ordre de grandeur souvent cité pour un portefeuille actions diversifié sur longue période — sans certitude de le retrouver à l'avenir."},
-  optimiste: {rate: 9, label: 'Optimiste', desc: "Scénario favorable, proche des meilleures décennies boursières historiques. À ne jamais retenir comme hypothèse par défaut."}
+  prudent: {rate: 3, label: 'Prudente', desc: 'Chargement de la référence réelle…'},
+  central: {rate: 6, label: 'Centrale', desc: 'Chargement de la référence réelle…'},
+  optimiste: {rate: 9, label: 'Optimiste', desc: 'Chargement de la référence réelle…'}
 };
-// Inflation illustrative par défaut, cohérente avec celle déjà utilisée par
-// ailleurs sur laboratoire.html (widget "Impact de l'inflation") — pas une donnée
-// macroéconomique en direct, une hypothèse constante à but pédagogique.
-const DEFAULT_INFLATION_ASSUMPTION = 2.1;
+
+// Symbole Yahoo réel associé à chaque scénario — mêmes supports déjà listés
+// dans laboratoire.html (aucun nouveau symbole). CAGR calculé en devise
+// native (dollars) : on mesure un rendement d'indice réel, pas un pari de
+// change — la conversion EUR/USD (utile pour "et si j'avais investi X €")
+// n'a pas sa place dans une hypothèse générique de rendement.
+const RETURN_ASSUMPTION_SYMBOLS = {
+  prudent: {symbol: 'AGG', name: "l'ETF obligataire US (AGG)"},
+  central: {symbol: '^GSPC', name: 'le S&P 500'},
+  optimiste: {symbol: 'QQQ', name: "l'ETF Nasdaq 100 (QQQ)"}
+};
+
+// Mute RETURN_ASSUMPTIONS en place avec un vrai CAGR sourcé et daté pour
+// chaque scénario, calculé sur tout l'historique réel disponible (cours
+// seuls, sans dividendes réinvestis — même limitation déjà assumée ailleurs
+// sur le site, ex. "Et si j'avais investi ?"). Un échec réseau sur UN
+// symbole laisse ce scénario sur son repli (jamais un blocage des deux
+// autres, jamais une valeur inventée à sa place). Retourne le sous-ensemble
+// des clés réellement mises à jour, pour que l'appelant sache quoi re-rendre.
+async function enrichReturnAssumptionsFromRealHistory(){
+  const updated = [];
+  await Promise.all(Object.entries(RETURN_ASSUMPTION_SYMBOLS).map(async ([key, {symbol, name}]) => {
+    try {
+      const resp = await fetch('/api/custom-quotes?symbols=' + encodeURIComponent(symbol) + '&range=max&interval=1mo');
+      if(!resp.ok) throw new Error('HTTP ' + resp.status);
+      const payload = await resp.json();
+      const q = (payload.quotes || [])[0];
+      if(!q || !Array.isArray(q.history) || q.history.length < 2) throw new Error('Historique indisponible');
+      const first = q.history[0], last = q.history[q.history.length - 1];
+      const years = (new Date(last.date) - new Date(first.date)) / (365.25 * 24 * 3600 * 1000);
+      if(years <= 0 || typeof first.close !== 'number' || typeof last.close !== 'number' || first.close <= 0) throw new Error('Période invalide');
+      const rate = (Math.pow(last.close / first.close, 1 / years) - 1) * 100;
+      const startLabel = new Date(first.date).toLocaleDateString('fr-FR', {year: 'numeric', month: 'short'});
+      const endLabel = new Date(last.date).toLocaleDateString('fr-FR', {year: 'numeric', month: 'short'});
+      RETURN_ASSUMPTIONS[key].rate = rate;
+      RETURN_ASSUMPTIONS[key].desc = `Rendement annualisé réel de ${name}, en dollars et hors dividendes réinvestis, du ${startLabel} au ${endLabel} (Yahoo Finance) : ${rate >= 0 ? '+' : ''}${rate.toFixed(1)} %/an — une période réellement observée, jamais une garantie pour l'avenir.`;
+      updated.push(key);
+    } catch(err){
+      RETURN_ASSUMPTIONS[key].desc = `⚠️ Donnée manquante : référence réelle temporairement indisponible, valeur de repli (${RETURN_ASSUMPTIONS[key].rate} %) affichée à la place.`;
+      console.info(`Likanza Academy — rendement réel indisponible pour "${key}" :`, err.message);
+    }
+  }));
+  return updated;
+}
+
+// Inflation par défaut — repli affiché tant que la vraie série française
+// (IPCH, BCE) n'a pas été chargée par la carte "Que valent réellement mes
+// euros ?" de laboratoire.html. Remplacée par computeRealInflationRate dès
+// que cette vraie série arrive (jamais recalculée depuis une constante figée
+// au moment de l'écriture du code).
+let DEFAULT_INFLATION_ASSUMPTION = 2.1;
+
+// Taux d'inflation annualisé réel le plus récent, calculé sur les 12
+// derniers mois glissants de la vraie série IPCH déjà chargée (points :
+// {period:'YYYY-MM', value}, la plus récente en dernier) — jamais une
+// hypothèse inventée. Retourne null si moins de 13 points disponibles
+// (pas assez pour un vrai glissement sur 12 mois), l'appelant garde alors
+// le repli existant plutôt que d'afficher un calcul non fiable.
+function computeRealInflationRate(points){
+  if(!Array.isArray(points) || points.length < 13) return null;
+  const last = points[points.length - 1], yearAgo = points[points.length - 13];
+  if(!last || !yearAgo || typeof last.value !== 'number' || typeof yearAgo.value !== 'number' || yearAgo.value <= 0) return null;
+  return (last.value / yearAgo.value - 1) * 100;
+}
 
 // ---------- Fonctions financières partagées ----------
 const fmtEUR = n => Math.round(n).toLocaleString('fr-FR') + ' €';
