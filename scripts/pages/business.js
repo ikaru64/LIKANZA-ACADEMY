@@ -103,6 +103,7 @@ renderConceptLevels('businessLevelLevier', "Effet de levier");
 renderBusinessQuestionDuJour('businessQuestion');
 renderBusinessCasRecommande('businessCasRecommande');
 renderBusinessLab('businessLab');
+renderBusinessProblemFinder('businessProblems');
 renderBusinessNiveau('businessNiveau');
 renderBusinessStories('businessStories');
 renderBusinessProfile('businessProfile');

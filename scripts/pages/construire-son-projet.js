@@ -153,9 +153,12 @@ const PROJECT_STEPS = [
   {key:'clientType', title:'Type de clients', category:'Le client',
     fields:[
       {key:'clientType', type:'radio', options:[{value:'b2c', label:'Des particuliers (B2C)'},{value:'b2b', label:'Des entreprises (B2B)'},{value:'both', label:'Les deux'}]},
-      {key:'clientDetail', type:'textarea', placeholder:"Ex : des parents qui travaillent à temps plein..."}
+      {key:'clientDetail', type:'textarea', placeholder:"Ex : des parents qui travaillent à temps plein..."},
+      {key:'roleUtilisateur', type:'text', label:"Qui utilise vraiment le produit/service au quotidien ?", placeholder:"Ex : l'employé qui s'en sert tous les jours (souvent = le client en B2C)"},
+      {key:'roleDecideur', type:'text', label:"Qui décide de l'achat ?", placeholder:"Ex : le/la responsable achats, un parent, un manager"},
+      {key:'rolePayeur', type:'text', label:"Qui paie, concrètement ?", placeholder:"Ex : l'entreprise elle-même, ou la même personne que l'utilisateur"}
     ],
-    prompt:"À qui ce problème s'adresse-t-il en priorité, et peux-tu le décrire plus précisément ?",
+    prompt:"À qui ce problème s'adresse-t-il en priorité, et peux-tu le décrire plus précisément ? En B2C, utilisateur/décideur/payeur sont souvent la même personne — en B2B, ils peuvent être trois personnes différentes, et l'ignorer est une erreur fréquente.",
     hint:'Persona'},
   {key:'marche', title:'Marché potentiel', category:'Le marché',
     fields:[{key:'marche', type:'textarea', placeholder:"Une estimation approximative suffit."}],
@@ -164,6 +167,9 @@ const PROJECT_STEPS = [
   {key:'concurrence', title:'Concurrence', category:'Le marché',
     fields:[{key:'concurrence', type:'textarea', placeholder:"..."}],
     prompt:"Qui résout déjà ce problème aujourd'hui, même partiellement ? Une absence totale de concurrence est rare, et souvent un signal d'alerte plutôt qu'un avantage."},
+  {key:'concurrentsListe', title:'Concurrents identifiés', category:'Le marché', type:'concurrents',
+    prompt:"Optionnel mais utile : détaille 1 à 3 concurrents réels (ou solutions de contournement, comme « ne rien faire » ou « le faire soi-même ») pour préciser en quoi tu es vraiment différent.",
+    hint:'Avantage concurrentiel'},
   {key:'valeur', title:'Proposition de valeur', category:"L'offre",
     fields:[{key:'valeur', type:'textarea', placeholder:"..."}],
     prompt:"Pourquoi un client choisirait ta solution plutôt qu'une autre, ou plutôt que rien du tout ?",
@@ -244,6 +250,14 @@ function collectCurrentFields(){
     saveAnswers();
     return;
   }
+  if(step.type === 'concurrents'){
+    collectConcurrentsRows();
+    // Ne garde que les lignes où au moins un champ a été rempli — une étape
+    // facultative laissée vide ne doit pas polluer la fiche finale.
+    answers.concurrentsListe = (answers.concurrentsListe || []).filter(r => Object.values(r).some(v => (v||'').trim()));
+    saveAnswers();
+    return;
+  }
   if(!step.fields) return;
   step.fields.forEach(f=>{
     if(f.type === 'radio'){
@@ -271,6 +285,9 @@ function renderFieldsHtml(step){
     const label = f.label ? `<label style="font-size:12.5px;color:var(--text-dim);display:block;margin-bottom:4px;">${f.label}</label>` : '';
     if(f.type === 'textarea'){
       return `<div class="field" style="margin-bottom:12px;">${label}<textarea id="field-${f.key}" rows="3" placeholder="${f.placeholder||''}" style="width:100%;background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:10px;border-radius:2px;font-family:inherit;font-size:13.5px;resize:vertical;">${value}</textarea></div>`;
+    }
+    if(f.type === 'text'){
+      return `<div class="field" style="margin-bottom:12px;">${label}<input type="text" id="field-${f.key}" value="${value}" placeholder="${f.placeholder||''}"></div>`;
     }
     if(f.type === 'number'){
       return `<div class="field" style="margin-bottom:12px;">${label}<div style="display:flex;align-items:center;gap:8px;"><input type="number" id="field-${f.key}" value="${value}" placeholder="${f.placeholder||''}" style="flex:1;"> ${f.suffix ? `<span style="color:var(--text-dim);font-size:12.5px;">${f.suffix}</span>` : ''}</div></div>`;
@@ -318,6 +335,52 @@ function renderComputedStep(){
     <p class="disclaimer-box" style="margin-top:12px;">Calcul simplifié à partir de tes propres chiffres, pas une prévision ni un conseil financier. Un vrai seuil de rentabilité intègre aussi la saisonnalité, la trésorerie et d'autres charges non listées ici.</p>`;
   answers.seuilVentesCalcule = r.valid ? r.seuilVentes : null;
   saveAnswers();
+}
+
+const CONCURRENT_ROW_FIELDS = ['nom','cible','prix','force','faiblesse'];
+
+function collectConcurrentsRows(){
+  const rows = answers.concurrentsListe && answers.concurrentsListe.length ? answers.concurrentsListe : [{}];
+  document.querySelectorAll('.concurrent-row').forEach((rowEl, i) => {
+    if(!rows[i]) rows[i] = {};
+    CONCURRENT_ROW_FIELDS.forEach(k => {
+      const inp = document.getElementById(`concurrent-${i}-${k}`);
+      if(inp) rows[i][k] = inp.value;
+    });
+  });
+  answers.concurrentsListe = rows;
+}
+
+function renderConcurrentsStep(){
+  const el = document.getElementById('wizardStepFields');
+  if(!answers.concurrentsListe || !answers.concurrentsListe.length){
+    answers.concurrentsListe = [{nom:'',cible:'',prix:'',force:'',faiblesse:''}];
+  }
+  const rows = answers.concurrentsListe;
+  const rowLabels = {nom:'Nom', cible:'Cible principale', prix:'Prix approximatif', force:'Force observée', faiblesse:'Faiblesse observée'};
+  const rowPlaceholders = {nom:"Ex : Deliveroo, ou 'cuisiner soi-même'", cible:'Ex : urbains pressés', prix:'Ex : 15€/livraison', force:'Ex : rapidité de livraison', faiblesse:'Ex : prix élevé, peu healthy'};
+  el.innerHTML = `
+    ${rows.map((r,i) => `
+      <div class="card concurrent-row" data-row="${i}" style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span class="smallcaps">Concurrent ${i+1}</span>
+          ${rows.length > 1 ? `<button type="button" class="btn btn-sm" data-remove-row="${i}">Supprimer</button>` : ''}
+        </div>
+        ${CONCURRENT_ROW_FIELDS.map(k => `<div class="field" style="margin-bottom:8px;"><label style="font-size:11.5px;color:var(--text-dim);display:block;margin-bottom:4px;">${rowLabels[k]}</label><input type="text" id="concurrent-${i}-${k}" value="${escapeHtml(r[k]||'')}" placeholder="${rowPlaceholders[k]}"></div>`).join('')}
+      </div>`).join('')}
+    <button type="button" class="btn btn-sm" id="addConcurrentBtn">+ Ajouter un concurrent</button>`;
+  el.querySelectorAll('[data-remove-row]').forEach(btn => btn.addEventListener('click', () => {
+    collectConcurrentsRows();
+    answers.concurrentsListe.splice(Number(btn.dataset.removeRow), 1);
+    saveAnswers();
+    renderConcurrentsStep();
+  }));
+  document.getElementById('addConcurrentBtn').addEventListener('click', () => {
+    collectConcurrentsRows();
+    answers.concurrentsListe.push({nom:'',cible:'',prix:'',force:'',faiblesse:''});
+    saveAnswers();
+    renderConcurrentsStep();
+  });
 }
 
 function renderDiagnosticStep(){
@@ -393,6 +456,11 @@ function renderFinalStep(a){
     {label:'Projet', value: esc(a.offre) || '—'},
     {label:'Problème', value: esc(a.probleme) || '—'},
     {label:'Client cible', value: [CLIENT_TYPE_LABELS[a.clientType], esc(a.clientDetail)].filter(Boolean).join(' — ') || '—'},
+    {label:'Utilisateur / décideur / payeur', value: [
+      a.roleUtilisateur ? `Utilise : ${esc(a.roleUtilisateur)}` : '',
+      a.roleDecideur ? `Décide : ${esc(a.roleDecideur)}` : '',
+      a.rolePayeur ? `Paie : ${esc(a.rolePayeur)}` : ''
+    ].filter(Boolean).join(' · ') || '—'},
     {label:'Marché', value: esc(a.marche) || '—'},
     {label:'Proposition de valeur', value: esc(a.valeur) || '—'},
     {label:'Offre', value: esc(a.offre) || '—'},
@@ -413,6 +481,7 @@ function renderFinalStep(a){
       <h2 class="display" style="font-size:24px;font-weight:600;margin:8px 0 14px;">Synthèse structurée</h2>
       ${fiche.map(f=>`<div style="margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--hairline);"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">${f.label}</strong><p style="font-size:13.5px;margin-top:4px;">${f.value}</p></div>`).join('')}
       ${r.valid ? `<div style="margin-bottom:12px;"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">Seuil de rentabilité simplifié</strong><p style="font-size:13.5px;margin-top:4px;">${r.seuilVentes} ventes/mois environ</p></div>` : ''}
+      ${(a.concurrentsListe && a.concurrentsListe.length) ? `<div style="margin-bottom:12px;"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">Concurrents identifiés</strong>${a.concurrentsListe.map(c=>`<p style="font-size:13px;margin-top:6px;"><strong>${esc(c.nom)||'—'}</strong>${c.cible?` · cible : ${esc(c.cible)}`:''}${c.prix?` · prix : ${esc(c.prix)}`:''}${c.force?` · force : ${esc(c.force)}`:''}${c.faiblesse?` · faiblesse : ${esc(c.faiblesse)}`:''}</p>`).join('')}</div>` : ''}
       <div style="margin-bottom:16px;">
         <strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">Diagnostic</strong>
         ${zones.map(z=>`<p style="font-size:12.5px;margin-top:6px;">${DIAGNOSTIC_STATUS_META[z.status].emoji} <strong>${z.label}</strong> — ${z.justification}</p>`).join('')}
@@ -466,6 +535,7 @@ function renderStep(){
   else if(step.type === 'summary'){ renderSummaryStep(); renderHint(null); }
   else if(step.type === 'diagnostic'){ renderDiagnosticStep(); renderHint(null); }
   else if(step.type === 'strategie'){ renderStrategieStep(); renderHint(null); }
+  else if(step.type === 'concurrents'){ renderConcurrentsStep(); renderHint(step.hint); }
   else { document.getElementById('wizardStepFields').innerHTML = renderFieldsHtml(step); renderHint(step.hint); }
 }
 

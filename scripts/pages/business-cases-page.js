@@ -1,0 +1,1 @@
+renderBusinessDecodeHub('businessCases');

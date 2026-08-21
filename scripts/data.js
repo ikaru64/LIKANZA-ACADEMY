@@ -3116,6 +3116,12 @@ function renderBusinessLab(elId){
       <h3 style="margin:10px 0 6px;">Business Cases</h3>
       <p>${casesPool.length} cas sur le chiffre d'affaires, la marge, les levées de fonds…</p>
       <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-unit-economics" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.calculator}</span>
+      <h3 style="margin:10px 0 6px;">Unit Economics</h3>
+      <p>Prix, marge, CAC, LTV, point mort : ton business est-il économiquement cohérent ?</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
     </button>`;
   document.getElementById(`${elId}-decisions`).addEventListener('click', () => {
     if(!sessionEl) return;
@@ -3127,6 +3133,89 @@ function renderBusinessLab(elId){
     startMixedSession(`${elId}-session`, shuffleCopy(casesPool).slice(0, 6), {level:'business', categorie:'Business Cases', onRestart: () => renderBusinessLab(elId)});
     sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
   });
+  document.getElementById(`${elId}-unit-economics`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-unit-economics"></div></div>`;
+    renderUnitEconomics(`${elId}-session-unit-economics`);
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+}
+
+// ---------- Unit Economics : "mon business est-il économiquement cohérent ?"
+// Calculs enchaînés à partir des seules hypothèses saisies (prix, coût
+// direct, CAC, achats moyens, charges fixes) — jamais un verdict du type
+// "ton business est excellent", seulement ce que les chiffres montrent une
+// fois combinés, plus 2 questions de sensibilité réelles recalculées en
+// direct. Formules réelles et standard (marge brute, LTV = marge × achats
+// moyens, ratio LTV/CAC, seuil de rentabilité = charges fixes / marge). ----------
+function computeUnitEconomics(a){
+  const prix = Number(a.prix) || 0;
+  const coutDirect = Number(a.coutDirect) || 0;
+  const cac = Number(a.cac) || 0;
+  const achatsMoyens = Number(a.achatsMoyens) || 0;
+  const chargesFixes = Number(a.chargesFixes) || 0;
+
+  const margeBrute = prix - coutDirect;
+  const margeBrutePct = prix > 0 ? (margeBrute / prix) * 100 : null;
+  const ltv = margeBrute * achatsMoyens;
+  const ratioLtvCac = cac > 0 ? ltv / cac : null;
+  const seuilVentes = (margeBrute > 0 && chargesFixes > 0) ? Math.ceil(chargesFixes / margeBrute) : null;
+  const revenuTotalMoyen = prix * achatsMoyens;
+
+  return {prix, coutDirect, cac, achatsMoyens, chargesFixes, margeBrute, margeBrutePct, ltv, ratioLtvCac, seuilVentes, revenuTotalMoyen};
+}
+
+function renderUnitEconomics(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const stored = safeGetJSON('fzr-unit-economics', {prix:50, coutDirect:15, cac:40, achatsMoyens:3, chargesFixes:1500});
+
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Renseigne tes propres hypothèses : les calculs s'enchaînent à partir de ces chiffres, sans jugement automatique sur ton projet.</p>
+    <div class="card-grid" style="margin-bottom:16px;">
+      <div class="field"><label for="${elId}-prix">Prix de vente moyen (€)</label><input type="number" id="${elId}-prix" value="${stored.prix}"></div>
+      <div class="field"><label for="${elId}-coutDirect">Coût direct par vente (€)</label><input type="number" id="${elId}-coutDirect" value="${stored.coutDirect}"></div>
+      <div class="field"><label for="${elId}-cac">CAC — coût d'acquisition (€)</label><input type="number" id="${elId}-cac" value="${stored.cac}"></div>
+      <div class="field"><label for="${elId}-achatsMoyens">Nombre d'achats moyen par client</label><input type="number" id="${elId}-achatsMoyens" value="${stored.achatsMoyens}" step="0.1"></div>
+      <div class="field"><label for="${elId}-chargesFixes">Charges fixes mensuelles (€)</label><input type="number" id="${elId}-chargesFixes" value="${stored.chargesFixes}"></div>
+    </div>
+    <div id="${elId}-results"></div>`;
+
+  function readInputs(){
+    return {
+      prix: document.getElementById(`${elId}-prix`).value,
+      coutDirect: document.getElementById(`${elId}-coutDirect`).value,
+      cac: document.getElementById(`${elId}-cac`).value,
+      achatsMoyens: document.getElementById(`${elId}-achatsMoyens`).value,
+      chargesFixes: document.getElementById(`${elId}-chargesFixes`).value
+    };
+  }
+  function update(){
+    const a = readInputs();
+    safeSetJSON('fzr-unit-economics', a);
+    const r = computeUnitEconomics(a);
+    const ratioColor = r.ratioLtvCac === null ? 'var(--text-dim)' : r.ratioLtvCac >= 3 ? 'var(--emerald)' : r.ratioLtvCac >= 1 ? 'var(--gold-bright)' : 'var(--bordeaux)';
+    document.getElementById(`${elId}-results`).innerHTML = `
+      <div class="card" style="margin-bottom:14px;">
+        <span class="smallcaps">Ce que ces chiffres donnent, étape par étape</span>
+        <div class="result-row" style="justify-content:space-between;margin-top:10px;"><span>Marge brute par vente</span><span class="mono">${fmtEUR(r.margeBrute)}${r.margeBrutePct!==null ? ` (${r.margeBrutePct.toFixed(0)}%)` : ''}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>LTV (marge brute × achats moyens)</span><span class="mono">${fmtEUR(r.ltv)}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>Ratio LTV / CAC</span><span class="mono" style="color:${ratioColor};">${r.ratioLtvCac===null?'—':r.ratioLtvCac.toFixed(1)+'×'}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>Revenu total moyen par client</span><span class="mono">${fmtEUR(r.revenuTotalMoyen)}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>Ventes mensuelles au point mort</span><span class="mono">${r.seuilVentes===null?'—':r.seuilVentes}</span></div>
+      </div>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;">${renderDataBadge('avis')} Un ratio LTV/CAC autour de 3 est souvent cité comme un repère sain (voir la fiche « CAC » de la Bibliothèque) — un repère indicatif, jamais une règle universelle ni une garantie de rentabilité.</p>
+      <span class="smallcaps" style="display:block;margin-bottom:8px;">Sensibilité — que se passe-t-il si...</span>
+      <div class="card-grid">
+        <div class="card"><h4>CAC +20%</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Ratio LTV/CAC : <strong class="mono">${r.cac>0 ? (r.ltv/(r.cac*1.2)).toFixed(1)+'×' : '—'}</strong></p></div>
+        <div class="card"><h4>1 achat de moins par client</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">LTV : <strong class="mono">${fmtEUR(r.margeBrute * Math.max(0, r.achatsMoyens - 1))}</strong></p></div>
+      </div>`;
+  }
+  ['prix','coutDirect','cac','achatsMoyens','chargesFixes'].forEach(key => {
+    document.getElementById(`${elId}-${key}`).addEventListener('input', update);
+  });
+  update();
+  tryAwardQuizPoints(`unit-economics-${new Date().toDateString()}`, 5, {usedUnitEconomics:true});
 }
 
 // 30 secondes / 2 minutes / Approfondir — réutilise les champs déjà existants
