@@ -1,6 +1,6 @@
 /* ============================================================
    LIKANZA ACADEMY — Bibliothèque de Business Case Studies
-   7 cas réels et sourcés (succès, échec, pivot) dans une structure
+   12 cas réels et sourcés (succès, échec, pivot) dans une structure
    commune — pas 3 systèmes de contenu séparés pour Business Case
    Studies / Business Autopsy / Pivots, mais un seul tableau avec un
    champ `type` et des `tags` (problèmes réellement abordés par le
@@ -216,6 +216,141 @@ const BUSINESS_CASES = [
       "Tes clients reviendraient-ils suffisamment souvent pour qu'un modèle d'adhésion ou d'abonnement ait du sens ?",
       "As-tu déjà distingué, dans tes chiffres, ce qui te fait vraiment gagner de l'argent de ce qui attire simplement des clients ?"
     ]
+  },
+  {
+    id: 'apple',
+    entreprise: 'Apple',
+    icon: '🍎',
+    type: 'succes',
+    tags: ['differenciation', 'retention'],
+    secteur: 'Technologie — électronique grand public',
+    annee: '2024',
+    contexte: "Apple vend des smartphones, ordinateurs et objets connectés sur un marché où les caractéristiques techniques des produits concurrents se ressemblent de plus en plus.",
+    probleme: "Sur un marché où le matériel devient une commodité (les fiches techniques se valent), comment continuer à justifier un prix premium et fidéliser les clients sur la durée plutôt qu'à chaque achat isolé ?",
+    concurrence: "Les fabricants Android (Samsung en tête) et les fabricants d'ordinateurs proposent des produits aux caractéristiques techniques comparables, souvent à prix inférieur.",
+    strategie: "Apple intègre étroitement matériel, logiciel et services (App Store, iCloud, Apple Music, Apple Pay...), ce qui rend chaque appareil plus utile en présence des autres et augmente le coût perçu de tout quitter pour un autre écosystème.",
+    resultats: [
+      {texte: "Les revenus de services d'Apple (App Store, iCloud, Apple Music, Apple Pay, AppleCare...) ont atteint environ 85 milliards de dollars en 2024, en hausse depuis 81 milliards en 2023.", source: 'Apple Services Revenue Statistics (TechLila)', sourceUrl: 'https://www.techlila.com/apple-services-revenue-statistics/'},
+      {texte: "68% des utilisateurs d'iPhone possèdent au moins trois autres appareils Apple, et le taux de rétention client d'Apple atteint environ 92%, davantage que Google ou Samsung.", source: "Étude de cas sur la stratégie d'écosystème d'Apple (The CDO Times)", sourceUrl: 'https://cdotimes.com/2024/11/21/case-study-apples-ecosystem-strategy-building-loyalty-and-revenue-through-integration-and-innovation/'}
+    ],
+    limites: [
+      "L'effet d'écosystème est plus fort chez les utilisateurs qui possèdent déjà plusieurs appareils Apple — il ne se déclenche pas dès le premier achat, ce qui suppose un investissement initial du client.",
+      "Cette stratégie s'appuie sur des décennies d'innovation produit et une image de marque déjà établie ; la reproduire suppose des ressources qu'une jeune entreprise n'a en général pas.",
+      "L'intégration fermée entre produits est aussi critiquée (position dominante, difficulté à changer d'écosystème), ce qui expose Apple à des enquêtes réglementaires dans plusieurs pays."
+    ],
+    retenir: "La différenciation peut venir de la façon dont plusieurs produits ou services se renforcent mutuellement, plutôt que d'un seul produit isolé — mais cela demande du temps et des ressources pour se construire.",
+    appliqueQuestions: [
+      "Est-ce que ton offre a plusieurs éléments qui se renforcent mutuellement, ou est-ce un produit isolé facilement comparable à un concurrent ?",
+      "Qu'est-ce qui rendrait réellement coûteux, pour un client, de passer à un concurrent ?"
+    ]
+  },
+  {
+    id: 'starbucks',
+    entreprise: 'Starbucks',
+    icon: '☕',
+    type: 'succes',
+    tags: ['differenciation', 'retention'],
+    secteur: 'Restauration — café',
+    annee: '2025',
+    contexte: "Starbucks vend un produit facilement reproductible (du café) dans un secteur où de nombreux concurrents proposent une boisson comparable à prix inférieur.",
+    probleme: "Comment vendre un produit banal à un prix premium de façon durable, et que se passe-t-il si l'exécution de la différenciation se dégrade avec le temps ?",
+    concurrence: "Chaînes de restauration rapide avec offre café (McDonald's McCafé), chaînes concurrentes (Dunkin'), cafés indépendants locaux.",
+    strategie: "Starbucks construit son positionnement autour du concept de « troisième lieu » (ni la maison ni le travail) : expérience de marque standardisée dans le monde entier, ambiance et service plutôt que le café seul justifient le prix.",
+    resultats: [
+      {texte: "Après plusieurs trimestres de recul, la stratégie « Back to Starbucks » lancée par le CEO Brian Niccol a permis une croissance des ventes comparables de 7,9% au 4e trimestre fiscal 2025 (contre 5,7% attendu par les analystes) — la première hausse en sept trimestres.", source: 'Starbucks stock pops as efforts to revive third place pay off (Yahoo Finance)', sourceUrl: 'https://finance.yahoo.com/markets/stocks/article/starbucks-stock-pops-as-efforts-to-revive-third-place-pay-off-2026-outlook-improves-154557895.html'},
+      {texte: "Le revenu du 4e trimestre fiscal 2025 a atteint 9,3 milliards de dollars, au-dessus des 9,2 milliards attendus par les marchés.", source: 'Starbucks stock pops as efforts to revive third place pay off (Yahoo Finance)', sourceUrl: 'https://finance.yahoo.com/markets/stocks/article/starbucks-stock-pops-as-efforts-to-revive-third-place-pay-off-2026-outlook-improves-154557895.html'}
+    ],
+    limites: [
+      "Les ventes comparables avaient reculé pendant plusieurs trimestres avant ce redressement — la stratégie « troisième lieu » s'était érodée dans l'exécution quotidienne (rapidité de service priorisée au détriment de l'ambiance) avant d'être consciemment relancée.",
+      "Un redressement sur un trimestre ne prouve pas encore une tendance durable ; les résultats ultérieurs restent à confirmer.",
+      "Cette stratégie suppose des coûts d'exploitation plus élevés (personnel, aménagement des magasins) qu'une chaîne purement low-cost."
+    ],
+    retenir: "Une proposition de valeur fondée sur l'expérience doit être défendue activement dans l'exécution quotidienne — elle peut s'éroder discrètement si l'entreprise privilégie d'autres priorités (ici la vitesse), même sans changer son discours marketing.",
+    appliqueQuestions: [
+      "Est-ce que ton « expérience client » est vraiment vécue à chaque visite, ou seulement affichée dans ta communication ?",
+      "Qu'est-ce qui pourrait éroder discrètement ta différenciation dans le temps si tu n'y fais pas attention ?"
+    ]
+  },
+  {
+    id: 'shopify',
+    entreprise: 'Shopify',
+    icon: '🛍️',
+    type: 'succes',
+    tags: ['business-model', 'croissance'],
+    secteur: 'Technologie — infrastructure e-commerce (SaaS)',
+    annee: '2023',
+    contexte: "Shopify fournit l'infrastructure technique permettant à des commerçants, petits ou grands, d'ouvrir une boutique en ligne sans compétences techniques ni gros budget de départ.",
+    probleme: "Un modèle d'abonnement fixe classique ne capte pas la valeur créée quand un marchand réussit très bien à vendre — le prestataire technique reste plafonné même si son client explose.",
+    concurrence: "Autres solutions e-commerce (WooCommerce, BigCommerce, Magento) et marketplaces qui captent directement la vente (Amazon).",
+    strategie: "Shopify combine un abonnement mensuel (accès à la plateforme) et des « solutions marchands » proportionnelles au volume vendu (paiement, expédition...) — le revenu de Shopify croît directement avec le succès de ses marchands.",
+    resultats: [
+      {texte: "En 2023, Shopify a généré environ 7,06 milliards de dollars de revenu (en hausse depuis 5,6 milliards en 2022), dont 26% issus des abonnements et 74% des solutions marchands.", source: 'Shopify Business Model 2024 (FourWeekMBA)', sourceUrl: 'https://fourweekmba.com/shopify-business-model/'},
+      {texte: "Sur les 9 premiers mois de 2023, la plateforme a facilité 160,8 milliards de dollars de volume de vente marchand (GMV), en hausse de 18% sur un an.", source: 'Shopify Inc. — Form 6-K FY2023 (SEC)', sourceUrl: 'https://www.sec.gov/Archives/edgar/data/1594805/000159480524000039/yearinreview.htm'}
+    ],
+    limites: [
+      "Le revenu de Shopify est directement exposé aux cycles économiques de ses marchands : si eux vendent moins, Shopify gagne mécaniquement moins aussi.",
+      "La plupart des marchands paient moins de 50$/mois d'abonnement — l'essentiel de la rentabilité vient du volume agrégé de très nombreux petits marchands, pas d'un abonnement élevé par client.",
+      "Des solutions tout-en-un moins chères peuvent attirer les tout premiers commerçants avant qu'ils n'atteignent une taille justifiant Shopify."
+    ],
+    retenir: "Un modèle où le prestataire gagne davantage quand son client réussit (plutôt qu'un abonnement fixe seul) aligne les intérêts des deux parties, mais expose aussi le prestataire aux mêmes cycles économiques que ses clients.",
+    appliqueQuestions: [
+      "Est-ce que tu gagnes plus quand tes clients réussissent, ou ton revenu est-il totalement décorrélé de leur succès ?",
+      "Que se passerait-il pour ton revenu si tes clients vendaient 20% de moins du jour au lendemain ?"
+    ]
+  },
+  {
+    id: 'airbnb',
+    entreprise: 'Airbnb',
+    icon: '🏠',
+    type: 'succes',
+    tags: ['effet-reseau', 'premiers-clients'],
+    secteur: 'Technologie — marketplace de l\'hébergement',
+    annee: '2024',
+    contexte: "Airbnb met en relation des particuliers qui louent leur logement (hôtes) avec des voyageurs, sur un marché où l'hébergement se faisait jusque-là presque exclusivement via des hôtels.",
+    probleme: "Un marketplace a besoin des deux côtés (hôtes ET voyageurs) pour avoir de la valeur, et doit résoudre un problème de confiance inédit : accepter de dormir chez un inconnu, ou d'héberger un inconnu chez soi.",
+    concurrence: "Hôtellerie traditionnelle, autres plateformes de location (VRBO/HomeAway), hébergement informel non structuré.",
+    strategie: "Airbnb a construit des mécanismes de confiance (avis bidirectionnels hôte/voyageur, paiement sécurisé, messagerie, assistance) qui ont permis un effet réseau où une partie des voyageurs deviennent eux-mêmes hôtes par la suite.",
+    resultats: [
+      {texte: "36% des hôtes d'Airbnb ont d'abord été des voyageurs sur la plateforme, un signe concret de l'effet réseau qui alimente à la fois l'offre et la demande.", source: 'Airbnb Revenues Benefit From Network Effects (PYMNTS)', sourceUrl: 'https://www.pymnts.com/earnings/2023/airbnb-sees-network-effect-as-36-of-hosts-are-prior-guests/'},
+      {texte: "En 2024, Airbnb a généré environ 11,1 milliards de dollars de revenus (+11,95% sur un an), avec plus de 8 millions d'annonces actives et plus de 5 millions d'hôtes dans le monde.", source: 'Airbnb Statistics (Dataopedia)', sourceUrl: 'https://dataopedia.com/airbnb-statistics/'}
+    ],
+    limites: [
+      "Ce modèle dépend fortement de la réglementation locale : de nombreuses villes limitent ou interdisent la location de courte durée, ce qui peut retirer une partie de l'offre du jour au lendemain.",
+      "La confiance construite reste fragile : un incident grave largement médiatisé peut nuire à la réputation de toute la plateforme, pas seulement d'un hôte.",
+      "Démarrer un marketplace demande d'attirer les deux côtés en même temps, souvent avec des moyens limités au début — une phase difficile qu'Airbnb a mis du temps à dépasser."
+    ],
+    retenir: "Dans un marketplace à deux faces, résoudre le problème de confiance entre inconnus peut être un avantage aussi déterminant que le produit lui-même.",
+    appliqueQuestions: [
+      "Si ton idée nécessite deux côtés (offre et demande), lequel des deux est le plus difficile à attirer en premier ?",
+      "Comment pourrais-tu construire de la confiance entre des inconnus dans ton propre projet ?"
+    ]
+  },
+  {
+    id: 'wework',
+    entreprise: 'WeWork',
+    icon: '🏢',
+    type: 'echec',
+    tags: ['financement', 'rentabilite', 'croissance'],
+    secteur: 'Immobilier — espaces de coworking',
+    annee: '2019',
+    contexte: "WeWork louait des immeubles de bureaux à long terme puis les relouait en espaces flexibles à court terme, valorisée 47 milliards de dollars par des investisseurs privés (dont SoftBank) avant sa tentative d'entrée en bourse (IPO) en 2019.",
+    probleme: "Une croissance très rapide, financée par du capital-risque, sans rentabilité claire ni gouvernance équilibrée — un problème resté invisible tant que l'entreprise restait privée.",
+    concurrence: "Espaces de coworking classiques (Regus/IWG), marché de l'immobilier de bureau traditionnel.",
+    strategie: "WeWork a cherché à se faire valoriser comme une entreprise technologique à forte croissance plutôt que comme une société immobilière classique, pour justifier une valorisation bien supérieure à ses fondamentaux financiers.",
+    resultats: [
+      {texte: "Le dépôt du document S-1 (14 août 2019), obligatoire avant une entrée en bourse, a révélé une perte nette de 1,9 milliard de dollars pour un revenu de 1,8 milliard en 2018 — des chiffres qui ont immédiatement refroidi de nombreux investisseurs institutionnels.", source: 'WeWork IPO Failure: Causes, Collapse, and Aftermath (iDeals VDR)', sourceUrl: 'https://www.idealsvdr.com/blog/deals/need-know-wework-ipo-postponement/'},
+      {texte: "La valorisation envisagée pour l'IPO est tombée d'environ 47 milliards de dollars à 10-15 milliards en quelques semaines ; le fondateur Adam Neumann a démissionné de son poste de CEO le 24 septembre 2019, et l'IPO a été suspendue mi-octobre 2019. L'entreprise a déposé le bilan (Chapter 11) en 2023.", source: 'The WeWork Collapse: Governance Failures (Directors Institute)', sourceUrl: 'https://www.directors-institute.com/post/the-wework-collapse-governance-failures-founder-control-lessons-learned/'}
+    ],
+    limites: [
+      "Des actions à droit de vote multiple donnaient au fondateur une majorité de contrôle malgré une part minoritaire du capital — une structure de gouvernance qui ne se retrouve pas dans toutes les levées de fonds agressives.",
+      "Toutes les startups en forte croissance financées par du capital-risque ne connaissent pas cet effondrement ; les circonstances propres à WeWork (conflits d'intérêts du fondateur, absentéisme de contrôle du conseil) ont aggravé une situation déjà fragile.",
+      "L'échec a été révélé au moment précis de l'examen public (le S-1), pas nécessairement avant — ce qui pose la question de ce qui reste invisible tant qu'une entreprise privée n'est pas soumise à cette transparence."
+    ],
+    retenir: "Une croissance rapide financée par du capital sans rentabilité claire peut sembler être un succès jusqu'à ce que les investisseurs — ou le public, lors d'une IPO — examinent réellement les chiffres et la gouvernance.",
+    appliqueQuestions: [
+      "Est-ce que ta croissance actuelle est rentable, ou financée par un capital qui devra un jour être justifié ou remboursé ?",
+      "Qui détient le pouvoir de décision dans ton projet, et cet équilibre te semble-t-il sain ?"
+    ]
   }
 ];
 
@@ -239,5 +374,6 @@ const BUSINESS_CASE_TAG_LABELS = {
   'rentabilite': "Pas rentable",
   'business-model': 'Changer de modèle économique',
   'croissance': 'Se développer',
-  'financement': 'Financer sa croissance'
+  'financement': 'Financer sa croissance',
+  'effet-reseau': "Démarrer un marketplace / effet réseau"
 };

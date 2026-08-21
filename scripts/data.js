@@ -3038,6 +3038,41 @@ function renderBusinessNiveau(elId){
     <div style="margin-top:14px;">${ctaHtml}</div>`;
 }
 
+// ---------- Ta progression sur les outils de raisonnement Business (cas,
+// modèles, problèmes, Unit Economics, idée en cours) : jamais un pourcentage
+// inventé, uniquement des comptes réels tirés de fzr-xp-repeat-counts (clé
+// permanente écrite par tryAwardQuizPoints, contrairement au ledger du jour
+// utilisé pour l'anti-farming) et de fzr-business-project. ----------
+function renderBusinessToolsProgress(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const claimedIds = Object.keys(getXPRepeatCounts());
+  const casesStudied = claimedIds.filter(id => id.startsWith('business-case-')).length;
+  const modelsStudied = claimedIds.filter(id => id.startsWith('business-model-')).length;
+  const problemsExplored = claimedIds.filter(id => id.startsWith('business-problem-')).length;
+  const unitEconomicsUsed = claimedIds.some(id => id.startsWith('unit-economics-'));
+  const projectAnswers = safeGetJSON('fzr-business-project', {});
+  const ideaInProgress = Object.values(projectAnswers).some(v => (typeof v === 'string' ? v.trim() : v));
+
+  const casesTotal = (typeof BUSINESS_CASES !== 'undefined') ? BUSINESS_CASES.length : null;
+  const modelsTotal = (typeof BUSINESS_MODELS !== 'undefined') ? BUSINESS_MODELS.length : null;
+  const problemsTotal = (typeof BUSINESS_PROBLEMS !== 'undefined') ? BUSINESS_PROBLEMS.length : null;
+
+  const rows = [];
+  if(casesTotal !== null) rows.push({label:'Cas réels étudiés', value:`${casesStudied}/${casesTotal}`, href:'business-cases.html'});
+  if(modelsTotal !== null) rows.push({label:'Modèles économiques explorés', value:`${modelsStudied}/${modelsTotal}`, href:'business-cases.html'});
+  if(problemsTotal !== null) rows.push({label:'Problèmes explorés', value:`${problemsExplored}/${problemsTotal}`, href:'business-lab.html#business-probleme'});
+  rows.push({label:'Unit Economics testé', value: unitEconomicsUsed ? 'Oui' : 'Pas encore', href:'business-lab.html'});
+  rows.push({label:'Idée en cours de construction', value: ideaInProgress ? 'Oui' : 'Pas encore', href:'construire-son-projet.html'});
+
+  const allZero = casesStudied === 0 && modelsStudied === 0 && problemsExplored === 0 && !unitEconomicsUsed && !ideaInProgress;
+
+  el.innerHTML = `
+    <span class="smallcaps">Ta progression Business</span>
+    ${allZero ? `<p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Tu n'as pas encore commencé — <a href="business-cases.html" style="color:var(--gold-bright);">explore un premier cas réel</a> pour démarrer.</p>` : `
+    <div style="margin-top:10px;">${rows.map(r => `<a href="${r.href}" class="panel-row" style="text-decoration:none;color:inherit;"><span>${r.label}</span><span class="val mono">${r.value}</span></a>`).join('')}</div>`}`;
+}
+
 // ---------- Cas recommandé pour toi (Business) : même logique que
 // renderRecommandePourToi (Défis), restreinte au périmètre déjà utilisé par
 // "Ton niveau" (BUSINESS_SKILL_CATEGORIES) — pas une nouvelle taxonomie,

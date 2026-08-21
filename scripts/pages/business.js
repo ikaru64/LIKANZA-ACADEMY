@@ -85,23 +85,24 @@ renderTopicWidget('businessImmobilier', {
 
 renderTopicWidget('businessMarketing', {
   title: 'Marketing',
-  intro: "Se faire connaître et convaincre : les leviers pour attirer des clients et les convertir, sans dépenser au hasard.",
+  intro: "Se faire connaître et convaincre : le funnel complet, de l'attention au client fidèle, avec les métriques réelles.",
   terms: ['Proposition de valeur', 'Acquisition', 'SEO', 'Contenu (marketing de contenu)', 'Réseaux sociaux (marketing)', 'Publicité', 'Email marketing', 'CAC', 'Taux de conversion', 'Rétention', 'Branding'],
-  ctaLabel: "Voir tout le vocabulaire Business →",
-  ctaHref: 'bibliotheque.html#theme:Business'
+  ctaLabel: "Explorer le funnel marketing →",
+  ctaHref: 'marketing.html'
 });
 
 renderTopicWidget('businessClients', {
   title: 'Clients',
-  intro: "Comprendre qui on sert vraiment : le socle de toute proposition de valeur solide.",
+  intro: "Comprendre qui on sert vraiment : segmentation, persona, objections, fidélisation — le socle de toute proposition de valeur solide.",
   terms: ['Client idéal', 'Persona', 'Segmentation', 'Niche', 'Objections (commerciales)', 'B2B et B2C', 'LTV'],
-  ctaLabel: "Voir tout le vocabulaire Business →",
-  ctaHref: 'bibliotheque.html#theme:Business'
+  ctaLabel: "Explorer le guide Clients →",
+  ctaHref: 'clients.html'
 });
 
 renderConceptLevels('businessLevelPib', 'PIB (Produit intérieur brut)');
 renderConceptLevels('businessLevelTaux', "Taux d'intérêt directeur");
 renderConceptLevels('businessLevelLevier', "Effet de levier");
+renderBusinessToolsProgress('businessToolsProgress');
 renderBusinessQuestionDuJour('businessQuestion');
 renderBusinessCasRecommande('businessCasRecommande');
 renderBusinessNiveau('businessNiveau');

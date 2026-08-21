@@ -53,7 +53,7 @@ const BUSINESS_MODELS = [
     coutsPrincipaux: ["Attirer et retenir suffisamment de vendeurs ET d'acheteurs pour équilibrer l'offre et la demande", "Modération et confiance entre les deux parties"],
     risques: ["Le démarrage (attirer les deux côtés à la fois) est souvent la phase la plus difficile — voir la notion d'effet réseau"],
     pertinence: "Pertinent quand il existe déjà de nombreux vendeurs et acheteurs dispersés, que la plateforme peut regrouper plus efficacement qu'ils ne le feraient seuls.",
-    caseId: null
+    caseId: 'airbnb'
   },
   {
     id: 'commission', nom: 'Commission sur transaction', icon: '💳',
@@ -64,7 +64,7 @@ const BUSINESS_MODELS = [
     coutsPrincipaux: ["Infrastructure de paiement et de sécurisation des transactions", "Support en cas de litige entre les parties"],
     risques: ["Dépend fortement du volume de transactions : une baisse d'activité du marché sous-jacent impacte directement le revenu"],
     pertinence: "Pertinent quand l'entreprise facilite réellement une transaction (paiement, mise en relation) plutôt que de vendre un produit propre.",
-    caseId: null
+    caseId: 'shopify'
   },
   {
     id: 'ecommerce', nom: 'E-commerce', icon: '📦',
