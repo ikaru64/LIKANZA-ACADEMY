@@ -5,8 +5,10 @@
    et plusieurs widgets qui réutilisent la vraie progression déjà
    existante (renderBusinessResume/renderBusinessNiveau/
    renderBusinessQuestionDuJour/renderBusinessCasRecommande/
-   renderBusinessLab/renderConceptLevels/renderTopicWidget,
-   tous dans scripts/data.js). L'actualité économique/entreprises réelle
+   renderConceptLevels/renderTopicWidget, tous dans scripts/data.js).
+   Business Lab et « J'ai un problème » vivent sur business-lab.html
+   (porte « Résoudre un problème »), pas ici, pour garder ce hub court.
+   L'actualité économique/entreprises réelle
    vit uniquement sur actualites.html (pas de duplication ici, juste un
    lien de renvoi). Aucune donnée inventée : en cas d'échec,
    dégradation silencieuse avec un message clair, jamais un contenu
@@ -102,8 +104,5 @@ renderConceptLevels('businessLevelTaux', "Taux d'intérêt directeur");
 renderConceptLevels('businessLevelLevier', "Effet de levier");
 renderBusinessQuestionDuJour('businessQuestion');
 renderBusinessCasRecommande('businessCasRecommande');
-renderBusinessLab('businessLab');
-renderBusinessProblemFinder('businessProblems');
 renderBusinessNiveau('businessNiveau');
-renderBusinessStories('businessStories');
 renderBusinessProfile('businessProfile');

@@ -1,0 +1,2 @@
+renderBusinessLab('businessLab');
+renderBusinessProblemFinder('businessProblems');

@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Business · Likanza Academy</title>
-<meta name="description" content="Entreprise, immobilier et économie : indicateurs en direct, actualité et notions clés pour comprendre et construire un business.">
-<meta property="og:title" content="Business · Likanza Academy">
-<meta property="og:description" content="Entreprise, immobilier et économie : indicateurs en direct, actualité et notions clés pour comprendre et construire un business.">
+<title>Business Lab · Likanza Academy</title>
+<meta name="description" content="Des outils pour raisonner sur un problème business : décisions rapides, cas chiffrés, calculateur Unit Economics, et un guide par problème courant.">
+<meta property="og:title" content="Business Lab · Likanza Academy">
+<meta property="og:description" content="Des outils pour raisonner sur un problème business : décisions rapides, cas chiffrés, calculateur Unit Economics, et un guide par problème courant.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://likanza-academy.vercel.app/business.html">
+<meta property="og:url" content="https://likanza-academy.vercel.app/business-lab.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -76,111 +76,31 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Business</div>
-<h1 class="visually-hidden">Business</h1>
-<div id="levelTip" style="max-width:720px;margin:14px auto 0;padding:0 24px;"></div>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / <a href="business.html">Business</a> / Business Lab</div>
+<h1 class="visually-hidden">Business Lab</h1>
 
 <section class="section" style="padding-bottom:0;">
-  <div class="section-head"><h2>Construis ta culture business</h2><span class="meta-line">immobilier, marketing &amp; clients</span></div>
-  <div class="card" style="max-width:720px;">
-    <p style="color:var(--text-dim);font-size:14px;line-height:1.6;">Investir dans l'immobilier, se faire connaître ou comprendre à qui l'on s'adresse : entreprendre demande les mêmes bases, quel que soit le projet.</p>
-    <ul class="business-hero-questions">
-      <li>Comment estimer le rendement réel d'un investissement locatif ?</li>
-      <li>Comment attirer des clients sans dépenser au hasard ?</li>
-      <li>Qui est vraiment mon client idéal ?</li>
-    </ul>
-    <div style="display:flex;gap:10px;flex-wrap:wrap;">
-      <a href="#business-explorer" class="btn btn-gold">Explorer les 3 piliers</a>
-      <a href="jeu-business.html" class="btn btn-sm">🎮 Jouer au Business Game</a>
-    </div>
+  <div class="section-head"><h2>🧠 Résoudre un problème</h2><span class="meta-line">des outils pour raisonner, pas des réponses toutes faites</span></div>
+</section>
+
+<section class="section" id="business-lab">
+  <div class="section-head"><h2>🧪 Business Lab</h2><span class="meta-line">des mises en situation, pas juste des définitions</span></div>
+  <div class="card-grid" id="businessLab"></div>
+  <div id="businessLab-session" style="margin-top:18px;"></div>
+</section>
+
+<section class="section" id="business-probleme" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
+  <div class="section-head"><h2>🧭 J'ai un problème</h2><span class="meta-line">choisis ce qui te bloque, pas une recette magique</span></div>
+  <div class="card" style="max-width:none;">
+    <div id="businessProblems"></div>
   </div>
-</section>
-
-<section class="section" id="business-portes">
-  <div class="section-head"><h2>Par où commencer ?</h2><span class="meta-line">4 façons d'entrer dans le Business, choisis celle qui correspond à ton besoin</span></div>
-  <div class="card-grid">
-    <a href="construire-son-projet.html" class="card play-tile">
-      <span class="icon" style="color:var(--gold-bright);">🚀</span>
-      <h3 style="margin:10px 0 6px;">Construire mon idée</h3>
-      <p>Un parcours guidé de ton problème jusqu'à ta fiche projet : client, marché, concurrence, chiffres, diagnostic.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Commencer →</span></div>
-    </a>
-    <a href="business-lab.html" class="card play-tile">
-      <span class="icon" style="color:var(--gold-bright);">🧠</span>
-      <h3 style="margin:10px 0 6px;">Résoudre un problème</h3>
-      <p>Trop de concurrence, pas rentable, CAC trop cher... choisis ce qui te bloque et explore des pistes concrètes.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Explorer →</span></div>
-    </a>
-    <a href="business-cases.html" class="card play-tile">
-      <span class="icon" style="color:var(--gold-bright);">🏢</span>
-      <h3 style="margin:10px 0 6px;">Décoder un business</h3>
-      <p>De vraies entreprises, sourcées et décomposées, et les modèles économiques derrière elles.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Découvrir →</span></div>
-    </a>
-    <a href="jeu-business.html" class="card play-tile">
-      <span class="icon" style="color:var(--gold-bright);">🎮</span>
-      <h3 style="margin:10px 0 6px;">Prendre des décisions</h3>
-      <p>Gère ton propre business dans le Business Game : chaque choix a de vraies conséquences, pas de fin scriptée.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Jouer →</span></div>
-    </a>
-  </div>
-</section>
-
-<section class="section" style="padding-bottom:0;">
-  <div class="business-resume" id="businessResume" style="max-width:720px;"></div>
-</section>
-
-<section class="section" id="business-explorer">
-  <div class="section-head"><h2>🧠 Explorer — les 3 piliers</h2><span class="meta-line">immobilier, marketing, clients</span></div>
-  <div class="card-grid">
-    <div class="card" id="businessImmobilier"></div>
-    <div class="card" id="businessMarketing"></div>
-    <div class="card" id="businessClients"></div>
-  </div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>🔥 À explorer aujourd'hui</h2><span class="meta-line">une sélection qui se renouvelle</span></div>
-  <div class="card-grid">
-    <div class="card" style="border-color:var(--gold);" id="businessQuestion"></div>
-    <div class="card" id="businessCasRecommande"></div>
-    <div class="card" id="businessLevelPib"></div>
-    <div class="card" id="businessLevelTaux"></div>
-    <div class="card" id="businessLevelLevier"></div>
-  </div>
-</section>
-
-<section class="section" id="business-profil" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
-  <div class="section-head"><h2>📊 Ton profil business</h2><span class="meta-line">basé sur tes vraies parties du Business Game, jamais sur une seule</span></div>
-  <div class="card" style="max-width:720px;">
-    <div id="businessProfile"></div>
-  </div>
-  <p style="max-width:720px;margin-top:14px;font-size:13px;color:var(--text-dim);">Le Business Game se joue depuis <a href="play.html" style="color:var(--gold-bright);">Play</a>.</p>
-</section>
-
-<section class="section" id="business-indicateurs" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
-  <div class="section-head"><h2>Ton niveau &amp; indicateurs en direct</h2><span class="meta-line">ta progression réelle, cotations différées jamais temps réel</span></div>
-  <div class="card-grid">
-    <div class="card" id="businessNiveau"></div>
-    <div class="business-featured-rate" id="businessRateCard"></div>
-    <div class="card"><div id="businessIndicators"></div></div>
-  </div>
-</section>
-
-<section class="section" style="background:var(--bg-alt);border-bottom:1px solid var(--hairline);">
-  <a href="actualites.html" class="card play-tile" style="max-width:720px;">
-    <span class="icon" data-icon="newspaper" style="color:var(--gold-bright);"></span>
-    <h3 style="margin:10px 0 6px;">Actualité entreprises &amp; économie</h3>
-    <p>Synthèse hebdomadaire réelle, avec sources — dans Actualités, catégories « Entreprises » et « Économie ».</p>
-    <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-  </a>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
-    <div><h4>Explorer</h4><ul><li><a href="immobilier.html">Immobilier</a></li><li><a href="bourse.html">Bourse</a></li></ul></div>
-    <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
+    <div><h4>Apprendre</h4><ul><li><a href="formations.html">Formations</a></li><li><a href="bibliotheque.html">Bibliothèque</a></li></ul></div>
+    <div><h4>Business</h4><ul><li><a href="business.html">Retour à Business</a></li><li><a href="construire-son-projet.html">Construire mon idée</a></li><li><a href="business-cases.html">Décoder un business</a></li><li><a href="jeu-business.html">Business Game</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
   <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
@@ -190,9 +110,10 @@
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/historical-data.js"></script>
-<script src="scripts/games/business-game-data.js"></script>
-<script src="scripts/games/business-game.js"></script>
-<script src="scripts/pages/business.js"></script>
+<script src="scripts/games/business-cases-data.js"></script>
+<script src="scripts/games/business-problems-data.js"></script>
+<script src="scripts/games/business-problems.js"></script>
+<script src="scripts/pages/business-lab-page.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>

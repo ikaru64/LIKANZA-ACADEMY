@@ -3309,7 +3309,7 @@ function renderBusinessProfile(elId){
   if(avgDecisions > 0 && avgDecisions < 6){
     recommendations.push({title:'Business Strategy', desc:"Tes parties se terminent souvent tôt — l'outil d'analyse de projet peut t'aider à préparer un budget et une stratégie avant de rejouer.", href:'construire-son-projet.html'});
   }
-  recommendations.push({title:'Business Cases', desc:"Continue à t'entraîner sur des mises en situation courtes dans le Business Lab.", href:'business.html#business-lab'});
+  recommendations.push({title:'Business Cases', desc:"Continue à t'entraîner sur des mises en situation courtes dans le Business Lab.", href:'business-lab.html'});
 
   el.innerHTML = `
     <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Basé sur tes ${history.length} dernières parties du Business Game — jamais sur une seule partie isolée.</p>
