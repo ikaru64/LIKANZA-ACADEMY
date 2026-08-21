@@ -304,7 +304,8 @@ async function renderActionDetail(){
               <p style="margin-top:8px;">${renderDataBadge('fait')}</p>
               <div id="whyPER" style="margin-top:10px;"></div>
               <div id="whyDividend" style="margin-top:6px;"></div>
-              <div id="whyROE" style="margin-top:6px;"></div>`;
+              <div id="whyROE" style="margin-top:6px;"></div>
+              ${typeof ff.dividendYield === 'number' ? `<p style="margin-top:12px;"><a href="dividende.html#${encodeURIComponent(ticker)}" style="color:var(--gold-bright);font-size:12.5px;">💰 Voir l'analyse complète des dividendes →</a></p>` : ''}`;
             renderWhyDrawer('whyPER', {fieldKey: 'trailingPE', companySymbol: ticker});
             renderWhyDrawer('whyDividend', {fieldKey: 'dividendYield', companySymbol: ticker});
             renderWhyDrawer('whyROE', {fieldKey: 'returnOnEquity', companySymbol: ticker});

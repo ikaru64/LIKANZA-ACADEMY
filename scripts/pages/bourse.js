@@ -5,8 +5,7 @@ const BOURSE_TABS = [
   {id:'tab-screener', title:'Filtrer', desc:'Parmi tes valeurs suivies', icon:'search'},
   {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale'},
   {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
-  {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
-  {id:'tab-dividendes', title:'Dividendes', desc:'Rendement + réinvestissement', icon:'coins'}
+  {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
@@ -142,6 +141,10 @@ const CRITERIA_ADV = [
   {key:'profitMargins', label:'Marge nette', source:'fundamentals', higherBetter:true},
   {key:'returnOnEquity', label:'ROE', source:'fundamentals', higherBetter:true},
   {key:'evToEbitda', label:'EV/EBITDA', source:'fundamentals', higherBetter:false},
+  // Dividend Intelligence : un payout ratio plus bas laisse en général plus
+  // de marge de manœuvre à l'entreprise pour maintenir ou augmenter son
+  // dividende — voir l'analyse complète (dividende.html) pour le détail.
+  {key:'payoutRatio', label:'Payout ratio', source:'fundamentals', higherBetter:false},
 ];
 
 function getFundamentalsFields(ticker){
@@ -619,57 +622,6 @@ function updateDcaVsLump(){
 [dcaTotalEl].forEach(el=>el.addEventListener('input', updateDcaVsLump));
 dcaPricesRowsEl.addEventListener('input', updateDcaVsLump);
 
-// ---------- Simulateur de dividendes ----------
-// Ouvert à toute valeur suivie (même logique que Scénarios ci-dessus).
-const divSelect = document.getElementById('divStock');
-function renderDivSelect(){
-  const previous = divSelect.value;
-  divSelect.innerHTML = getFollowedStocks().map(entry => {
-    const s = resolveFollowedStock(entry.symbol);
-    return `<option value="${entry.symbol}">${s.nom}</option>`;
-  }).join('');
-  if(previous && getFollowedStocks().some(e => e.symbol === previous)) divSelect.value = previous;
-}
-renderDivSelect();
-const divGrowthEl = document.getElementById('divGrowth'), divYearsEl = document.getElementById('divYears'), divReinvestEl = document.getElementById('divReinvest');
-function updateDividend(){
-  document.getElementById('valDivGrowth').textContent = divGrowthEl.value + ' %';
-  document.getElementById('valDivYears').textContent = divYearsEl.value + ' ans';
-  const symbol = divSelect.value || (getFollowedStocks()[0] && getFollowedStocks()[0].symbol);
-  if(!symbol) return;
-  const stock = resolveFollowedStock(symbol);
-  const resultEl = document.getElementById('divResult');
-  const ff = getFundamentalsFields(stock.ticker);
-  if(!ff || typeof ff.dividendYield !== 'number' || typeof stock.prix !== 'number'){
-    resultEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (rendement du dividende réel ou cours indisponible pour ${stock.nom}).</p>`;
-    document.getElementById('divChart').innerHTML = ''; document.getElementById('divChartLabels').innerHTML = '';
-    return;
-  }
-  const growth = +divGrowthEl.value/100;
-  const years = +divYearsEl.value;
-  const reinvest = divReinvestEl.checked;
-  let shareValue = stock.prix;
-  let shares = 1;
-  let cumDividends = 0;
-  const series = [shareValue*shares];
-  for(let y=1;y<=years;y++){
-    const yieldRate = ff.dividendYield * Math.pow(1+growth, y-1);
-    const dividendPaid = shareValue * shares * yieldRate;
-    cumDividends += dividendPaid;
-    if(reinvest) shares += dividendPaid/shareValue;
-    series.push(shareValue*shares + (reinvest?0:cumDividends));
-  }
-  const finalValue = series[series.length-1];
-  resultEl.innerHTML = `
-    <div class="result-label">Valeur totale estimée après ${years} an(s)</div>
-    <div class="result-big">${fmtEUR(finalValue)}</div>
-    <div class="result-row"><span>Dividendes cumulés : ${fmtEUR(cumDividends)}</span><span>Mode : ${reinvest?'réinvestis':'encaissés'}</span></div>
-    <p style="margin-top:6px;">${renderDataBadge('fait')} Rendement de départ : ${formatFundamentalValue('dividendYield', ff.dividendYield)}</p>`;
-  renderBarChart('divChart','divChartLabels', series, years);
-}
-[divGrowthEl, divYearsEl, divReinvestEl].forEach(el=>el.addEventListener('input', updateDividend));
-divSelect.addEventListener('change', updateDividend);
-
 // ---------- Marché du jour : hausses / baisses / sélection ----------
 let marketOfDayView = 'hausses';
 document.querySelectorAll('[data-mjtab]').forEach(btn=>{
@@ -822,8 +774,6 @@ function refreshAllStockViews(){
   renderScenSelect();
   renderAnalystScenarios();
   updateScenario();
-  renderDivSelect();
-  updateDividend();
   renderMarketOfDay();
   renderMarketMovers();
   renderScreener();
@@ -886,9 +836,9 @@ function loadCustomQuotesForGrid(list){
         const trendEl = document.getElementById(`trend-${q.symbol}`);
         if(trendEl) trendEl.innerHTML = renderTrendHtml(computeTrendIndicator(q.history));
       });
-      // Une fois les cotations en cache, le Comparateur/Scénarios/Dividendes
-      // peuvent afficher un vrai prix pour ces valeurs (pas seulement la grille).
-      if(appliedAny){ renderCompare(); renderAnalystScenarios(); updateScenario(); updateDividend(); renderScreener(); }
+      // Une fois les cotations en cache, le Comparateur/Scénarios peuvent
+      // afficher un vrai prix pour ces valeurs (pas seulement la grille).
+      if(appliedAny){ renderCompare(); renderAnalystScenarios(); updateScenario(); renderScreener(); }
     })
     .catch(err=>{
       console.info('Likanza Academy — cours en direct indisponibles pour les actions suivies :', err.message);

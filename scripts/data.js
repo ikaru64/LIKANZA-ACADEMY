@@ -3535,6 +3535,31 @@ async function fetchSymbolMonthlyHistory(symbol, range){
   return points;
 }
 
+// ---------- Dividend Intelligence : historique mensuel + dividendes réels,
+// convertis en EUR pour les valeurs cotées en USD — même conversion mois par
+// mois que fetchSymbolMonthlyHistory ci-dessus (jamais un taux unique
+// appliqué à toute la période, ni pour le cours ni pour le dividende). Un
+// seul appel réseau (events=div ajouté à la même requête chart déjà
+// utilisée). dividends: [] si l'entreprise n'en verse pas — jamais une erreur.
+async function fetchSymbolMonthlyHistoryWithDividends(symbol, range){
+  const resp = await fetch('/api/custom-quotes?symbols=' + encodeURIComponent(symbol) + '&range=' + (range || '10y') + '&interval=1mo&events=div');
+  if(!resp.ok) throw new Error('HTTP ' + resp.status);
+  const payload = await resp.json();
+  const q = (payload.quotes || [])[0];
+  if(!q || !Array.isArray(q.history) || q.history.length < 2) throw new Error('Historique indisponible');
+  let points = q.history.map(h => ({period: h.date.slice(0, 7), close: h.close}));
+  let dividends = Array.isArray(q.dividends) ? q.dividends : [];
+  if(q.currency === 'USD'){
+    const fx = await fetchEurUsdRate();
+    points = points.filter(p => typeof fx[p.period] === 'number').map(p => ({period: p.period, close: p.close / fx[p.period]}));
+    dividends = dividends
+      .map(d => { const rate = fx[d.date.slice(0, 7)]; return typeof rate === 'number' ? {date: d.date, amount: d.amount / rate} : null; })
+      .filter(Boolean);
+    if(points.length < 2) throw new Error('Conversion EUR/USD insuffisante sur cette période');
+  }
+  return {points, dividends, currency: q.currency};
+}
+
 // ---------- Investissement historique réel (P0-1 "Et si j'avais investi ?" / P0-2 DCA historique) ----------
 // monthlyPoints : [{period:'2016-09', close:72.66}, ...] triés chronologiquement,
 // une vraie série mensuelle (Yahoo Finance via /api/custom-quotes?interval=1mo).
@@ -4213,7 +4238,18 @@ const FUNDAMENTALS_FIELD_META = {
   targetLowPrice: {label: 'Cible basse des analystes', format: 'eur'},
   targetMeanPrice: {label: 'Cible moyenne des analystes', format: 'eur'},
   targetMedianPrice: {label: 'Cible médiane des analystes', format: 'eur'},
-  targetHighPrice: {label: 'Cible haute des analystes', format: 'eur'}
+  targetHighPrice: {label: 'Cible haute des analystes', format: 'eur'},
+  // Dividend Intelligence. fiveYearAvgDividendYield est une exception du
+  // format Yahoo : contrairement à dividendYield/payoutRatio (fractions,
+  // 0.0201 = 2,01 %), ce champ revient déjà en points de pourcentage
+  // (1.83 = 1,83 %) — vérifié en direct en production (AI.PA), d'où le
+  // format 'percentRaw' dédié plutôt que 'percent' (qui donnerait 183 %).
+  dividendRate: {label: 'Dividende annuel réel', format: 'eur'},
+  payoutRatio: {label: 'Payout ratio (part du bénéfice reversée)', format: 'percent'},
+  fiveYearAvgDividendYield: {label: 'Rendement moyen sur 5 ans', format: 'percentRaw'},
+  trailingAnnualDividendRate: {label: 'Dividende versé sur les 12 derniers mois', format: 'eur'},
+  exDividendDate: {label: 'Date de détachement', format: 'date'},
+  dividendDate: {label: 'Date de paiement', format: 'date'}
 };
 const FUNDAMENTALS_UNAVAILABLE_TEXT = 'Donnée indisponible ou non suffisamment fiable';
 
@@ -4223,10 +4259,12 @@ function formatFundamentalValue(key, value){
   if(!meta) return String(value);
   switch(meta.format){
     case 'percent': return (value * 100).toFixed(1).replace('.', ',') + ' %';
+    case 'percentRaw': return value.toFixed(1).replace('.', ',') + ' %';
     case 'multiple': return value.toFixed(1).replace('.', ',') + '×';
     case 'eur': return value.toFixed(2).replace('.', ',') + ' €';
     case 'bigEUR': return fmtBigNumber(value) + ' €';
     case 'bigNumber': return fmtBigNumber(value);
+    case 'date': return new Date(value * 1000).toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
     default: return String(value);
   }
 }
@@ -4607,6 +4645,185 @@ function renderWhyDrawer(elId, {fieldKey, companySymbol}){
         <p style="margin-top:8px;font-style:italic;">Un chiffre isolé ne résume jamais une entreprise à lui seul — à lire avec le reste de la fiche.</p>
       </div>
     </details>`;
+}
+
+// ---------- Dividend Intelligence : historique réel agrégé par année civile ----------
+// dividendEvents vient de parseYahooDividendEvents (lib/yahoo.js) via
+// /api/custom-quotes?events=div — un événement par versement réellement
+// effectué. Ici, simple agrégation (somme réelle par année civile), jamais
+// une extrapolation : une année en cours (encore incomplète) est marquée
+// explicitement pour ne jamais être comparée comme si elle était terminée.
+function computeDividendYearlyHistory(dividendEvents){
+  if(!Array.isArray(dividendEvents) || dividendEvents.length === 0) return null;
+  const currentYear = new Date().getFullYear();
+  const byYear = {};
+  dividendEvents.forEach(e => {
+    const year = Number(e.date.slice(0, 4));
+    if(!byYear[year]) byYear[year] = {year, total: 0, payments: 0};
+    byYear[year].total += e.amount;
+    byYear[year].payments++;
+  });
+  const years = Object.values(byYear).sort((a, b) => a.year - b.year);
+  years.forEach((y, i) => {
+    y.isPartial = y.year === currentYear;
+    const prev = i > 0 ? years[i - 1] : null;
+    // Une année encore en cours ne peut pas être comparée à une année
+    // complète : son total est mécaniquement plus bas (moins de versements
+    // reçus à date), ce qui produirait une fausse "baisse" — jamais affiché.
+    if(!y.isPartial && prev && prev.total > 0 && !prev.isPartial){
+      y.growthPct = (y.total / prev.total - 1) * 100;
+      y.trend = y.growthPct > 0.5 ? 'hausse' : y.growthPct < -0.5 ? 'baisse' : 'gel';
+    } else {
+      y.growthPct = null;
+      y.trend = null;
+    }
+  });
+  const completedYears = years.filter(y => !y.isPartial);
+  const increases = completedYears.filter(y => y.trend === 'hausse').length;
+  const decreases = completedYears.filter(y => y.trend === 'baisse').length;
+  const freezes = completedYears.filter(y => y.trend === 'gel').length;
+  function cagrOver(nYears){
+    const span = completedYears.slice(-nYears - 1);
+    if(span.length < 2) return null;
+    const first = span[0], last = span[span.length - 1];
+    if(first.total <= 0) return null;
+    const yearsElapsed = last.year - first.year;
+    if(yearsElapsed <= 0) return null;
+    return (Math.pow(last.total / first.total, 1 / yearsElapsed) - 1) * 100;
+  }
+  return {
+    years,
+    latestCompletedYear: completedYears.length ? completedYears[completedYears.length - 1] : null,
+    increases, decreases, freezes,
+    cagr5y: cagrOver(5),
+    cagr10y: cagrOver(10)
+  };
+}
+
+// ---------- Dividend Intelligence : score de soutenabilité, décomposable ----------
+// Même esprit que computeStockScore : chaque composant retourne sa vraie
+// valeur ET les points qu'elle rapporte, un composant sans donnée est exclu
+// (jamais remplacé par une valeur inventée), et le score global n'est JAMAIS
+// présenté comme "sûr à 100%" — voir le disclaimer porté par l'appelant.
+function computeDividendSafetyScore(fields, yearlyHistory){
+  fields = fields || {};
+  function sub(label, value, formatted, points){ return {label, value, formatted, points}; }
+  const components = [];
+
+  // Couverture par les bénéfices : payout ratio réel (part du bénéfice reversée).
+  if(typeof fields.payoutRatio === 'number' && fields.payoutRatio >= 0){
+    const pr = fields.payoutRatio;
+    const points = pr <= 0.6 ? 85 : pr <= 0.8 ? 55 : pr <= 1 ? 25 : 5;
+    components.push(sub('Couverture par les bénéfices (payout ratio)', pr, formatFundamentalValue('payoutRatio', pr), points));
+  }
+
+  // Couverture par le free cash-flow réel : montant total versé (dividendRate ×
+  // actions en circulation) rapporté au FCF réellement généré — jamais un
+  // repli sur le seul bénéfice comptable si le FCF est disponible.
+  if(typeof fields.dividendRate === 'number' && typeof fields.sharesOutstanding === 'number' && typeof fields.freeCashflow === 'number' && fields.freeCashflow > 0){
+    const totalPaid = fields.dividendRate * fields.sharesOutstanding;
+    const fcfPayout = totalPaid / fields.freeCashflow;
+    const points = fcfPayout <= 0.6 ? 85 : fcfPayout <= 0.8 ? 55 : fcfPayout <= 1 ? 25 : 5;
+    components.push(sub('Couverture par le free cash-flow', fcfPayout, (fcfPayout * 100).toFixed(0).replace('.', ',') + ' %', points));
+  }
+
+  // Dette : réutilise exactement bucketLeverage (Comparateur), jamais une
+  // nouvelle bande inventée pour ce composant.
+  const leverage = bucketLeverage(fields.totalDebt, fields.totalCash);
+  if(leverage) components.push(sub('Endettement net', null, leverage.label,
+    leverage.level === 'faible' ? 90 : leverage.level === 'modere' ? 55 : 20));
+
+  // Stabilité historique : réutilise le compte réel de hausses/baisses/gels
+  // de computeDividendYearlyHistory, jamais une nouvelle lecture des données brutes.
+  if(yearlyHistory){
+    const total = yearlyHistory.increases + yearlyHistory.decreases + yearlyHistory.freezes;
+    if(total > 0){
+      const stablePct = (yearlyHistory.increases + yearlyHistory.freezes) / total;
+      const points = yearlyHistory.decreases === 0 ? 90 : stablePct >= 0.7 ? 60 : 25;
+      components.push(sub('Stabilité historique du dividende', stablePct,
+        `${yearlyHistory.increases} hausse(s), ${yearlyHistory.freezes} gel(s), ${yearlyHistory.decreases} baisse(s) sur ${total} année(s) complète(s)`, points));
+    }
+  }
+
+  if(components.length === 0) return null;
+  const overall = Math.round(components.reduce((s, c) => s + c.points, 0) / components.length);
+  return {overall, components};
+}
+
+// ---------- Dividend Intelligence : Yield on Cost ----------
+// Rendement rapporté au prix d'ACHAT historique (pas au cours actuel) : plus
+// il est ancien, plus la différence avec le rendement affiché aujourd'hui est
+// significative — calcul simple, jamais une prédiction.
+function computeYieldOnCost(purchasePrice, currentDividendRate){
+  if(typeof purchasePrice !== 'number' || purchasePrice <= 0 || typeof currentDividendRate !== 'number' || currentDividendRate < 0) return null;
+  return (currentDividendRate / purchasePrice) * 100;
+}
+
+// ---------- Dividend Intelligence : simulation "si j'avais investi X€" avec
+// réinvestissement des VRAIS dividendes versés (remplace le taux de croissance
+// fictif de l'ancien simulateur) ----------
+// Méthodologie explicitée (à afficher telle quelle à l'utilisateur, jamais
+// cachée) : à chaque versement réel (dividendEvents), le montant total perçu
+// (unités détenues × montant par action) est réinvesti au premier cours de
+// clôture mensuel disponible À LA DATE DU VERSEMENT OU APRÈS — Likanza ne
+// prétend jamais connaître le cours exact intra-mensuel auquel l'achat aurait
+// eu lieu. priceHistory : même format que computeHistoricalInvestment
+// ({period:'YYYY-MM', close}). Les splits ne sont pas pris en compte
+// (simplification explicite, voir disclaimer).
+function computeDividendReinvestmentSimulation(priceHistory, dividendEvents, initial, reinvest){
+  if(!Array.isArray(priceHistory) || priceHistory.length < 2 || typeof initial !== 'number' || initial <= 0) return null;
+  const points = priceHistory.filter(p => typeof p.close === 'number');
+  if(points.length < 2) return null;
+
+  let units = initial / points[0].close;
+  let cashDividendsReceived = 0;
+  let dividendsReinvestedValue = 0;
+  let paymentsUsed = 0;
+  const events = Array.isArray(dividendEvents) ? dividendEvents.slice().sort((a, b) => a.date.localeCompare(b.date)) : [];
+
+  events.forEach(ev => {
+    const evMonth = ev.date.slice(0, 7);
+    // Un versement antérieur au début de l'historique de prix fourni n'a pas
+    // de cours de référence fiable pour calculer les unités déjà détenues à
+    // cette date : jamais compté comme perçu, plutôt que d'inventer un prix.
+    if(evMonth < points[0].period) return;
+    paymentsUsed++;
+    const amount = units * ev.amount;
+    cashDividendsReceived += amount;
+    if(reinvest){
+      const target = points.find(p => p.period >= evMonth);
+      if(target && target.close > 0){
+        const newUnits = amount / target.close;
+        units += newUnits;
+        dividendsReinvestedValue += amount;
+      }
+    }
+  });
+
+  const finalClose = points[points.length - 1].close;
+  const finalValue = units * finalClose;
+  const priceOnlyValue = (initial / points[0].close) * finalClose;
+  const years = (() => {
+    const first = points[0].period, last = points[points.length - 1].period;
+    const [y1, m1] = first.split('-').map(Number), [y2, m2] = last.split('-').map(Number);
+    return (y2 - y1) + (m2 - m1) / 12;
+  })();
+  const totalGain = finalValue - initial;
+  const cagr = years > 0 ? (Math.pow(finalValue / initial, 1 / years) - 1) * 100 : 0;
+  const cagrPriceOnly = years > 0 ? (Math.pow(priceOnlyValue / initial, 1 / years) - 1) * 100 : 0;
+
+  return {
+    initial, finalValue, totalGain, cagr, years,
+    finalUnits: units,
+    // Décomposition demandée : évolution du cours seul vs effet dividendes/réinvestissement.
+    priceOnlyValue,
+    cagrPriceOnly,
+    dividendEffect: finalValue - priceOnlyValue,
+    cashDividendsReceived,
+    dividendsReinvestedValue,
+    reinvest: !!reinvest,
+    paymentsUsed
+  };
 }
 
 // ---------- Profil personnel (pré-remplit les simulateurs + test de positionnement) ----------
