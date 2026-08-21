@@ -71,6 +71,19 @@ function populateDivTickerSelect(){
   }
 }
 
+// Recherche ouverte à TOUTE valeur réelle (pas seulement les valeurs déjà
+// suivies) : wireStockSearch (scripts/data.js) ajoute la valeur choisie aux
+// valeurs suivies puis navigue directement vers sa fiche dividende.
+function wireDivSearch(){
+  const input = document.getElementById('divSearchInput');
+  if(!input || input.dataset.bound) return;
+  input.dataset.bound = '1';
+  wireStockSearch(input, document.getElementById('divSearchResults'), (symbol) => {
+    populateDivTickerSelect();
+    location.hash = encodeURIComponent(symbol);
+  });
+}
+
 // ---------- Chargement des données réelles (fondamentaux + historique de
 // prix/dividendes convertis en EUR) — un seul chargement par ticker, partagé
 // par tous les onglets pour ne jamais afficher deux vues incohérentes. ----------
@@ -438,6 +451,7 @@ function initDividendePage(){
   const el = document.getElementById('divContent');
   const noTickerEl = document.getElementById('divNoTicker');
   if(!el) return;
+  wireDivSearch();
   const followed = getFollowedStocks();
   if(followed.length === 0){
     el.style.display = 'none';

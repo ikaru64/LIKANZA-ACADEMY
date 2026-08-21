@@ -84,9 +84,14 @@
 
   <div class="card" style="margin-bottom:18px;">
     <div class="field"><label for="divTickerSelect">Entreprise suivie</label><select id="divTickerSelect"></select></div>
+    <div class="field" style="margin-top:12px;margin-bottom:0;">
+      <label for="divSearchInput">Ou cherche n'importe quelle autre action (nom ou ticker)</label>
+      <input type="text" id="divSearchInput" placeholder="Ex : Apple, Microsoft, TSLA...">
+    </div>
+    <div id="divSearchResults" style="margin-top:8px;"></div>
   </div>
 
-  <div id="divNoTicker" style="display:none;"><p style="color:var(--text-dim);font-size:13.5px;">Ajoute d'abord une action suivie depuis la page <a href="bourse.html" style="color:var(--gold-bright);">Bourse</a>.</p></div>
+  <div id="divNoTicker" style="display:none;"><p style="color:var(--text-dim);font-size:13.5px;">Utilise la recherche ci-dessus pour choisir une première action, ou ajoutes-en depuis la page <a href="bourse.html" style="color:var(--gold-bright);">Bourse</a>.</p></div>
 
   <div id="divContent" style="display:none;">
     <div class="quick-access-grid" id="divTabsGrid" style="grid-template-columns:repeat(6,1fr);"></div>

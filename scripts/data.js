@@ -4153,6 +4153,48 @@ function resetFollowedStocks(){
   saveFollowedStocks(STOCKS_DEMO.map(s => ({symbol: s.ticker, name: s.nom})));
 }
 
+// ---------- Recherche d'une action à ajouter (/api/stock-search) ----------
+// Partagée entre bourse.html (Fiches actions, Comparateur) et dividende.html
+// — n'importe quelle valeur réelle peut être ajoutée aux valeurs suivies
+// depuis n'importe laquelle de ces pages, jamais une recherche limitée aux
+// 8 valeurs de démonstration. Ne fait volontairement AUCUNE hypothèse sur
+// l'état de la page appelante (pas de refreshAllStockViews/loadFundamentals
+// codés en dur ici, propres à bourse.js) : tout rafraîchissement spécifique
+// à la page se fait via le callback onAdded(symbol).
+function wireStockSearch(inputEl, resultsEl, onAdded){
+  if(!inputEl || !resultsEl) return;
+  let timer = null;
+  inputEl.addEventListener('input', ()=>{
+    clearTimeout(timer);
+    const q = inputEl.value.trim();
+    if(q.length < 2){ resultsEl.innerHTML = ''; return; }
+    timer = setTimeout(()=>{
+      fetch('/api/stock-search?q=' + encodeURIComponent(q))
+        .then(r=>r.json())
+        .then(payload=>{
+          const results = payload.results || [];
+          if(results.length === 0){
+            resultsEl.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Aucun résultat.</p>`;
+            return;
+          }
+          resultsEl.innerHTML = results.map(r=>
+            `<button class="pill" style="display:block;width:100%;text-align:left;margin-bottom:6px;" data-add-symbol="${r.symbol}" data-add-name="${r.name.replace(/"/g,'&quot;')}">${r.name} <span class="mono" style="color:var(--text-dim);">${r.symbol} · ${r.exchange}</span></button>`
+          ).join('');
+          resultsEl.querySelectorAll('[data-add-symbol]').forEach(btn=>{
+            btn.addEventListener('click', ()=>{
+              const symbol = btn.dataset.addSymbol;
+              addFollowedStock({symbol, name: btn.dataset.addName});
+              inputEl.value = '';
+              resultsEl.innerHTML = '';
+              if(onAdded) onAdded(symbol);
+            });
+          });
+        })
+        .catch(()=>{ resultsEl.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Recherche momentanément indisponible.</p>`; });
+    }, 300);
+  });
+}
+
 // Indicateur factuel de tendance, calculé uniquement à partir de vraies
 // données de prix (Yahoo Finance) — décrit la situation, ne recommande
 // jamais d'acheter, vendre ou renforcer une position.

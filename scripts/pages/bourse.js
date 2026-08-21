@@ -849,51 +849,19 @@ function loadCustomQuotesForGrid(list){
     });
 }
 
-// ---------- Recherche d'action à ajouter (/api/stock-search) ----------
-// Réutilisable : branchée à la fois sur Fiches actions et sur le
-// Comparateur, pour ne jamais obliger à changer d'onglet juste pour élargir
-// ses choix de comparaison (c'est tout l'univers suivi, jusqu'à 20 valeurs,
-// qui est cherchable ici, pas seulement les 8 de départ).
-function wireStockSearch(inputEl, resultsEl, onAdded){
-  if(!inputEl || !resultsEl) return;
-  let timer = null;
-  inputEl.addEventListener('input', ()=>{
-    clearTimeout(timer);
-    const q = inputEl.value.trim();
-    if(q.length < 2){ resultsEl.innerHTML = ''; return; }
-    timer = setTimeout(()=>{
-      fetch('/api/stock-search?q=' + encodeURIComponent(q))
-        .then(r=>r.json())
-        .then(payload=>{
-          const results = payload.results || [];
-          if(results.length === 0){
-            resultsEl.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Aucun résultat.</p>`;
-            return;
-          }
-          resultsEl.innerHTML = results.map(r=>
-            `<button class="pill" style="display:block;width:100%;text-align:left;margin-bottom:6px;" data-add-symbol="${r.symbol}" data-add-name="${r.name.replace(/"/g,'&quot;')}">${r.name} <span class="mono" style="color:var(--text-dim);">${r.symbol} · ${r.exchange}</span></button>`
-          ).join('');
-          resultsEl.querySelectorAll('[data-add-symbol]').forEach(btn=>{
-            btn.addEventListener('click', ()=>{
-              const symbol = btn.dataset.addSymbol;
-              addFollowedStock({symbol, name: btn.dataset.addName});
-              inputEl.value = '';
-              resultsEl.innerHTML = '';
-              refreshAllStockViews();
-              loadFundamentalsAndRefresh();
-              if(onAdded) onAdded(symbol);
-            });
-          });
-        })
-        .catch(()=>{ resultsEl.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Recherche momentanément indisponible.</p>`; });
-    }, 300);
-  });
-}
-wireStockSearch(document.getElementById('stockSearchInput'), document.getElementById('stockSearchResults'));
+// wireStockSearch (recherche + ajout d'une action suivie) vit maintenant dans
+// scripts/data.js — réutilisée aussi par dividende.html, pas seulement par
+// cette page. Ici, on ne fournit que le rafraîchissement propre à bourse.js.
+wireStockSearch(document.getElementById('stockSearchInput'), document.getElementById('stockSearchResults'), () => {
+  refreshAllStockViews();
+  loadFundamentalsAndRefresh();
+});
 // Sur le Comparateur, la valeur ajoutée est automatiquement cochée pour
 // comparaison immédiate — refreshAllStockViews() a déjà reconstruit
 // compareChecks de façon synchrone au moment où ce callback s'exécute.
 wireStockSearch(document.getElementById('compareSearchInput'), document.getElementById('compareSearchResults'), (symbol) => {
+  refreshAllStockViews();
+  loadFundamentalsAndRefresh();
   const cb = checksEl.querySelector(`input[value="${symbol}"]`);
   if(cb){ cb.checked = true; renderCompare(); }
 });
