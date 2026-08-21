@@ -668,7 +668,12 @@ function updateSim(){
   const grossRate = currentGrossRate();
   if(simMode !== 'personnalise') rateEl.value = grossRate;
   const frais = +simFraisEl.value || 0;
-  const netRate = Math.max(0, grossRate - frais);
+  // Jamais plafonné à 0 : depuis que "Prudente" peut refléter un vrai CAGR
+  // obligataire (AGG, cours seuls) et être légèrement négatif sur certaines
+  // périodes réelles (ex. remontée des taux 2022-2023), un plancher artificiel
+  // ferait afficher "-0,2 %" tout en calculant en réalité sur 0% — un écart
+  // entre ce qui est affiché et ce qui est réellement compté, jamais acceptable.
+  const netRate = grossRate - frais;
   document.getElementById('valCapital').textContent = fmtEUR(P);
   document.getElementById('valMonthly').textContent = fmtEUR(PMT);
   document.getElementById('valRate').textContent = grossRate.toFixed(1) + ' %' + (frais > 0 ? ` (net de frais : ${netRate.toFixed(1)} %)` : '');
@@ -715,7 +720,9 @@ renderWhatIf('simWhatIf', [
 ], (change)=>{
   const P = change.capital ?? +capitalEl.value;
   const PMT = change.monthly ?? +monthlyEl.value;
-  const rate = Math.max(0, (change.rate ?? currentGrossRate()) - (+simFraisEl.value || 0));
+  // Même correction qu'updateSim() : jamais de plancher artificiel à 0, pour
+  // rester cohérent avec un vrai CAGR qui peut être légèrement négatif.
+  const rate = (change.rate ?? currentGrossRate()) - (+simFraisEl.value || 0);
   const years = change.years ?? +yearsEl.value;
   const series = compoundSeries(P, PMT, rate, years);
   return series[series.length-1];
