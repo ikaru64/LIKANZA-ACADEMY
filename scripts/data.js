@@ -3705,6 +3705,73 @@ function computeHistoricalInvestment(monthlyPoints, initial, monthlyContribution
   };
 }
 
+// ---------- Livret A réel (comparaison "Et si j'avais investi ?") ----------
+// Aucune API n'est déjà branchée sur ce site pour le taux du Livret A (BCE
+// SDW/lib/ecb.js ne couvre pas les taux réglementés français) — traité
+// comme COMPANY_EDITORIAL : une table réelle, datée, sourcée, curatée à la
+// main plutôt qu'inventée, jamais présentée comme une donnée "live".
+//
+// Vérifié par recherche web croisée le 2026-08-22 (2 sources indépendantes,
+// un écart entre elles corrigé) :
+//  - https://www.magnolia.fr/placement/produits-epargne/reglementes/livret-a/historique
+//  - https://www.ideal-investisseur.fr/economie/livret-A-baisse-remuneration-1-er-fevrier-2020-7649.html
+//    (la première source seule indiquait à tort "aucun changement entre
+//    2015 et 2022" ; corrigée : gel réel à 0,75 % jusqu'au 31/01/2020, puis
+//    0,50 % dès le 1er février 2020, confirmé par la seconde source).
+// Couverture à partir de 2010, largement suffisante pour la fenêtre
+// range=10y déjà utilisée par fetchLabMonthlyHistory (jamais besoin
+// d'extrapoler avant cette date).
+const LIVRET_A_RATE_HISTORY = [
+  {date: '2010-08-01', rate: 1.75},
+  {date: '2011-02-01', rate: 2.00},
+  {date: '2011-08-01', rate: 2.25},
+  {date: '2013-02-01', rate: 1.75},
+  {date: '2013-08-01', rate: 1.25},
+  {date: '2014-08-01', rate: 1.00},
+  {date: '2015-08-01', rate: 0.75},
+  {date: '2020-02-01', rate: 0.50},
+  {date: '2022-02-01', rate: 1.00},
+  {date: '2022-08-01', rate: 2.00},
+  {date: '2023-02-01', rate: 3.00},
+  {date: '2025-02-01', rate: 2.40},
+  {date: '2025-08-01', rate: 1.70},
+  {date: '2026-02-01', rate: 1.50}
+];
+// Retourne le taux réellement en vigueur pour le mois donné ('YYYY-MM'),
+// null si antérieur à la couverture du tableau — jamais un taux extrapolé.
+function computeLivretARateAt(periodYYYYMM){
+  let applicable = null;
+  for(const entry of LIVRET_A_RATE_HISTORY){
+    if(entry.date.slice(0, 7) <= periodYYYYMM) applicable = entry;
+    else break;
+  }
+  return applicable ? applicable.rate : null;
+}
+// Même forme de sortie que computeHistoricalInvestment (investedSeries/
+// valueSeries) pour un ajout direct à renderMultiLineChart. monthlyPeriods :
+// ['YYYY-MM', ...] triés chronologiquement — mêmes mois que la série du
+// support comparé, pour un graphique parfaitement superposable.
+// Capitalisation mensuelle du taux annuel réellement en vigueur chaque mois
+// (simplification explicite par rapport à la vraie règle des quinzaines
+// bancaires françaises — disclaimé côté appelant). null si UN SEUL mois de
+// la période n'a pas de taux réel disponible (jamais une valeur inventée
+// pour combler un trou).
+function computeLivretASeries(monthlyPeriods, initial, monthlyContribution){
+  if(!Array.isArray(monthlyPeriods) || monthlyPeriods.length < 2) return null;
+  let capital = initial;
+  const investedSeries = [initial];
+  const valueSeries = [capital];
+  for(let i = 1; i < monthlyPeriods.length; i++){
+    const rate = computeLivretARateAt(monthlyPeriods[i]);
+    if(rate === null) return null;
+    const monthlyRate = rate / 100 / 12;
+    capital = capital * (1 + monthlyRate) + monthlyContribution;
+    investedSeries.push(investedSeries[investedSeries.length - 1] + monthlyContribution);
+    valueSeries.push(capital);
+  }
+  return {investedSeries, valueSeries, finalValue: valueSeries[valueSeries.length - 1]};
+}
+
 // Volatilité réelle : écart-type des variations mensuelles en %, calculée sur
 // de vrais cours (même format que computeHistoricalInvestment — {period, close}).
 // Seule brique de calcul manquante pour évaluer un risque relatif entre

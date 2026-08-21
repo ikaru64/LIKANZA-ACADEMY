@@ -94,12 +94,55 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   const monthlyEl = document.getElementById('labInvestMonthly');
   const startEl = document.getElementById('labInvestStart');
   const endEl = document.getElementById('labInvestEnd');
+  const qtyEl = document.getElementById('labInvestQty');
+  const qtyNoteEl = document.getElementById('labInvestQtyNote');
+  const compareLivretAEl = document.getElementById('labInvestCompareLivretA');
+  const searchInputEl = document.getElementById('labInvestSearchInput');
+  const searchResultsEl = document.getElementById('labInvestSearchResults');
+  const followedGroupEl = document.getElementById('labInvestFollowedGroup');
   const outputEl = document.getElementById('labInvestOutput');
   const badgeEl = document.getElementById('labInvestBadge');
   const partialNoteEl = document.getElementById('labInvestPartialNote');
   if(!supportEl || !outputEl) return;
 
   let currentHistory = null;
+
+  // Nom affichable pour n'importe quel support : les 8 indices/matières
+  // premières curatés ont un libellé fixe (LAB_SUPPORT_LABELS) ; toute autre
+  // action réelle (ajoutée via recherche) utilise son vrai nom via
+  // resolveFollowedStock — jamais "undefined" affiché.
+  function labSupportLabel(symbol){
+    return LAB_SUPPORT_LABELS[symbol] || resolveFollowedStock(symbol).nom;
+  }
+
+  // Optgroup "Actions suivies" peuplé depuis les vraies valeurs suivies du
+  // site (getFollowedStocks, partagé avec bourse.html/dividende.html) — sans
+  // dupliquer les 8 indices/matières premières déjà listés séparément.
+  function populateFollowedGroup(){
+    if(!followedGroupEl) return;
+    const previous = supportEl.value;
+    followedGroupEl.innerHTML = getFollowedStocks()
+      .filter(s => !LAB_SUPPORT_LABELS[s.symbol])
+      .map(s => `<option value="${s.symbol}">${resolveFollowedStock(s.symbol).nom}</option>`)
+      .join('');
+    if(previous && Array.from(supportEl.options).some(o => o.value === previous)) supportEl.value = previous;
+  }
+  populateFollowedGroup();
+
+  // Convertit une quantité d'actions saisie en capital réel, au vrai cours
+  // de clôture de la date de départ choisie — jamais un prix supposé.
+  function applyQtyIfSet(){
+    const qty = +qtyEl.value;
+    if(!qty || qty <= 0 || !currentHistory){ if(qtyNoteEl) qtyNoteEl.textContent = ''; return; }
+    const startPoint = currentHistory.find(p => p.period === startEl.value);
+    if(!startPoint || typeof startPoint.close !== 'number'){
+      if(qtyNoteEl) qtyNoteEl.textContent = 'Cours réel indisponible pour cette date de départ.';
+      return;
+    }
+    const capital = qty * startPoint.close;
+    capitalEl.value = Math.round(capital);
+    if(qtyNoteEl) qtyNoteEl.textContent = `= ${qty} action${qty > 1 ? 's' : ''} × ${startPoint.close.toFixed(2)} € (cours réel de ${startEl.value}) = ${fmtEUR(capital)}.`;
+  }
 
   function renderOutput(){
     if(!currentHistory) return;
@@ -113,11 +156,21 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
     const result = computeHistoricalInvestment(slice, +capitalEl.value || 0, +monthlyEl.value || 0);
     if(!result){ outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Pas assez de données sur cette période.</p>`; return; }
 
+    // Comparaison Livret A réel (même période, même capital/versement) —
+    // computeLivretASeries renvoie null si un seul mois de la période est
+    // hors de la couverture réelle du tableau : jamais un chiffre inventé
+    // pour combler, l'onglet affiche alors une note honnête à la place.
+    const livretA = compareLivretAEl.checked
+      ? computeLivretASeries(slice.map(p => p.period), +capitalEl.value || 0, +monthlyEl.value || 0)
+      : null;
+
     const level = getLevel();
-    const chart = renderMultiLineChart([
+    const chartSeries = [
       {data: result.investedSeries, color: 'var(--text-dim)', dashed: true, width: 1.5},
       {data: result.valueSeries, color: 'var(--gold-bright)', width: 2.5}
-    ]);
+    ];
+    if(livretA) chartSeries.push({data: livretA.valueSeries, color: 'var(--emerald)', dashed: true, width: 2});
+    const chart = renderMultiLineChart(chartSeries);
     const mainFactor = result.years >= 10 ? `la durée (${result.years.toFixed(1)} ans d'exposition réelle au marché)` : 'la période choisie (les rendements réels varient beaucoup d\'une période à l\'autre)';
 
     let statsHtml = `
@@ -138,15 +191,30 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
     }
     statsHtml += `</div>`;
 
+    const legendItems = [
+      `<span><span style="display:inline-block;width:10px;height:2px;background:var(--text-dim);margin-right:6px;vertical-align:middle;"></span>Versé</span>`,
+      `<span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-bright);border-radius:50%;margin-right:6px;"></span>Valeur (${labSupportLabel(supportEl.value)})</span>`
+    ];
+    let livretAHtml = '';
+    if(compareLivretAEl.checked){
+      if(livretA){
+        legendItems.push(`<span><span style="display:inline-block;width:10px;height:2px;background:var(--emerald);margin-right:6px;vertical-align:middle;"></span>Livret A réel</span>`);
+        const delta = result.finalValue - livretA.finalValue;
+        livretAHtml = `<p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">${renderDataBadge('fait')} Sur la même période, avec les mêmes versements, un Livret A (taux réel en vigueur à chaque mois, capitalisation mensuelle simplifiée) aurait donné <strong style="color:var(--text);">${fmtEUR(livretA.finalValue)}</strong> — soit ${delta >= 0 ? '+' : ''}${fmtEUR(delta)} ${delta >= 0 ? 'de plus' : 'de moins'} avec ${labSupportLabel(supportEl.value)} sur cette période précise.</p>`;
+      } else {
+        livretAHtml = `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (comparaison Livret A : période antérieure à 2010, hors de la couverture réelle disponible).</p>`;
+      }
+    }
+
     outputEl.innerHTML = `
       <div class="pattern-chart" style="margin-top:12px;">${chart}</div>
       <div style="display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:12px;color:var(--text-dim);">
-        <span><span style="display:inline-block;width:10px;height:2px;background:var(--text-dim);margin-right:6px;vertical-align:middle;"></span>Versé</span>
-        <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-bright);border-radius:50%;margin-right:6px;"></span>Valeur (${LAB_SUPPORT_LABELS[supportEl.value]})</span>
+        ${legendItems.join('')}
       </div>
       ${statsHtml}
+      ${livretAHtml}
       <div id="labInvestExplainer" style="margin-top:14px;"></div>
-      <p class="disclaimer-box" style="margin-top:12px;">Simulation strictement rétrospective sur des cours réels passés. Les performances passées ne préjugent jamais des performances futures.</p>
+      <p class="disclaimer-box" style="margin-top:12px;">Simulation strictement rétrospective sur des cours réels passés. Les performances passées ne préjugent jamais des performances futures. Le Livret A affiché capitalise mensuellement le taux réel en vigueur (simplification par rapport à la règle bancaire des quinzaines).</p>
     `;
     renderResultExplainer('labInvestExplainer', {invested: result.totalInvested, final: result.finalValue, mainFactorLabel: mainFactor});
   }
@@ -161,7 +229,14 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       populatePeriodSelect(endEl, periods, periods[periods.length - 1]);
       badgeEl.innerHTML = renderDataBadge('fait');
       const lastPeriod = periods[periods.length - 1];
-      partialNoteEl.textContent = formatPartialYearNote(lastPeriod) + ` Source : ${HISTORICAL_SERIES[LAB_SUPPORT_SERIES_KEY[supportEl.value]].source}.`;
+      // Source citée : le libellé dédié pour les 8 supports curatés, sinon
+      // une citation générique Yahoo Finance — jamais un plantage pour une
+      // action réelle ajoutée par recherche (LAB_SUPPORT_SERIES_KEY ne
+      // couvre que les 8 supports d'origine).
+      const seriesKey = LAB_SUPPORT_SERIES_KEY[supportEl.value];
+      const sourceLabel = seriesKey ? HISTORICAL_SERIES[seriesKey].source : 'Yahoo Finance';
+      partialNoteEl.textContent = formatPartialYearNote(lastPeriod) + ` Source : ${sourceLabel}.`;
+      applyQtyIfSet();
       renderOutput();
     } catch(err){
       outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : historique temporairement indisponible (${err.message}).</p>`;
@@ -170,7 +245,16 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   }
 
   supportEl.addEventListener('change', loadHistory);
-  [capitalEl, monthlyEl, startEl, endEl].forEach(el => el.addEventListener('change', () => { renderOutput(); tryAwardQuizPoints(`lab-invest-${new Date().toDateString()}`, 8, {usedLab:true}); }));
+  [capitalEl, monthlyEl, endEl, compareLivretAEl].forEach(el => el.addEventListener('change', () => { renderOutput(); tryAwardQuizPoints(`lab-invest-${new Date().toDateString()}`, 8, {usedLab:true}); }));
+  startEl.addEventListener('change', () => { applyQtyIfSet(); renderOutput(); tryAwardQuizPoints(`lab-invest-${new Date().toDateString()}`, 8, {usedLab:true}); });
+  qtyEl.addEventListener('input', () => { applyQtyIfSet(); renderOutput(); });
+  if(searchInputEl && searchResultsEl){
+    wireStockSearch(searchInputEl, searchResultsEl, (symbol) => {
+      populateFollowedGroup();
+      supportEl.value = symbol;
+      loadHistory();
+    });
+  }
   loadHistory();
 })();
 

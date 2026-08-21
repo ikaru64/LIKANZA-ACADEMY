@@ -95,27 +95,38 @@
         <h3>Et si j'avais investi ?</h3>
         <span id="labInvestBadge"></span>
       </div>
-      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Applique les vrais cours mensuels d'un support pour reconstituer ce qui se serait réellement passé — rétrospectif uniquement, jamais une prédiction.</p>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Applique les vrais cours mensuels d'un support — indice, matière première ou n'importe quelle action réelle — pour reconstituer ce qui se serait réellement passé — rétrospectif uniquement, jamais une prédiction.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <div class="field" style="flex:1;min-width:200px;"><label for="labInvestSupport">Support</label>
           <select id="labInvestSupport">
-            <option value="URTH">Actions monde (MSCI World, ETF URTH)</option>
-            <option value="^GSPC">Actions US (S&amp;P 500)</option>
-            <option value="^FCHI">Actions France (CAC 40)</option>
-            <option value="^STOXX50E">Actions Europe (Euro Stoxx 50)</option>
-            <option value="QQQ">Actions technologie US (Nasdaq 100, ETF QQQ)</option>
-            <option value="EEM">Actions émergents (MSCI Emerging Markets, ETF EEM)</option>
-            <option value="GC=F">Or (cours au comptant, futures)</option>
-            <option value="AGG">Obligations US (ETF AGG)</option>
+            <optgroup label="Indices & matières premières">
+              <option value="URTH">Actions monde (MSCI World, ETF URTH)</option>
+              <option value="^GSPC">Actions US (S&amp;P 500)</option>
+              <option value="^FCHI">Actions France (CAC 40)</option>
+              <option value="^STOXX50E">Actions Europe (Euro Stoxx 50)</option>
+              <option value="QQQ">Actions technologie US (Nasdaq 100, ETF QQQ)</option>
+              <option value="EEM">Actions émergents (MSCI Emerging Markets, ETF EEM)</option>
+              <option value="GC=F">Or (cours au comptant, futures)</option>
+              <option value="AGG">Obligations US (ETF AGG)</option>
+            </optgroup>
+            <optgroup label="Actions suivies" id="labInvestFollowedGroup"></optgroup>
           </select>
         </div>
         <div class="field" style="flex:1;min-width:120px;"><label for="labInvestCapital">Capital initial (€)</label><input type="number" id="labInvestCapital" value="1000" min="0"></div>
         <div class="field" style="flex:1;min-width:120px;"><label for="labInvestMonthly">Versement mensuel (€)</label><input type="number" id="labInvestMonthly" value="200" min="0"></div>
       </div>
+      <div class="field" style="max-width:420px;margin-top:4px;">
+        <label for="labInvestSearchInput">Ou cherche une autre action (nom ou ticker)</label>
+        <input type="text" id="labInvestSearchInput" placeholder="Ex : TotalEnergies, Apple, TSLA...">
+        <div id="labInvestSearchResults" style="margin-top:6px;"></div>
+      </div>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <div class="field" style="flex:1;min-width:140px;"><label for="labInvestStart">Date de départ</label><select id="labInvestStart"></select></div>
         <div class="field" style="flex:1;min-width:140px;"><label for="labInvestEnd">Date de fin</label><select id="labInvestEnd"></select></div>
+        <div class="field" style="flex:1;min-width:160px;"><label for="labInvestQty">Nombre d'actions (optionnel)</label><input type="number" id="labInvestQty" min="0" step="1" placeholder="Ex : 50"></div>
       </div>
+      <p id="labInvestQtyNote" class="source-note"></p>
+      <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;"><input type="checkbox" id="labInvestCompareLivretA" checked style="accent-color:var(--gold);"> Comparer avec un Livret A réel</label>
       <p id="labInvestPartialNote" class="source-note"></p>
       <div id="labInvestOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
     </div>
