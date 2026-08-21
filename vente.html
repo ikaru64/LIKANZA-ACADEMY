@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Immobilier · Likanza Academy</title>
-<meta name="description" content="Calculateurs de capacité d'emprunt, mensualité de crédit et rendement locatif pour préparer un projet immobilier.">
-<meta property="og:title" content="Immobilier · Likanza Academy">
-<meta property="og:description" content="Calculateurs de capacité d'emprunt, mensualité de crédit et rendement locatif pour préparer un projet immobilier.">
+<title>Vente &amp; Négociation · Likanza Academy</title>
+<meta name="description" content="Prospection, qualification, objections, closing — comprendre la vente sans phrase magique, avec un exercice sur 5 objections courantes.">
+<meta property="og:title" content="Vente &amp; Négociation · Likanza Academy">
+<meta property="og:description" content="Prospection, qualification, objections, closing — comprendre la vente sans phrase magique.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://likanza-academy.vercel.app/immobilier.html">
+<meta property="og:url" content="https://likanza-academy.vercel.app/vente.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -28,7 +28,7 @@
   <span class="sidebar-group-label">Marchés</span>
   <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
   <a href="crypto.html"><span class="icon" data-icon="bitcoin"></span><span>Crypto</span></a>
-  <a href="business.html"><span class="icon" data-icon="briefcase"></span><span>Business</span></a>
+  <a href="business.html" class="active"><span class="icon" data-icon="briefcase"></span><span>Business</span></a>
   <span class="sidebar-group-label">Compte</span>
   <a href="compte.html"><span class="icon" data-icon="trophy"></span><span>Mon compte</span></a>
 </aside>
@@ -76,93 +76,33 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Immobilier</div>
-<h1 class="visually-hidden">Immobilier</h1>
-<div id="levelTip" style="max-width:720px;margin:14px auto 0;padding:0 24px;"></div>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / <a href="business.html">Business</a> / Vente &amp; Négociation</div>
+<h1 class="visually-hidden">Vente &amp; Négociation</h1>
 
 <section class="section">
-  <div class="section-head"><h2>Immobilier</h2><span class="meta-line">calculateurs</span></div>
-  <div class="card-grid">
-
-    <div class="card">
-      <h3>Capacité d'emprunt <span class="data-badge data-badge-calcul" style="margin-left:4px;">🧮 Calcul</span></h3>
-      <div class="slider-row field"><label for="capMonthly">Mensualité maximale <span class="v mono" id="valMonthlyCap">1 000 €</span></label><input type="range" id="capMonthly" min="200" max="4000" step="50" value="1000"></div>
-      <div class="slider-row field"><label for="capRate">Taux d'intérêt annuel <span class="v mono" id="valRateCap">3.8 %</span></label><input type="range" id="capRate" min="1" max="7" step="0.1" value="3.8"></div>
-      <div class="slider-row field"><label for="capYears">Durée <span class="v mono" id="valYearsCap">20 ans</span></label><input type="range" id="capYears" min="5" max="30" step="1" value="20"></div>
-      <div class="result-label">Capacité d'emprunt estimée</div>
-      <div class="result-big" id="capResult">— €</div>
-      <p class="disclaimer-box">Estimation simplifiée hors assurance, frais de dossier et taux d'endettement réglementaire (35% maximum en France). Un courtier ou une banque affinera ce calcul.</p>
-    </div>
-
-    <a href="laboratoire.html#labCreditCard" class="card play-tile">
-      <span class="icon" data-icon="calculator" style="color:var(--gold-bright);"></span>
-      <h3 style="margin:10px 0 6px;">Combien coûte réellement mon crédit ?</h3>
-      <p>Mensualité, tableau d'amortissement complet, comparaison des durées et des taux, avec le vrai taux moyen des crédits immobiliers en France (BCE) — dans le Laboratoire financier.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-    </a>
-
-    <div class="card">
-      <h3>Rendement locatif <span class="data-badge data-badge-calcul" style="margin-left:4px;">🧮 Calcul</span></h3>
-      <div class="field"><label for="rentPrice">Prix d'achat (€)</label><input type="number" id="rentPrice" value="200000"></div>
-      <div class="field"><label for="rentMonthly">Loyer mensuel (€)</label><input type="number" id="rentMonthly" value="850"></div>
-      <div class="field"><label for="rentCharges">Charges annuelles (€) : taxe foncière, gestion, copropriété</label><input type="number" id="rentCharges" value="1800"></div>
-      <div class="result-row" id="rentResult" style="margin-top:16px;"></div>
-      <p class="disclaimer-box">Le rendement net ci-dessus déduit les charges saisies, mais ne tient compte ni de la fiscalité personnelle, ni de la vacance locative (périodes sans locataire), ni de gros travaux, ni du crédit éventuel : le cash-flow réel peut différer sensiblement.</p>
-    </div>
-
-    <a href="laboratoire.html#labBuyRentCard" class="card play-tile">
-      <span class="icon" data-icon="scale" style="color:var(--gold-bright);"></span>
-      <h3 style="margin:10px 0 6px;">Acheter ou louer ?</h3>
-      <p>Patrimoine net comparé sur plusieurs horizons, coût d'opportunité de l'apport, vraie évolution des prix immobiliers en France — bien plus qu'une comparaison de flux mensuel. Dans le Laboratoire financier.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Ouvrir →</span></div>
-    </a>
-
-  </div>
-</section>
-
-<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
+  <div class="section-head"><h2>🤝 Vente &amp; Négociation</h2><span class="meta-line">prospection, objections, closing — sans phrase magique</span></div>
   <div class="card" style="max-width:none;">
-    <span class="smallcaps">⚠️ Erreurs fréquentes</span>
-    <div style="margin-top:10px;">
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;"><strong style="color:var(--text);">Confondre rendement brut et rentabilité réelle</strong> — le rendement brut ignore charges, vacance locative, travaux et fiscalité ; deux biens au même rendement brut peuvent avoir une rentabilité réelle très différente.</p>
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;"><strong style="color:var(--text);">Oublier la vacance locative dans le calcul</strong> — un bien vide un mois sur douze, c'est 8% de revenus locatifs en moins, rarement intégré dans une estimation rapide.</p>
-      <p style="font-size:13px;color:var(--text-dim);"><strong style="color:var(--text);">Ignorer l'effet du taux d'emprunt sur la capacité réelle</strong> — une même mensualité finance un capital très différent selon que le taux est à 2% ou à 5%.</p>
-    </div>
-  </div>
-  <div class="card-grid" style="margin-top:14px;">
-    <a href="defis.html?cat=Immobilier" class="card play-tile">
-      <span class="icon" data-icon="target" style="color:var(--gold-bright);"></span>
-      <h4 style="margin:8px 0 4px;">Teste tes connaissances</h4>
-      <p style="font-size:12.5px;">De vraies questions sur l'immobilier et le crédit, dans les Défis.</p>
-    </a>
-    <a href="bibliotheque.html#theme:Immobilier" class="card play-tile">
-      <span class="icon" data-icon="library" style="color:var(--gold-bright);"></span>
-      <h4 style="margin:8px 0 4px;">Approfondir</h4>
-      <p style="font-size:12.5px;">Rendement locatif, apport personnel, effet de levier, vacance locative — les définitions complètes.</p>
-    </a>
-    <a href="finance.html" class="card play-tile">
-      <span class="icon" style="color:var(--gold-bright);">💰</span>
-      <h4 style="margin:8px 0 4px;">Finance d'entreprise</h4>
-      <p style="font-size:12.5px;">Cash-flow, rentabilité, dette : les mêmes notions s'appliquent à une entreprise.</p>
-    </a>
+    <div id="venteContent"></div>
   </div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
-    <div><h4>Explorer</h4><ul><li><a href="bourse.html">Bourse</a></li><li><a href="crypto.html">Crypto</a></li></ul></div>
-    <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="laboratoire.html">Laboratoire financier</a></li></ul></div>
+    <div><h4>Apprendre</h4><ul><li><a href="formations.html">Formations</a></li><li><a href="bibliotheque.html">Bibliothèque</a></li></ul></div>
+    <div><h4>Business</h4><ul><li><a href="business.html">Retour à Business</a></li><li><a href="clients.html">Clients</a></li><li><a href="marketing.html">Marketing</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
-  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Investir comporte un risque de perte en capital.</span></div>
+  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, synthèses originales à partir de sources publiques citées.</span></div>
 </footer>
 
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/historical-data.js"></script>
-<script src="scripts/pages/immobilier.js"></script>
+<script src="scripts/games/vente-data.js"></script>
+<script src="scripts/games/vente.js"></script>
+<script src="scripts/pages/vente-page.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>

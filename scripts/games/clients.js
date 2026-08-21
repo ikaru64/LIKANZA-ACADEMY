@@ -35,6 +35,27 @@ function renderClientsGuide(elId){
             </div>
           </div>
         </div>`).join('')}
+    </div>
+    <div class="card" style="margin-top:20px;">
+      <span class="smallcaps">⚠️ Erreurs fréquentes</span>
+      <div style="margin-top:10px;">${CLIENTS_MISTAKES.map(m => `<p style="font-size:13px;color:var(--text-dim);margin-bottom:10px;"><strong style="color:var(--text);">${m.titre}</strong> — ${m.description}</p>`).join('')}</div>
+    </div>
+    <div class="card-grid" style="margin-top:14px;">
+      <a href="business-lab.html" class="card play-tile">
+        <span class="icon" style="color:var(--gold-bright);">🧪</span>
+        <h4 style="margin:8px 0 4px;">Teste tes connaissances</h4>
+        <p style="font-size:12.5px;">Le Business Lab propose des mises en situation réelles, pas un quiz de définitions.</p>
+      </a>
+      <a href="bibliotheque.html#theme:Business" class="card play-tile">
+        <span class="icon" style="color:var(--gold-bright);">📚</span>
+        <h4 style="margin:8px 0 4px;">Approfondir</h4>
+        <p style="font-size:12.5px;">Persona, Segmentation, LTV — les définitions complètes dans la Bibliothèque.</p>
+      </a>
+      <a href="marketing.html" class="card play-tile">
+        <span class="icon" style="color:var(--gold-bright);">📣</span>
+        <h4 style="margin:8px 0 4px;">Marketing</h4>
+        <p style="font-size:12.5px;">Une fois qu'on sait qui on sert, reste à savoir comment l'atteindre.</p>
+      </a>
     </div>`;
 
   el.querySelectorAll('[data-toggle]').forEach(btn => {

@@ -1,0 +1,1 @@
+renderStrategiePage('strategieContent');

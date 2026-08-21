@@ -84,3 +84,13 @@ const MARKETING_FUNNEL = [
     caseTag: 'effet-reseau'
   }
 ];
+
+// Erreurs fréquentes à afficher en fin de page (marketing.js) — jamais un
+// conseil générique type "crois en toi", toujours un piège concret et
+// observable.
+const MARKETING_MISTAKES = [
+  {titre: 'Confondre vues et résultats commerciaux', description: "Beaucoup de vues ou d'impressions ne garantissent pas des ventes — ce n'est qu'une étape, pas la fin du funnel."},
+  {titre: 'Optimiser le haut du funnel alors que le problème est en bas', description: "Si peu de visiteurs achètent, générer plus de trafic ne résout rien — il faut d'abord comprendre où les gens abandonnent."},
+  {titre: "Copier une stratégie sans tenir compte du contexte", description: "Ce qui a fonctionné pour une entreprise dépendait de ses ressources, sa marque et son marché — la copier telle quelle ignore ces différences."}
+];
+

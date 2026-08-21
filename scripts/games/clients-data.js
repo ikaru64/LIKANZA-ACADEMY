@@ -60,3 +60,10 @@ const CLIENTS_TOPICS = [
     caseTag: 'differenciation'
   }
 ];
+
+// Erreurs fréquentes à afficher en fin de page (clients.js).
+const CLIENTS_MISTAKES = [
+  {titre: 'Créer un persona sans jamais parler à un vrai client', description: "Un persona entièrement imaginé donne une fausse impression de certitude — il reste une hypothèse tant qu'il n'est pas confronté à de vraies personnes."},
+  {titre: 'Confondre utilisateur, décideur et payeur', description: "En B2B surtout, ces 3 rôles peuvent être 3 personnes différentes — leur parler comme s'il s'agissait d'une seule revient souvent à mal cibler les 3."},
+  {titre: "Ignorer les objections plutôt que d'y répondre", description: "Une objection récurrente et jamais traitée continue de faire perdre des ventes, même si elle n'est jamais formulée à voix haute."}
+];
