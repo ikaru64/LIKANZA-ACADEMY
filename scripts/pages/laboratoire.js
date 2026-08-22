@@ -22,6 +22,7 @@ renderLevelTip('levelTip', 'personalFinance');
 const LAB_TABS = [
   {id:'tab-investissement', title:'Investissement', desc:'Tester des stratégies', icon:'trending-up'},
   {id:'tab-logement', title:'Logement', desc:'Achat, location, prêt', icon:'house'},
+  {id:'tab-dettes', title:'Dettes & crédits', desc:'Coût et stratégies', icon:'landmark'},
   {id:'tab-budget-epargne', title:'Budget & épargne', desc:'Comprendre son argent', icon:'coins'},
   {id:'tab-planification', title:'Planification', desc:'Comparer des décisions', icon:'scale'}
 ];
@@ -67,6 +68,10 @@ const LAB_WIDGETS = {
   'tab-logement': [
     {id:'labCreditCard', title:'Coût réel de mon crédit', desc:"Tableau d'amortissement complet, taux et durée.", icon:'landmark'},
     {id:'labBuyRentCard', title:'Acheter ou louer ?', desc:'Patrimoine net comparé entre achat et location.', icon:'house'}
+  ],
+  'tab-dettes': [
+    {id:'widget-debt-strategy', title:'Quel crédit rembourser en premier ?', desc:'Compare deux stratégies sur tes vrais crédits.', icon:'landmark'},
+    {id:'widget-debt-consolidation', title:'Regrouper ou conserver ses crédits ?', desc:'Mensualité vs coût total réel du regroupement.', icon:'scale'}
   ],
   'tab-budget-epargne': [
     {id:'widget-budget-inflation', title:'Que valent mes euros ?', desc:'Inflation réelle mesurée, pas une hypothèse constante.', icon:'trending-down'},
@@ -551,6 +556,71 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
 
   [amountEl, startEl, endEl].forEach(el => el.addEventListener('change', render));
   load();
+})();
+
+// ---------- Dettes & crédits : listes dynamiques de crédits réutilisables
+// entre les deux widgets (stratégie de remboursement / regroupement) — même
+// pattern que addDcaRow/updateDca (prix moyen d'achat) ci-dessus, avec un
+// bouton de suppression par ligne. Les calculs eux-mêmes (computeDebtPayoffPlan,
+// renderDebtPayoffComparison, computeDebtConsolidation,
+// renderDebtConsolidationComparison) vivent dans scripts/data.js. ----------
+(function initLabDebts(){
+  function createDebtRowList(containerId, onChange){
+    function addRow(label, balance, rate, minPayment){
+      const row = document.createElement('div');
+      row.className = 'field';
+      row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;';
+      row.innerHTML = `
+        <input type="text" class="debt-label" placeholder="Nom du crédit" value="${label || ''}" style="background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:8px 10px;border-radius:2px;flex:2;min-width:120px;">
+        <input type="number" class="debt-balance" placeholder="Solde (€)" value="${typeof balance === 'number' ? balance : 1000}" min="0" style="background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:8px 10px;border-radius:2px;flex:1;min-width:90px;">
+        <input type="number" class="debt-rate" placeholder="Taux (%)" value="${typeof rate === 'number' ? rate : 5}" min="0" max="30" step="0.1" style="background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:8px 10px;border-radius:2px;flex:1;min-width:80px;">
+        <input type="number" class="debt-min" placeholder="Mensualité min. (€)" value="${typeof minPayment === 'number' ? minPayment : 100}" min="0" style="background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:8px 10px;border-radius:2px;flex:1;min-width:90px;">
+        <button type="button" class="btn btn-sm debt-remove" style="flex:0;" aria-label="Retirer ce crédit">✕</button>`;
+      document.getElementById(containerId).appendChild(row);
+      row.querySelectorAll('input').forEach(i => i.addEventListener('input', onChange));
+      row.querySelectorAll('.debt-remove').forEach(btn => btn.addEventListener('click', () => { row.remove(); onChange(); }));
+    }
+    function readRows(){
+      return Array.from(document.querySelectorAll(`#${containerId} > div`)).map(row => ({
+        label: row.querySelector('.debt-label').value || 'Crédit',
+        balance: +row.querySelector('.debt-balance').value || 0,
+        rate: +row.querySelector('.debt-rate').value || 0,
+        minPayment: +row.querySelector('.debt-min').value || 0
+      }));
+    }
+    return {addRow, readRows};
+  }
+
+  const strategyRowsEl = document.getElementById('debtRows');
+  const consoRowsEl = document.getElementById('debtConsoRows');
+  if(!strategyRowsEl || !consoRowsEl) return;
+
+  const strategyRows = createDebtRowList('debtRows', () => updateDebtStrategy());
+  function updateDebtStrategy(){
+    const extra = +document.getElementById('debtExtra').value || 0;
+    document.getElementById('debtStrategyOutput').innerHTML = renderDebtPayoffComparison(strategyRows.readRows(), extra);
+  }
+  document.getElementById('debtAdd').addEventListener('click', () => { strategyRows.addRow(); updateDebtStrategy(); });
+  document.getElementById('debtExtra').addEventListener('input', updateDebtStrategy);
+  strategyRows.addRow('Carte de crédit', 2000, 19, 80);
+  strategyRows.addRow('Prêt personnel', 6000, 5, 150);
+  updateDebtStrategy();
+
+  const consoRows = createDebtRowList('debtConsoRows', () => updateDebtConsolidation());
+  function updateDebtConsolidation(){
+    const newLoan = {
+      amount: +document.getElementById('consoAmount').value || 0,
+      rate: +document.getElementById('consoRate').value || 0,
+      years: +document.getElementById('consoYears').value || 0,
+      fees: +document.getElementById('consoFrais').value || 0
+    };
+    document.getElementById('debtConsolidationOutput').innerHTML = renderDebtConsolidationComparison(consoRows.readRows(), newLoan);
+  }
+  document.getElementById('debtConsoAdd').addEventListener('click', () => { consoRows.addRow(); updateDebtConsolidation(); });
+  ['consoAmount', 'consoRate', 'consoYears', 'consoFrais'].forEach(id => document.getElementById(id).addEventListener('input', updateDebtConsolidation));
+  consoRows.addRow('Carte de crédit', 2000, 19, 80);
+  consoRows.addRow('Prêt personnel', 6000, 5, 150);
+  updateDebtConsolidation();
 })();
 
 // ---------- P0-5 : Acheter ou louer, version sérieuse ----------

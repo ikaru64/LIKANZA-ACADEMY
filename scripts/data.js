@@ -4022,6 +4022,145 @@ function computeLoanAmortization(capital, rateAnnual, years, insuranceRatePct, f
   };
 }
 
+// ---------- Dettes & crédits : stratégie de remboursement multi-crédits ----------
+// Simulation mois par mois (avalanche = taux le plus élevé d'abord, snowball =
+// plus petit solde d'abord, custom = ordre fourni) — jamais une formule
+// fermée, car l'ordre de priorité change à chaque mois selon les soldes
+// restants. Une mensualité minimale qui ne couvre même pas les intérêts du
+// mois (amortissement négatif) est détectée et retournée comme une erreur
+// explicite, jamais une simulation qui boucle indéfiniment ou un résultat
+// silencieusement faux. Garde-fou à 600 mois (50 ans) : au-delà, le plan
+// n'est jamais présenté comme complet.
+function computeDebtPayoffPlan(debts, strategy, extraMonthly, customOrder){
+  if(!Array.isArray(debts) || debts.length === 0) return null;
+  const clean = debts.filter(d => d && typeof d.balance === 'number' && d.balance > 0 && typeof d.rate === 'number' && d.rate >= 0 && typeof d.minPayment === 'number' && d.minPayment > 0);
+  if(clean.length === 0) return null;
+  const negative = clean.filter(d => d.minPayment <= (d.rate / 100 / 12) * d.balance);
+  if(negative.length > 0) return {error: 'negative-amortization', debts: negative.map(d => d.label || '')};
+
+  let balances = clean.map(d => ({...d}));
+  const baseExtra = typeof extraMonthly === 'number' && extraMonthly > 0 ? extraMonthly : 0;
+  let rolloverExtra = 0; // mensualités libérées par des dettes déjà soldées, réutilisées à partir du mois suivant (effet boule de neige)
+
+  function priorityOrder(){
+    const active = balances.map((d, i) => i).filter(i => balances[i].balance > 0);
+    if(strategy === 'avalanche') return active.sort((a, b) => balances[b].rate - balances[a].rate);
+    if(strategy === 'snowball') return active.sort((a, b) => balances[a].balance - balances[b].balance);
+    if(strategy === 'custom' && Array.isArray(customOrder)) return customOrder.filter(i => active.includes(i));
+    return active;
+  }
+
+  let month = 0;
+  let totalInterest = 0;
+  const maxMonths = 600;
+  while(balances.some(d => d.balance > 0.01) && month < maxMonths){
+    month++;
+    let newlyFreed = 0;
+    balances.forEach(d => {
+      if(d.balance <= 0) return;
+      const interest = d.balance * (d.rate / 100 / 12);
+      totalInterest += interest;
+      d.balance += interest;
+      const payment = Math.min(d.minPayment, d.balance);
+      d.balance -= payment;
+      if(d.balance <= 0.01){ d.balance = 0; newlyFreed += d.minPayment; }
+    });
+    let pool = baseExtra + rolloverExtra;
+    priorityOrder().forEach(idx => {
+      if(pool <= 0) return;
+      const d = balances[idx];
+      const pay = Math.min(pool, d.balance);
+      d.balance -= pay;
+      pool -= pay;
+      if(d.balance <= 0.01) d.balance = 0;
+    });
+    rolloverExtra += newlyFreed;
+  }
+  return {
+    months: month, years: month / 12, totalInterest,
+    completed: balances.every(d => d.balance <= 0.01),
+    strategy
+  };
+}
+function renderDebtPayoffComparison(debts, extraMonthly){
+  if(!Array.isArray(debts) || debts.length === 0){
+    return `<p style="color:var(--text-dim);font-size:13px;">Ajoute au moins un crédit réel pour comparer les stratégies.</p>`;
+  }
+  const baseline = computeDebtPayoffPlan(debts, 'avalanche', 0);
+  if(baseline && baseline.error){
+    return `<p style="color:var(--bordeaux);font-size:13px;">${renderDataBadge('avis')} La mensualité minimale de <strong>${baseline.debts.join(', ')}</strong> ne couvre même pas les intérêts du mois — la dette augmenterait indéfiniment avec ces valeurs (amortissement négatif). Vérifie le taux et la mensualité saisis.</p>`;
+  }
+  if(!baseline) return `<p style="color:var(--text-dim);font-size:13px;">Renseigne un solde, un taux et une mensualité réels pour chaque crédit.</p>`;
+  const avalanche = computeDebtPayoffPlan(debts, 'avalanche', extraMonthly);
+  const snowball = computeDebtPayoffPlan(debts, 'snowball', extraMonthly);
+
+  const fmtEUR = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+  const fmtDuree = months => months >= 12 ? `${Math.floor(months / 12)} an(s) et ${months % 12} mois` : `${months} mois`;
+  const rows = [
+    {label: 'Taux le plus élevé d\'abord (avalanche)', plan: avalanche},
+    {label: 'Plus petit solde d\'abord (boule de neige)', plan: snowball}
+  ];
+
+  return `
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${renderDataBadge('calcul')} Comparaison calculée mois par mois à partir des vrais soldes, taux et mensualités minimales saisis${extraMonthly > 0 ? `, avec ${fmtEUR(extraMonthly)}/mois supplémentaires` : ''}.</p>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr><th style="text-align:left;padding:6px 8px;">Stratégie</th><th style="text-align:right;padding:6px 8px;">Durée</th><th style="text-align:right;padding:6px 8px;">Intérêts totaux</th></tr></thead>
+      <tbody>${rows.map(r => `<tr><td style="padding:6px 8px;">${r.label}${!r.plan.completed ? ' ⚠️' : ''}</td><td style="text-align:right;padding:6px 8px;">${fmtDuree(r.plan.months)}</td><td style="text-align:right;padding:6px 8px;">${fmtEUR(r.plan.totalInterest)}</td></tr>`).join('')}</tbody>
+    </table></div>
+    ${(!avalanche.completed || !snowball.completed) ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">⚠️ Avec ces paramètres, le remboursement dépasse 50 ans dans la simulation — les mensualités saisies sont probablement insuffisantes.</p>` : ''}
+    <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Avec les mensualités minimales seules (sans effort supplémentaire) : ${fmtDuree(baseline.months)}, ${fmtEUR(baseline.totalInterest)} d'intérêts au total.</p>
+    ${extraMonthly > 0 ? `<p style="font-size:12px;color:var(--emerald);margin-top:4px;">Économie grâce aux ${fmtEUR(extraMonthly)}/mois supplémentaires : ${fmtEUR(baseline.totalInterest - Math.min(avalanche.totalInterest, snowball.totalInterest))} d'intérêts en moins, terminé ${fmtDuree(baseline.months - Math.min(avalanche.months, snowball.months))} plus tôt.</p>` : ''}`;
+}
+
+// ---------- Dettes & crédits : regrouper ou conserver ses crédits ----------
+// Réutilise computeLoanAmortization (déjà utilisé pour le crédit immobilier)
+// pour le nouveau prêt regroupé — jamais une deuxième formule de mensualité
+// dupliquée. Le point du chantier (section 7 du plan) : une mensualité plus
+// faible ne signifie jamais automatiquement un coût total inférieur, le
+// calcul doit pouvoir montrer les deux à la fois, jamais un seul chiffre.
+function computeDebtConsolidation(debts, newLoan){
+  if(!Array.isArray(debts) || debts.length === 0) return null;
+  if(!newLoan || !(newLoan.amount > 0) || typeof newLoan.rate !== 'number' || !(newLoan.years > 0)) return null;
+  const current = computeDebtPayoffPlan(debts, 'avalanche', 0);
+  if(!current || current.error) return null;
+  const currentMonthly = debts.reduce((s, d) => s + (d.minPayment || 0), 0);
+  const currentTotalCost = debts.reduce((s, d) => s + (d.balance || 0), 0) + current.totalInterest;
+
+  const amort = computeLoanAmortization(newLoan.amount, newLoan.rate, newLoan.years, 0, newLoan.fees || 0);
+  const consolidatedMonths = Math.round(newLoan.years * 12);
+
+  return {
+    current: {monthly: currentMonthly, totalCost: currentTotalCost, months: current.months},
+    consolidated: {monthly: amort.monthlyPayment, totalCost: amort.totalCost, months: consolidatedMonths},
+    monthlyDiff: amort.monthlyPayment - currentMonthly,
+    totalCostDiff: amort.totalCost - currentTotalCost
+  };
+}
+function renderDebtConsolidationComparison(debts, newLoan){
+  if(!Array.isArray(debts) || debts.length === 0){
+    return `<p style="color:var(--text-dim);font-size:13px;">Ajoute au moins un crédit réel à regrouper.</p>`;
+  }
+  const result = computeDebtConsolidation(debts, newLoan);
+  if(!result){
+    return `<p style="color:var(--text-dim);font-size:13px;">Renseigne des valeurs réelles (soldes, taux, mensualités, et les paramètres du nouveau prêt) pour comparer.</p>`;
+  }
+  const fmtEUR = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+  const fmtDuree = months => months >= 12 ? `${Math.floor(months / 12)} an(s) et ${months % 12} mois` : `${months} mois`;
+  const monthlyLower = result.monthlyDiff < 0;
+  const totalCostHigher = result.totalCostDiff > 0;
+  return `
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${renderDataBadge('calcul')} Comparaison calculée à partir des vrais crédits saisis et des paramètres du nouveau prêt.</p>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr><th style="text-align:left;padding:6px 8px;"></th><th style="text-align:right;padding:6px 8px;">Mensualité</th><th style="text-align:right;padding:6px 8px;">Coût total</th><th style="text-align:right;padding:6px 8px;">Durée</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:6px 8px;">Situation actuelle</td><td style="text-align:right;padding:6px 8px;">${fmtEUR(result.current.monthly)}</td><td style="text-align:right;padding:6px 8px;">${fmtEUR(result.current.totalCost)}</td><td style="text-align:right;padding:6px 8px;">${fmtDuree(result.current.months)}</td></tr>
+        <tr><td style="padding:6px 8px;">Crédit regroupé</td><td style="text-align:right;padding:6px 8px;">${fmtEUR(result.consolidated.monthly)}</td><td style="text-align:right;padding:6px 8px;">${fmtEUR(result.consolidated.totalCost)}</td><td style="text-align:right;padding:6px 8px;">${fmtDuree(result.consolidated.months)}</td></tr>
+      </tbody>
+    </table></div>
+    <p style="font-size:12.5px;margin-top:10px;">Mensualité ${monthlyLower ? 'plus basse' : 'plus élevée'} de ${fmtEUR(Math.abs(result.monthlyDiff))}${monthlyLower ? ', mais' : ' et'} coût total ${totalCostHigher ? 'plus élevé' : 'plus bas'} de ${fmtEUR(Math.abs(result.totalCostDiff))}.</p>
+    ${monthlyLower && totalCostHigher ? `<p class="disclaimer-box" style="margin-top:10px;"><strong>Une mensualité plus faible ne signifie pas un coût total inférieur.</strong> Ici, regrouper allège la mensualité mais coûte plus cher au total — souvent parce que la durée s'allonge.</p>` : ''}`;
+}
+
 // ---------- Acheter ou louer, version sérieuse (P0-5) ----------
 // Simulation mois par mois (pas une formule fermée) car le loyer augmente
 // chaque année et le crédit s'amortit de façon non linéaire — un calcul en

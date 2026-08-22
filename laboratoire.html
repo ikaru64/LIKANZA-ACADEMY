@@ -277,6 +277,47 @@
   </div>
   </div>
 
+  <div class="home-tab-panel" id="tab-dettes">
+  <div class="section-head"><h2>💳 Dettes &amp; crédits</h2><span class="meta-line">coût réel et stratégies de remboursement</span></div>
+  <button type="button" class="btn btn-sm" id="tab-dettes-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>
+  <div class="quick-access-grid" id="tab-dettes-widgets"></div>
+  <div class="card-grid">
+
+    <div class="card" id="widget-debt-strategy" style="display:none;grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Quel crédit rembourser en premier ?</h3>
+        <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Ajoute tes crédits réels (solde restant, taux, mensualité minimale) pour comparer deux stratégies de remboursement — jamais un ordre arbitraire.</p>
+      <div id="debtRows"></div>
+      <button class="btn btn-sm" id="debtAdd" style="margin-top:10px;">+ Ajouter un crédit</button>
+      <div class="field" style="max-width:300px;margin-top:14px;"><label for="debtExtra">Mensualité supplémentaire disponible (€)</label><input type="number" id="debtExtra" value="0" min="0"></div>
+      <div id="debtStrategyOutput" style="margin-top:16px;"></div>
+      <p class="disclaimer-box" style="margin-top:14px;">Simulation mois par mois à partir des vraies valeurs saisies — jamais une garantie que ta banque appliquera exactement ce calendrier (pénalités de remboursement anticipé éventuelles à vérifier auprès de chaque prêteur).</p>
+    </div>
+
+    <div class="card" id="widget-debt-consolidation" style="display:none;grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Regrouper ou conserver ses crédits ?</h3>
+        <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Compare tes crédits actuels à un unique crédit regroupé — une mensualité plus faible ne signifie pas toujours un coût total plus bas.</p>
+      <span class="smallcaps">Crédits actuels</span>
+      <div id="debtConsoRows" style="margin-top:8px;"></div>
+      <button class="btn btn-sm" id="debtConsoAdd" style="margin-top:10px;">+ Ajouter un crédit</button>
+      <span class="smallcaps" style="display:block;margin-top:18px;">Nouveau crédit regroupé</span>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
+        <div class="field" style="flex:1;min-width:140px;"><label for="consoAmount">Montant regroupé (€)</label><input type="number" id="consoAmount" value="9000" min="0"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="consoRate">Taux (%)</label><input type="number" id="consoRate" value="6" min="0" max="15" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="consoYears">Durée (ans)</label><input type="number" id="consoYears" value="7" min="1" max="30" step="1"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="consoFrais">Frais de dossier (€)</label><input type="number" id="consoFrais" value="300" min="0"></div>
+      </div>
+      <div id="debtConsolidationOutput" style="margin-top:16px;"></div>
+    </div>
+
+  </div>
+  </div>
+
   <div class="home-tab-panel" id="tab-budget-epargne">
   <div class="section-head"><h2>💰 Budget &amp; épargne</h2><span class="meta-line">inflation réelle, budget, objectifs</span></div>
   <button type="button" class="btn btn-sm" id="tab-budget-epargne-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>
