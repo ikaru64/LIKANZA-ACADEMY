@@ -4829,13 +4829,13 @@ function buildCompanyTimeline({dividendEvents, priceMoves, earnings, thematicNew
   const entries = [];
   (dividendEvents || []).forEach(d => {
     if(!d || typeof d.date !== 'string' || typeof d.amount !== 'number') return;
-    entries.push({date: d.date, type: 'dividende', label: `Dividende versé : ${d.amount.toFixed(2)} €`, badge: 'fait'});
+    entries.push({date: d.date, type: 'dividende', label: `Dividende versé : ${d.amount.toFixed(2).replace('.', ',')} €`, badge: 'fait'});
   });
   (priceMoves || []).forEach(m => {
     if(!m || typeof m.period !== 'string' || typeof m.changePct !== 'number') return;
     entries.push({
       date: `${m.period}-01`, type: 'mouvement',
-      label: `Mouvement de cours observé : ${m.changePct >= 0 ? '+' : ''}${m.changePct.toFixed(1)} %`,
+      label: `Mouvement de cours observé : ${m.changePct >= 0 ? '+' : ''}${m.changePct.toFixed(1).replace('.', ',')} %`,
       changePct: m.changePct, priceBefore: m.priceBefore, priceAfter: m.priceAfter, badge: 'calcul'
     });
   });
@@ -4844,7 +4844,7 @@ function buildCompanyTimeline({dividendEvents, priceMoves, earnings, thematicNew
     const surprisePct = typeof e.epsEstimate === 'number' && e.epsEstimate !== 0 ? ((e.epsActual / e.epsEstimate - 1) * 100) : null;
     entries.push({
       date: e.quarterDate, type: 'resultat',
-      label: `Résultat trimestriel publié : BPA réel ${e.epsActual.toFixed(2)}${typeof e.epsEstimate === 'number' ? ` vs attendu ${e.epsEstimate.toFixed(2)}` : ''}`,
+      label: `Résultat trimestriel publié : BPA réel ${e.epsActual.toFixed(2).replace('.', ',')}${typeof e.epsEstimate === 'number' ? ` vs attendu ${e.epsEstimate.toFixed(2).replace('.', ',')}` : ''}`,
       epsActual: e.epsActual, epsEstimate: e.epsEstimate, surprisePct, badge: 'fait'
     });
   });

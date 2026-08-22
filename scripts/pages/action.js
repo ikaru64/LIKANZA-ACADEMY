@@ -45,6 +45,81 @@ const ACTION_HORIZON_OPTIONS = [
   {value: 'long', label: 'Long terme', detail: 'plus de 5 ans', pick: s => s.quality.components.filter(c => !c.label.includes('Croissance')), reminder: "Sur cet horizon, la structure financière (endettement, marge) compte souvent davantage que la performance récente du cours."}
 ];
 
+// ---------- Chronologie d'entreprise ("Que s'est-il passé ?") ----------
+// Fusionne dividendes/mouvements de cours/résultats/actualités réels
+// (buildCompanyTimeline, scripts/data.js) — formulations strictement
+// factuelles partout, jamais de causalité affirmée entre un événement et
+// une variation du cours.
+const TIMELINE_TYPE_META = {
+  dividende: {icon: '💰', label: 'Dividende'},
+  mouvement: {icon: '📉', label: 'Mouvement de cours'},
+  resultat: {icon: '📊', label: 'Résultats'},
+  actualite: {icon: '📰', label: 'Actualité'}
+};
+const TIMELINE_FILTERS = [
+  {key: 'tout', label: '🏢 Tout'},
+  {key: 'resultat', label: '📊 Résultats'},
+  {key: 'dividende', label: '💰 Dividendes'},
+  {key: 'mouvement', label: '📉 Mouvements'},
+  {key: 'actualite', label: '📰 Actualités'}
+];
+let timelineData = [];
+let timelineFilter = 'tout';
+
+function renderTimelineList(elId){
+  const listEl = document.getElementById(elId + '-list');
+  if(!listEl) return;
+  const entries = timelineFilter === 'tout' ? timelineData : timelineData.filter(e => e.type === timelineFilter);
+  if(entries.length === 0){
+    listEl.innerHTML = `<p style="color:var(--text-dim);font-size:12.5px;">Aucun événement réel dans cette catégorie.</p>`;
+    return;
+  }
+  listEl.innerHTML = entries.map((e, i) => {
+    const meta = TIMELINE_TYPE_META[e.type];
+    const icon = e.type === 'mouvement' ? (e.changePct >= 0 ? '📈' : '📉') : meta.icon;
+    const dateLabel = new Date(e.date).toLocaleDateString('fr-FR', {year: 'numeric', month: 'short', day: e.type === 'actualite' ? undefined : 'numeric'});
+    if(e.type === 'mouvement'){
+      // "Que s'est-il passé ?" : uniquement les vrais faits déjà connus pour
+      // cette période — jamais une causalité affirmée entre l'actualité et
+      // le mouvement, seulement "survenu(e) pendant cette période".
+      const linkedNews = timelineData.filter(n => n.type === 'actualite' && n.date.slice(0, 7) === e.date.slice(0, 7));
+      return `<details class="why-drawer" style="margin-bottom:10px;">
+        <summary class="smallcaps" style="cursor:pointer;">${icon} ${dateLabel} — ${e.label}</summary>
+        <div style="margin-top:8px;font-size:12.5px;color:var(--text-dim);line-height:1.6;">
+          <p>${renderDataBadge('calcul')} Cours réel : ${e.priceBefore.toFixed(2).replace('.', ',')} € → ${e.priceAfter.toFixed(2).replace('.', ',')} € (${e.changePct >= 0 ? '+' : ''}${e.changePct.toFixed(1).replace('.', ',')} %).</p>
+          ${linkedNews.length ? `<p style="margin-top:8px;">${renderDataBadge('fait')} Actualité publiée pendant cette période (pas nécessairement la cause) :</p>${linkedNews.map(n => `<p style="margin-top:4px;"><a href="actualites.html#${n.slug}" style="color:var(--gold-bright);">${n.label}</a></p>`).join('')}`
+            : `<p style="margin-top:8px;font-style:italic;">Aucune actualité identifiée pour cette période précise — seule la semaine en cours est disponible via le fil d'actualités du site, pas un historique complet.</p>`}
+        </div>
+      </details>`;
+    }
+    return `<p style="font-size:12.5px;margin-bottom:8px;"><span style="color:var(--text-dim);">${dateLabel}</span> — ${icon} ${e.type === 'actualite' ? `<a href="actualites.html#${e.slug}" style="color:var(--gold-bright);">${e.label}</a>` : e.label}</p>`;
+  }).join('');
+}
+
+function renderCompanyTimeline(elId, timeline){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  timelineData = timeline;
+  timelineFilter = 'tout';
+  if(timeline.length === 0){
+    el.innerHTML = `<h3>Chronologie</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (aucun événement réel identifié pour cette valeur).</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <h3>Chronologie</h3>
+    <p style="font-size:12px;color:var(--text-dim);margin:6px 0 12px;">Dividendes, résultats et mouvements de cours réellement observés — jamais une causalité inventée entre une actualité et une variation du cours.</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;">
+      ${TIMELINE_FILTERS.map(f => `<button type="button" class="pill ${f.key === timelineFilter ? 'active' : ''}" data-timeline-filter="${f.key}">${f.label}</button>`).join('')}
+    </div>
+    <div id="${elId}-list"></div>`;
+  el.querySelectorAll('[data-timeline-filter]').forEach(btn => btn.addEventListener('click', () => {
+    timelineFilter = btn.dataset.timelineFilter;
+    el.querySelectorAll('[data-timeline-filter]').forEach(b => b.classList.toggle('active', b.dataset.timelineFilter === timelineFilter));
+    renderTimelineList(elId);
+  }));
+  renderTimelineList(elId);
+}
+
 function renderScoreVerdictCard(el, ff, volatility, drawdown){
   const score = computeStockScore(ff, volatility, drawdown);
   const tier = computeRiskTier(ff, volatility);
@@ -195,6 +270,7 @@ async function renderActionDetail(){
     <div class="card" id="scoreVerdictCard" style="margin-top:16px;display:none;"></div>
     <div class="card" id="technicalCard" style="margin-top:16px;"></div>
     <div class="card" id="thematicNewsCard" style="margin-top:16px;display:none;"></div>
+    <div class="card" id="timelineCard" style="margin-top:16px;"><h3>Chronologie</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement…</p></div>
     <p class="disclaimer-box" style="margin-top:16px;">Ces informations sont fournies à titre pédagogique, en différé. Elles ne constituent ni un conseil en investissement, ni une incitation à acheter ou vendre.</p>`;
 
   initFavButtons();
@@ -376,6 +452,32 @@ async function renderActionDetail(){
         } else if(scoreCard){
           scoreCard.style.display = 'none';
         }
+
+        // ---------- Chronologie : fusionne dividendes/mouvements de cours réels
+        // (déjà calculables depuis un seul fetch de prix+dividendes) avec les
+        // résultats trimestriels réels (profile.earnings, déjà chargé ci-dessus)
+        // et les actualités thématiques de la semaine en cours (curatées
+        // uniquement). Un seul nouvel appel réseau (prix+dividendes). ----------
+        const timelineCard = document.getElementById('timelineCard');
+        if(timelineCard){
+          const earningsHistory = profile.earnings ? profile.earnings.history : [];
+          Promise.allSettled([
+            fetchSymbolMonthlyHistoryWithDividends(ticker, '5y'),
+            (stock.curated && stock.secteur)
+              ? fetch('/api/weekly-news').then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+              : Promise.resolve(null)
+          ]).then(([priceResult, newsResult]) => {
+            const priceData = priceResult.status === 'fulfilled' ? priceResult.value : null;
+            const priceMoves = priceData ? detectSignificantPriceMoves(priceData.points) : [];
+            const dividendEvents = priceData ? priceData.dividends : [];
+            const newsPayload = newsResult.status === 'fulfilled' ? newsResult.value : null;
+            const thematicNews = (newsPayload && stock.secteur)
+              ? findThematicNews(stock.secteur, newsPayload.articles || []).map(a => ({...a, date: newsPayload.weekStart}))
+              : [];
+            const timeline = buildCompanyTimeline({dividendEvents, priceMoves, earnings: earningsHistory, thematicNews});
+            renderCompanyTimeline('timelineCard', timeline);
+          });
+        }
       })
       .catch(err => {
         console.info('Likanza Academy — description/fondamentaux de société indisponibles :', err.message);
@@ -384,6 +486,8 @@ async function renderActionDetail(){
         if(consensusCard) consensusCard.style.display = 'none';
         const scoreCardEl = document.getElementById('scoreVerdictCard');
         if(scoreCardEl) scoreCardEl.style.display = 'none';
+        const timelineCardEl = document.getElementById('timelineCard');
+        if(timelineCardEl) timelineCardEl.innerHTML = `<h3>Chronologie</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
       });
   }
 
