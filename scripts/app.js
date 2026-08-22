@@ -1014,7 +1014,61 @@ const POSITIONING_RISK_COMFORT = [
 // dupliqué) et un quiz de validation puisé dans QUIZ_BANK_FULL par thème.
 // Les points ne sont attribués qu'une fois le quiz de validation réussi.
 const COURS_CATALOG = [
-  {id:'bourse-actions', titre:'Comprendre la Bourse et les actions', niveau:'Débutant', libraryTermes:['Action','ETF','Capitalisation boursière','Obligation','PER (Price Earning Ratio)'], quizCategories:['Bourse','Actions','ETF','Obligations']},
+  // Premier cours pilote du chantier "Formation" (chapitres réels rédigés
+  // pour Likanza — structure/pédagogie inspirées de Khan Academy et CFI,
+  // aucun texte copié). Voir renderCoursRich/renderCourseBlock (data.js).
+  {id:'bourse-actions', titre:'Comprendre la Bourse et les actions', niveau:'Débutant',
+    libraryTermes:['Action','ETF','Capitalisation boursière','Obligation','PER (Price Earning Ratio)'],
+    quizCategories:['Bourse','Actions','ETF','Obligations'],
+    applyUrl:'bourse.html', applyLabel:'Voir de vraies fiches actions et leur PER réel',
+    acquis:[
+      "Expliquer ce qu'est une action et ce que possède réellement un actionnaire",
+      "Calculer une capitalisation boursière à partir d'un cours et d'un nombre d'actions",
+      "Distinguer une action, un ETF et une obligation",
+      "Calculer un PER et l'interpréter sans le réduire à une règle simpliste"
+    ],
+    chapitres:[
+      {titre:"1. Qu'est-ce qu'une action ?", blocs:[
+        {type:'texte', texte:"Que se passe-t-il réellement quand tu achètes une action ? Tu ne reçois ni un billet, ni un produit — tu deviens propriétaire d'une toute petite partie d'une vraie entreprise."},
+        {type:'definition', texte:"Une action représente une fraction du capital d'une entreprise. La détenir fait de toi un actionnaire : tu possèdes une part réelle de cette entreprise, avec les droits qui vont avec (vote en assemblée générale, part des bénéfices distribués)."},
+        {type:'visualisation', schema:
+"ENTREPRISE\n    │\n    ▼\n CAPITAL (divisé en actions)\n    │\n ┌──┴──┬─────┬─────┐\n │     │     │     │\n ▼     ▼     ▼     ▼\nActionnaire 1  2  3  4\n(chacun possède une part)"},
+        {type:'exemple', texte:"Air Liquide, cotée à la Bourse de Paris, est une vraie entreprise industrielle réelle. Comme pour n'importe quelle société cotée, son capital est divisé en un grand nombre d'actions : chaque action détenue représente une part infime, mais réelle, de l'entreprise et de ses bénéfices futurs."},
+        {type:'retenir', texte:"Un actionnaire peut gagner de deux façons différentes : si le cours de l'action monte (plus-value, seulement réalisée à la revente), et si l'entreprise reverse une partie de ses bénéfices sous forme de dividende."},
+        {type:'attention', texte:"Aucun de ces deux gains n'est garanti. Le cours peut aussi baisser, et une entreprise peut choisir de ne pas verser de dividende, y compris si elle est bénéficiaire."},
+        {type:'approfondir', texte:"Il existe plusieurs catégories d'actions. Les actions ordinaires donnent un droit de vote en assemblée générale (une voix par action, en général) et un droit sur les bénéfices distribués. Certaines entreprises émettent aussi des actions à droit de vote multiple ou sans droit de vote — une nuance rarement expliquée mais qui change qui contrôle réellement l'entreprise."}
+      ]},
+      {titre:"2. Comment une action s'échange : la Bourse et la capitalisation", blocs:[
+        {type:'definition', texte:"La Bourse est un marché où s'échangent les actions déjà émises par les entreprises cotées. Le cours d'une action à un instant donné, c'est simplement le prix auquel un acheteur et un vendeur se sont mis d'accord pour l'échanger à ce moment précis."},
+        {type:'texte', texte:"Ce prix bouge en continu selon l'offre et la demande : plus il y a d'acheteurs pressés d'acheter que de vendeurs pressés de vendre, plus le cours monte — et inversement."},
+        {type:'calcul', texte:"La capitalisation boursière mesure la valeur totale attribuée par le marché à une entreprise cotée.", schema:
+"Capitalisation boursière = Cours de l'action × Nombre total d'actions\n\nExemple :\nCours de l'action  : 50 €\nNombre d'actions   : 400 000 000\n\nCapitalisation = 50 × 400 000 000 = 20 000 000 000 €\n(20 milliards d'euros)"},
+        {type:'exerciceErreur', affirmation:"Une entreprise dont l'action vaut 500 € est forcément plus grosse qu'une entreprise dont l'action vaut 10 €.", pourquoi:"Le prix d'une seule action ne dit rien sur la taille de l'entreprise : tout dépend du nombre total d'actions émises. Une entreprise à 500 €/action avec 1 million d'actions capitalise 500 millions d'euros ; une entreprise à 10 €/action avec 200 millions d'actions capitalise 2 milliards d'euros — largement plus grosse malgré un cours par action bien plus bas. Seule la capitalisation (cours × nombre d'actions) permet de comparer la taille de deux entreprises."},
+        {type:'approfondir', texte:"La capitalisation boursière n'est pas tout à fait la même chose que la « valeur d'entreprise » (Enterprise Value), qui ajoute la dette nette de l'entreprise à sa capitalisation — un acheteur qui rachèterait 100% de l'entreprise devrait aussi reprendre sa dette. Cette distinction devient importante dès qu'on compare des entreprises avec des niveaux d'endettement très différents."}
+      ]},
+      {titre:"3. Les ETF : investir dans plusieurs entreprises à la fois", blocs:[
+        {type:'definition', texte:"Un ETF (Exchange-Traded Fund, ou fonds indiciel coté) est un fonds qui réplique la performance d'un indice — par exemple le CAC 40 ou le MSCI World — en détenant un panier des actions qui composent cet indice."},
+        {type:'texte', texte:"Acheter une seule part d'ETF revient donc à investir en une fois dans toutes les entreprises de l'indice répliqué, dans les proportions de cet indice — sans avoir à choisir et acheter chaque action une par une."},
+        {type:'retenir', texte:"Le principal intérêt d'un ETF est la diversification instantanée : la performance d'une seule entreprise en difficulté pèse peu sur le résultat global, puisque le capital est réparti entre de nombreuses entreprises."},
+        {type:'attention', texte:"Un ETF ne supprime pas tout le risque : si le marché ou le secteur entier de l'indice répliqué baisse, l'ETF baisse aussi. La diversification réduit le risque propre à une seule entreprise (risque spécifique), pas le risque de l'ensemble du marché (risque systématique)."},
+        {type:'casReel', texte:"Un ETF répliquant le CAC 40 détient, en proportions variables, les 40 plus grandes capitalisations boursières françaises cotées à Paris — d'un secteur industriel comme Air Liquide à un secteur du luxe comme LVMH. Un seul achat d'ETF donne donc une exposition partagée entre des secteurs très différents."}
+      ]},
+      {titre:"4. Les obligations : prêter de l'argent plutôt qu'en devenir propriétaire", blocs:[
+        {type:'definition', texte:"Une obligation est un titre de dette : en l'achetant, tu prêtes de l'argent à l'émetteur (une entreprise ou un État) pour une durée déterminée, en échange d'un intérêt régulier (le coupon) et du remboursement du capital prêté à l'échéance."},
+        {type:'texte', texte:"C'est une relation fondamentalement différente de celle de l'action : l'actionnaire est propriétaire de l'entreprise, l'obligataire est un créancier — il lui a prêté de l'argent."},
+        {type:'visualisation', schema:
+"ACTION                          OBLIGATION\n───────                         ──────────\nTu deviens propriétaire         Tu prêtes de l'argent\nGain : dividende + plus-value   Gain : coupon (intérêt) fixé à l'avance\nAucun remboursement garanti     Capital remboursé à l'échéance (si l'émetteur ne fait pas défaut)\nEn cas de faillite : payé en    En cas de faillite : payé avant les\ndernier, après les créanciers   actionnaires, mais pas garanti pour autant"},
+        {type:'attention', texte:"Une obligation n'est pas « sans risque ». Deux risques réels existent : le risque de défaut (l'émetteur ne rembourse pas), plus élevé pour une entreprise fragile que pour un État solide, et le risque de taux (la valeur d'une obligation déjà émise baisse si les taux d'intérêt du marché montent, car de nouvelles obligations émises deviennent plus attractives)."}
+      ]},
+      {titre:"5. Le PER : un premier outil pour interpréter un prix", blocs:[
+        {type:'definition', texte:"Le PER (Price-to-Earnings Ratio, ou rapport cours/bénéfice) compare le prix d'une action au bénéfice net généré par action sur les 12 derniers mois."},
+        {type:'calcul', texte:"PER = Prix de l'action ÷ Bénéfice par action (BPA).", schema:
+"Exemple :\nPrix de l'action     : 100 €\nBénéfice par action  : 5 €\n\nPER = 100 ÷ 5 = 20\n\nAutrement dit : au cours actuel, il faudrait 20 années de bénéfices\nau rythme actuel pour \"rembourser\" le prix payé pour l'action —\nune façon de lire le prix, pas une prédiction."},
+        {type:'pourquoi', texte:"Un PER élevé ne signifie jamais automatiquement qu'une action est chère ou mauvaise, et un PER faible ne signifie jamais automatiquement qu'elle est bon marché. L'interprétation dépend notamment de la croissance attendue des bénéfices, du secteur (les secteurs à forte croissance ont structurellement des PER plus élevés que les secteurs matures), de la fiabilité de ces bénéfices dans le temps, et de la situation particulière de l'entreprise à ce moment précis."},
+        {type:'exerciceErreur', affirmation:"Cette action est forcément une bonne affaire parce que son PER est faible.", pourquoi:"Un PER faible peut aussi signifier que le marché anticipe une baisse future des bénéfices, des risques spécifiques à l'entreprise ou à son secteur, ou une croissance jugée limitée — pas nécessairement une « bonne affaire ». Le PER est un point de départ pour comparer des entreprises d'un même secteur, jamais une conclusion à lui seul."},
+        {type:'texte', texte:"Le PER n'est qu'un premier outil parmi d'autres pour interpréter un prix — la partie Bourse de Likanza permet de voir le PER réel, calculé et daté, de n'importe quelle action suivie, avec les autres indicateurs financiers qui l'entourent."}
+      ]}
+    ]},
   {id:'epargne-interets', titre:"Épargne et intérêts composés", niveau:'Débutant', libraryTermes:['Intérêts composés','Assurance-vie'], quizCategories:['Épargne','Intérêts composés','Intérêts simples','Livret A','Assurance-vie']},
   {id:'fiscalite-pea', titre:'Fiscalité et enveloppes fiscales', niveau:'Intermédiaire', libraryTermes:['PEA'], quizCategories:['PEA','Fiscalité de base','Retraite et PER']},
   {id:'risque-diversification', titre:'Risque, volatilité et diversification', niveau:'Intermédiaire', libraryTermes:['Diversification','Volatilité'], quizCategories:['Diversification','Risque et volatilité',"Psychologie de l'investisseur"]},

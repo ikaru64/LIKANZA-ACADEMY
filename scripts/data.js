@@ -2663,14 +2663,154 @@ function renderCoursTiles(elId, domainKey){
   const list = domainKey ? COURS_CATALOG.filter(c => coursDomainKey(c) === domainKey) : COURS_CATALOG;
   el.innerHTML = `<div class="card-grid">${list.map(cours=>{
     const done = !!progress[cours.id];
+    const isRich = Array.isArray(cours.chapitres) && cours.chapitres.length > 0;
+    const meta = isRich ? `${cours.chapitres.length} chapitre${cours.chapitres.length>1?'s':''} · lecture + quiz de validation` : `${cours.libraryTermes.length} notion${cours.libraryTermes.length>1?'s':''} · lecture + quiz de validation`;
     return `
     <a href="cours.html#${encodeURIComponent(cours.id)}" class="card play-tile">
       <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
       <h3 style="font-size:16px;margin-top:10px;">${done ? ICONS.check + ' ' : ''}${cours.titre}</h3>
-      <p>${cours.libraryTermes.length} notion${cours.libraryTermes.length>1?'s':''} · lecture + quiz de validation</p>
+      <p>${meta}</p>
       <div class="card-footer"><span class="badge ${done ? 'status-reel' : 'status-differe'}">${done ? 'Validé' : cours.niveau}</span><span>Ouvrir →</span></div>
     </a>`;
   }).join('')}</div>`;
+}
+
+// ---------- Cours enrichi (chapitres réels) : template universel de bloc
+// pédagogique (section 5 du plan) — définition/à retenir/attention/exemple/
+// calcul/visualisation/cas réel/pourquoi, plus un bloc "approfondir" replié
+// par défaut (<details> natif, aucun JS de toggle) pour aller plus loin sans
+// quitter le cours, et un bloc "trouve l'erreur" pour varier les exercices
+// (section 15 : pas uniquement des QCM). Un bloc sans contenu réel n'est
+// jamais rendu vide. ----------
+const COURSE_BLOCK_META = {
+  definition: {emoji: '📖', label: 'Définition'},
+  retenir: {emoji: '💡', label: 'À retenir'},
+  attention: {emoji: '⚠️', label: 'Attention'},
+  exemple: {emoji: '🔢', label: 'Exemple'},
+  calcul: {emoji: '🧮', label: 'Calcul'},
+  visualisation: {emoji: '📊', label: 'Visualisation'},
+  casReel: {emoji: '🏢', label: 'Cas réel'},
+  pourquoi: {emoji: '🧠', label: 'Pourquoi ?'}
+};
+function renderCourseBlock(bloc){
+  if(!bloc || !bloc.type) return '';
+  if(bloc.type === 'texte'){
+    return bloc.texte ? `<p style="margin-top:12px;line-height:1.7;">${bloc.texte}</p>` : '';
+  }
+  if(bloc.type === 'approfondir'){
+    return bloc.texte ? `<details class="why-drawer" style="margin-top:14px;">
+      <summary class="smallcaps" style="cursor:pointer;">🔬 Approfondir</summary>
+      <div style="font-size:13px;color:var(--text-dim);line-height:1.7;margin-top:8px;">${bloc.texte}</div>
+    </details>` : '';
+  }
+  if(bloc.type === 'exerciceErreur'){
+    if(!bloc.affirmation || !bloc.pourquoi) return '';
+    return `<div class="card" style="margin-top:14px;background:var(--bg-alt);">
+      <span class="smallcaps">🕵️ Trouve l'erreur</span>
+      <p style="margin-top:8px;font-style:italic;">« ${bloc.affirmation} »</p>
+      <details class="why-drawer" style="margin-top:8px;"><summary class="smallcaps" style="cursor:pointer;">Voir pourquoi c'est incomplet ou faux</summary>
+        <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">${bloc.pourquoi}</p>
+      </details>
+    </div>`;
+  }
+  const meta = COURSE_BLOCK_META[bloc.type];
+  if(!meta || (!bloc.texte && !bloc.schema)) return '';
+  const textHtml = bloc.texte ? `<p style="margin-top:8px;line-height:1.7;">${bloc.texte}</p>` : '';
+  const schemaHtml = bloc.schema ? `<pre style="background:var(--bg);border:1px solid var(--hairline);border-radius:var(--radius);padding:12px 16px;font-size:12px;line-height:1.5;overflow-x:auto;margin-top:8px;">${bloc.schema}</pre>` : '';
+  return `<div class="card" style="margin-top:14px;">
+    <span class="smallcaps">${meta.emoji} ${meta.label}</span>
+    ${textHtml}${schemaHtml}
+  </div>`;
+}
+function renderCourseChapter(chapitre){
+  if(!chapitre) return '';
+  const blocsHtml = (chapitre.blocs || []).map(renderCourseBlock).join('');
+  return `<h4 style="margin-top:4px;">${chapitre.titre}</h4>${blocsHtml}`;
+}
+// Lien réel vers la Bibliothèque pour chaque notion citée (section 17 : la
+// Formation et la Bibliothèque doivent être liées) — même format de hash que
+// bibliotheque.js (terme avec espaces remplacés par des tirets).
+function renderCourseLibraryLinks(libraryTermes){
+  const termes = (libraryTermes || []).filter(t => LIBRARY.some(l => l.terme === t));
+  if(termes.length === 0) return '';
+  return `<p style="font-size:12px;color:var(--text-dim);margin-top:16px;">📚 Voir aussi dans la Bibliothèque : ${termes.map(t => `<a href="bibliotheque.html#${encodeURIComponent(t.replace(/\s+/g,'-'))}" style="color:var(--gold-bright);">${t}</a>`).join(' · ')}</p>`;
+}
+
+// Navigation chapitre par chapitre (même forme que la pagination existante
+// de renderCoursDetail — barre de progression, bouton Suivant/Précédent),
+// puis bascule sur le quiz de validation déjà existant (renderCoursQuiz,
+// inchangé). Utilisé uniquement pour les cours qui déclarent cours.chapitres
+// — les cours sans chapitres réels gardent l'ancien rendu (bundle de
+// notions), jamais une régression sur ce qui existe déjà.
+function renderCoursRich(elId, cours, onComplete){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const chapitres = cours.chapitres;
+  let chapIndex = 0;
+
+  function renderChapterStep(){
+    const isLast = chapIndex === chapitres.length - 1;
+    const pct = Math.round(((chapIndex + 1) / chapitres.length) * 100);
+    el.innerHTML = `
+      <div class="mono" style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Chapitre ${chapIndex+1} / ${chapitres.length}</div>
+      <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+      ${renderCourseChapter(chapitres[chapIndex])}
+      ${isLast ? renderCourseLibraryLinks(cours.libraryTermes) : ''}
+      <div style="display:flex;gap:8px;margin-top:18px;">
+        ${chapIndex > 0 ? `<button class="btn btn-sm" id="${elId}-prev">← Précédent</button>` : ''}
+        <button class="btn btn-sm btn-gold" id="${elId}-next">${isLast ? 'Passer au quiz →' : 'Chapitre suivant →'}</button>
+      </div>`;
+    document.getElementById(`${elId}-next`).addEventListener('click', () => {
+      if(isLast){ renderQuizStep(); }
+      else { chapIndex++; renderChapterStep(); }
+    });
+    const prevBtn = document.getElementById(`${elId}-prev`);
+    if(prevBtn) prevBtn.addEventListener('click', () => { chapIndex--; renderChapterStep(); });
+  }
+
+  function renderQuizStep(){
+    const progress = getCoursProgress();
+    const done = !!progress[cours.id];
+    el.innerHTML = `
+      <div class="mission-question">
+        <p class="mission-q-prompt">${done ? "Cours validé — retente le quiz quand tu veux, en révision." : "Lecture terminée : valide le quiz pour gagner des points."}</p>
+        <div id="${elId}-quiz"></div>
+        <button class="btn btn-sm btn-gold" id="${elId}-start">${done ? 'Revoir le quiz' : 'Commencer le quiz'}</button>
+      </div>
+      <button class="btn btn-sm" id="${elId}-back" style="margin-top:12px;">← Revoir les chapitres</button>`;
+    document.getElementById(`${elId}-start`).addEventListener('click', function(){
+      this.style.display = 'none';
+      renderCoursQuiz(`${elId}-quiz`, cours, onComplete);
+    });
+    document.getElementById(`${elId}-back`).addEventListener('click', () => { chapIndex = 0; renderChapterStep(); });
+  }
+
+  renderChapterStep();
+}
+
+// Écran de fin d'un cours enrichi : jamais un simple "Bravo", toujours les
+// vraies acquisitions (section 16) et les 4 suites possibles réelles —
+// "Approfondir" pointe vers le prochain cours réel du même domaine s'il
+// existe, "Appliquer" vers un vrai outil Likanza fourni par le cours lui-même
+// (jamais un lien générique), "Expérimenter"/"Te tester" vers le Laboratoire
+// et les Défis, toujours disponibles.
+function renderCourseCompletionMenu(elId, cours){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const domain = coursDomainKey(cours);
+  const next = COURS_CATALOG.find(c => c.id !== cours.id && coursDomainKey(c) === domain) || null;
+  const acquis = Array.isArray(cours.acquis) ? cours.acquis : [];
+  el.innerHTML = `
+    ${acquis.length ? `<div class="card" style="margin-top:18px;">
+      <span class="smallcaps">Tu sais maintenant :</span>
+      <ul style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--text-dim);line-height:1.8;">${acquis.map(a => `<li>${a}</li>`).join('')}</ul>
+    </div>` : ''}
+    <div class="card-grid" style="margin-top:14px;">
+      ${next ? `<a href="cours.html#${encodeURIComponent(next.id)}" class="card play-tile"><span class="icon">📚</span><h4 style="margin:8px 0 4px;">Approfondir</h4><p style="font-size:12.5px;color:var(--text-dim);">${next.titre}</p></a>` : ''}
+      ${cours.applyUrl ? `<a href="${cours.applyUrl}" class="card play-tile"><span class="icon">📈</span><h4 style="margin:8px 0 4px;">Appliquer</h4><p style="font-size:12.5px;color:var(--text-dim);">${cours.applyLabel || 'Voir dans Likanza'}</p></a>` : ''}
+      <a href="laboratoire.html" class="card play-tile"><span class="icon">🧪</span><h4 style="margin:8px 0 4px;">Expérimenter</h4><p style="font-size:12.5px;color:var(--text-dim);">Tester dans le Laboratoire</p></a>
+      <a href="defis.html" class="card play-tile"><span class="icon">🧠</span><h4 style="margin:8px 0 4px;">Te tester</h4><p style="font-size:12.5px;color:var(--text-dim);">Faire un défi</p></a>
+    </div>`;
 }
 
 // Rendu complet d'un seul cours (lecture + quiz) — utilisé par cours.html.
@@ -2703,6 +2843,10 @@ function renderCoursDetail(elId, coursId, onComplete){
   const cours = COURS_CATALOG.find(c=>c.id===coursId);
   if(!cours){
     el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Cours introuvable. <a href="formations.html" style="color:var(--gold-bright);">Retour à l'Academy</a>.</p>`;
+    return;
+  }
+  if(Array.isArray(cours.chapitres) && cours.chapitres.length > 0){
+    renderCoursRich(elId, cours, onComplete);
     return;
   }
   const termItems = cours.libraryTermes.map(t=>LIBRARY.find(l=>l.terme===t)).filter(Boolean);
@@ -2813,7 +2957,8 @@ function renderCoursQuiz(elId, cours, onComplete){
       <button class="btn btn-sm btn-gold" id="${elId}-retry">${passed ? 'Repasser le quiz' : 'Réessayer'}</button>
       <div id="${elId}-nextstep"></div>`;
     document.getElementById(`${elId}-retry`).addEventListener('click', ()=>renderCoursQuiz(elId, cours, onComplete));
-    renderNextStepCard(`${elId}-nextstep`, {categories: cours.quizCategories});
+    if(Array.isArray(cours.chapitres) && cours.chapitres.length > 0) renderCourseCompletionMenu(`${elId}-nextstep`, cours);
+    else renderNextStepCard(`${elId}-nextstep`, {categories: cours.quizCategories});
   }
 
   renderQuestion();
