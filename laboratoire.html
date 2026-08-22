@@ -318,6 +318,67 @@
   </div>
   </div>
 
+  <div class="home-tab-panel" id="tab-transport">
+  <div class="section-head"><h2>🚗 Transport</h2><span class="meta-line">coût réel de possession et de financement</span></div>
+  <button type="button" class="btn btn-sm" id="tab-transport-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>
+  <div class="quick-access-grid" id="tab-transport-widgets"></div>
+  <div class="card-grid">
+
+    <div class="card" id="widget-transport-tco" style="display:none;grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Coût total de possession</h3>
+        <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Achat, carburant ou électricité, assurance, entretien et décote — le même formulaire pour n'importe quel véhicule (essence, hybride, électrique) : change juste la consommation et le prix de l'énergie.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:130px;"><label for="tcoPrice">Prix d'achat (€)</label><input type="number" id="tcoPrice" value="22000" min="0"></div>
+        <div class="field" style="flex:1;min-width:150px;"><label for="tcoFinancing">Mode de paiement</label>
+          <select id="tcoFinancing"><option value="cash">Comptant</option><option value="credit">Crédit</option></select>
+        </div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="tcoYears">Durée de possession (ans)</label><input type="number" id="tcoYears" value="6" min="1" max="20" step="1"></div>
+      </div>
+      <div id="tcoCreditFields" style="display:none;">
+        <div style="display:flex;gap:12px;flex-wrap:wrap;">
+          <div class="field" style="flex:1;min-width:120px;"><label for="tcoDownPayment">Apport (€)</label><input type="number" id="tcoDownPayment" value="3000" min="0"></div>
+          <div class="field" style="flex:1;min-width:100px;"><label for="tcoCreditRate">Taux crédit (%)</label><input type="number" id="tcoCreditRate" value="4" min="0" max="15" step="0.05"></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:130px;"><label for="tcoConsumption">Consommation (L ou kWh /100km)</label><input type="number" id="tcoConsumption" value="6" min="0" step="0.1"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="tcoFuelPrice">Prix de l'unité (€/L ou €/kWh)</label><input type="number" id="tcoFuelPrice" value="1.8" min="0" step="0.01"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="tcoKm">Kilométrage annuel</label><input type="number" id="tcoKm" value="12000" min="0"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:120px;"><label for="tcoInsurance">Assurance (€/an)</label><input type="number" id="tcoInsurance" value="650" min="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="tcoMaintenance">Entretien (€/an)</label><input type="number" id="tcoMaintenance" value="500" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="tcoDepreciation">Décote annuelle (%)</label><input type="number" id="tcoDepreciation" value="15" min="0" max="40" step="1"></div>
+      </div>
+      <div id="tcoOutput" style="margin-top:16px;"></div>
+    </div>
+
+    <div class="card" id="widget-transport-financing" style="display:none;grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Comptant, crédit, LOA ou LLD ?</h3>
+        <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Compare le coût total réel de plusieurs façons de financer le même véhicule sur la même durée — laisse vide ce que tu ne veux pas comparer.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:130px;"><label for="finPrice">Prix du véhicule (€)</label><input type="number" id="finPrice" value="22000" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="finYears">Durée de comparaison (ans)</label><input type="number" id="finYears" value="5" min="1" max="15" step="1"></div>
+        <div class="field" style="flex:1;min-width:150px;"><label for="finOpportunity">Rendement si comptant investi à la place (%/an)</label><input type="number" id="finOpportunity" value="0" min="0" max="15" step="0.1"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:110px;"><label for="finCreditRate">Taux crédit (%, optionnel)</label><input type="number" id="finCreditRate" placeholder="Ex : 4" min="0" max="15" step="0.05"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="finLoaMonthly">Mensualité LOA (€, optionnel)</label><input type="number" id="finLoaMonthly" placeholder="Ex : 300" min="0"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="finLoaOption">Option d'achat LOA (€, optionnel)</label><input type="number" id="finLoaOption" placeholder="Ex : 8000" min="0"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="finLldMonthly">Mensualité LLD (€, optionnel)</label><input type="number" id="finLldMonthly" placeholder="Ex : 280" min="0"></div>
+      </div>
+      <div id="finOutput" style="margin-top:16px;"></div>
+    </div>
+
+  </div>
+  </div>
+
   <div class="home-tab-panel" id="tab-budget-epargne">
   <div class="section-head"><h2>💰 Budget &amp; épargne</h2><span class="meta-line">inflation réelle, budget, objectifs</span></div>
   <button type="button" class="btn btn-sm" id="tab-budget-epargne-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>

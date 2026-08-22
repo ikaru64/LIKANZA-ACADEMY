@@ -4161,6 +4161,104 @@ function renderDebtConsolidationComparison(debts, newLoan){
     ${monthlyLower && totalCostHigher ? `<p class="disclaimer-box" style="margin-top:10px;"><strong>Une mensualité plus faible ne signifie pas un coût total inférieur.</strong> Ici, regrouper allège la mensualité mais coûte plus cher au total — souvent parce que la durée s'allonge.</p>` : ''}`;
 }
 
+// ---------- Transport : coût total de possession d'un véhicule ----------
+// Outlay total réellement dépensé (achat ou crédit, carburant/électricité,
+// assurance, entretien, carte grise) moins une valeur de revente estimée par
+// décote annuelle constante — la décote n'est jamais une donnée officielle,
+// juste l'hypothèse choisie par l'utilisateur, toujours signalée comme telle.
+// Le même formulaire sert aussi bien un véhicule essence qu'électrique
+// (consommation + prix de l'unité d'énergie saisis librement) — jamais deux
+// calculs séparés dupliqués pour la même formule.
+function computeVehicleTCO(inputs){
+  const {price, financing, downPayment, creditRate, consumptionPer100, fuelPricePerUnit, kmPerYear, insuranceAnnual, maintenanceAnnual, depreciationRatePct, possessionYears, cartGrise} = inputs || {};
+  if(!(price > 0) || !(possessionYears > 0) || typeof kmPerYear !== 'number' || kmPerYear < 0) return null;
+  if(typeof consumptionPer100 !== 'number' || consumptionPer100 < 0 || typeof fuelPricePerUnit !== 'number' || fuelPricePerUnit < 0) return null;
+  if(typeof insuranceAnnual !== 'number' || insuranceAnnual < 0 || typeof maintenanceAnnual !== 'number' || maintenanceAnnual < 0) return null;
+  if(typeof depreciationRatePct !== 'number' || depreciationRatePct < 0 || depreciationRatePct > 100) return null;
+
+  let purchaseOutlay, financingDetail = null;
+  if(financing === 'credit'){
+    const dp = typeof downPayment === 'number' && downPayment >= 0 ? downPayment : 0;
+    const amort = computeLoanAmortization(Math.max(price - dp, 0), typeof creditRate === 'number' ? creditRate : 0, possessionYears);
+    purchaseOutlay = dp + amort.totalCost;
+    financingDetail = {monthlyPayment: amort.monthlyPayment, totalInterest: amort.totalInterest};
+  } else {
+    purchaseOutlay = price;
+  }
+
+  const fuelCost = (consumptionPer100 / 100) * kmPerYear * fuelPricePerUnit * possessionYears;
+  const insuranceCost = insuranceAnnual * possessionYears;
+  const maintenanceCost = maintenanceAnnual * possessionYears;
+  const totalOutlay = purchaseOutlay + fuelCost + insuranceCost + maintenanceCost + (typeof cartGrise === 'number' ? cartGrise : 0);
+  const resaleValue = price * Math.pow(1 - depreciationRatePct / 100, possessionYears);
+  const netCost = totalOutlay - resaleValue;
+  const totalKm = kmPerYear * possessionYears;
+
+  return {
+    totalOutlay, resaleValue, netCost,
+    costPerKm: totalKm > 0 ? netCost / totalKm : null,
+    fuelCost, insuranceCost, maintenanceCost, purchaseOutlay, financingDetail
+  };
+}
+function renderVehicleTCOResult(result){
+  if(!result) return `<p style="color:var(--text-dim);font-size:13px;">Renseigne des valeurs réelles (prix, consommation, kilométrage annuel, assurance, entretien) pour calculer le coût total de possession.</p>`;
+  const fmtEUR = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+  return `
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${renderDataBadge('calcul')} Calculé à partir des valeurs saisies (achat, carburant ou électricité, assurance, entretien) et d'une décote annuelle constante que tu choisis.</p>
+    <div class="result-label">Coût net de possession</div>
+    <div class="result-big">${fmtEUR(result.netCost)}</div>
+    <div class="result-row"><span>Dépensé au total : ${fmtEUR(result.totalOutlay)}</span><span>Valeur de revente estimée : ${fmtEUR(result.resaleValue)}</span></div>
+    ${result.costPerKm !== null ? `<p style="font-size:12.5px;margin-top:8px;">Soit environ <strong>${result.costPerKm.toFixed(2).replace('.', ',')} € / km</strong> parcouru sur cette période.</p>` : ''}
+    <div style="margin-top:12px;font-size:12.5px;color:var(--text-dim);">
+      <p>Carburant / électricité : ${fmtEUR(result.fuelCost)}</p>
+      <p>Assurance : ${fmtEUR(result.insuranceCost)}</p>
+      <p>Entretien : ${fmtEUR(result.maintenanceCost)}</p>
+      ${result.financingDetail ? `<p>Dont intérêts du crédit : ${fmtEUR(result.financingDetail.totalInterest)}</p>` : ''}
+    </div>
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">La valeur de revente est une estimation basée sur le taux de décote annuel que tu as choisi — la vraie décote dépend du modèle, de l'état et du marché de l'occasion au moment de la revente, jamais une donnée officielle.</p>`;
+}
+
+// ---------- Transport : comptant, crédit, LOA ou LLD ? ----------
+// Jamais une option présentée par défaut comme la meilleure (section 6 du
+// plan) — la LOA/LLD est saisie directement par l'utilisateur (mensualité
+// réellement proposée par un concessionnaire), Likanza ne prétend pas la
+// calculer depuis des premiers principes qu'il ne connaît pas (marge du
+// loueur, valeur résiduelle contractuelle...).
+function computeVehicleFinancingComparison(inputs){
+  const {price, years, cashOpportunityRatePct, creditRate, loaMonthly, loaFinalOption, lldMonthly} = inputs || {};
+  if(!(price > 0) || !(years > 0)) return null;
+
+  const cashOpportunityCost = typeof cashOpportunityRatePct === 'number' && cashOpportunityRatePct > 0
+    ? price * (Math.pow(1 + cashOpportunityRatePct / 100, years) - 1) : 0;
+  const amort = typeof creditRate === 'number' && creditRate >= 0 ? computeLoanAmortization(price, creditRate, years) : null;
+  const loaTotal = typeof loaMonthly === 'number' && loaMonthly > 0 ? loaMonthly * years * 12 + (typeof loaFinalOption === 'number' ? loaFinalOption : 0) : null;
+  const lldTotal = typeof lldMonthly === 'number' && lldMonthly > 0 ? lldMonthly * years * 12 : null;
+
+  return {
+    cash: {totalCost: price, opportunityCost: cashOpportunityCost, owns: true},
+    credit: amort ? {totalCost: amort.totalCost, monthlyPayment: amort.monthlyPayment, owns: true} : null,
+    loa: loaTotal !== null ? {totalCost: loaTotal, owns: typeof loaFinalOption === 'number' && loaFinalOption > 0} : null,
+    lld: lldTotal !== null ? {totalCost: lldTotal, owns: false} : null
+  };
+}
+function renderVehicleFinancingComparison(result){
+  if(!result) return `<p style="color:var(--text-dim);font-size:13px;">Renseigne au moins le prix du véhicule et la durée de comparaison.</p>`;
+  const fmtEUR = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+  const rows = [{label: 'Comptant', totalCost: result.cash.totalCost, owns: true, extra: result.cash.opportunityCost > 0 ? `Coût d'opportunité si ce capital avait été investi : ${fmtEUR(result.cash.opportunityCost)}` : null}];
+  if(result.credit) rows.push({label: 'Crédit', totalCost: result.credit.totalCost, owns: true, extra: `Mensualité : ${fmtEUR(result.credit.monthlyPayment)}`});
+  if(result.loa) rows.push({label: "LOA (avec option d'achat)", totalCost: result.loa.totalCost, owns: result.loa.owns, extra: null});
+  if(result.lld) rows.push({label: 'LLD (sans option d\'achat)', totalCost: result.lld.totalCost, owns: false, extra: null});
+
+  return `
+    <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${renderDataBadge('calcul')} Comparaison calculée sur la même durée, à partir des valeurs réellement saisies — jamais une solution présentée par défaut comme la meilleure.</p>
+    <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr><th style="text-align:left;padding:6px 8px;">Solution</th><th style="text-align:right;padding:6px 8px;">Coût total</th><th style="text-align:center;padding:6px 8px;">Propriétaire à la fin</th></tr></thead>
+      <tbody>${rows.map(r => `<tr><td style="padding:6px 8px;">${r.label}</td><td style="text-align:right;padding:6px 8px;">${fmtEUR(r.totalCost)}</td><td style="text-align:center;padding:6px 8px;">${r.owns ? 'Oui' : 'Non'}</td></tr>`).join('')}</tbody>
+    </table></div>
+    ${rows.filter(r => r.extra).map(r => `<p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${r.label} — ${r.extra}</p>`).join('')}
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">Le coût total le plus bas n'est pas automatiquement le meilleur choix : la LOA/LLD n'immobilise pas de capital et peut inclure l'entretien selon le contrat — vérifie les conditions réelles proposées avant de comparer uniquement sur ce chiffre.</p>`;
+}
+
 // ---------- Acheter ou louer, version sérieuse (P0-5) ----------
 // Simulation mois par mois (pas une formule fermée) car le loyer augmente
 // chaque année et le crédit s'amortit de façon non linéaire — un calcul en

@@ -23,6 +23,7 @@ const LAB_TABS = [
   {id:'tab-investissement', title:'Investissement', desc:'Tester des stratégies', icon:'trending-up'},
   {id:'tab-logement', title:'Logement', desc:'Achat, location, prêt', icon:'house'},
   {id:'tab-dettes', title:'Dettes & crédits', desc:'Coût et stratégies', icon:'landmark'},
+  {id:'tab-transport', title:'Transport', desc:'Achat, crédit, LOA', icon:'compass'},
   {id:'tab-budget-epargne', title:'Budget & épargne', desc:'Comprendre son argent', icon:'coins'},
   {id:'tab-planification', title:'Planification', desc:'Comparer des décisions', icon:'scale'}
 ];
@@ -72,6 +73,10 @@ const LAB_WIDGETS = {
   'tab-dettes': [
     {id:'widget-debt-strategy', title:'Quel crédit rembourser en premier ?', desc:'Compare deux stratégies sur tes vrais crédits.', icon:'landmark'},
     {id:'widget-debt-consolidation', title:'Regrouper ou conserver ses crédits ?', desc:'Mensualité vs coût total réel du regroupement.', icon:'scale'}
+  ],
+  'tab-transport': [
+    {id:'widget-transport-tco', title:'Coût total de possession', desc:'Achat, énergie, assurance, entretien, décote.', icon:'calculator'},
+    {id:'widget-transport-financing', title:'Comptant, crédit, LOA ou LLD ?', desc:'Compare le coût total réel de financement.', icon:'scale'}
   ],
   'tab-budget-epargne': [
     {id:'widget-budget-inflation', title:'Que valent mes euros ?', desc:'Inflation réelle mesurée, pas une hypothèse constante.', icon:'trending-down'},
@@ -621,6 +626,65 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   consoRows.addRow('Carte de crédit', 2000, 19, 80);
   consoRows.addRow('Prêt personnel', 6000, 5, 150);
   updateDebtConsolidation();
+})();
+
+// ---------- Transport : coût total de possession + comparaison de
+// financement. La logique de calcul (computeVehicleTCO, renderVehicleTCOResult,
+// computeVehicleFinancingComparison, renderVehicleFinancingComparison) vit
+// dans scripts/data.js — même formulaire pour un véhicule essence, hybride ou
+// électrique, seule la consommation/le prix de l'énergie changent. ----------
+(function initLabTransport(){
+  const tcoOutputEl = document.getElementById('tcoOutput');
+  if(!tcoOutputEl) return;
+
+  const tcoFinancingEl = document.getElementById('tcoFinancing');
+  const tcoCreditFieldsEl = document.getElementById('tcoCreditFields');
+  function updateTCO(){
+    const financing = tcoFinancingEl.value;
+    tcoCreditFieldsEl.style.display = financing === 'credit' ? '' : 'none';
+    const result = computeVehicleTCO({
+      price: +document.getElementById('tcoPrice').value || 0,
+      financing,
+      downPayment: +document.getElementById('tcoDownPayment').value || 0,
+      creditRate: +document.getElementById('tcoCreditRate').value || 0,
+      possessionYears: +document.getElementById('tcoYears').value || 0,
+      consumptionPer100: +document.getElementById('tcoConsumption').value || 0,
+      fuelPricePerUnit: +document.getElementById('tcoFuelPrice').value || 0,
+      kmPerYear: +document.getElementById('tcoKm').value || 0,
+      insuranceAnnual: +document.getElementById('tcoInsurance').value || 0,
+      maintenanceAnnual: +document.getElementById('tcoMaintenance').value || 0,
+      depreciationRatePct: +document.getElementById('tcoDepreciation').value || 0
+    });
+    tcoOutputEl.innerHTML = renderVehicleTCOResult(result);
+  }
+  ['tcoPrice','tcoFinancing','tcoYears','tcoDownPayment','tcoCreditRate','tcoConsumption','tcoFuelPrice','tcoKm','tcoInsurance','tcoMaintenance','tcoDepreciation'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', updateTCO);
+  });
+  updateTCO();
+
+  const finOutputEl = document.getElementById('finOutput');
+  function updateFinancing(){
+    const loaOptionVal = document.getElementById('finLoaOption').value;
+    const creditRateVal = document.getElementById('finCreditRate').value;
+    const loaMonthlyVal = document.getElementById('finLoaMonthly').value;
+    const lldMonthlyVal = document.getElementById('finLldMonthly').value;
+    const result = computeVehicleFinancingComparison({
+      price: +document.getElementById('finPrice').value || 0,
+      years: +document.getElementById('finYears').value || 0,
+      cashOpportunityRatePct: +document.getElementById('finOpportunity').value || 0,
+      creditRate: creditRateVal ? +creditRateVal : null,
+      loaMonthly: loaMonthlyVal ? +loaMonthlyVal : null,
+      loaFinalOption: loaOptionVal ? +loaOptionVal : null,
+      lldMonthly: lldMonthlyVal ? +lldMonthlyVal : null
+    });
+    finOutputEl.innerHTML = renderVehicleFinancingComparison(result);
+  }
+  ['finPrice','finYears','finOpportunity','finCreditRate','finLoaMonthly','finLoaOption','finLldMonthly'].forEach(id => {
+    const el = document.getElementById(id);
+    if(el) el.addEventListener('input', updateFinancing);
+  });
+  updateFinancing();
 })();
 
 // ---------- P0-5 : Acheter ou louer, version sérieuse ----------
