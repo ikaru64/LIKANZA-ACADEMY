@@ -4797,6 +4797,64 @@ function findThematicNews(secteur, weeklyArticles){
   });
 }
 
+// ---------- Chronologie d'entreprise (fiche action) ----------
+// Mouvement de cours réel et notable, calculé mois par mois sur l'historique
+// déjà récupéré (aucun nouvel appel réseau) — seuil explicite, jamais une
+// interprétation de la cause : "mouvement observé", jamais "causé par".
+function detectSignificantPriceMoves(monthlyPoints, thresholdPct){
+  thresholdPct = typeof thresholdPct === 'number' ? thresholdPct : 12;
+  if(!Array.isArray(monthlyPoints) || monthlyPoints.length < 2) return [];
+  const moves = [];
+  for(let i = 1; i < monthlyPoints.length; i++){
+    const prev = monthlyPoints[i - 1], curr = monthlyPoints[i];
+    if(typeof prev.close !== 'number' || typeof curr.close !== 'number' || prev.close <= 0) continue;
+    const changePct = (curr.close / prev.close - 1) * 100;
+    if(Math.abs(changePct) >= thresholdPct){
+      moves.push({period: curr.period, changePct, priceBefore: prev.close, priceAfter: curr.close});
+    }
+  }
+  return moves;
+}
+
+// Fusionne les catégories d'événements réels disponibles en une chronologie
+// triée (plus ancien en premier, comme une vraie histoire de l'entreprise) —
+// une catégorie absente ou vide est simplement omise, jamais comblée par une
+// valeur inventée. `earnings` : vérifié en direct (Yahoo quoteSummary,
+// 2026-08-22) que earningsHistory.history contient aussi des trimestres PAS
+// ENCORE publiés (epsEstimate seul, sans epsActual — ex. AI.PA n'avait alors
+// AUCUN trimestre passé avec un vrai epsActual, contrairement à AAPL) :
+// filtré ici en dur sur la présence réelle d'epsActual, jamais une
+// estimation présentée comme un résultat déjà publié.
+function buildCompanyTimeline({dividendEvents, priceMoves, earnings, thematicNews}){
+  const entries = [];
+  (dividendEvents || []).forEach(d => {
+    if(!d || typeof d.date !== 'string' || typeof d.amount !== 'number') return;
+    entries.push({date: d.date, type: 'dividende', label: `Dividende versé : ${d.amount.toFixed(2)} €`, badge: 'fait'});
+  });
+  (priceMoves || []).forEach(m => {
+    if(!m || typeof m.period !== 'string' || typeof m.changePct !== 'number') return;
+    entries.push({
+      date: `${m.period}-01`, type: 'mouvement',
+      label: `Mouvement de cours observé : ${m.changePct >= 0 ? '+' : ''}${m.changePct.toFixed(1)} %`,
+      changePct: m.changePct, priceBefore: m.priceBefore, priceAfter: m.priceAfter, badge: 'calcul'
+    });
+  });
+  (earnings || []).forEach(e => {
+    if(!e || typeof e.epsActual !== 'number' || typeof e.quarterDate !== 'string') return;
+    const surprisePct = typeof e.epsEstimate === 'number' && e.epsEstimate !== 0 ? ((e.epsActual / e.epsEstimate - 1) * 100) : null;
+    entries.push({
+      date: e.quarterDate, type: 'resultat',
+      label: `Résultat trimestriel publié : BPA réel ${e.epsActual.toFixed(2)}${typeof e.epsEstimate === 'number' ? ` vs attendu ${e.epsEstimate.toFixed(2)}` : ''}`,
+      epsActual: e.epsActual, epsEstimate: e.epsEstimate, surprisePct, badge: 'fait'
+    });
+  });
+  (thematicNews || []).forEach(a => {
+    if(!a || typeof a.date !== 'string' || !a.titre) return;
+    entries.push({date: a.date, type: 'actualite', label: a.titre, slug: a.slug || null, badge: 'fait'});
+  });
+  return entries.sort((a, b) => a.date.localeCompare(b.date));
+}
+
 // ---------- Comparateur : verdict par angle, jamais de gagnant global ----------
 function computeComparisonAngles(companyA, companyB){
   const angles = [];
