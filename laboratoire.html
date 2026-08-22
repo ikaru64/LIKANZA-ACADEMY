@@ -88,9 +88,11 @@
 
   <div class="home-tab-panel" id="tab-investissement">
   <div class="section-head"><h2>📈 Investissement</h2><span class="meta-line">performances réelles des marchés, pas un rendement moyen lissé</span></div>
+  <button type="button" class="btn btn-sm" id="tab-investissement-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>
+  <div class="quick-access-grid" id="tab-investissement-widgets"></div>
   <div class="card-grid">
 
-    <div class="card" style="grid-column:1/-1;">
+    <div class="card" id="widget-invest-whatif" style="display:none;grid-column:1/-1;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
         <h3>Et si j'avais investi ?</h3>
         <span id="labInvestBadge"></span>
@@ -131,7 +133,7 @@
       <div id="labInvestOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
     </div>
 
-    <div class="card" style="grid-column:1/-1;">
+    <div class="card" id="widget-invest-dca" style="display:none;grid-column:1/-1;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
         <h3>DCA historique</h3>
         <span id="labDcaBadge"></span>
@@ -156,7 +158,7 @@
       <div id="labDcaOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
     </div>
 
-    <div class="card">
+    <div class="card" id="widget-invest-compound" style="display:none;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
         <h3>Intérêts composés</h3>
         <span id="simModeBadge"></span>
@@ -186,7 +188,7 @@
       <p class="disclaimer-box"><strong>Ce scénario n'est pas une prévision.</strong> Les performances passées ne préjugent pas des performances futures. Les marchés actions ont déjà connu des baisses de plus de 30% sur une seule année dans le passé (crises de 2000, 2008, 2020) : un scénario réaliste doit intégrer cette possibilité, pas seulement une moyenne lissée.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="widget-invest-pru" style="display:none;">
       <h3>Prix moyen d'achat <span class="data-badge data-badge-simulation" style="margin-left:6px;">🎮 Simulation</span></h3>
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Ajoute tes achats successifs pour voir ton prix moyen d'achat.</p>
       <div id="dcaRows"></div>
@@ -199,9 +201,11 @@
 
   <div class="home-tab-panel" id="tab-logement">
   <div class="section-head"><h2>🏠 Logement</h2><span class="meta-line">taux et prix réellement observés en France</span></div>
+  <button type="button" class="btn btn-sm" id="tab-logement-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>
+  <div class="quick-access-grid" id="tab-logement-widgets"></div>
   <div class="card-grid">
 
-    <div class="card" id="labCreditCard" style="grid-column:1/-1;">
+    <div class="card" id="labCreditCard" style="display:none;grid-column:1/-1;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
         <h3>Combien coûte réellement mon crédit ?</h3>
         <span id="labCreditBadge"></span>
@@ -221,7 +225,7 @@
       <div id="labCreditOutput"></div>
     </div>
 
-    <div class="card" id="labBuyRentCard" style="grid-column:1/-1;">
+    <div class="card" id="labBuyRentCard" style="display:none;grid-column:1/-1;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
         <h3>Acheter ou louer ?</h3>
         <span id="labBuyRentBadge"></span>
@@ -275,9 +279,11 @@
 
   <div class="home-tab-panel" id="tab-budget-epargne">
   <div class="section-head"><h2>💰 Budget &amp; épargne</h2><span class="meta-line">inflation réelle, budget, objectifs</span></div>
+  <button type="button" class="btn btn-sm" id="tab-budget-epargne-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>
+  <div class="quick-access-grid" id="tab-budget-epargne-widgets"></div>
   <div class="card-grid">
 
-    <div class="card" style="grid-column:1/-1;">
+    <div class="card" id="widget-budget-inflation" style="display:none;grid-column:1/-1;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
         <h3>Que valent réellement mes euros ?</h3>
         <span id="labInflationBadge"></span>
@@ -302,7 +308,7 @@
       </div>
     </div>
 
-    <div class="card">
+    <div class="card" id="widget-budget-calc" style="display:none;">
       <h3>Calculateur de budget <span class="data-badge data-badge-simulation" style="margin-left:6px;">🎮 Simulation</span></h3>
       <div class="field"><label for="budgetRevenu">Revenus mensuels nets (€)</label><input type="number" id="budgetRevenu" value="2200"></div>
       <div class="field"><label for="budgetLoyer">Loyer / crédit (€)</label><input type="number" id="budgetLoyer" value="750"></div>
@@ -313,7 +319,7 @@
       <p class="disclaimer-box">Une capacité d'épargne négative signale un budget à revoir avant tout projet d'investissement.</p>
     </div>
 
-    <div class="card">
+    <div class="card" id="widget-budget-goal" style="display:none;">
       <h3>Objectif d'épargne <span class="data-badge data-badge-simulation" style="margin-left:6px;">🎮 Simulation</span></h3>
       <div class="field"><label for="goalAmount">Montant visé (€)</label><input type="number" id="goalAmount" value="5000"></div>
       <div class="field"><label for="goalMonthly">Épargne mensuelle possible (€)</label><input type="number" id="goalMonthly" value="150"></div>
@@ -321,7 +327,7 @@
       <div class="result-big" id="goalResult">—</div>
     </div>
 
-    <div class="card">
+    <div class="card" id="widget-budget-sub" style="display:none;">
       <h3>Coût futur d'un abonnement <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span></h3>
       <div class="field"><label for="subCost">Coût mensuel de l'abonnement (€)</label><input type="number" id="subCost" value="15"></div>
       <div class="slider-row field"><label for="subYears">Sur une durée de <span class="v mono" id="valSubYears">5 ans</span></label><input type="range" id="subYears" min="1" max="20" step="1" value="5"></div>

@@ -52,6 +52,70 @@ window.addEventListener('hashchange', ()=>{
   if(target && target.classList.contains('home-tab-panel')) setLabTab(tab);
 });
 
+// ---------- Widgets individuels à l'intérieur de chaque catégorie (2e niveau
+// de la même logique de hub) : chaque simulateur est une carte cachée par
+// défaut (display:none dans le HTML), révélée uniquement au clic sur sa
+// vignette — jamais plusieurs formulaires empilés visibles par défaut, même
+// à l'intérieur d'une seule catégorie. ----------
+const LAB_WIDGETS = {
+  'tab-investissement': [
+    {id:'widget-invest-whatif', title:"Et si j'avais investi ?", desc:"Rejoue un support réel sur une période choisie.", icon:'trending-up'},
+    {id:'widget-invest-dca', title:'DCA historique', desc:'Prix moyen réel avec un versement mensuel régulier.', icon:'banknote'},
+    {id:'widget-invest-compound', title:'Intérêts composés', desc:'Un capital qui grossit avec des versements réguliers.', icon:'coins'},
+    {id:'widget-invest-pru', title:"Prix moyen d'achat", desc:'Calcule ton prix moyen à partir de tes achats successifs.', icon:'calculator'}
+  ],
+  'tab-logement': [
+    {id:'labCreditCard', title:'Coût réel de mon crédit', desc:"Tableau d'amortissement complet, taux et durée.", icon:'landmark'},
+    {id:'labBuyRentCard', title:'Acheter ou louer ?', desc:'Patrimoine net comparé entre achat et location.', icon:'house'}
+  ],
+  'tab-budget-epargne': [
+    {id:'widget-budget-inflation', title:'Que valent mes euros ?', desc:'Inflation réelle mesurée, pas une hypothèse constante.', icon:'trending-down'},
+    {id:'widget-budget-calc', title:'Calculateur de budget', desc:"Ta capacité d'épargne mensuelle réelle.", icon:'wallet'},
+    {id:'widget-budget-goal', title:"Objectif d'épargne", desc:'Combien de temps pour atteindre un montant visé.', icon:'target'},
+    {id:'widget-budget-sub', title:"Coût futur d'un abonnement", desc:'Ce que représente un abonnement sur plusieurs années.', icon:'coins'}
+  ]
+};
+function renderLabWidgetGrid(categoryId){
+  const widgets = LAB_WIDGETS[categoryId];
+  const el = document.getElementById(categoryId + '-widgets');
+  if(!widgets || !el) return;
+  el.innerHTML = widgets.map(w => `
+    <button class="quick-access-card" data-widget="${w.id}">
+      <div class="icon">${ICONS[w.icon] || ''}</div>
+      <h3>${w.title}</h3>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${w.desc}</p>
+    </button>`).join('');
+  el.querySelectorAll('[data-widget]').forEach(btn=>{
+    btn.addEventListener('click', ()=>openLabWidget(categoryId, btn.dataset.widget));
+  });
+}
+function openLabWidget(categoryId, widgetId){
+  const gridEl = document.getElementById(categoryId + '-widgets');
+  if(gridEl) gridEl.style.display = 'none';
+  (LAB_WIDGETS[categoryId] || []).forEach(w => {
+    const panel = document.getElementById(w.id);
+    if(panel) panel.style.display = (w.id === widgetId) ? '' : 'none';
+  });
+  const backBtn = document.getElementById(categoryId + '-back');
+  if(backBtn) backBtn.style.display = '';
+}
+function closeLabWidget(categoryId){
+  const gridEl = document.getElementById(categoryId + '-widgets');
+  if(gridEl) gridEl.style.display = '';
+  (LAB_WIDGETS[categoryId] || []).forEach(w => {
+    const panel = document.getElementById(w.id);
+    if(panel) panel.style.display = 'none';
+  });
+  const backBtn = document.getElementById(categoryId + '-back');
+  if(backBtn) backBtn.style.display = 'none';
+}
+Object.keys(LAB_WIDGETS).forEach(categoryId => {
+  renderLabWidgetGrid(categoryId);
+  closeLabWidget(categoryId);
+  const backBtn = document.getElementById(categoryId + '-back');
+  if(backBtn) backBtn.addEventListener('click', () => closeLabWidget(categoryId));
+});
+
 const LAB_SUPPORT_LABELS = {
   URTH: 'Actions monde (MSCI World, ETF URTH)', '^GSPC': 'Actions US (S&P 500)', '^FCHI': 'Actions France (CAC 40)',
   '^STOXX50E': 'Actions Europe (Euro Stoxx 50)', QQQ: 'Actions technologie US (Nasdaq 100, ETF QQQ)',
