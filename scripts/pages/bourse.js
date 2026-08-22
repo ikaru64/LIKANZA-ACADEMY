@@ -412,30 +412,129 @@ function renderScreenerFilters(){
 function screenerUniverse(){
   return getFollowedStocks().map(entry => resolveFollowedStock(entry.symbol));
 }
+
+// ---------- Screener « mode avancé » : critères numériques + tri, sur le
+// même univers honnête (valeurs suivies uniquement, jamais un classement sur
+// des milliers de titres) — les fondamentaux sont déjà chargés par
+// loadFundamentalsAndRefresh, aucun nouvel appel réseau. Une valeur sans la
+// donnée demandée est exclue du filtre correspondant, jamais incluse par
+// défaut ; en tri, elle est toujours reléguée en fin de liste, jamais classée
+// arbitrairement parmi les valeurs réelles.
+const SCREENER_ADV_COLUMNS = [
+  {key: 'trailingPE', label: 'PER'},
+  {key: 'dividendYield', label: 'Rendement'},
+  {key: 'profitMargins', label: 'Marge nette'},
+  {key: 'marketCap', label: 'Capitalisation'}
+];
+let screenerAdvancedMode = false;
+let screenerAdvSort = {key: null, dir: 1};
+const screenerAdvFilters = {perMax: null, divYieldMin: null, secteur: 'toutes'};
+
+function screenerAdvancedMatch(s){
+  if(!screenerAdvancedMode) return true;
+  const ff = getFundamentalsFields(s.ticker);
+  if(screenerAdvFilters.perMax != null && !(ff && typeof ff.trailingPE === 'number' && ff.trailingPE <= screenerAdvFilters.perMax)) return false;
+  if(screenerAdvFilters.divYieldMin != null && !(ff && typeof ff.dividendYield === 'number' && ff.dividendYield * 100 >= screenerAdvFilters.divYieldMin)) return false;
+  if(screenerAdvFilters.secteur !== 'toutes' && s.secteur !== screenerAdvFilters.secteur) return false;
+  return true;
+}
+
+function renderScreenerAdvancedControls(){
+  const el = document.getElementById('screenerAdvancedControls');
+  if(!el) return;
+  el.style.display = screenerAdvancedMode ? '' : 'none';
+  if(!screenerAdvancedMode) return;
+  const secteurs = [...new Set(screenerUniverse().map(s => s.secteur).filter(Boolean))].sort();
+  el.innerHTML = `
+    <div style="display:flex;flex-wrap:wrap;gap:12px;align-items:end;">
+      <div class="field" style="max-width:160px;">
+        <label for="screenerPerMax">PER maximum</label>
+        <input type="number" id="screenerPerMax" min="0" step="1" placeholder="Ex : 25" value="${screenerAdvFilters.perMax ?? ''}">
+      </div>
+      <div class="field" style="max-width:200px;">
+        <label for="screenerDivMin">Rendement dividende minimum (%)</label>
+        <input type="number" id="screenerDivMin" min="0" step="0.1" placeholder="Ex : 2" value="${screenerAdvFilters.divYieldMin ?? ''}">
+      </div>
+      <div class="field" style="max-width:220px;">
+        <label for="screenerSecteur">Secteur</label>
+        <select id="screenerSecteur">
+          <option value="toutes">Tous les secteurs suivis</option>
+          ${secteurs.map(s => `<option value="${s}" ${screenerAdvFilters.secteur === s ? 'selected' : ''}>${s}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">Une valeur sans la donnée demandée est exclue du filtre correspondant, jamais incluse par défaut — clique un en-tête de colonne du tableau pour trier.</p>`;
+  document.getElementById('screenerPerMax').addEventListener('input', e => { screenerAdvFilters.perMax = e.target.value ? parseFloat(e.target.value) : null; renderScreener(); });
+  document.getElementById('screenerDivMin').addEventListener('input', e => { screenerAdvFilters.divYieldMin = e.target.value ? parseFloat(e.target.value) : null; renderScreener(); });
+  document.getElementById('screenerSecteur').addEventListener('change', e => { screenerAdvFilters.secteur = e.target.value; renderScreener(); });
+}
+
+function renderScreenerAdvancedTable(list){
+  const rows = list.map(s => ({stock: s, ff: getFundamentalsFields(s.ticker) || {}}));
+  if(screenerAdvSort.key){
+    const key = screenerAdvSort.key;
+    rows.sort((a, b) => {
+      const va = a.ff[key], vb = b.ff[key];
+      const na = typeof va === 'number', nb = typeof vb === 'number';
+      if(!na && !nb) return 0;
+      if(!na) return 1;
+      if(!nb) return -1;
+      return (va - vb) * screenerAdvSort.dir;
+    });
+  }
+  const arrow = key => screenerAdvSort.key === key ? (screenerAdvSort.dir === 1 ? ' ▲' : ' ▼') : '';
+  return `<div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+    <thead><tr>
+      <th style="text-align:left;padding:6px 8px;">Valeur</th>
+      <th style="text-align:left;padding:6px 8px;">Secteur</th>
+      ${SCREENER_ADV_COLUMNS.map(c => `<th data-sort-key="${c.key}" style="text-align:right;padding:6px 8px;cursor:pointer;white-space:nowrap;">${c.label}${arrow(c.key)}</th>`).join('')}
+    </tr></thead>
+    <tbody>${rows.map(({stock, ff}) => `<tr>
+      <td style="padding:6px 8px;"><a href="action.html#${encodeURIComponent(stock.ticker)}" style="color:var(--gold-bright);">${stock.nom}</a></td>
+      <td style="padding:6px 8px;color:var(--text-dim);">${stock.secteur || 'Non déterminé'}</td>
+      ${SCREENER_ADV_COLUMNS.map(c => `<td style="text-align:right;padding:6px 8px;">${formatFundamentalValue(c.key, ff[c.key])}</td>`).join('')}
+    </tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
 function renderScreener(){
   const el = document.getElementById('screenerResults');
   if(!el) return;
   const universe = screenerUniverse();
   const activeFilters = SCREENER_FILTERS.filter(f => screenerActiveFilters.has(f.id));
-  const list = activeFilters.length === 0 ? universe : universe.filter(s => {
+  let list = activeFilters.length === 0 ? universe : universe.filter(s => {
     const ff = getFundamentalsFields(s.ticker);
     return activeFilters.every(f => f.test(s, ff));
   });
-  const summary = activeFilters.length === 0
+  if(screenerAdvancedMode) list = list.filter(screenerAdvancedMatch);
+  const summary = (activeFilters.length === 0 && !screenerAdvancedMode)
     ? `${universe.length} valeur${universe.length>1?'s':''} suivie${universe.length>1?'s':''} au total (aucun filtre actif).`
     : `${list.length} valeur${list.length>1?'s':''} sur ${universe.length} correspond${list.length>1?'ent':''} à ces critères.`;
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px;">${summary}</p>
     ${list.length === 0
       ? `<p style="color:var(--text-dim);font-size:13px;">Aucune de tes valeurs suivies ne correspond à cette combinaison de critères.</p>`
-      : `<div class="card-grid">${list.map(s => `
+      : (screenerAdvancedMode ? renderScreenerAdvancedTable(list) : `<div class="card-grid">${list.map(s => `
         <a href="action.html#${encodeURIComponent(s.ticker)}" class="card play-tile">
           <span class="smallcaps">${s.secteur || 'Non déterminé'} · ${s.pays || 'Non déterminé'}</span>
           <h4 style="margin:6px 0;">${s.nom} <span class="mono" style="font-size:12px;color:var(--text-dim);">${s.ticker}</span></h4>
           <p style="font-size:12.5px;color:var(--text-dim);">${typeof s.prix === 'number' ? s.prix.toFixed(1) + ' €' : 'Cours indisponible'} ${typeof s.variation === 'number' ? `<span style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span>` : ''}</p>
-        </a>`).join('')}</div>`}
+        </a>`).join('')}</div>`)}
     ${activeFilters.some(f => f.id === 'pea') ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:12px;">Le filtre « Éligible PEA » ne retient que les valeurs dont l'éligibilité est confirmée — une valeur suivie hors des 8 démo n'apparaît pas ici tant que cette information n'est pas vérifiée, jamais parce qu'elle est explicitement non éligible.</p>` : ''}`;
+  if(screenerAdvancedMode){
+    el.querySelectorAll('[data-sort-key]').forEach(th => th.addEventListener('click', () => {
+      const key = th.dataset.sortKey;
+      if(screenerAdvSort.key === key) screenerAdvSort.dir *= -1; else { screenerAdvSort.key = key; screenerAdvSort.dir = 1; }
+      renderScreener();
+    }));
+  }
 }
+const screenerAdvToggle = document.getElementById('screenerAdvancedToggle');
+if(screenerAdvToggle) screenerAdvToggle.addEventListener('change', () => {
+  screenerAdvancedMode = screenerAdvToggle.checked;
+  renderScreenerAdvancedControls();
+  renderScreener();
+});
 renderScreenerFilters();
 
 // ---------- Scénarios (moteur partagé avec la sélection du jour) ----------
