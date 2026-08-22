@@ -5,7 +5,8 @@ const BOURSE_TABS = [
   {id:'tab-screener', title:'Filtrer', desc:'Parmi tes valeurs suivies', icon:'search'},
   {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale'},
   {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
-  {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'}
+  {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
+  {id:'tab-portefeuille', title:'Portefeuille', desc:'Déclaratif, tes transactions', icon:'wallet'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
@@ -876,6 +877,7 @@ function refreshAllStockViews(){
   renderMarketOfDay();
   renderMarketMovers();
   renderScreener();
+  renderPortfolioTab();
 }
 
 // Charge les fondamentaux réels de TOUTE valeur suivie (pas seulement les 8
@@ -970,3 +972,89 @@ if(resetStocksBtn) resetStocksBtn.addEventListener('click', ()=>{
   resetFollowedStocks();
   refreshAllStockViews();
 });
+
+// ---------- Portefeuille réel (déclaratif) : les cours actuels réutilisent
+// resolveFollowedStock, déjà alimenté par les cotations live ci-dessus
+// (applyLiveStockQuotes/loadCustomQuotesForGrid) — aucun nouvel appel réseau
+// dédié à ce tableau. L'action choisie via la recherche devient aussi une
+// valeur suivie (même wireStockSearch que partout ailleurs), pour que son
+// cours se rafraîchisse automatiquement comme les autres. ----------
+let portfolioSelectedSymbol = null;
+let portfolioSelectedName = null;
+
+function renderPortfolioTab(){
+  const positionsEl = document.getElementById('portfolioPositions');
+  const listEl = document.getElementById('portfolioTransactionsList');
+  if(!positionsEl && !listEl) return;
+  const transactions = getRealPortfolio();
+  const livePrices = {};
+  [...new Set(transactions.map(t => t.ticker))].forEach(ticker => {
+    const s = resolveFollowedStock(ticker);
+    if(typeof s.prix === 'number') livePrices[ticker] = s.prix;
+  });
+  const positions = computeRealPortfolioPositions(transactions, livePrices);
+  const totals = computeRealPortfolioTotals(positions);
+  if(positionsEl) positionsEl.innerHTML = `<h3>Positions</h3>${renderRealPortfolioHTML(positions, totals)}`;
+  if(listEl){
+    if(transactions.length === 0){
+      listEl.innerHTML = '';
+      return;
+    }
+    const sorted = [...transactions].sort((a, b) => b.buyDate.localeCompare(a.buyDate));
+    listEl.innerHTML = `
+      <h3>Transactions</h3>
+      <div style="overflow-x:auto;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 8px;">Date</th>
+          <th style="text-align:left;padding:6px 8px;">Valeur</th>
+          <th style="text-align:right;padding:6px 8px;">Quantité</th>
+          <th style="text-align:right;padding:6px 8px;">Prix d'achat</th>
+          <th style="padding:6px 8px;"></th>
+        </tr></thead>
+        <tbody>${sorted.map(t => `<tr>
+          <td style="padding:6px 8px;">${new Date(t.buyDate).toLocaleDateString('fr-FR')}</td>
+          <td style="padding:6px 8px;">${t.name}</td>
+          <td style="text-align:right;padding:6px 8px;">${t.quantity}</td>
+          <td style="text-align:right;padding:6px 8px;">${t.buyPrice.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2})} €</td>
+          <td style="text-align:right;padding:6px 8px;"><button type="button" class="pill" data-remove-tx="${t.id}" style="cursor:pointer;">Supprimer</button></td>
+        </tr>`).join('')}</tbody>
+      </table></div>`;
+    listEl.querySelectorAll('[data-remove-tx]').forEach(btn => btn.addEventListener('click', () => {
+      removeRealPortfolioTransaction(btn.dataset.removeTx);
+      renderPortfolioTab();
+    }));
+  }
+}
+
+wireStockSearch(document.getElementById('portfolioSearchInput'), document.getElementById('portfolioSearchResults'), (symbol) => {
+  portfolioSelectedSymbol = symbol;
+  const followed = getFollowedStocks().find(s => s.symbol === symbol);
+  portfolioSelectedName = followed ? followed.name : symbol;
+  const selEl = document.getElementById('portfolioSelectedStock');
+  if(selEl) selEl.textContent = `Action sélectionnée : ${portfolioSelectedName} (${symbol})`;
+  loadFundamentalsAndRefresh();
+});
+
+const portfolioAddBtn = document.getElementById('portfolioAddBtn');
+if(portfolioAddBtn) portfolioAddBtn.addEventListener('click', () => {
+  const errEl = document.getElementById('portfolioFormError');
+  const qtyEl = document.getElementById('portfolioQty');
+  const priceEl = document.getElementById('portfolioPrice');
+  const dateEl = document.getElementById('portfolioDate');
+  const qty = parseFloat(qtyEl.value);
+  const price = parseFloat(priceEl.value);
+  const date = dateEl.value;
+  if(!portfolioSelectedSymbol){ if(errEl) errEl.textContent = "Choisis d'abord une action réelle dans la recherche ci-dessus."; return; }
+  if(!(qty > 0)){ if(errEl) errEl.textContent = 'Renseigne une quantité réelle supérieure à 0.'; return; }
+  if(!(price > 0)){ if(errEl) errEl.textContent = "Renseigne un prix d'achat réel supérieur à 0."; return; }
+  if(!date){ if(errEl) errEl.textContent = 'Renseigne la date réelle de la transaction.'; return; }
+  if(errEl) errEl.textContent = '';
+  saveRealPortfolioTransaction({ticker: portfolioSelectedSymbol, name: portfolioSelectedName, quantity: qty, buyPrice: price, buyDate: date});
+  qtyEl.value = ''; priceEl.value = ''; dateEl.value = '';
+  portfolioSelectedSymbol = null; portfolioSelectedName = null;
+  const selEl = document.getElementById('portfolioSelectedStock');
+  if(selEl) selEl.textContent = 'Aucune action sélectionnée.';
+  renderPortfolioTab();
+});
+
+renderPortfolioTab();

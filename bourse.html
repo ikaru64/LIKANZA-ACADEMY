@@ -211,6 +211,38 @@
     </div>
   </div>
 
+  <div class="home-tab-panel" id="tab-portefeuille">
+    <div class="section-head"><h2>Portefeuille réel</h2><span class="meta-line">déclaratif, jamais un compte-titres connecté</span></div>
+    <p class="disclaimer-box" style="max-width:70ch;">Likanza n'a accès à aucun compte-titres réel. Chaque position vient d'une transaction que tu renseignes toi-même (action, quantité, prix, date) — seuls les cours actuels sont réels et mis à jour automatiquement.</p>
+    <div class="card" style="max-width:560px;margin-bottom:20px;">
+      <h3>Ajouter une transaction réelle</h3>
+      <div class="field" style="margin-top:10px;">
+        <label for="portfolioSearchInput">Action (nom ou ticker)</label>
+        <input type="text" id="portfolioSearchInput" placeholder="Ex : Air Liquide, AI.PA...">
+        <div id="portfolioSearchResults" style="margin-top:6px;"></div>
+      </div>
+      <p id="portfolioSelectedStock" style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Aucune action sélectionnée.</p>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+        <div class="field" style="max-width:140px;">
+          <label for="portfolioQty">Quantité</label>
+          <input type="number" id="portfolioQty" min="0" step="any" placeholder="Ex : 10">
+        </div>
+        <div class="field" style="max-width:170px;">
+          <label for="portfolioPrice">Prix d'achat unitaire (€)</label>
+          <input type="number" id="portfolioPrice" min="0" step="0.01" placeholder="Ex : 150.20">
+        </div>
+        <div class="field" style="max-width:180px;">
+          <label for="portfolioDate">Date d'achat</label>
+          <input type="date" id="portfolioDate">
+        </div>
+      </div>
+      <button type="button" class="btn-primary" id="portfolioAddBtn" style="margin-top:12px;">Ajouter la transaction</button>
+      <p id="portfolioFormError" style="font-size:12px;color:var(--bordeaux);margin-top:6px;"></p>
+    </div>
+    <div id="portfolioPositions"></div>
+    <div id="portfolioTransactionsList" style="margin-top:20px;"></div>
+  </div>
+
 
 </section>
 

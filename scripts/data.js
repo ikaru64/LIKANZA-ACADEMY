@@ -4361,7 +4361,7 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-cours-progress', 'fzr-defis-parcours-progress', 'fzr-daily-missions-log',
   'fzr-weekly-missions-log', 'fzr-activity-log', 'fzr-positioning-result',
   'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
-  'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist'
+  'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
@@ -4726,6 +4726,110 @@ function resolveFollowedStock(symbol){
     prix: q ? q.price : null, variation: q ? q.changePercent : null, history: q ? q.history : null,
     curated: false
   };
+}
+
+// ---------- Portefeuille réel (déclaratif) : Likanza n'a accès à aucun
+// compte-titres réel — chaque transaction (action, quantité, prix, date) est
+// saisie manuellement par l'utilisateur. Les positions sont agrégées à
+// partir de ces transactions réellement saisies, valorisées avec un cours
+// ACTUEL réel déjà chargé ailleurs (resolveFollowedStock, jamais un nouvel
+// appel réseau dédié). Une transaction malformée (quantité/prix non
+// positifs, ticker manquant) est ignorée, jamais complétée par une valeur
+// par défaut inventée. ----------
+const REAL_PORTFOLIO_KEY = 'fzr-real-portfolio';
+function getRealPortfolio(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(REAL_PORTFOLIO_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function saveRealPortfolioTransaction(tx){
+  if(!tx || typeof tx.ticker !== 'string' || !tx.ticker || !(tx.quantity > 0) || !(tx.buyPrice > 0) || typeof tx.buyDate !== 'string' || !tx.buyDate) return null;
+  const list = getRealPortfolio();
+  const entry = {
+    id: 'tx-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    ticker: tx.ticker, name: typeof tx.name === 'string' && tx.name ? tx.name : tx.ticker,
+    quantity: tx.quantity, buyPrice: tx.buyPrice, buyDate: tx.buyDate,
+    note: typeof tx.note === 'string' ? tx.note.slice(0, 140) : ''
+  };
+  list.push(entry);
+  localStorage.setItem(REAL_PORTFOLIO_KEY, JSON.stringify(list));
+  return entry;
+}
+function removeRealPortfolioTransaction(id){
+  const list = getRealPortfolio().filter(tx => tx.id !== id);
+  localStorage.setItem(REAL_PORTFOLIO_KEY, JSON.stringify(list));
+}
+// livePrices : {ticker: prixActuelRéel|null} — construit par l'appelant à
+// partir de resolveFollowedStock, jamais recalculé ici. Un ticker absent de
+// livePrices (cours indisponible) laisse currentValue/gainLoss à `null`,
+// jamais un chiffre approximé à partir du prix d'achat.
+function computeRealPortfolioPositions(transactions, livePrices){
+  livePrices = livePrices || {};
+  const byTicker = {};
+  (transactions || []).forEach(tx => {
+    if(!tx || typeof tx.ticker !== 'string' || typeof tx.quantity !== 'number' || typeof tx.buyPrice !== 'number' || tx.quantity <= 0 || tx.buyPrice <= 0) return;
+    if(!byTicker[tx.ticker]) byTicker[tx.ticker] = {ticker: tx.ticker, name: tx.name || tx.ticker, quantity: 0, totalInvested: 0};
+    byTicker[tx.ticker].quantity += tx.quantity;
+    byTicker[tx.ticker].totalInvested += tx.quantity * tx.buyPrice;
+  });
+  return Object.values(byTicker).map(pos => {
+    const currentPrice = typeof livePrices[pos.ticker] === 'number' ? livePrices[pos.ticker] : null;
+    const avgBuyPrice = pos.totalInvested / pos.quantity;
+    const currentValue = currentPrice !== null ? currentPrice * pos.quantity : null;
+    const gainLoss = currentValue !== null ? currentValue - pos.totalInvested : null;
+    const gainLossPct = (currentValue !== null && pos.totalInvested > 0) ? (gainLoss / pos.totalInvested) * 100 : null;
+    return {ticker: pos.ticker, name: pos.name, quantity: pos.quantity, totalInvested: pos.totalInvested, avgBuyPrice, currentPrice, currentValue, gainLoss, gainLossPct};
+  }).sort((a, b) => (b.currentValue !== null ? b.currentValue : b.totalInvested) - (a.currentValue !== null ? a.currentValue : a.totalInvested));
+}
+// Le total n'est affiché comme un seul chiffre que si TOUTES les positions
+// ont un cours actuel connu — jamais un total qui mélange silencieusement une
+// vraie valeur de marché et un coût d'achat pour les positions sans cours.
+function computeRealPortfolioTotals(positions){
+  const totalInvested = (positions || []).reduce((sum, p) => sum + p.totalInvested, 0);
+  const known = (positions || []).filter(p => p.currentValue !== null);
+  const allKnown = positions.length > 0 && known.length === positions.length;
+  const totalCurrentValue = allKnown ? known.reduce((sum, p) => sum + p.currentValue, 0) : null;
+  const totalGainLoss = allKnown ? totalCurrentValue - totalInvested : null;
+  const totalGainLossPct = (allKnown && totalInvested > 0) ? (totalGainLoss / totalInvested) * 100 : null;
+  return {
+    totalInvested, totalCurrentValue, totalGainLoss, totalGainLossPct,
+    positionsWithUnknownPrice: positions.length - known.length
+  };
+}
+function renderRealPortfolioHTML(positions, totals){
+  if(!Array.isArray(positions) || positions.length === 0){
+    return `<p style="color:var(--text-dim);font-size:13px;">Aucune transaction enregistrée pour l'instant — ajoute ta première transaction réelle ci-dessus.</p>`;
+  }
+  const eurFmt = v => v.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' €';
+  const pctFmt = v => (v >= 0 ? '+' : '') + v.toFixed(1).replace('.', ',') + ' %';
+  const totalsHtml = totals.totalCurrentValue !== null
+    ? `<p style="font-size:14px;margin-bottom:4px;">Valeur actuelle totale : <strong>${eurFmt(totals.totalCurrentValue)}</strong> (investi : ${eurFmt(totals.totalInvested)})</p>
+       <p style="font-size:13px;color:${totals.totalGainLoss >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${totals.totalGainLoss >= 0 ? '+' : ''}${eurFmt(totals.totalGainLoss)} (${pctFmt(totals.totalGainLossPct)}) — calculé à partir des cours actuels réels</p>`
+    : `<p style="font-size:13px;color:var(--text-dim);">Valeur totale non calculable : le cours actuel de ${totals.positionsWithUnknownPrice} position(s) sur ${positions.length} est indisponible (voir le détail par position ci-dessous).</p>`;
+  const rows = positions.map(p => `
+    <tr>
+      <td style="padding:6px 8px;"><a href="action.html#${encodeURIComponent(p.ticker)}" style="color:var(--gold-bright);">${p.name}</a></td>
+      <td style="text-align:right;padding:6px 8px;">${p.quantity}</td>
+      <td style="text-align:right;padding:6px 8px;">${eurFmt(p.avgBuyPrice)}</td>
+      <td style="text-align:right;padding:6px 8px;">${p.currentPrice !== null ? eurFmt(p.currentPrice) : FUNDAMENTALS_UNAVAILABLE_TEXT}</td>
+      <td style="text-align:right;padding:6px 8px;">${eurFmt(p.totalInvested)}</td>
+      <td style="text-align:right;padding:6px 8px;${p.gainLoss !== null ? `color:${p.gainLoss >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};` : ''}">${p.gainLoss !== null ? `${p.gainLoss >= 0 ? '+' : ''}${eurFmt(p.gainLoss)} (${pctFmt(p.gainLossPct)})` : FUNDAMENTALS_UNAVAILABLE_TEXT}</td>
+    </tr>`).join('');
+  return `
+    ${totalsHtml}
+    <div style="overflow-x:auto;margin-top:12px;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 8px;">Valeur</th>
+        <th style="text-align:right;padding:6px 8px;">Quantité</th>
+        <th style="text-align:right;padding:6px 8px;">Prix d'achat moyen</th>
+        <th style="text-align:right;padding:6px 8px;">Cours actuel</th>
+        <th style="text-align:right;padding:6px 8px;">Investi</th>
+        <th style="text-align:right;padding:6px 8px;">Gain / perte latent</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">Portefeuille déclaratif : ces positions viennent des transactions que tu as toi-même saisies, jamais d'un compte-titres réel connecté. Le gain/perte est latent (non réalisé) et calculé sur le cours actuel réel.</p>`;
 }
 
 // ---------- Contenu éditorial (résumé business / business model / risques) ----------
