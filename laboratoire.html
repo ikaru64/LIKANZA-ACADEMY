@@ -131,6 +131,7 @@
       <label style="display:flex;gap:8px;align-items:center;font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;"><input type="checkbox" id="labInvestCompareLivretA" checked style="accent-color:var(--gold);"> Comparer avec un Livret A réel</label>
       <p id="labInvestPartialNote" class="source-note"></p>
       <div id="labInvestOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
+      <div id="method-invest-whatif"></div>
     </div>
 
     <div class="card" id="widget-invest-dca" style="display:none;grid-column:1/-1;">
@@ -156,6 +157,7 @@
         <div class="field" style="flex:1;min-width:140px;"><label for="labDcaStart">Depuis</label><select id="labDcaStart"></select></div>
       </div>
       <div id="labDcaOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
+      <div id="method-invest-dca"></div>
     </div>
 
     <div class="card" id="widget-invest-compound" style="display:none;">
@@ -186,6 +188,7 @@
       <div class="bar-labels" id="simChartLabels"></div>
       <div id="simWhatIf"></div>
       <p class="disclaimer-box"><strong>Ce scénario n'est pas une prévision.</strong> Les performances passées ne préjugent pas des performances futures. Les marchés actions ont déjà connu des baisses de plus de 30% sur une seule année dans le passé (crises de 2000, 2008, 2020) : un scénario réaliste doit intégrer cette possibilité, pas seulement une moyenne lissée.</p>
+      <div id="method-invest-compound"></div>
     </div>
 
     <div class="card" id="widget-invest-pru" style="display:none;">
@@ -194,6 +197,7 @@
       <div id="dcaRows"></div>
       <button class="btn btn-sm" id="dcaAdd" style="margin-top:10px;">+ Ajouter un achat</button>
       <div class="result-row" id="dcaResult" style="margin-top:16px;"></div>
+      <div id="method-invest-pru"></div>
     </div>
 
   </div>
@@ -223,6 +227,7 @@
         <div class="field" style="flex:1;min-width:140px;"><label for="labCreditFrais">Frais annexes (dossier + garantie + notaire, €)</label><input type="number" id="labCreditFrais" value="18000" min="0"></div>
       </div>
       <div id="labCreditOutput"></div>
+      <div id="method-credit"></div>
     </div>
 
     <div class="card" id="labBuyRentCard" style="display:none;grid-column:1/-1;">
@@ -265,6 +270,7 @@
         </select>
       </div>
       <div id="labBuyRentOutput"></div>
+      <div id="method-buyrent"></div>
     </div>
 
     <a href="immobilier.html" class="card play-tile">
@@ -294,6 +300,7 @@
       <div class="field" style="max-width:300px;margin-top:14px;"><label for="debtExtra">Mensualité supplémentaire disponible (€)</label><input type="number" id="debtExtra" value="0" min="0"></div>
       <div id="debtStrategyOutput" style="margin-top:16px;"></div>
       <p class="disclaimer-box" style="margin-top:14px;">Simulation mois par mois à partir des vraies valeurs saisies — jamais une garantie que ta banque appliquera exactement ce calendrier (pénalités de remboursement anticipé éventuelles à vérifier auprès de chaque prêteur).</p>
+      <div id="method-debt-strategy"></div>
     </div>
 
     <div class="card" id="widget-debt-consolidation" style="display:none;grid-column:1/-1;">
@@ -313,6 +320,7 @@
         <div class="field" style="flex:1;min-width:120px;"><label for="consoFrais">Frais de dossier (€)</label><input type="number" id="consoFrais" value="300" min="0"></div>
       </div>
       <div id="debtConsolidationOutput" style="margin-top:16px;"></div>
+      <div id="method-debt-consolidation"></div>
     </div>
 
   </div>
@@ -354,6 +362,7 @@
         <div class="field" style="flex:1;min-width:110px;"><label for="tcoDepreciation">Décote annuelle (%)</label><input type="number" id="tcoDepreciation" value="15" min="0" max="40" step="1"></div>
       </div>
       <div id="tcoOutput" style="margin-top:16px;"></div>
+      <div id="method-transport-tco"></div>
     </div>
 
     <div class="card" id="widget-transport-financing" style="display:none;grid-column:1/-1;">
@@ -374,6 +383,7 @@
         <div class="field" style="flex:1;min-width:110px;"><label for="finLldMonthly">Mensualité LLD (€, optionnel)</label><input type="number" id="finLldMonthly" placeholder="Ex : 280" min="0"></div>
       </div>
       <div id="finOutput" style="margin-top:16px;"></div>
+      <div id="method-transport-financing"></div>
     </div>
 
   </div>
@@ -408,6 +418,7 @@
         <div class="bar-chart" id="inflChart"></div>
         <div class="bar-labels" id="inflChartLabels"></div>
       </div>
+      <div id="method-budget-inflation"></div>
     </div>
 
     <div class="card" id="widget-budget-calc" style="display:none;">
@@ -419,6 +430,7 @@
       <div class="result-label">Capacité d'épargne mensuelle</div>
       <div class="result-big" id="budgetResult">— €</div>
       <p class="disclaimer-box">Une capacité d'épargne négative signale un budget à revoir avant tout projet d'investissement.</p>
+      <div id="method-budget-calc"></div>
     </div>
 
     <div class="card" id="widget-budget-goal" style="display:none;">
@@ -427,6 +439,7 @@
       <div class="field"><label for="goalMonthly">Épargne mensuelle possible (€)</label><input type="number" id="goalMonthly" value="150"></div>
       <div class="result-label">Temps nécessaire pour atteindre l'objectif</div>
       <div class="result-big" id="goalResult">—</div>
+      <div id="method-budget-goal"></div>
     </div>
 
     <div class="card" id="widget-budget-sub" style="display:none;">
@@ -436,6 +449,7 @@
       <div class="slider-row field"><label for="subRate">Si investi à la place, rendement annuel <span class="v mono" id="valSubRate">6 %</span></label><input type="range" id="subRate" min="0" max="10" step="0.5" value="6"></div>
       <div class="result-row" id="subResult" style="margin-top:10px;"></div>
       <div id="subRateAlert"></div>
+      <div id="method-budget-sub"></div>
     </div>
 
   </div>

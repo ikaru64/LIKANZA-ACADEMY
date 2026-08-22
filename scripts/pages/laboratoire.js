@@ -126,6 +126,114 @@ Object.keys(LAB_WIDGETS).forEach(categoryId => {
   if(backBtn) backBtn.addEventListener('click', () => closeLabWidget(categoryId));
 });
 
+// ---------- Template méthodologie universel (section 18 du plan) : même
+// panneau « ⓘ Comment ce résultat est calculé ? » sur chaque simulateur,
+// contenu réel propre à chaque calcul — renderMethodologyPanel (dans
+// scripts/historical-data.js) omet silencieusement toute section non
+// renseignée ici, jamais un onglet affiché vide. Contenu statique (ne décrit
+// pas le résultat courant mais la MÉTHODE), injecté une seule fois au
+// chargement dans le placeholder <div id="method-XXX"> de chaque carte. ----------
+const LAB_METHODOLOGY = {
+  'invest-whatif': {
+    calcul: "Ton capital initial et chaque versement mensuel achètent des unités au vrai cours de ce mois précis — la valeur finale est le nombre total d'unités multiplié par le dernier cours connu.",
+    donnees: "Cours de clôture mensuels réels (Yahoo Finance) du support choisi, sur la période exacte que tu sélectionnes.",
+    hypotheses: "Le capital initial, le versement mensuel, la date de début et de fin, et le support choisi.",
+    limites: "Ne tient pas compte des frais de courtage ni de la fiscalité. Les dividendes ne sont inclus que pour les supports où l'historique Yahoo les intègre déjà.",
+    comprendre: "Une simulation rétrospective ne prédit rien : elle montre ce qui se serait passé sur cette période précise, avec ce support précis — une autre période aurait donné un résultat différent."
+  },
+  'invest-dca': {
+    calcul: "Même principe que « Et si j'avais investi ? » : chaque versement mensuel achète des unités au vrai cours du mois. Le prix moyen d'achat réel est le total dépensé divisé par le nombre total d'unités achetées.",
+    donnees: "Cours de clôture mensuels réels (Yahoo Finance) du support choisi.",
+    hypotheses: "Le versement mensuel et la date de départ.",
+    limites: "Ne tient pas compte des frais de courtage ni de la fiscalité.",
+    comprendre: "Le DCA (versement programmé) lisse le prix d'achat dans le temps — il ne garantit ni un meilleur ni un moins bon résultat qu'un versement unique, tout dépend de l'évolution réelle des prix."
+  },
+  'invest-compound': {
+    calcul: "Chaque mois, le capital accumulé (versements + intérêts déjà générés) rapporte à nouveau des intérêts — c'est l'effet « boule de neige » des intérêts composés.",
+    donnees: "Selon le mode choisi : soit un vrai rendement annualisé historique (obligations/S&P 500/Nasdaq, Yahoo Finance), soit un taux que tu fixes toi-même (mode personnalisé).",
+    hypotheses: "Le capital de départ, le versement mensuel, le rendement annuel, la durée et d'éventuels frais de gestion.",
+    limites: "Un rendement annuel moyen constant est une simplification : les marchés réels varient fortement d'une année à l'autre.",
+    comprendre: "Un rendement de 6%/an ne veut pas dire +6% chaque année : certaines années sont négatives, d'autres bien plus fortes — seule la moyenne composée sur la durée totale atteint ce chiffre."
+  },
+  'invest-pru': {
+    calcul: "Prix moyen = (somme de chaque quantité × son prix d'achat) ÷ quantité totale achetée.",
+    donnees: "Aucune donnée externe : uniquement les quantités et prix que tu saisis toi-même.",
+    hypotheses: "Le nombre d'achats, leur quantité et leur prix unitaire.",
+    limites: "Ne tient pas compte des frais de courtage à l'achat."
+  },
+  'credit': {
+    calcul: "Mensualité = capital emprunté × [taux mensuel × (1+taux mensuel)^n] ÷ [(1+taux mensuel)^n − 1], où n est le nombre de mensualités — la formule standard d'un prêt amortissable à taux fixe.",
+    donnees: "Le taux proposé par défaut vient du taux moyen des crédits immobiliers en France (Banque de France/BCE) sur la durée choisie — modifiable librement.",
+    hypotheses: "Le prix du bien, l'apport, le taux, la durée, l'assurance et les frais annexes.",
+    limites: "Ne tient pas compte d'un taux variable, d'un remboursement anticipé, ni des conditions spécifiques de chaque banque.",
+    comprendre: "Le tableau d'amortissement montre qu'au début d'un crédit, une mensualité rembourse surtout des intérêts — la part de capital remboursé augmente progressivement au fil du temps."
+  },
+  'buyrent': {
+    calcul: "Simulation mois par mois (pas une formule unique) : le patrimoine net du propriétaire est la valeur du bien moins le capital restant dû ; celui du locataire est son apport non dépensé, investi dès le départ, puis abondé chaque mois de la différence de coût réel entre les deux situations.",
+    donnees: "Le taux de crédit par défaut et l'évolution des prix immobiliers viennent de séries réelles (Banque de France/BCE) ; le loyer initial et le rendement de l'apport investi sont saisis par toi.",
+    hypotheses: "Prix du bien, apport, taux, durée, charges, taxe foncière, entretien, loyer et son évolution, et le rendement hypothétique si l'apport était investi ailleurs.",
+    limites: "Ne tient pas compte des évolutions futures réelles des prix immobiliers ou des loyers (inconnues à l'avance), ni d'événements personnels qui pourraient forcer une revente anticipée.",
+    comprendre: "Le point d'équilibre indique la durée à partir de laquelle un scénario devient plus favorable que l'autre, avec ces hypothèses précises — il change dès qu'une seule hypothèse change."
+  },
+  'debt-strategy': {
+    calcul: "Simulation mois par mois : chaque crédit accumule ses intérêts réels puis reçoit sa mensualité minimale ; l'éventuel effort supplémentaire (plus les mensualités libérées par les crédits déjà soldés) est redirigé selon la stratégie choisie — taux le plus élevé d'abord (avalanche) ou plus petit solde d'abord (boule de neige).",
+    donnees: "Aucune donnée externe : uniquement les crédits (solde, taux, mensualité minimale) que tu saisis toi-même.",
+    hypotheses: "Le solde, le taux et la mensualité minimale de chaque crédit, plus l'effort mensuel supplémentaire éventuel.",
+    limites: "Ne tient pas compte d'éventuelles pénalités de remboursement anticipé (à vérifier auprès de chaque prêteur), ni d'un taux variable.",
+    comprendre: "L'avalanche (taux le plus élevé d'abord) minimise toujours le coût total en intérêts ; la boule de neige (plus petit solde d'abord) solde des crédits plus vite, ce qui peut aider à rester motivé."
+  },
+  'debt-consolidation': {
+    calcul: "La situation actuelle additionne les mensualités minimales réelles de chaque crédit ; le crédit regroupé réutilise la même formule de mensualité qu'un crédit classique, sur le nouveau montant, taux et durée que tu saisis.",
+    donnees: "Aucune donnée externe : les crédits actuels et les paramètres du nouveau prêt sont saisis par toi.",
+    hypotheses: "Solde, taux et mensualité de chaque crédit actuel, plus montant, taux, durée et frais de dossier du crédit regroupé.",
+    limites: "Ne tient pas compte de frais de rachat de crédit possibles sur les prêts actuels, ni des conditions réelles qu'une banque accepterait effectivement de proposer.",
+    comprendre: "Une mensualité plus faible ne veut pas dire un coût total inférieur : allonger la durée réduit la mensualité mais augmente souvent le total des intérêts payés."
+  },
+  'transport-tco': {
+    calcul: "Additionne tout ce qui est réellement dépensé (achat ou coût total du crédit, carburant/électricité, assurance, entretien), puis soustrait une valeur de revente estimée par décote annuelle composée — le coût net divisé par le kilométrage total donne le coût au kilomètre.",
+    donnees: "Aucune donnée externe : prix, consommation, kilométrage, assurance, entretien et décote sont tous saisis par toi.",
+    hypotheses: "Le prix d'achat, le mode de paiement, la durée de possession, la consommation et le prix de l'énergie, l'assurance, l'entretien et le taux de décote annuel.",
+    limites: "La décote réelle dépend du modèle, de son état et du marché de l'occasion au moment de la revente — un taux constant est une simplification, jamais une valeur garantie.",
+    comprendre: "Le même formulaire sert un véhicule essence, hybride ou électrique : seuls la consommation et le prix de l'énergie changent, le calcul reste identique."
+  },
+  'transport-financing': {
+    calcul: "Comptant : le prix payé, avec en information séparée le coût d'opportunité si ce capital avait été investi. Crédit : coût total réel du prêt (même formule que « Coût réel de mon crédit »). LOA/LLD : la mensualité réelle que tu saisis, multipliée par la durée, plus l'option d'achat éventuelle pour la LOA.",
+    donnees: "Aucune donnée externe : le prix du véhicule et les mensualités LOA/LLD réellement proposées sont saisis par toi.",
+    hypotheses: "Prix, durée de comparaison, taux de crédit, mensualités LOA/LLD et option d'achat éventuelle.",
+    limites: "Likanza ne calcule pas la mensualité LOA/LLD elle-même (marge du loueur, valeur résiduelle contractuelle) — elle doit venir d'une offre réelle que tu saisis.",
+    comprendre: "Le coût total le plus bas n'est pas automatiquement le meilleur choix : la LOA/LLD n'immobilise pas de capital et peut inclure l'entretien selon le contrat."
+  },
+  'budget-inflation': {
+    calcul: "Perte de pouvoir d'achat = montant × (indice des prix à la fin de la période ÷ indice au début) − montant. Le scénario futur applique un taux d'inflation annuel composé sur la durée choisie.",
+    donnees: "Indice harmonisé des prix à la consommation (IPCH), France, BCE — donnée réelle mesurée, pas une hypothèse.",
+    hypotheses: "Pour le passé : uniquement le montant et les deux dates. Pour l'avenir (scénario) : un taux d'inflation et un rendement d'épargne hypothétiques que tu choisis, jamais garantis.",
+    limites: "L'inflation mesure une moyenne nationale sur un panier de biens — ton propre coût de la vie peut évoluer différemment selon tes dépenses réelles.",
+    comprendre: "Le passé est un fait mesuré (badge 📊) ; l'avenir est un scénario basé sur des hypothèses (badge 🔮) — les deux ne doivent jamais être confondus."
+  },
+  'budget-calc': {
+    calcul: "Capacité d'épargne = revenus mensuels nets − loyer/crédit − charges fixes − dépenses variables.",
+    donnees: "Aucune donnée externe : uniquement les montants que tu saisis toi-même.",
+    hypotheses: "Tes revenus et dépenses tels que tu les renseignes.",
+    limites: "Ne détaille pas les postes de dépenses individuellement — un budget réel varie souvent d'un mois à l'autre."
+  },
+  'budget-goal': {
+    calcul: "Durée nécessaire = montant visé ÷ épargne mensuelle possible.",
+    donnees: "Aucune donnée externe.",
+    hypotheses: "Le montant visé et l'épargne mensuelle que tu penses pouvoir mettre de côté.",
+    limites: "Ne tient pas compte d'un éventuel rendement de l'épargne placée (calcul à versements simples, sans intérêts) ni d'imprévus qui pourraient interrompre l'épargne."
+  },
+  'budget-sub': {
+    calcul: "Compare le total simplement dépensé (coût mensuel × durée) à ce que ce même montant aurait pu devenir s'il avait été investi à un rendement annuel composé plutôt que dépensé.",
+    donnees: "Aucune donnée externe : coût, durée et rendement hypothétique sont saisis par toi.",
+    hypotheses: "Le coût mensuel, la durée et le rendement annuel hypothétique si investi à la place.",
+    limites: "Le rendement utilisé est une hypothèse, jamais garanti — voir le mode « Historique » du simulateur Intérêts composés pour des taux réellement mesurés dans le passé."
+  }
+};
+Object.keys(LAB_METHODOLOGY).forEach(key => {
+  const el = document.getElementById('method-' + key);
+  if(el) el.innerHTML = renderMethodologyPanel(LAB_METHODOLOGY[key]);
+});
+
 const LAB_SUPPORT_LABELS = {
   URTH: 'Actions monde (MSCI World, ETF URTH)', '^GSPC': 'Actions US (S&P 500)', '^FCHI': 'Actions France (CAC 40)',
   '^STOXX50E': 'Actions Europe (Euro Stoxx 50)', QQQ: 'Actions technologie US (Nasdaq 100, ETF QQQ)',

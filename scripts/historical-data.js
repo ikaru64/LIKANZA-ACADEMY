@@ -132,6 +132,36 @@ function renderSourceNote(seriesKey, extra){
   return `<p class="source-note">Source : ${s.source}${s.frequency ? ' · ' + s.frequency : ''}${period}${s.sourceUrl ? ` · <a href="${s.sourceUrl}" target="_blank" rel="noopener">voir la série</a>` : ''}</p>`;
 }
 
+// ---------- Template méthodologie universel (Laboratoire financier, section
+// 18 du plan) : le même bouton « ⓘ Comment ce résultat est calculé ? », avec
+// les mêmes 5 sous-sections partout — calcul, données, hypothèses, limites,
+// comprendre. Une section sans contenu réel fourni n'est jamais affichée
+// vide (jamais un onglet "Limites" laissé blanc pour faire comme les autres).
+// <details>/<summary> natif : aucun JS de toggle à écrire ni à tester. ----------
+const METHODOLOGY_SECTION_META = {
+  calcul: {emoji: '🧮', label: 'Calcul'},
+  donnees: {emoji: '📊', label: 'Données'},
+  hypotheses: {emoji: '⚙️', label: 'Hypothèses'},
+  limites: {emoji: '⚠️', label: 'Limites'},
+  comprendre: {emoji: '📚', label: 'Comprendre'}
+};
+function renderMethodologyPanel(spec){
+  if(!spec) return '';
+  const sections = Object.keys(METHODOLOGY_SECTION_META)
+    .filter(key => spec[key])
+    .map(key => {
+      const meta = METHODOLOGY_SECTION_META[key];
+      const parts = Array.isArray(spec[key]) ? spec[key] : [spec[key]];
+      const content = parts.map(p => `<p style="margin-top:6px;">${p}</p>`).join('');
+      return `<div style="margin-top:12px;"><span class="smallcaps">${meta.emoji} ${meta.label}</span>${content}</div>`;
+    }).join('');
+  if(!sections) return '';
+  return `<details class="why-drawer" style="margin-top:14px;">
+    <summary class="smallcaps" style="cursor:pointer;">ⓘ Comment ce résultat est calculé ?</summary>
+    <div style="font-size:12.5px;color:var(--text-dim);line-height:1.6;">${sections}</div>
+  </details>`;
+}
+
 // ---------- Période couverte + avertissement année partielle (section 2) ----------
 function formatSeriesPeriodLabel(points){
   if(!points || points.length === 0) return '';
