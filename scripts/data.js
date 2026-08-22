@@ -2636,14 +2636,32 @@ function renderChartPatternGame(elId){
 const COURS_PASS_THRESHOLD = 0.6;
 function getCoursProgress(){ return safeGetJSON('fzr-cours-progress', {}); }
 
+// Rattache chaque cours à son domaine réel (DOMAINS, app.js) en comptant le
+// recouvrement entre ses quizCategories et celles de chaque domaine — jamais
+// une catégorie inventée à la main : le domaine avec le plus de catégories en
+// commun l'emporte, à égalité le premier domaine testé (ordre de DOMAINS).
+// Reste correct même si COURS_CATALOG grandit sans mise à jour manuelle.
+function coursDomainKey(cours){
+  if(!cours || !Array.isArray(cours.quizCategories)) return null;
+  let best = null, bestScore = 0;
+  DOMAINS.forEach(domain => {
+    const score = cours.quizCategories.filter(c => (domain.quizCategories || []).includes(c)).length;
+    if(score > bestScore){ bestScore = score; best = domain.key; }
+  });
+  return best;
+}
+
 // Grille de tuiles cliquables (page Academy) — chaque tuile ouvre le cours
 // complet sur sa propre page (cours.html#id) plutôt que de tout dérouler en
-// accordéon sur la même page, pour éviter un scroll interminable.
-function renderCoursTiles(elId){
+// accordéon sur la même page, pour éviter un scroll interminable. domainKey
+// optionnel : ne montre que les cours réellement rattachés à ce domaine
+// (voir coursDomainKey), jamais un cours mal classé pour remplir un onglet.
+function renderCoursTiles(elId, domainKey){
   const el = document.getElementById(elId);
   if(!el) return;
   const progress = getCoursProgress();
-  el.innerHTML = `<div class="card-grid">${COURS_CATALOG.map(cours=>{
+  const list = domainKey ? COURS_CATALOG.filter(c => coursDomainKey(c) === domainKey) : COURS_CATALOG;
+  el.innerHTML = `<div class="card-grid">${list.map(cours=>{
     const done = !!progress[cours.id];
     return `
     <a href="cours.html#${encodeURIComponent(cours.id)}" class="card play-tile">
