@@ -270,6 +270,7 @@ async function renderActionDetail(){
     <div class="card" id="scoreVerdictCard" style="margin-top:16px;display:none;"></div>
     <div class="card" id="technicalCard" style="margin-top:16px;"></div>
     <div class="card" id="thematicNewsCard" style="margin-top:16px;display:none;"></div>
+    <div class="card" id="financialHistoryCard" style="margin-top:16px;"><h3>Historique financier</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement…</p></div>
     <div class="card" id="timelineCard" style="margin-top:16px;"><h3>Chronologie</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement…</p></div>
     <p class="disclaimer-box" style="margin-top:16px;">Ces informations sont fournies à titre pédagogique, en différé. Elles ne constituent ni un conseil en investissement, ni une incitation à acheter ou vendre.</p>`;
 
@@ -453,6 +454,12 @@ async function renderActionDetail(){
           scoreCard.style.display = 'none';
         }
 
+        // ---------- Historique financier : CA + résultat net réels (déjà
+        // chargés dans profile.financialHistory, aucun appel réseau
+        // supplémentaire). ----------
+        const financialHistoryCard = document.getElementById('financialHistoryCard');
+        if(financialHistoryCard) financialHistoryCard.innerHTML = renderFinancialHistoryCard(profile.financialHistory);
+
         // ---------- Chronologie : fusionne dividendes/mouvements de cours réels
         // (déjà calculables depuis un seul fetch de prix+dividendes) avec les
         // résultats trimestriels réels (profile.earnings, déjà chargé ci-dessus)
@@ -488,6 +495,8 @@ async function renderActionDetail(){
         if(scoreCardEl) scoreCardEl.style.display = 'none';
         const timelineCardEl = document.getElementById('timelineCard');
         if(timelineCardEl) timelineCardEl.innerHTML = `<h3>Chronologie</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+        const financialHistoryCardEl = document.getElementById('financialHistoryCard');
+        if(financialHistoryCardEl) financialHistoryCardEl.innerHTML = `<h3>Historique financier</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
       });
   }
 

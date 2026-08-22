@@ -14,7 +14,8 @@
                   Fiches actions — 8 = taille fixe de STOCKS_DEMO)
    Réponse  : { sector, industry, website, employees, summary,
                 fundamentals:{asOfDate, source, fields:{...|null}},
-                earnings:{nextDate, history:[{quarterDate, epsActual, epsEstimate}]} }
+                earnings:{nextDate, history:[{quarterDate, epsActual, epsEstimate}]},
+                financialHistory:[{year, totalRevenue, netIncome}] (annuel, jusqu'à 4 ans réels) }
    ou, en mode batch : { updatedAt, companies:[...], errors:[...] }
    Jamais de description ou de fondamental inventé — un champ absent de la
    réponse Yahoo reste `null`, la page appelante affiche alors "Donnée

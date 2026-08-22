@@ -4610,6 +4610,68 @@ function formatFundamentalValue(key, value){
   }
 }
 
+// ---------- Historique financier (graphiques) : CA + résultat net réels sur
+// jusqu'à 4 années annuelles (Yahoo incomeStatementHistory, voir lib/yahoo.js
+// pour la vérification en direct du 2026-08-22 — seuls totalRevenue/netIncome
+// sont fiables sur cet endpoint, grossProfit/ebit y sont systématiquement à
+// 0). Trois petits graphiques à barres séparés (CA, résultat net, marge nette
+// calculée) plutôt qu'un double axe trompeur — chaque échelle reste honnête
+// pour sa propre grandeur. ----------
+function financialHistoryBarsSVG(labels, values, opts){
+  opts = opts || {};
+  const W = 600, H = 130, padL = 10, padR = 10, padT = 14, padB = 24;
+  const n = values.length;
+  const max = Math.max(...values, 0);
+  const min = Math.min(...values, 0);
+  const spread = (max - min) || Math.abs(max) * 0.01 || 1;
+  const plotH = H - padT - padB;
+  const zeroY = padT + (1 - (0 - min) / spread) * plotH;
+  const slot = (W - padL - padR) / n;
+  const barW = slot * 0.5;
+  const Y = v => padT + (1 - (v - min) / spread) * plotH;
+  const color = opts.color || 'var(--gold-bright)';
+  const fmt = opts.fmt || (v => String(v));
+  const bars = values.map((v, i) => {
+    const x = padL + i * slot + (slot - barW) / 2;
+    const y = v >= 0 ? Y(v) : zeroY;
+    const h = Math.max(Math.abs(Y(v) - zeroY), 1);
+    return `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${barW.toFixed(1)}" height="${h.toFixed(1)}" fill="${v < 0 ? 'var(--bordeaux)' : color}" rx="2"><title>${labels[i]} : ${fmt(v)}</title></rect>`;
+  }).join('');
+  const labelsSVG = labels.map((l, i) =>
+    `<text x="${(padL + i * slot + slot / 2).toFixed(1)}" y="${H - 6}" text-anchor="middle">${l}</text>`).join('');
+  return `<svg class="market-chart" viewBox="0 0 ${W} ${H}" role="img" aria-label="${opts.ariaLabel || ''}">
+    <line x1="${padL}" y1="${zeroY.toFixed(1)}" x2="${W - padR}" y2="${zeroY.toFixed(1)}" class="refline"/>
+    ${bars}
+    ${labelsSVG}
+  </svg>`;
+}
+function renderFinancialHistoryCard(financialHistory){
+  if(!Array.isArray(financialHistory) || financialHistory.length < 2){
+    return `<h3>Historique financier</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+  }
+  const labels = financialHistory.map(f => String(f.year));
+  const revenues = financialHistory.map(f => f.totalRevenue);
+  const netIncomes = financialHistory.map(f => f.netIncome);
+  const margins = financialHistory.map(f => f.totalRevenue !== 0 ? (f.netIncome / f.totalRevenue) * 100 : 0);
+  const eurFmt = v => fmtBigNumber(v) + ' €';
+  const pctFmt = v => (v >= 0 ? '+' : '') + v.toFixed(1).replace('.', ',') + ' %';
+  return `
+    <h3>Historique financier</h3>
+    <p style="font-size:12px;color:var(--text-dim);margin:6px 0 12px;">Chiffre d'affaires et résultat net réellement publiés (jusqu'à ${financialHistory.length} années, Yahoo Finance) — la marge nette est calculée à partir de ces deux valeurs, jamais une donnée fournie directement.</p>
+    <div style="margin-bottom:14px;">
+      <p class="smallcaps">${renderDataBadge('fait')} Chiffre d'affaires</p>
+      ${financialHistoryBarsSVG(labels, revenues, {fmt: eurFmt, ariaLabel: 'Chiffre d\'affaires annuel réel'})}
+    </div>
+    <div style="margin-bottom:14px;">
+      <p class="smallcaps">${renderDataBadge('fait')} Résultat net</p>
+      ${financialHistoryBarsSVG(labels, netIncomes, {fmt: eurFmt, ariaLabel: 'Résultat net annuel réel', color: 'var(--emerald)'})}
+    </div>
+    <div>
+      <p class="smallcaps">${renderDataBadge('calcul')} Marge nette (résultat net / chiffre d'affaires)</p>
+      ${financialHistoryBarsSVG(labels, margins, {fmt: pctFmt, ariaLabel: 'Marge nette annuelle calculée', color: 'var(--gold-bright)'})}
+    </div>`;
+}
+
 // ---------- Cache en session des fondamentaux réels (partagé entre pages) ----------
 // Découpe en lots de 8 : limite réelle du batch Yahoo quoteSummary derrière
 // /api/company-profile (voir api/company-profile.js, symbols.slice(0,8)) — au
