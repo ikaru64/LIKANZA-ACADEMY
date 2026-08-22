@@ -12,6 +12,46 @@
 
 renderLevelTip('levelTip', 'personalFinance');
 
+// ---------- Hub par catégories (même pattern que bourse.js/BOURSE_TABS) :
+// remplace le long scroll par une navigation, sans changer la logique des
+// simulateurs eux-mêmes (chaque champ/carte garde son id, seuls les <section>
+// englobants sont devenus des .home-tab-panel). D'autres catégories du plan
+// (Transport, Dettes & crédits, Famille & projets, Scénarios de vie...) sont
+// prévues mais pas encore construites — jamais un onglet vide affiché en
+// attendant, seules les catégories réellement fonctionnelles apparaissent. ----------
+const LAB_TABS = [
+  {id:'tab-investissement', title:'Investissement', desc:'Tester des stratégies', icon:'trending-up'},
+  {id:'tab-logement', title:'Logement', desc:'Achat, location, prêt', icon:'house'},
+  {id:'tab-budget-epargne', title:'Budget & épargne', desc:'Comprendre son argent', icon:'coins'},
+  {id:'tab-planification', title:'Planification', desc:'Comparer des décisions', icon:'scale'}
+];
+let labActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-investissement';
+function renderLabTabs(){
+  const el = document.getElementById('labTabsGrid');
+  if(!el) return;
+  el.innerHTML = LAB_TABS.map(t=>`
+    <button class="quick-access-card ${t.id===labActiveTab?'active':''}" data-tab="${t.id}">
+      <div class="icon">${ICONS[t.icon] || ''}</div>
+      <h3>${t.title}</h3>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${t.desc}</p>
+    </button>`).join('');
+  el.querySelectorAll('.quick-access-card').forEach(btn=>{
+    btn.addEventListener('click', ()=>setLabTab(btn.dataset.tab));
+  });
+}
+function setLabTab(tabId){
+  labActiveTab = tabId;
+  document.querySelectorAll('#labTabsGrid .quick-access-card').forEach(c=>c.classList.toggle('active', c.dataset.tab===tabId));
+  document.querySelectorAll('.home-tab-panel').forEach(p=>p.classList.toggle('active', p.id===tabId));
+}
+renderLabTabs();
+setLabTab(labActiveTab);
+window.addEventListener('hashchange', ()=>{
+  const tab = location.hash.slice(1);
+  const target = document.getElementById(tab);
+  if(target && target.classList.contains('home-tab-panel')) setLabTab(tab);
+});
+
 const LAB_SUPPORT_LABELS = {
   URTH: 'Actions monde (MSCI World, ETF URTH)', '^GSPC': 'Actions US (S&P 500)', '^FCHI': 'Actions France (CAC 40)',
   '^STOXX50E': 'Actions Europe (Euro Stoxx 50)', QQQ: 'Actions technologie US (Nasdaq 100, ETF QQQ)',
