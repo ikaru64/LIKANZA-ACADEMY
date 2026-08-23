@@ -66,3 +66,82 @@ function renderFinancePage(elId){
 
   tryAwardQuizPoints(`finance-page-viewed-${new Date().toDateString()}`, 3, {financePageViewed: true});
 }
+
+// ============================================================
+// ---------- Laboratoire "Faut-il investir ?" (section 9 du prompt
+// "Extension des domaines") : VAN/TRI à partir d'hypothèses saisies par
+// l'utilisateur (investissement, CA généré, croissance, marge, durée,
+// taux d'actualisation) — computeVAN/computeTRI/computeInvestmentProject
+// CashFlows (scripts/data.js), jamais un résultat présenté comme une
+// prédiction, toujours le résultat mécanique des hypothèses affichées. ----------
+function renderFinanceLab(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <p style="color:var(--text-dim);font-size:13.5px;line-height:1.6;margin:0 0 16px;max-width:70ch;">Une entreprise envisage un investissement (nouvelle usine, nouvelle ligne de produit...). Ajuste les hypothèses ci-dessous pour voir si, sur cette base, le projet créerait ou détruirait de la valeur — jamais une prédiction, seulement le résultat mécanique de ce que tu saisis.</p>
+    <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card">
+        <div class="field"><label for="labInvInitial">Investissement initial (€)</label><input type="number" id="labInvInitial" min="0" step="1000" value="10000000"></div>
+        <div class="field"><label for="labInvCA1">Chiffre d'affaires additionnel généré la 1ère année (€)</label><input type="number" id="labInvCA1" min="0" step="1000" value="8000000"></div>
+        <div class="slider-row field"><label for="labInvGrowth">Croissance annuelle de ce CA <span class="v mono" id="valLabInvGrowth">3 %</span></label><input type="range" id="labInvGrowth" min="-10" max="30" step="1" value="3"></div>
+        <div class="slider-row field"><label for="labInvMargin">Marge nette sur ce CA additionnel <span class="v mono" id="valLabInvMargin">20 %</span></label><input type="range" id="labInvMargin" min="0" max="50" step="1" value="20"></div>
+        <div class="slider-row field"><label for="labInvYears">Durée du projet <span class="v mono" id="valLabInvYears">10 ans</span></label><input type="range" id="labInvYears" min="1" max="25" step="1" value="10"></div>
+        <div class="slider-row field" style="margin-bottom:0;"><label for="labInvWacc">Taux d'actualisation (WACC) <span class="v mono" id="valLabInvWacc">8 %</span></label><input type="range" id="labInvWacc" min="1" max="20" step="0.5" value="8"></div>
+      </div>
+      <div class="card">
+        <h3>Résultat</h3>
+        <div id="labInvResult" style="margin-top:12px;"></div>
+      </div>
+    </div>`;
+
+  const ids = ['labInvInitial','labInvCA1','labInvGrowth','labInvMargin','labInvYears','labInvWacc'];
+  const get = id => +document.getElementById(id).value || 0;
+
+  function update(){
+    document.getElementById('valLabInvGrowth').textContent = get('labInvGrowth') + ' %';
+    document.getElementById('valLabInvMargin').textContent = get('labInvMargin') + ' %';
+    document.getElementById('valLabInvYears').textContent = get('labInvYears') + ' ans';
+    document.getElementById('valLabInvWacc').textContent = get('labInvWacc') + ' %';
+
+    const investissement = get('labInvInitial');
+    const ca1 = get('labInvCA1');
+    const croissance = get('labInvGrowth');
+    const marge = get('labInvMargin');
+    const duree = get('labInvYears');
+    const wacc = get('labInvWacc');
+
+    const cashFlows = computeInvestmentProjectCashFlows(ca1, croissance, marge, duree);
+    const van = computeVAN(investissement, cashFlows, wacc);
+    const tri = computeTRI(investissement, cashFlows);
+    const cashFlowTotal = cashFlows.reduce((s, cf) => s + cf, 0);
+    const roiSimple = investissement > 0 ? ((cashFlowTotal - investissement) / investissement) * 100 : 0;
+    const creeDeLaValeur = van > 0;
+
+    const resultEl = document.getElementById('labInvResult');
+    resultEl.innerHTML = `
+      ${renderDataBadge('calcul')}
+      <div class="result-row" style="margin-top:10px;">
+        <span>VAN</span><span class="mono" style="color:${creeDeLaValeur ? 'var(--emerald)' : 'var(--bordeaux)'};font-size:18px;">${fmtEUR(van)}</span>
+      </div>
+      <div class="result-row">
+        <span>TRI</span><span class="mono">${tri === null ? 'Non calculable sur cette plage' : tri.toFixed(1) + ' %'}</span>
+      </div>
+      <div class="result-row">
+        <span>ROI simple (non actualisé)</span><span class="mono">${roiSimple >= 0 ? '+' : ''}${roiSimple.toFixed(0)} %</span>
+      </div>
+      <p style="font-size:13px;margin-top:14px;color:${creeDeLaValeur ? 'var(--emerald)' : 'var(--bordeaux)'};">${creeDeLaValeur
+        ? `Sur ces hypothèses, le projet créerait de la valeur : sa rentabilité attendue dépasse le coût du capital (${wacc}%).`
+        : `Sur ces hypothèses, le projet détruirait de la valeur : sa rentabilité attendue ne couvre pas le coût du capital (${wacc}%), même s'il reste comptablement rentable.`}</p>
+      ${renderMethodologyPanel({
+        calcul: "VAN = −Investissement initial + somme des flux de trésorerie annuels, chacun actualisé au taux choisi. TRI = le taux d'actualisation pour lequel cette VAN serait exactement nulle, trouvé par approximations successives.",
+        donnees: `Flux de trésorerie annuels calculés à partir de : CA additionnel de ${fmtEUR(ca1)} la 1ère année, croissance de ${croissance}%/an, marge nette de ${marge}% sur ce CA — jamais une donnée de marché, uniquement tes hypothèses saisies ci-contre.`,
+        hypotheses: "Croissance et marge constantes sur toute la durée du projet (simplification) ; aucun investissement complémentaire en cours de route ; le taux d'actualisation (WACC) reste constant sur toute la période.",
+        limites: "Un projet réel implique souvent des investissements échelonnés, une marge qui évolue avec l'échelle, et un WACC qui peut varier avec le risque perçu du projet — ce simulateur isole le mécanisme VAN/TRI, pas une prévision d'entreprise réelle.",
+        comprendre: "Une VAN positive signifie que le projet rapporte plus que ce qu'il coûte de financer (WACC) — un TRI supérieur au WACC dit la même chose autrement, en %. Les deux mesures peuvent en théorie diverger sur des projets aux flux atypiques : la VAN reste la référence recommandée en cas de désaccord entre les deux."
+      })}`;
+  }
+
+  ids.forEach(id => document.getElementById(id).addEventListener('input', update));
+  update();
+  tryAwardQuizPoints(`finance-lab-${new Date().toDateString()}`, 8, {usedSimulator: true});
+}

@@ -4717,6 +4717,51 @@ function computeLoanAmortization(capital, rateAnnual, years, insuranceRatePct, f
   };
 }
 
+// ---------- Décision d'investissement (Finance d'entreprise, section 9 du
+// prompt "Extension des domaines") : VAN et TRI à partir de flux de
+// trésorerie annuels réels saisis par l'utilisateur — jamais une prédiction,
+// toujours le résultat mécanique des hypothèses fournies. ----------
+// VAN = -investissement initial + somme des flux actualisés au taux donné.
+function computeVAN(investissementInitial, cashFlows, tauxActualisationPct){
+  const r = tauxActualisationPct / 100;
+  let van = -investissementInitial;
+  cashFlows.forEach((cf, i) => { van += cf / Math.pow(1 + r, i + 1); });
+  return van;
+}
+// TRI = le taux pour lequel la VAN est nulle. Pas de formule fermée en
+// général : recherche par bissection sur l'intervalle -99%/+500%. Si la VAN
+// ne change jamais de signe sur cet intervalle (ex. tous les flux négatifs),
+// aucun TRI n'existe dans cette plage — retourne null plutôt qu'une valeur
+// approchée trompeuse.
+function computeTRI(investissementInitial, cashFlows){
+  const vanAt = r => computeVAN(investissementInitial, cashFlows, r * 100);
+  let lo = -0.99, hi = 5;
+  const vLo = vanAt(lo), vHi = vanAt(hi);
+  if(vLo === 0) return lo * 100;
+  if(vHi === 0) return hi * 100;
+  if((vLo > 0) === (vHi > 0)) return null; // pas de changement de signe -> pas de TRI trouvable sur cette plage
+  for(let i = 0; i < 100; i++){
+    const mid = (lo + hi) / 2;
+    const vMid = vanAt(mid);
+    if(Math.abs(vMid) < 0.01) return mid * 100;
+    if((vMid > 0) === (vLo > 0)) lo = mid; else hi = mid;
+  }
+  return ((lo + hi) / 2) * 100;
+}
+// Construit la série de cash-flows annuels à partir d'hypothèses simplifiées
+// (CA additionnel généré la 1ère année, croissance annuelle, marge nette sur
+// ce CA) — jamais une croissance ou une marge inventée, toujours celles
+// saisies par l'utilisateur, explicitement présentées comme des hypothèses.
+function computeInvestmentProjectCashFlows(caAnnee1, croissancePct, margePct, dureeAnnees){
+  const cashFlows = [];
+  let ca = caAnnee1;
+  for(let t = 0; t < dureeAnnees; t++){
+    if(t > 0) ca *= (1 + croissancePct / 100);
+    cashFlows.push(ca * (margePct / 100));
+  }
+  return cashFlows;
+}
+
 // ---------- Dettes & crédits : stratégie de remboursement multi-crédits ----------
 // Simulation mois par mois (avalanche = taux le plus élevé d'abord, snowball =
 // plus petit solde d'abord, custom = ordre fourni) — jamais une formule

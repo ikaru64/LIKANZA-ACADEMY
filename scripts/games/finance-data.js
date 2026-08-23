@@ -17,7 +17,8 @@ const FINANCE_ROADMAP = [
   'Tester tes propres chiffres dans Unit Economics'
 ];
 
-const FINANCE_CONCEPTS = ["Chiffre d'affaires", 'Marge brute', 'Marge nette', 'EBITDA', 'Cash flow', 'BFR', 'Point mort', 'Trésorerie', 'Rentabilité', 'Dette', 'Dilution', 'Valorisation'];
+const FINANCE_CONCEPTS = ["Chiffre d'affaires", 'Marge brute', 'Marge nette', 'EBITDA', 'Cash flow', 'BFR', 'Point mort', 'Trésorerie', 'Rentabilité', 'Dette', 'Dilution', 'Valorisation',
+  'VAN (Valeur Actuelle Nette)', 'TRI (Taux de Rentabilité Interne)', 'WACC (coût moyen pondéré du capital)', 'ROIC', 'ROE', 'Structure financière', "Rachat d'actions", 'Création de valeur'];
 
 const FINANCE_EXEMPLES = [
   {caseId: 'wework', angle: "Un revenu de 1,8 Md$ et une perte de 1,9 Md$ la même année : chiffre d'affaires élevé et rentabilité négative peuvent coexister"},
