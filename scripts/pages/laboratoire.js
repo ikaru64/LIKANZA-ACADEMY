@@ -65,7 +65,8 @@ const LAB_WIDGETS = {
     {id:'widget-invest-whatif', title:"Et si j'avais investi ?", desc:"Rejoue un support réel sur une période choisie.", icon:'trending-up'},
     {id:'widget-invest-dca', title:'DCA historique', desc:'Prix moyen réel avec un versement mensuel régulier.', icon:'banknote'},
     {id:'widget-invest-compound', title:'Intérêts composés', desc:'Un capital qui grossit avec des versements réguliers.', icon:'coins'},
-    {id:'widget-invest-pru', title:"Prix moyen d'achat", desc:'Calcule ton prix moyen à partir de tes achats successifs.', icon:'calculator'}
+    {id:'widget-invest-pru', title:"Prix moyen d'achat", desc:'Calcule ton prix moyen à partir de tes achats successifs.', icon:'calculator'},
+    {id:'widget-invest-var', title:'Risque quantitatif (VaR)', desc:'Perte potentielle estimée, selon un niveau de confiance choisi.', icon:'shield'}
   ],
   'tab-logement': [
     {id:'labCreditCard', title:'Coût réel de mon crédit', desc:"Tableau d'amortissement complet, taux et durée.", icon:'landmark'},
@@ -161,6 +162,13 @@ const LAB_METHODOLOGY = {
     donnees: "Aucune donnée externe : uniquement les quantités et prix que tu saisis toi-même.",
     hypotheses: "Le nombre d'achats, leur quantité et leur prix unitaire.",
     limites: "Ne tient pas compte des frais de courtage à l'achat."
+  },
+  'invest-var': {
+    calcul: "VaR (en %) = z(niveau de confiance) × volatilité annuelle × √(horizon en jours ÷ 252) − rendement annuel attendu × (horizon en jours ÷ 252). Le z est une constante standard associée au niveau de confiance choisi (1,645 pour 95%, 2,326 pour 99%...). VaR en € = VaR en % × valeur du portefeuille.",
+    donnees: "Aucune donnée externe : la valeur du portefeuille, le rendement annuel attendu et la volatilité annuelle sont saisis par toi (tu peux t'inspirer des volatilités historiques de la Bibliothèque pour différents types d'actifs).",
+    hypotheses: "Cette VaR paramétrique suppose que les rendements suivent approximativement une loi normale (voir ce terme dans la Bibliothèque), et met à l'échelle une volatilité annuelle sur l'horizon choisi via la règle dite « racine du temps ».",
+    limites: "L'hypothèse de loi normale sous-estime la fréquence réelle des mouvements de marché extrêmes (« queues de distribution plus épaisses » en réalité) : cette VaR peut donc sous-estimer le risque des pertes les plus sévères, précisément celles qui comptent le plus en pratique.",
+    comprendre: "Une VaR n'est jamais une perte maximale garantie : c'est un seuil associé à une probabilité de dépassement. Une VaR à 95% signifie qu'il reste, par construction, 5% de scénarios où la perte réelle dépasse ce seuil — parfois largement."
   },
   'credit': {
     calcul: "Mensualité = capital emprunté × [taux mensuel × (1+taux mensuel)^n] ÷ [(1+taux mensuel)^n − 1], où n est le nombre de mensualités — la formule standard d'un prêt amortissable à taux fixe.",
@@ -1186,6 +1194,42 @@ function updateDca(){
 }
 addDcaRow(10, 95); addDcaRow(5, 110);
 updateDca();
+
+// ---------- Risque quantitatif (VaR, section 15 du prompt "Extension des
+// domaines" : mathématiques financières avancées / finance quantitative) :
+// computeParametricVaR (scripts/data.js) à partir d'hypothèses saisies par
+// l'utilisateur — jamais une prédiction, toujours le résultat mécanique de ce
+// qui est saisi, sous une hypothèse de loi normale explicitement rappelée. ----------
+function markVarUsed(){ tryAwardQuizPoints(`lab-var-${new Date().toDateString()}`, 8, {usedVaR:true}); }
+function updateVar(){
+  const portefeuille = +document.getElementById('varPortefeuille').value || 0;
+  const rendement = +document.getElementById('varRendement').value || 0;
+  const volatilite = +document.getElementById('varVolatilite').value || 0;
+  const confiance = +document.getElementById('varConfiance').value || 95;
+  const horizon = +document.getElementById('varHorizon').value || 1;
+  document.getElementById('valVarHorizon').textContent = horizon + (horizon > 1 ? ' jours' : ' jour');
+
+  const resultEl = document.getElementById('varResult');
+  const r = computeParametricVaR(portefeuille, rendement, volatilite, confiance, horizon);
+  if(!r){
+    resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : la valeur du portefeuille doit être positive et la volatilité ne peut pas être négative.</p>`;
+    return;
+  }
+  resultEl.innerHTML = `
+    ${renderDataBadge('calcul')}
+    <div class="result-row" style="margin-top:10px;">
+      <span>Perte potentielle estimée (VaR)</span><span class="mono" style="color:var(--bordeaux);font-size:18px;">${fmtEUR(r.perteEnMontant)}</span>
+    </div>
+    <div class="result-row">
+      <span>Soit, en % du portefeuille</span><span class="mono">${(r.perteEnPct * 100).toFixed(2)} %</span>
+    </div>
+    <p style="font-size:13px;margin-top:14px;color:var(--text-dim);">Avec ${confiance}% de confiance, la perte sur ${horizon} jour${horizon>1?'s':''} ne devrait pas dépasser <strong style="color:var(--text);">${fmtEUR(r.perteEnMontant)}</strong> — et donc ${100-confiance}% de chances (selon ce modèle) qu'elle soit plus élevée, potentiellement bien plus élevée : la VaR ne dit rien sur l'ampleur d'une perte au-delà de ce seuil.</p>
+    <p class="disclaimer-box" style="margin-top:10px;">Ce calcul suppose que les rendements suivent approximativement une loi normale — une simplification aux limites connues : les marchés réels connaissent des mouvements extrêmes plus fréquents que ce qu'une loi normale prédirait. Cette VaR peut donc sous-estimer le risque des pertes les plus sévères.</p>`;
+}
+['varPortefeuille','varRendement','varVolatilite','varConfiance','varHorizon'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { updateVar(); markVarUsed(); });
+});
+updateVar();
 
 // ============================================================
 // ---------- Laboratoire économique (tab-economie, section 4 du prompt

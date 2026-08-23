@@ -202,6 +202,28 @@
       <div id="method-invest-pru"></div>
     </div>
 
+    <div class="card" id="widget-invest-var" style="display:none;grid-column:1/-1;">
+      <h3>Risque quantitatif (VaR) <span class="data-badge data-badge-simulation" style="margin-left:6px;">🎮 Simulation</span></h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;max-width:70ch;">Estime la perte potentielle d'un portefeuille sur une période donnée, avec un niveau de confiance choisi — jamais une prédiction, seulement le résultat mécanique de ce que tu saisis, sous l'hypothèse d'une loi normale des rendements (voir ses limites dans le résultat).</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:160px;"><label for="varPortefeuille">Valeur du portefeuille (€)</label><input type="number" id="varPortefeuille" min="0" step="1000" value="100000"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="varRendement">Rendement annuel attendu (%)</label><input type="number" id="varRendement" step="0.5" value="7"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="varVolatilite">Volatilité annuelle (%)</label><input type="number" id="varVolatilite" min="0" step="0.5" value="15"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:160px;"><label for="varConfiance">Niveau de confiance</label>
+          <select id="varConfiance">
+            <option value="90">90%</option>
+            <option value="95" selected>95%</option>
+            <option value="99">99%</option>
+          </select>
+        </div>
+        <div class="slider-row field" style="flex:1;min-width:160px;"><label for="varHorizon">Horizon <span class="v mono" id="valVarHorizon">10 jours</span></label><input type="range" id="varHorizon" min="1" max="60" step="1" value="10"></div>
+      </div>
+      <div id="varResult" style="margin-top:16px;"></div>
+      <div id="method-invest-var"></div>
+    </div>
+
   </div>
   </div>
 

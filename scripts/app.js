@@ -461,6 +461,16 @@ const QUIZ_BANK_FULL = [
   {id:"q-risque-002", niveau:"intermediaire", categorie:"Risque et volatilité", type:"qcm", question:"Un actif très volatil est-il automatiquement un mauvais investissement ?", choix:["Oui, toujours","Non, cela dépend de l'horizon de placement et de la tolérance au risque de l'investisseur","Oui, sauf pour les obligations d'État","Non, la volatilité n'a aucune importance"], bonneReponse:1, explication:"La volatilité est un facteur de risque à prendre en compte, mais son acceptabilité dépend de l'horizon de temps et des objectifs de chacun, pas d'une règle universelle."},
   {id:"q-risque-003", niveau:"avance", categorie:"Risque et volatilité", type:"qcm", question:"Qu'appelle-t-on le \"maximum drawdown\" d'un placement ?", choix:["Son rendement moyen annuel","La plus forte baisse observée entre un sommet et un creux sur une période donnée","Son montant minimum de versement","Son taux d'imposition maximal"], bonneReponse:1, explication:"Le maximum drawdown mesure la perte la plus sévère subie historiquement par un placement entre un pic et un creux, un indicateur utile pour juger du risque réellement vécu."},
 
+  // ---- Finance quantitative ----
+  {id:"q-financequant-001", niveau:"avance", categorie:"Finance quantitative", type:"qcm", question:"Que mesure le ratio de Sharpe ?", choix:["Le rendement brut d'un placement, sans autre ajustement", "Le rendement d'un placement rapporté au risque (volatilité) pris pour l'obtenir", "Le montant des frais de gestion d'un fonds", "La corrélation entre deux actifs"], bonneReponse:1, explication:"Le ratio de Sharpe rapporte le rendement excédentaire d'un placement (par rapport à un taux sans risque) à sa volatilité, permettant de comparer des placements sur leur efficacité, pas seulement leur performance brute."},
+  {id:"q-financequant-002", niveau:"avance", categorie:"Finance quantitative", type:"vraifaux", question:"Un ratio de Sharpe plus élevé signifie qu'un placement a obtenu son rendement avec moins de risque qu'un placement au ratio plus faible, à rendement égal.", choix:["Vrai","Faux"], bonneReponse:0, explication:"À rendement égal, un ratio de Sharpe plus élevé signifie une volatilité plus faible pour obtenir ce même rendement — donc une meilleure efficacité risque/rendement."},
+  {id:"q-financequant-003", niveau:"avance", categorie:"Finance quantitative", type:"qcm", question:"Qu'indique un beta (β) d'action supérieur à 1 ?", choix:["L'action verse un dividende plus élevé que la moyenne", "L'action a historiquement amplifié les mouvements du marché dans son ensemble", "L'action est forcément sous-évaluée", "L'action ne peut pas perdre de valeur"], bonneReponse:1, explication:"Un beta supérieur à 1 signifie qu'historiquement, l'action a eu tendance à amplifier les mouvements de marché (plus forte hausse en période de hausse, plus forte baisse en période de baisse)."},
+  {id:"q-financequant-004", niveau:"avance", categorie:"Finance quantitative", type:"qcm", question:"Que signifie une Value at Risk (VaR) à 95% sur 10 jours de 5 000€ pour un portefeuille ?", choix:["La perte sera exactement de 5 000€ dans 95% des cas", "Il y a 95% de chances (selon le modèle) que la perte sur 10 jours ne dépasse pas 5 000€", "Le portefeuille ne peut jamais perdre plus de 5 000€", "5 000€ est le gain moyen attendu sur la période"], bonneReponse:1, explication:"La VaR est un seuil de perte associé à un niveau de confiance : elle indique qu'il y a 95% de chances, selon le modèle utilisé, que la perte ne dépasse pas ce montant sur la période — jamais une garantie absolue."},
+  {id:"q-financequant-005", niveau:"avance", categorie:"Finance quantitative", type:"vraifaux", question:"La VaR indique l'ampleur maximale possible d'une perte, même au-delà du seuil de confiance choisi.", choix:["Vrai","Faux"], bonneReponse:1, explication:"La VaR ne dit rien sur l'ampleur d'une perte au-delà du seuil choisi — elle indique seulement la probabilité de dépasser ce seuil, pas la pire perte possible dans l'absolu."},
+  {id:"q-financequant-006", niveau:"avance", categorie:"Finance quantitative", type:"qcm", question:"Pourquoi l'hypothèse de loi normale des rendements, utilisée dans de nombreux modèles financiers, est-elle considérée comme une simplification imparfaite ?", choix:["Parce qu'elle est trop complexe à calculer", "Parce que les mouvements de marché extrêmes surviennent en réalité plus souvent que ce qu'une loi normale prédirait", "Parce qu'elle ne s'applique qu'aux obligations", "Parce qu'elle surestime systématiquement le risque"], bonneReponse:1, explication:"L'observation empirique des marchés montre que les rendements réels ont des \"queues plus épaisses\" qu'une loi normale : les mouvements extrêmes (krachs) surviennent plus fréquemment que cette hypothèse ne le suggère."},
+  {id:"q-financequant-007", niveau:"intermediaire", categorie:"Finance quantitative", type:"qcm", question:"Pourquoi la corrélation entre deux actifs est-elle un concept central de la diversification ?", choix:["Parce qu'une corrélation élevée entre actifs réduit toujours le risque du portefeuille", "Parce que combiner des actifs faiblement ou négativement corrélés réduit davantage le risque global qu'en combinant des actifs qui évoluent toujours ensemble", "Parce que la corrélation détermine directement le rendement futur d'un portefeuille", "Parce que la corrélation entre deux actifs ne change jamais dans le temps"], bonneReponse:1, explication:"La diversification est d'autant plus efficace que les actifs combinés sont faiblement corrélés : leurs mouvements ne se renforcent pas mutuellement, ce qui réduit la volatilité globale du portefeuille."},
+  {id:"q-financequant-008", niveau:"avance", categorie:"Finance quantitative", type:"qcm", question:"À quoi sert une simulation de Monte Carlo en finance ?", choix:["À garantir un rendement futur précis", "À générer un grand nombre de scénarios aléatoires pour estimer une distribution de résultats possibles, plutôt qu'un chiffre unique", "À remplacer entièrement le besoin de données réelles historiques", "À calculer un impôt sur les plus-values"], bonneReponse:1, explication:"Une simulation de Monte Carlo génère de nombreux scénarios aléatoires selon des hypothèses statistiques données, pour explorer la distribution des résultats possibles plutôt que de produire une seule projection déterministe."},
+
   // ---- PEA ----
   {id:"q-pea-001", niveau:"intermediaire", categorie:"PEA", type:"qcm", question:"Le PEA permet notamment de...", choix:["Investir en actions européennes avec une fiscalité allégée après 5 ans","Garantir un capital sans aucun risque","Emprunter de l'argent sans intérêt","Éviter totalement tout impôt sur le revenu, quel que soit le placement"], bonneReponse:0, explication:"Le PEA offre un cadre fiscal avantageux après 5 ans de détention, mais le capital investi en actions n'est jamais garanti."},
   {id:"q-pea-002", niveau:"intermediaire", categorie:"PEA", type:"qcm", question:"Que se passe-t-il généralement en cas de retrait sur un PEA avant 5 ans ?", choix:["Aucune conséquence particulière","Cela entraîne en principe la clôture du plan, sauf exceptions prévues par la loi","Le plafond de versement double automatiquement","Le PEA devient un Livret A"], bonneReponse:1, explication:"Un retrait avant 5 ans entraîne en général la clôture du PEA (sauf cas particuliers prévus par la loi), ce qui en fait un outil pensé pour le long terme."},
@@ -1292,7 +1302,7 @@ const DOMAINS = [
     deepQuizHook:{title:'Comprends-tu vraiment tes finances ?', subtitle:'Découvre tes forces et les notions à approfondir.'}},
   {key:'stockMarket', label:'Bourse', displayLabel:'la bourse', icon:'📈',
     mentalChallengeDomain:'Bourse',
-    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur"],
+    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative'],
     libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque', "Psychologie de l'investisseur"],
     deepQuizHook:{title:'Penses-tu vraiment comprendre la Bourse ?', subtitle:'Des situations concrètes pour découvrir tes forces.'}},
   {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
@@ -1580,6 +1590,42 @@ const COURS_CATALOG = [
         {type:'pourquoi', texte:"Entre deux levées de fonds ou deux transactions, la valorisation affichée d'une entreprise non cotée repose sur une estimation (comparaison avec des entreprises similaires, dernière transaction connue...), pas sur un prix réellement validé par un acheteur au moment présent. Ce n'est qu'à l'exit — quand un acheteur réel paie un prix réel pour la participation — que ce gain théorique se transforme en un montant effectivement encaissé, éventuellement très différent de la dernière valorisation affichée."},
         {type:'attention', texte:"Le calendrier et la voie de sortie ne sont jamais garantis à l'avance, et peuvent fortement dépendre de conditions de marché (fenêtre d'IPO favorable ou non, appétit des acheteurs industriels...) indépendantes de la performance réelle de l'entreprise."},
         {type:'retenir', texte:"Une performance d'investissement non réalisée (avant exit) doit toujours être interprétée avec prudence — c'est une estimation, jamais un gain acquis."}
+      ]}
+    ]},
+  {id:'mathematiques-financieres', titre:"Introduction aux mathématiques financières et à la finance quantitative", niveau:'Avancé',
+    libraryTermes:['Corrélation (entre actifs)','Ratio de Sharpe','Beta (β) d\'un actif','Value at Risk (VaR)','Loi normale des rendements et ses limites','Simulation de Monte Carlo','Volatilité','Diversification'],
+    quizCategories:['Finance quantitative'],
+    applyUrl:'laboratoire.html#tab-investissement', applyLabel:"Essayer le simulateur de risque (VaR)",
+    acquis:["Comprendre pourquoi la corrélation rend la diversification efficace, et ses limites en période de crise", "Savoir interpréter un ratio de Sharpe et un beta", "Comprendre ce qu'une Value at Risk (VaR) affirme réellement, et ce qu'elle n'affirme pas", "Comprendre les limites de l'hypothèse de loi normale utilisée dans de nombreux modèles financiers"],
+    chapitres:[
+      {titre:"Mesurer le risque : volatilité et corrélation", blocs:[
+        {type:'texte', texte:"Avant de pouvoir comparer des placements sur leur rapport rendement/risque, il faut d'abord savoir mesurer ce risque. La finance quantitative s'appuie sur des outils statistiques pour cela, plutôt que sur une impression générale."},
+        {type:'definition', texte:"La volatilité mesure l'ampleur des variations de prix d'un actif (statistiquement, l'écart-type de ses rendements). La corrélation, elle, mesure à quel point deux actifs évoluent ensemble, sur une échelle de -1 à +1."},
+        {type:'pourquoi', texte:"C'est la corrélation qui rend la diversification mathématiquement efficace : combiner des actifs faiblement ou négativement corrélés réduit le risque global du portefeuille au-delà de ce qu'une simple moyenne des risques individuels suggérerait, car leurs mouvements ne se renforcent pas mutuellement."},
+        {type:'attention', texte:"La corrélation entre deux actifs n'est pas fixe : elle a tendance à augmenter fortement lors des crises de marché, réduisant précisément le bénéfice de la diversification au moment où on en aurait le plus besoin — un phénomène régulièrement observé lors des grandes crises financières."},
+        {type:'retenir', texte:"Une diversification construite uniquement sur des corrélations mesurées en période calme peut se révéler moins protectrice que prévu en période de crise."}
+      ]},
+      {titre:"Rendement ajusté au risque : le ratio de Sharpe", blocs:[
+        {type:'texte', texte:"Comparer deux placements sur leur seul rendement affiché est incomplet : un rendement plus élevé obtenu avec un risque bien plus grand n'est pas nécessairement un meilleur choix."},
+        {type:'calcul', texte:"Ratio de Sharpe = (rendement du portefeuille − taux sans risque) ÷ volatilité du portefeuille. Exemple : deux fonds affichent le même rendement annuel de 8%, mais l'un varie beaucoup plus fortement dans le temps que l'autre — celui qui varie le moins aura un ratio de Sharpe plus élevé, car il a obtenu ce même rendement avec moins de risque."},
+        {type:'pourquoi', texte:"Le ratio de Sharpe permet de répondre à la question « ce rendement supplémentaire valait-il le risque pris pour l'obtenir ? », plutôt que de comparer des rendements bruts qui ne racontent qu'une partie de l'histoire."},
+        {type:'exerciceErreur', affirmation:"Un placement avec un ratio de Sharpe élevé dans le passé est garanti de bien performer à l'avenir.", pourquoi:"Le ratio de Sharpe, comme toute mesure statistique basée sur des données passées, ne garantit rien sur l'avenir. Il suppose aussi implicitement que la volatilité mesure bien le risque réel — une hypothèse discutable pour des stratégies dont les pertes surviennent rarement mais brutalement, un cas où le ratio peut paraître artificiellement favorable sur la période observée."},
+        {type:'retenir', texte:"Le ratio de Sharpe est un outil de comparaison utile, pas une prédiction ni une garantie de performance future."}
+      ]},
+      {titre:"Le beta et la sensibilité au marché", blocs:[
+        {type:'texte', texte:"Au-delà du risque propre à un actif pris isolément, il est souvent utile de savoir comment il se comporte relativement au marché dans son ensemble."},
+        {type:'definition', texte:"Le beta (β) mesure la sensibilité historique d'une action aux mouvements du marché : un beta de 1 signifie un comportement proche du marché, un beta supérieur à 1 signifie une amplification de ses mouvements, un beta inférieur à 1 signifie une atténuation."},
+        {type:'exemple', texte:"Une entreprise technologique en forte croissance a souvent un beta supérieur à 1 (plus sensible aux mouvements de marché) ; une entreprise de biens de consommation courante a souvent un beta inférieur à 1 (moins sensible, activité perçue comme plus stable quel que soit le contexte économique)."},
+        {type:'pourquoi', texte:"Le beta importe parce qu'il distingue deux sources de risque différentes pour un investisseur : le risque propre à une entreprise en particulier (qu'une bonne diversification peut largement réduire, voir le chapitre précédent) et le risque lié au marché dans son ensemble (que la diversification seule ne peut pas éliminer, puisqu'il touche toutes les actions à des degrés divers). Un portefeuille composé d'actions à beta élevé restera exposé aux baisses générales du marché, même très largement diversifié entre elles."},
+        {type:'attention', texte:"Le beta est calculé par régression statistique sur des données passées : il n'est ni fixe ni garanti pour l'avenir, et peut varier significativement selon la période observée et l'indice de marché retenu comme référence."}
+      ]},
+      {titre:"Value at Risk et les limites de la loi normale", blocs:[
+        {type:'texte', texte:"La Value at Risk (VaR) est l'un des outils de gestion du risque les plus utilisés par les institutions financières et les régulateurs — mais aussi l'un des plus mal compris."},
+        {type:'definition', texte:"La VaR estime la perte maximale plausible d'un portefeuille sur une période donnée, avec un niveau de confiance choisi (par exemple 95% ou 99%). Une VaR à 95% sur 10 jours de 5 000€ signifie qu'il y a 95% de chances, selon le modèle utilisé, que la perte ne dépasse pas ce montant — et 5% de chances qu'elle soit plus élevée."},
+        {type:'exerciceErreur', affirmation:"Une VaR à 99% de 10 000€ signifie que le portefeuille ne peut jamais perdre plus de 10 000€.", pourquoi:"La VaR ne dit rien sur l'ampleur d'une perte au-delà du seuil de confiance choisi — elle indique seulement la probabilité de dépasser ce seuil (ici 1% de chances), jamais une garantie sur la pire perte possible dans l'absolu. Une perte largement supérieure reste possible dans ce 1% de cas restant."},
+        {type:'pourquoi', texte:"La VaR paramétrique la plus courante suppose que les rendements suivent approximativement une loi normale. Or les marchés réels connaissent des mouvements extrêmes plus fréquents que ce qu'une loi normale prédirait (des « queues de distribution plus épaisses ») — ce qui peut conduire la VaR à sous-estimer le risque réel des pertes les plus sévères, précisément celles qui comptent le plus en pratique."},
+        {type:'casReel', texte:"Plusieurs krachs boursiers historiques (dont celui de 1987) ont représenté des mouvements de marché qu'une loi normale calibrée sur la volatilité habituelle aurait qualifiés de quasiment impossibles — un rappel régulièrement cité des limites de cette hypothèse simplificatrice, largement utilisée malgré tout pour sa simplicité et sa standardisation dans l'industrie."},
+        {type:'retenir', texte:"Un outil quantitatif comme la VaR est utile pour standardiser et comparer des risques, mais reste construit sur des hypothèses simplificatrices dont il faut connaître les limites, jamais un chiffre à interpréter comme une certitude absolue."}
       ]}
     ]}
 ];
@@ -1879,6 +1925,84 @@ const LIBRARY = [
     avantages:[],
     inconvenients:[],
     erreurs:["Ne regarder que le rendement final d'un placement sans jamais vérifier l'ampleur de ses baisses intermédiaires"]
+  },
+  {
+    terme:"Corrélation (entre actifs)",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"La corrélation mesure à quel point deux actifs évoluent ensemble : proche de +1, ils montent et baissent en même temps ; proche de -1, ils évoluent en sens opposé ; proche de 0, leurs mouvements ne sont pas liés.",
+    detail:"Elle se mesure sur une échelle de -1 à +1 à partir des rendements passés de deux actifs. C'est le concept mathématique qui rend la diversification efficace : combiner des actifs faiblement ou négativement corrélés réduit davantage le risque global du portefeuille que de combiner des actifs qui évoluent presque toujours ensemble.",
+    avance:"La corrélation entre deux actifs n'est pas fixe dans le temps : elle a tendance à augmenter fortement lors des crises de marché (les actifs \"habituellement peu corrélés\" chutent alors souvent ensemble), ce qui réduit précisément le bénéfice de la diversification au moment où on en aurait le plus besoin.",
+    exemple:"Deux actions du même secteur (deux banques, par exemple) ont généralement une corrélation élevée : les mêmes événements économiques les affectent de façon similaire.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Supposer qu'une corrélation historiquement faible entre deux actifs restera faible en toutes circonstances, y compris en période de crise"]
+  },
+  {
+    terme:"Ratio de Sharpe",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le ratio de Sharpe mesure le rendement d'un investissement par rapport au risque pris pour l'obtenir : il rapporte le rendement excédentaire (par rapport à un placement sans risque) à la volatilité de l'investissement.",
+    detail:"Formule : (rendement du portefeuille − taux sans risque) ÷ volatilité du portefeuille. À rendement égal, un investissement avec un ratio de Sharpe plus élevé a obtenu ce rendement avec moins de risque (moins de variations) — il permet de comparer deux placements sur leur efficacité, pas seulement sur leur performance brute.",
+    avance:"Un ratio de Sharpe élevé sur le passé ne garantit rien sur le futur, et le ratio suppose implicitement que la volatilité mesure bien le risque réel — une hypothèse discutable pour des stratégies dont les pertes surviennent rarement mais brutalement (voir aussi Loi normale des rendements et ses limites), un cas où le ratio de Sharpe peut paraître artificiellement favorable.",
+    exemple:"Deux fonds affichent le même rendement annuel de 8% ; celui dont la valeur varie moins fortement au fil du temps aura un ratio de Sharpe plus élevé, car il a obtenu ce même rendement avec moins de risque.",
+    avantages:["Permet de comparer des placements sur leur rendement ajusté au risque, pas seulement sur leur performance brute"],
+    inconvenients:["Repose sur la volatilité passée comme mesure du risque, qui peut sous-estimer le risque de pertes rares mais sévères"],
+    erreurs:["Comparer deux placements uniquement sur leur rendement affiché, sans tenir compte du risque pris pour l'obtenir"]
+  },
+  {
+    terme:"Beta (β) d'un actif",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le beta mesure la sensibilité d'une action aux mouvements du marché dans son ensemble : un beta de 1 signifie que l'action bouge en moyenne comme le marché, un beta supérieur à 1 signifie qu'elle amplifie ces mouvements, un beta inférieur à 1 qu'elle les atténue.",
+    detail:"Un beta de 1,5 signifie qu'historiquement, quand le marché monte ou baisse de 1%, l'action a eu tendance à monter ou baisser d'environ 1,5% en moyenne — à l'inverse, un beta de 0,5 signifie une réaction historique d'environ moitié moindre que le marché.",
+    avance:"Le beta se calcule par régression statistique des rendements passés de l'action par rapport à ceux du marché ; il n'est ni fixe ni garanti pour l'avenir, et peut varier significativement selon la période observée et l'indice de marché choisi comme référence.",
+    exemple:"Une entreprise de technologie en forte croissance a souvent un beta supérieur à 1 (plus sensible aux mouvements de marché) ; une entreprise de biens de consommation courante a souvent un beta inférieur à 1 (moins sensible).",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Considérer le beta comme une mesure fixe et garantie du comportement futur d'une action, alors qu'il est calculé sur des données passées et peut évoluer"]
+  },
+  {
+    terme:"Value at Risk (VaR)",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"La Value at Risk (VaR) est une estimation de la perte maximale plausible d'un portefeuille sur une période donnée, avec un niveau de confiance choisi (par exemple 95% ou 99%).",
+    detail:"Une VaR à 95% sur 10 jours de 5 000€ signifie : sur cette période, il y a 95% de chances (selon le modèle utilisé) que la perte ne dépasse pas 5 000€ — et donc 5% de chances qu'elle soit plus élevée. La VaR ne dit rien sur l'ampleur possible de cette perte au-delà du seuil, seulement sur sa probabilité de dépassement.",
+    avance:"La VaR paramétrique la plus courante suppose que les rendements suivent approximativement une loi normale — une simplification aux limites bien documentées : les marchés réels connaissent des mouvements extrêmes plus fréquents que ce qu'une loi normale prédirait (voir Loi normale des rendements et ses limites), ce qui peut conduire la VaR à sous-estimer le risque réel des pertes les plus sévères, précisément celles qui comptent le plus en pratique.",
+    exemple:"Un fonds qui annonce une VaR à 99% sur 1 jour de 2% de son portefeuille estime qu'il y a 99% de chances que sa perte quotidienne ne dépasse pas 2% de sa valeur.",
+    avantages:["Donne un ordre de grandeur chiffré et standardisé du risque, largement utilisé par les institutions financières et les régulateurs"],
+    inconvenients:["Ne dit rien de l'ampleur d'une perte au-delà du seuil choisi", "Sous-estime souvent le risque réel des événements extrêmes du fait de l'hypothèse de loi normale sous-jacente"],
+    erreurs:["Présenter la VaR comme la perte maximale absolue possible, alors qu'elle n'est qu'un seuil de perte associé à un niveau de confiance, jamais une garantie"]
+  },
+  {
+    terme:"Loi normale des rendements et ses limites",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"De nombreux modèles financiers (ratio de Sharpe, VaR paramétrique, certains modèles d'options) supposent, par simplification, que les rendements d'un actif suivent une loi normale (la courbe \"en cloche\" bien connue en statistiques).",
+    detail:"Sous cette hypothèse, les mouvements extrêmes (très fortes hausses ou baisses) sont supposés extrêmement rares. C'est une simplification pratique qui permet des calculs simples et standardisés, largement utilisée dans l'industrie financière.",
+    avance:"L'observation empirique des marchés financiers montre de façon bien documentée que les rendements réels ont des \"queues plus épaisses\" que ne le prédit une loi normale : les mouvements extrêmes (krachs, journées de panique) surviennent plus fréquemment qu'une loi normale ne le suggérerait. Les modèles qui s'appuient uniquement sur cette hypothèse peuvent donc sous-estimer la fréquence et l'ampleur des événements les plus sévères.",
+    exemple:"Plusieurs krachs boursiers historiques (dont celui de 1987) ont représenté des mouvements de marché qu'une loi normale calibrée sur la volatilité habituelle aurait qualifiés de quasiment impossibles — un rappel classique des limites de cette hypothèse.",
+    avantages:["Permet des calculs simples et standardisés, une référence commune largement comprise dans l'industrie financière"],
+    inconvenients:["Sous-estime la fréquence réelle des mouvements de marché extrêmes, précisément ceux qui présentent le plus de risque"],
+    erreurs:["Traiter un modèle basé sur la loi normale comme une description exacte de la réalité, plutôt que comme une simplification utile mais imparfaite"]
+  },
+  {
+    terme:"Simulation de Monte Carlo",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Une simulation de Monte Carlo consiste à générer un très grand nombre de scénarios aléatoires (selon des hypothèses statistiques données) pour estimer la distribution possible des résultats futurs d'un investissement ou d'un portefeuille.",
+    detail:"Plutôt que de calculer un seul résultat à partir d'hypothèses fixes, la méthode fait varier aléatoirement les paramètres (rendements, volatilité...) des milliers ou millions de fois, pour produire une distribution complète de résultats possibles plutôt qu'un chiffre unique.",
+    avance:"La qualité d'une simulation de Monte Carlo dépend entièrement des hypothèses statistiques utilisées pour générer les scénarios aléatoires (par exemple, quelle distribution de rendements est supposée) — si ces hypothèses sont mal calibrées, la simulation peut produire une fausse impression de précision malgré le grand nombre de scénarios testés.",
+    exemple:"Un simulateur de retraite peut utiliser une simulation de Monte Carlo pour estimer, sur des milliers de scénarios de marché simulés, dans quelle proportion des cas une épargne donnée suffit jusqu'à un âge donné — plutôt que d'afficher une seule projection avec un rendement moyen constant.",
+    avantages:["Donne une vision de la distribution des résultats possibles, pas seulement un scénario moyen unique"],
+    inconvenients:["Le résultat dépend entièrement de la qualité des hypothèses statistiques utilisées en entrée — \"garbage in, garbage out\""],
+    erreurs:["Présenter le résultat d'une simulation de Monte Carlo comme une prédiction précise plutôt que comme une exploration de scénarios possibles sous des hypothèses données"]
   },
   {
     terme:"Horizon de placement",

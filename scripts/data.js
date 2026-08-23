@@ -4781,6 +4781,27 @@ function computeLBOReturns(prixAchat, dette, ebitdaInitial, croissanceEbitdaPct,
   return {equityInitial, ebitdaSortie, veSortie, detteRestante, equitySortie, multipleEquity, multipleEV, triApprox};
 }
 
+// ---------- Value at Risk paramétrique (section 15 du prompt "Extension des
+// domaines" : mathématiques financières avancées / finance quantitative).
+// Convention Bâle usuelle (z-score fixé pour 3 niveaux de confiance standards,
+// jamais une fonction de répartition normale inverse générale — inutile ici
+// et source d'erreur d'implémentation) + règle "racine du temps" pour mettre
+// à l'échelle une volatilité annuelle sur l'horizon choisi. Hypothèse
+// explicite (voir renderMethodologyPanel côté UI) : rendements supposés
+// suivre une loi normale — une simplification aux limites connues (queues de
+// distribution plus épaisses en réalité), jamais présentée comme un fait. ----------
+const VAR_Z_SCORES = {90: 1.2816, 95: 1.645, 99: 2.326};
+function computeParametricVaR(portefeuilleValeur, rendementAnnuelPct, volatiliteAnnuellePct, niveauConfiance, horizonJours){
+  const z = VAR_Z_SCORES[niveauConfiance];
+  if(!z || !(portefeuilleValeur > 0) || !(volatiliteAnnuellePct >= 0) || !(horizonJours > 0)) return null;
+  const horizonAnnees = horizonJours / 252;
+  const moyenneHorizon = (rendementAnnuelPct / 100) * horizonAnnees;
+  const volatiliteHorizon = (volatiliteAnnuellePct / 100) * Math.sqrt(horizonAnnees);
+  const perteEnPct = z * volatiliteHorizon - moyenneHorizon;
+  const perteEnMontant = portefeuilleValeur * Math.max(0, perteEnPct);
+  return {z, horizonAnnees, moyenneHorizon, volatiliteHorizon, perteEnPct, perteEnMontant};
+}
+
 // ---------- Dettes & crédits : stratégie de remboursement multi-crédits ----------
 // Simulation mois par mois (avalanche = taux le plus élevé d'abord, snowball =
 // plus petit solde d'abord, custom = ordre fourni) — jamais une formule
