@@ -1794,6 +1794,35 @@ function findLibraryEntryForCategorie(categorie, domain){
   if(!entry && domain) entry = LIBRARY.find(l => (domain.libraryCategories || []).includes(l.categorie));
   return entry || null;
 }
+// Sens inverse de findLibraryEntryForCategorie : depuis un terme de
+// Bibliothèque (ex. "ETF"), retrouve la vraie catégorie de quiz correspondante
+// (ex. "ETF" ou "Obligations" pour le terme "Obligation") si elle existe —
+// permet à renderRecommendationsRow (Bibliothèque, section 12 du prompt
+// Learning Engine) de réutiliser findRecommendationsFor telle quelle, jamais
+// une deuxième logique de correspondance dupliquée.
+function matchQuizCategorieForTerme(terme){
+  const norm = s => s.toLowerCase().trim();
+  const target = norm(terme);
+  const pluralTarget = target + 's';
+  for(const domain of DOMAINS){
+    const match = (domain.quizCategories || []).find(c => norm(c) === target || norm(c) === pluralTarget);
+    if(match) return match;
+  }
+  return null;
+}
+// Ligne de liens "Voir aussi" (Bibliothèque -> Cours/Défi) pour un terme
+// donné — omise si aucune vraie correspondance n'existe pour ce terme
+// précis, jamais un lien générique déconnecté de la notion consultée.
+function renderTermeRecommendationsRow(terme){
+  const categorie = matchQuizCategorieForTerme(terme);
+  if(!categorie) return '';
+  const {domainKey, cours, defi} = findRecommendationsFor(categorie);
+  const links = [];
+  if(cours && domainKey) links.push(`<a href="formations.html#tab-formation-${domainKey}">${ICONS['book-open']} Cours lié</a>`);
+  if(defi) links.push(`<a href="defis.html?cat=${encodeURIComponent(categorie)}">${ICONS.target} Défi lié</a>`);
+  if(links.length === 0) return '';
+  return `<p class="kt-leaf-example" style="margin-top:10px;"><strong>Aller plus loin : </strong>${links.join(' · ')}</p>`;
+}
 // Recherche brute (aucun HTML) — partagée entre le panneau complet
 // (renderRecommendationPanel, après un échec) et le widget compact "À
 // apprendre" de l'accueil (renderTodayWeakness) : même logique de

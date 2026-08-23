@@ -35,6 +35,7 @@ function renderLeafCards(container, items){
         ${l.avantages && l.avantages.length ? `<p class="kt-leaf-pro"><strong>Avantages :</strong> ${l.avantages.join(' · ')}</p>` : ''}
         ${l.inconvenients && l.inconvenients.length ? `<p class="kt-leaf-con"><strong>Limites :</strong> ${l.inconvenients.join(' · ')}</p>` : ''}
         ${l.erreurs && l.erreurs.length ? `<p class="kt-leaf-err"><strong>Erreurs fréquentes :</strong> ${l.erreurs.join(' · ')}</p>` : ''}
+        ${renderTermeRecommendationsRow(l.terme)}
       </div>
     </div>`).join('') || '<p style="padding:12px 4px;color:var(--text-dim);">Aucune notion trouvée.</p>';
 
