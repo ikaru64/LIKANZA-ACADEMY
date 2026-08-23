@@ -1191,10 +1191,10 @@ updateDca();
 // ---------- Laboratoire économique (tab-economie, section 4 du prompt
 // "Extension intelligente des domaines") : scénarios qualitatifs de choc
 // macro. Jamais une prédiction chiffrée — chaque effet explique son
-// mécanisme, jamais un simple "X monte donc Y baisse" (section 30). 3 des
-// 5 scénarios du prompt (taux, inflation, chômage) ; dépenses publiques et
-// récession en phase suivante, jamais un onglet à moitié rempli pour
-// atteindre un chiffre rond. ----------
+// mécanisme, jamais un simple "X monte donc Y baisse" (section 30). 4 des
+// 5 scénarios du prompt (taux, inflation, chômage, droits de douane) ;
+// dépenses publiques en phase suivante, jamais un onglet à moitié rempli
+// pour atteindre un chiffre rond. ----------
 // ============================================================
 const ECO_LAB_SCENARIOS = [
   {
@@ -1235,6 +1235,20 @@ const ECO_LAB_SCENARIOS = [
       {domaine: 'Entreprises', effet: 'Le risque de crédit (impayés, défauts) augmente pour les entreprises exposées à la consommation.', mecanisme: "Une baisse de la consommation et des revenus des ménages réduit le chiffre d'affaires des entreprises qui en dépendent le plus directement (commerce, services), ce qui peut fragiliser leur capacité à rembourser leurs propres dettes."}
     ],
     limites: "L'ampleur de ces effets dépend du secteur touché, de la rapidité de la hausse, et des filets de sécurité sociale en place (assurance chômage) qui amortissent en partie le choc sur la consommation."
+  },
+  {
+    id: 'droits-douane',
+    icon: '🚢',
+    titre: 'Un pays impose 20 % de droits de douane sur ses importations',
+    hypotheses: "Mesure isolée et unilatérale, sans présumer de la réaction des pays visés (aucune mesure de rétorsion supposée dans ce scénario de base) ni du secteur précis concerné.",
+    effets: [
+      {domaine: 'Prix & consommateurs', effet: 'Les prix des produits importés visés augmentent généralement pour les consommateurs du pays qui impose la taxe.', mecanisme: "Le droit de douane est payé à l'entrée du territoire par l'importateur, qui répercute tout ou partie de ce coût sur son prix de vente final. La part réellement répercutée dépend du pouvoir de négociation entre l'exportateur (qui peut baisser sa marge) et l'importateur/consommateur local."},
+      {domaine: 'Entreprises nationales concurrentes', effet: 'Les entreprises locales produisant des biens équivalents peuvent gagner en compétitivité-prix face aux produits importés désormais plus chers.', mecanisme: "En rendant les produits étrangers relativement plus chers, le droit de douane réduit la pression concurrentielle sur les producteurs nationaux du même secteur — un effet protecteur, mais qui ne dit rien de leur efficacité ou innovation réelle."},
+      {domaine: 'Importations / exportations', effet: 'Le volume d\'importations du bien visé tend à diminuer.', mecanisme: "Un prix plus élevé réduit mécaniquement la quantité demandée, selon la sensibilité des acheteurs au prix (élasticité) : plus il existe des alternatives locales ou d'autres pays fournisseurs non taxés, plus la baisse des importations visées sera marquée."},
+      {domaine: 'Devise', effet: 'L\'effet sur le taux de change du pays qui impose la mesure est ambigu et dépend du contexte.', mecanisme: "Une baisse des importations peut réduire la demande de devise étrangère (soutien à la monnaie locale), mais des mesures de rétorsion ou une perte de confiance des investisseurs peuvent jouer en sens inverse — aucun effet mécanique unique ne s'impose ici."},
+      {domaine: 'Inflation', effet: 'Peut contribuer à une hausse générale des prix si les biens visés sont largement consommés ou utilisés comme intrants par d\'autres entreprises.', mecanisme: "Quand les biens taxés sont des composants utilisés dans d'autres chaînes de production locales (voir Chaînes d'approvisionnement), leur surcoût se propage aux produits finaux qui en dépendent, au-delà du seul bien directement visé par la taxe."}
+    ],
+    limites: "Ce scénario isole l'effet d'une mesure unilatérale et ignore volontairement les mesures de rétorsion possibles du ou des pays visés (qui peuvent imposer leurs propres droits de douane en retour), ainsi que les effets de plus long terme sur les chaînes d'approvisionnement mondiales."
   }
 ];
 
