@@ -2356,6 +2356,40 @@ const DEFI_FORMAT_RENDERERS = {
   enquete: renderEnqueteItem
 };
 
+// ---------- Adaptation de la difficulté (section 27 du prompt Learning
+// Engine) : "si l'utilisateur réussit facilement, augmenter la difficulté ;
+// s'il échoue, proposer un niveau intermédiaire — jamais un changement
+// absurde sur une seule réponse." Basé sur getSkillMastery (déjà pondéré
+// par difficulté, voir DIFFICULTY_WEIGHT), donc déjà lissé sur l'historique
+// réel — une seule bonne/mauvaise réponse ne fait pas basculer le niveau
+// visé. Uniquement les 3 niveaux réellement présents dans le contenu
+// (aucun défi/quiz n'utilise "expert" aujourd'hui). ----------
+const NIVEAU_ORDER = ['debutant', 'intermediaire', 'avance'];
+function targetNiveauForCategorie(categorie){
+  const m = getSkillMastery().find(x => x.categorie === categorie);
+  if(!m || m.total < 4) return 'debutant'; // pas assez de données -> commencer par les fondamentaux, jamais deviner
+  if(m.pct < 40) return 'debutant';
+  if(m.pct < 70) return 'intermediaire';
+  return 'avance';
+}
+// Trie par proximité avec le niveau visé (le plus proche en premier), en
+// mélangeant aléatoirement au sein d'un même niveau de proximité — jamais un
+// classement figé qui montrerait toujours les mêmes exercices en premier.
+// Un niveau absent/inconnu sur un item est traité comme le plus éloigné,
+// jamais priorisé par erreur.
+function pickAdaptivePool(pool, categorie, count){
+  const targetIdx = NIVEAU_ORDER.indexOf(targetNiveauForCategorie(categorie));
+  return pool
+    .map(item => {
+      const idx = NIVEAU_ORDER.indexOf(item.niveau);
+      const distance = idx === -1 ? NIVEAU_ORDER.length : Math.abs(idx - targetIdx);
+      return {item, distance, rand: Math.random()};
+    })
+    .sort((a, b) => a.distance - b.distance || a.rand - b.rand)
+    .slice(0, count)
+    .map(s => s.item);
+}
+
 // Contrairement à startQuizSession/renderVraiFaux (avance automatiquement
 // après 1400-1700ms), la session mixte avance sur un clic explicite : les
 // nouveaux formats (cas, séquence, info manquante...) ont un texte plus
@@ -2598,7 +2632,7 @@ function renderRecommandePourToi(elId){
     <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const pool = defisFullPool().filter(i => i.categorie === categorie);
-    startMixedSession(elId, pool.slice(0, 5), {onRestart: () => renderRecommandePourToi(elId)});
+    startMixedSession(elId, pickAdaptivePool(pool, categorie, 5), {onRestart: () => renderRecommandePourToi(elId)});
   });
 }
 
@@ -2621,7 +2655,7 @@ function renderDefisARevoir(elId){
     <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ${topCategorie} →</button>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const pool = defisFullPool().filter(i => i.categorie === topCategorie);
-    startMixedSession(elId, pool.slice(0, 5), {onRestart: () => renderDefisARevoir(elId)});
+    startMixedSession(elId, pickAdaptivePool(pool, topCategorie, 5), {onRestart: () => renderDefisARevoir(elId)});
   });
 }
 
@@ -2714,12 +2748,21 @@ function renderModesEntrainement(elId){
     const cat = document.getElementById(`${elId}-cat`).value;
     const level = document.getElementById(`${elId}-level`).value;
     const length = +document.getElementById(`${elId}-len`).value;
-    let items = pool.filter(i => (cat === 'tous' || i.categorie === cat) && (level === 'tous' || i.niveau === level));
-    for(let i = items.length - 1; i > 0; i--){
-      const j = Math.floor(Math.random() * (i + 1));
-      [items[i], items[j]] = [items[j], items[i]];
+    let candidates = pool.filter(i => (cat === 'tous' || i.categorie === cat) && (level === 'tous' || i.niveau === level));
+    // Niveau explicitement choisi par l'utilisateur -> toujours prioritaire,
+    // jamais réécrit automatiquement. Adaptation (section 27) uniquement
+    // quand "Tous niveaux" ET un thème précis sont sélectionnés : un mélange
+    // de thèmes n'a pas de maîtrise unique à cibler.
+    let items;
+    if(level === 'tous' && cat !== 'tous'){
+      items = pickAdaptivePool(candidates, cat, length);
+    } else {
+      for(let i = candidates.length - 1; i > 0; i--){
+        const j = Math.floor(Math.random() * (i + 1));
+        [candidates[i], candidates[j]] = [candidates[j], candidates[i]];
+      }
+      items = candidates.slice(0, length);
     }
-    items = items.slice(0, length);
     startMixedSession(`${elId}-session`, items, {onRestart: () => document.getElementById(`${elId}-start`).click()});
   });
 }
