@@ -111,6 +111,13 @@ function renderInvestorProfileWizard(elId){
       const risk = computeInvestorRiskProfile(riskAnswers);
       const profile = {capital, horizon: horizonEl.value, objectif: objectifEl.value, riskAnswers, riskScore: risk.score, riskMaxScore: risk.maxScore, riskProfile: risk.profile, computedAt: new Date().toISOString()};
       saveInvestorProfile(profile);
+      // Cohérence entre les profils du site (section 1 du prompt Learning
+      // Engine) : ces 6 questions ciblées donnent une évaluation du risque
+      // plus précise que la question unique du positionnement général —
+      // sa conclusion affine donc profile.risque partagé (utilisé par
+      // Mon compte/les simulateurs ailleurs sur le site), jamais l'inverse.
+      // Toujours modifiable ensuite à la main sur Mon compte.
+      saveProfile({...getProfile(), risque: risk.profile});
       tryAwardQuizPoints(`investor-profile-${new Date().toDateString()}`, 5, {investorProfileSet: true});
       renderSummary(profile);
     });
