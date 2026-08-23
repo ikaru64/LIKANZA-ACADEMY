@@ -232,6 +232,12 @@ function renderBusinessGame(elId){
     const meta = BUSINESS_GAME_OUTCOME_META[outcome];
 
     tryAwardQuizPoints(`business-game-${new Date().toDateString()}`, 20, {usedSimulator:true});
+    // Alimente la maîtrise réelle (section 18 du prompt Learning Engine) :
+    // une issue de partie positive (rentable/stable/levée/rachat) compte
+    // comme une bonne réponse en "Startup" (vraie catégorie de quiz du
+    // domaine Business), une issue négative (pivot/faillite) comme une
+    // erreur — jamais un simple bonus XP déconnecté de la vraie compétence.
+    recordAnswer('Startup', ['rentable', 'stable', 'levee', 'acquisition'].includes(outcome), true);
     const resultEntry = {
       date: new Date().toISOString(), sectorKey: game.sectorKey, eraKey: game.eraKey,
       outcome, monthsPlayed: game.month,

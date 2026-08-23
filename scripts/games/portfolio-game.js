@@ -426,6 +426,13 @@ function renderPortfolioGame(elId){
     const narrative = buildPortfolioGameNarrative(result, scenario);
 
     tryAwardQuizPoints(`portfolio-game-${new Date().toDateString()}`, 20, {usedSimulator: true});
+    // Alimente la maîtrise réelle (section 18 du prompt Learning Engine :
+    // "les résultats peuvent alimenter certaines compétences du profil") —
+    // un objectif de partie atteint est traité comme une bonne réponse en
+    // "Diversification" (vraie catégorie de quiz du domaine Bourse), avec le
+    // niveau de difficulté choisi comme niveau de la question (mêmes clés
+    // debutant/intermediaire/avance que les quiz).
+    recordAnswer('Diversification', !!scenario.evaluate(result).metGoal, true, g.difficultyId);
     savePortfolioGameResult({
       date: new Date().toISOString(), difficultyId: g.difficultyId, scenarioId: 'croissanceMaitrisee', turnCount: g.difficulty.turnCount,
       finalWeights: g.weightsHistory[g.weightsHistory.length - 1], result
