@@ -1735,17 +1735,26 @@ function findLibraryEntryForCategorie(categorie, domain){
   if(!entry && domain) entry = LIBRARY.find(l => (domain.libraryCategories || []).includes(l.categorie));
   return entry || null;
 }
-function renderRecommendationPanel(categorie){
-  if(!categorie) return '';
+// Recherche brute (aucun HTML) — partagée entre le panneau complet
+// (renderRecommendationPanel, après un échec) et le widget compact "À
+// apprendre" de l'accueil (renderTodayWeakness) : même logique de
+// correspondance partout, jamais deux résultats différents pour la même
+// catégorie selon l'endroit du site.
+function findRecommendationsFor(categorie){
+  if(!categorie) return {domainKey:null, cours:null, def:null, defi:null, labo:null, hasRetryContent:false};
   const domainKey = categorieDomainKey(categorie);
   const domain = DOMAINS.find(d => d.key === domainKey);
-
   const cours = COURS_CATALOG.find(c => (c.quizCategories || []).includes(categorie))
     || (domainKey ? COURS_CATALOG.find(c => coursDomainKey(c) === domainKey) : null);
   const def = findLibraryEntryForCategorie(categorie, domain);
   const defi = MENTAL_CHALLENGES.find(m => m.categorie === categorie);
   const labo = domainKey ? DOMAIN_LAB_LINK[domainKey] : null;
   const hasRetryContent = QUIZ_BANK_FULL.concat(MENTAL_CHALLENGES).some(i => i.categorie === categorie);
+  return {domainKey, cours, def, defi, labo, hasRetryContent};
+}
+function renderRecommendationPanel(categorie){
+  if(!categorie) return '';
+  const {domainKey, cours, def, defi, labo, hasRetryContent} = findRecommendationsFor(categorie);
 
   const links = [];
   if(cours && domainKey) links.push(`<a class="btn btn-sm" href="formations.html#tab-formation-${domainKey}">${ICONS['book-open']} Cours : ${cours.titre}</a>`);
@@ -1760,6 +1769,36 @@ function renderRecommendationPanel(categorie){
       <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Tu dois renforcer cette compétence — quelques pistes :</p>
       <div style="display:flex;flex-wrap:wrap;gap:8px;">${links.join('')}</div>
     </div>`;
+}
+
+// ---------- Widget accueil "À apprendre" (section 10 du prompt Learning
+// Engine) : la vraie faiblesse mesurée de l'utilisateur (getSkillMastery,
+// déjà utilisé par Mon Parcours/Financial IQ), pas un contenu identique
+// pour tout le monde. Un seul lien (le plus actionnable : défi > cours >
+// définition) pour rester un widget compact, cohérent avec ses voisins
+// (todayMission/todayNotion) — le détail complet reste dans le panneau de
+// recommandation (renderRecommendationPanel), pas dupliqué ici. ----------
+function renderTodayWeakness(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const mastery = getSkillMastery();
+  const weakest = mastery.find(m => m.niveau === 'faible') || mastery[0];
+  if(!weakest){
+    el.innerHTML = `
+      <h4>À apprendre</h4>
+      <p style="font-size:13px;color:var(--text-dim);">Fais quelques quiz ou défis pour que Likanza repère tes points à renforcer.</p>`;
+    return;
+  }
+  const {domainKey, cours, def, defi} = findRecommendationsFor(weakest.categorie);
+  let cta = null;
+  if(defi) cta = {href:`defis.html?cat=${encodeURIComponent(weakest.categorie)}`, label:'Faire un défi'};
+  else if(cours && domainKey) cta = {href:`formations.html#tab-formation-${domainKey}`, label:'Voir le cours'};
+  else if(def) cta = {href:`bibliotheque.html#${encodeURIComponent(def.terme.replace(/\s+/g,'-'))}`, label:'Lire la définition'};
+
+  el.innerHTML = `
+    <h4>À apprendre</h4>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:6px;">Ta plus grande marge de progression : <strong style="color:var(--text);">${weakest.categorie}</strong> (${weakest.pct}% de bonnes réponses).</p>
+    ${cta ? `<a href="${cta.href}" class="today-link">${cta.label} →</a>` : ''}`;
 }
 
 // ---------- Feedback pédagogique partagé (Défis) ----------

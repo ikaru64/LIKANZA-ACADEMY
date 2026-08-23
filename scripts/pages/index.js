@@ -328,6 +328,7 @@ safeRun('textes traduits (init)', applyStaticI18n);
 safeRun('accès rapides (init)', renderQuickAccess);
 setActiveTab(activeTab);
 safeRun('carte du jour (init)', renderTodayCard);
+safeRun('carte du jour - à apprendre (init)', () => renderTodayWeakness('todayWeakness'));
 safeRun('onglet apprendre (init)', renderLearnTab);
 safeRun('professeur IA mini (init)', renderTeacherMini);
 safeRun('défis (aperçu)', ()=>{
