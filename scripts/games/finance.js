@@ -145,3 +145,89 @@ function renderFinanceLab(elId){
   update();
   tryAwardQuizPoints(`finance-lab-${new Date().toDateString()}`, 8, {usedSimulator: true});
 }
+
+// ============================================================
+// ---------- Simulateur LBO (section 13 du prompt "Extension des
+// domaines" : M&A/PE/VC) : computeLBOReturns (scripts/data.js) à partir
+// d'hypothèses saisies par l'utilisateur — montre mécaniquement pourquoi
+// la dette amplifie le rendement sur le capital investi (effet de levier),
+// jamais une prédiction, toujours le résultat mécanique de ce que
+// l'utilisateur saisit. ----------
+function renderLboLab(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <p style="color:var(--text-dim);font-size:13.5px;line-height:1.6;margin:0 0 16px;max-width:70ch;">Un fonds de private equity envisage de racheter une entreprise en utilisant de la dette (un LBO). Ajuste les hypothèses ci-dessous pour voir comment l'effet de levier peut amplifier le rendement sur le capital investi — dans les deux sens, jamais une prédiction, seulement le résultat mécanique de ce que tu saisis.</p>
+    <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card">
+        <div class="field"><label for="lboPrixAchat">Prix d'achat de l'entreprise (€)</label><input type="number" id="lboPrixAchat" min="0" step="100000" value="20000000"></div>
+        <div class="field"><label for="lboDette">Dette utilisée pour l'achat (€)</label><input type="number" id="lboDette" min="0" step="100000" value="12000000"></div>
+        <div class="field"><label for="lboEbitda">EBITDA initial de l'entreprise (€)</label><input type="number" id="lboEbitda" min="1" step="10000" value="2500000"></div>
+        <div class="slider-row field"><label for="lboCroissance">Croissance annuelle de l'EBITDA <span class="v mono" id="valLboCroissance">6 %</span></label><input type="range" id="lboCroissance" min="-10" max="25" step="1" value="6"></div>
+        <div class="slider-row field"><label for="lboMultipleSortie">Multiple de sortie (x EBITDA) <span class="v mono" id="valLboMultipleSortie">8 x</span></label><input type="range" id="lboMultipleSortie" min="3" max="15" step="0.5" value="8"></div>
+        <div class="slider-row field"><label for="lboDuree">Durée de détention <span class="v mono" id="valLboDuree">5 ans</span></label><input type="range" id="lboDuree" min="1" max="10" step="1" value="5"></div>
+        <div class="slider-row field" style="margin-bottom:0;"><label for="lboDetteRemboursee">Part de la dette remboursée sur la période <span class="v mono" id="valLboDetteRemboursee">60 %</span></label><input type="range" id="lboDetteRemboursee" min="0" max="100" step="5" value="60"></div>
+      </div>
+      <div class="card">
+        <h3>Résultat</h3>
+        <div id="lboLabResult" style="margin-top:12px;"></div>
+      </div>
+    </div>`;
+
+  const ids = ['lboPrixAchat','lboDette','lboEbitda','lboCroissance','lboMultipleSortie','lboDuree','lboDetteRemboursee'];
+  const get = id => +document.getElementById(id).value || 0;
+
+  function update(){
+    document.getElementById('valLboCroissance').textContent = get('lboCroissance') + ' %';
+    document.getElementById('valLboMultipleSortie').textContent = get('lboMultipleSortie') + ' x';
+    document.getElementById('valLboDuree').textContent = get('lboDuree') + ' ans';
+    document.getElementById('valLboDetteRemboursee').textContent = get('lboDetteRemboursee') + ' %';
+
+    const prixAchat = get('lboPrixAchat');
+    const dette = get('lboDette');
+    const ebitda = get('lboEbitda');
+    const croissance = get('lboCroissance');
+    const multipleSortie = get('lboMultipleSortie');
+    const duree = get('lboDuree');
+    const detteRemboursee = get('lboDetteRemboursee');
+
+    const resultEl = document.getElementById('lboLabResult');
+    const r = computeLBOReturns(prixAchat, dette, ebitda, croissance, multipleSortie, duree, detteRemboursee);
+    if(!r || dette >= prixAchat){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : la dette doit rester inférieure au prix d'achat (il faut un capital investi positif) et l'EBITDA initial doit être positif.</p>`;
+      return;
+    }
+    const multipleEntree = ebitda > 0 ? prixAchat / ebitda : null;
+    const creeDeLaValeur = r.multipleEquity > 1;
+
+    resultEl.innerHTML = `
+      ${renderDataBadge('calcul')}
+      <div class="result-row" style="margin-top:10px;">
+        <span>Capital investi (equity)</span><span class="mono">${fmtEUR(r.equityInitial)}</span>
+      </div>
+      <div class="result-row">
+        <span>Multiple d'entrée</span><span class="mono">${multipleEntree === null ? '—' : multipleEntree.toFixed(1) + ' x EBITDA'}</span>
+      </div>
+      <div class="result-row">
+        <span>Valeur d'entreprise à la sortie</span><span class="mono">${fmtEUR(r.veSortie)}</span>
+      </div>
+      <div class="result-row">
+        <span>Multiple sur capital investi</span><span class="mono" style="color:${creeDeLaValeur ? 'var(--emerald)' : 'var(--bordeaux)'};font-size:18px;">${r.multipleEquity.toFixed(2)} x</span>
+      </div>
+      <div class="result-row">
+        <span>TRI approximatif</span><span class="mono">${r.triApprox === null ? 'Non calculable' : r.triApprox.toFixed(1) + ' %'}</span>
+      </div>
+      <p style="font-size:13px;margin-top:14px;color:var(--text-dim);">Sur ces hypothèses, la valeur de l'entreprise a progressé de <strong style="color:var(--text);">${r.multipleEV === null ? '—' : ((r.multipleEV - 1) * 100).toFixed(0) + ' %'}</strong> sur la période, alors que le capital des investisseurs a été multiplié par <strong style="color:${creeDeLaValeur ? 'var(--emerald)' : 'var(--bordeaux)'};">${r.multipleEquity.toFixed(2)}</strong> — c'est l'effet de levier de la dette utilisée pour l'achat, qui amplifie le rendement sur le capital investi dans les deux sens (à la hausse comme à la baisse).</p>
+      ${renderMethodologyPanel({
+        calcul: "Capital investi = Prix d'achat − Dette. Valeur de l'entreprise à la sortie = EBITDA initial × (1 + croissance)^durée × multiple de sortie. Valeur du capital à la sortie = Valeur d'entreprise à la sortie − Dette restante (dette initiale réduite du % remboursé saisi). Multiple sur capital investi = Valeur du capital à la sortie / Capital investi initial.",
+        donnees: `Calcul à partir de tes hypothèses saisies ci-contre : prix d'achat de ${fmtEUR(prixAchat)}, dette de ${fmtEUR(dette)}, EBITDA initial de ${fmtEUR(ebitda)} — jamais une donnée de marché réelle, uniquement les valeurs que tu as saisies.`,
+        hypotheses: "Croissance de l'EBITDA constante sur toute la durée ; remboursement de la dette simplifié à un pourcentage global saisi (jamais un échéancier réel calculé à partir des flux de trésorerie de l'entreprise) ; aucun coût d'intérêt sur la dette n'est modélisé séparément ; le multiple de sortie peut être identique ou différent du multiple d'entrée implicite.",
+        limites: "Un LBO réel implique un échéancier de dette précis (intérêts + capital), plusieurs tranches de dette à des coûts différents, et souvent des refinancements en cours de route — ce simulateur isole le mécanisme de l'effet de levier, pas une modélisation financière complète d'une opération réelle.",
+        comprendre: "Comme la dette est fixe (son remboursement ne dépend pas de la performance de l'entreprise au-delà du minimum contractuel), toute variation de valeur de l'entreprise se reporte proportionnellement plus fortement sur le capital investi. C'est ce même mécanisme qui amplifie les gains si l'entreprise performe bien, et amplifie tout autant les pertes si elle sous-performe — voir aussi le terme Effet de levier, utilisé de façon similaire en immobilier."
+      })}`;
+  }
+
+  ids.forEach(id => document.getElementById(id).addEventListener('input', update));
+  update();
+  tryAwardQuizPoints(`lbo-lab-${new Date().toDateString()}`, 8, {usedSimulator: true});
+}

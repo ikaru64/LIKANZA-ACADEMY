@@ -4762,6 +4762,25 @@ function computeInvestmentProjectCashFlows(caAnnee1, croissancePct, margePct, du
   return cashFlows;
 }
 
+// ---------- LBO (rachat par effet de levier, section 13 du prompt "Extension
+// des domaines" : M&A/PE/VC) : illustre mécaniquement pourquoi la dette
+// amplifie le rendement sur le capital investi (effet de levier), jamais une
+// prédiction — simplification volontaire : remboursement de dette linéaire
+// piloté par un % saisi par l'utilisateur, pas de coût d'intérêt modélisé
+// séparément (voir renderMethodologyPanel côté UI pour les limites). ----------
+function computeLBOReturns(prixAchat, dette, ebitdaInitial, croissanceEbitdaPct, multipleSortie, dureeAnnees, pctDetteRembourseePct){
+  const equityInitial = prixAchat - dette;
+  if(!(equityInitial > 0) || !(dureeAnnees > 0) || !(ebitdaInitial > 0)) return null;
+  const ebitdaSortie = ebitdaInitial * Math.pow(1 + croissanceEbitdaPct / 100, dureeAnnees);
+  const veSortie = ebitdaSortie * multipleSortie;
+  const detteRestante = Math.max(0, dette * (1 - pctDetteRembourseePct / 100));
+  const equitySortie = veSortie - detteRestante;
+  const multipleEquity = equitySortie / equityInitial;
+  const multipleEV = prixAchat > 0 ? veSortie / prixAchat : null;
+  const triApprox = multipleEquity > 0 ? (Math.pow(multipleEquity, 1 / dureeAnnees) - 1) * 100 : null;
+  return {equityInitial, ebitdaSortie, veSortie, detteRestante, equitySortie, multipleEquity, multipleEV, triApprox};
+}
+
 // ---------- Dettes & crédits : stratégie de remboursement multi-crédits ----------
 // Simulation mois par mois (avalanche = taux le plus élevé d'abord, snowball =
 // plus petit solde d'abord, custom = ordre fourni) — jamais une formule

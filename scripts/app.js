@@ -649,7 +649,17 @@ const QUIZ_BANK_FULL = [
   {id:"q-leveedefonds-001", niveau:"intermediaire", categorie:"Levée de fonds", type:"qcm", question:"Que reçoivent en général les investisseurs en échange d'une levée de fonds ?", choix:["Un remboursement garanti avec intérêts","Des parts (actions) de l'entreprise","Un poste salarié dans l'entreprise","Rien, c'est un don"], bonneReponse:1, explication:"En échange de leur investissement, les investisseurs reçoivent des parts de l'entreprise, ce qui les rend actionnaires."},
   {id:"q-leveedefonds-002", niveau:"intermediaire", categorie:"Levée de fonds", type:"vraifaux", question:"Une levée de fonds dilue la part de propriété des actionnaires déjà présents dans l'entreprise.", choix:["Vrai","Faux"], bonneReponse:0, explication:"L'arrivée de nouveaux actionnaires via une levée de fonds réduit mécaniquement le pourcentage de détention des actionnaires existants, sauf s'ils réinvestissent proportionnellement."},
   {id:"q-leveedefonds-003", niveau:"intermediaire", categorie:"Levée de fonds", type:"situation", question:"Une startup lève 5 millions d'euros en échange de 20% de son capital. Quelle est sa valorisation après l'opération ?", choix:["5 millions €","10 millions €","25 millions €","100 millions €"], bonneReponse:2, explication:"Si 5 M€ correspondent à 20% du capital, la valorisation totale est 5 / 0,20 = 25 millions €."},
-  {id:"q-leveedefonds-004", niveau:"avance", categorie:"Levée de fonds", type:"qcm", question:"Qu'est-ce qu'une « down round » ?", choix:["Une levée de fonds à une valorisation supérieure à la précédente","Une levée de fonds à une valorisation inférieure à la précédente","Le remboursement anticipé d'un prêt","Une augmentation du chiffre d'affaires"], bonneReponse:1, explication:"Une « down round » désigne une levée de fonds réalisée à une valorisation inférieure à celle de la levée précédente, souvent le signe de difficultés."}
+  {id:"q-leveedefonds-004", niveau:"avance", categorie:"Levée de fonds", type:"qcm", question:"Qu'est-ce qu'une « down round » ?", choix:["Une levée de fonds à une valorisation supérieure à la précédente","Une levée de fonds à une valorisation inférieure à la précédente","Le remboursement anticipé d'un prêt","Une augmentation du chiffre d'affaires"], bonneReponse:1, explication:"Une « down round » désigne une levée de fonds réalisée à une valorisation inférieure à celle de la levée précédente, souvent le signe de difficultés."},
+
+  // ---- M&A et Private Equity ----
+  {id:"q-mape-001", niveau:"intermediaire", categorie:"M&A et Private Equity", type:"qcm", question:"Quelle est la différence principale entre une fusion et une acquisition ?", choix:["Il n'y a aucune différence, les deux termes sont interchangeables", "Une acquisition est le rachat d'une entreprise par une autre, une fusion est le rapprochement de deux entreprises en une seule structure", "Une fusion implique toujours de la dette, une acquisition jamais", "Une acquisition ne concerne que des entreprises cotées en bourse"], bonneReponse:1, explication:"Dans une acquisition, une entreprise en rachète une autre qui perd son indépendance ; dans une fusion, deux entreprises se rapprochent pour n'en former qu'une, en théorie sur un pied d'égalité."},
+  {id:"q-mape-002", niveau:"avance", categorie:"M&A et Private Equity", type:"vraifaux", question:"Une part importante des opérations de fusion-acquisition ne créent finalement pas la valeur espérée au moment de l'annonce.", choix:["Vrai","Faux"], bonneReponse:0, explication:"De nombreuses études montrent qu'une part significative des opérations de M&A échoue à créer la valeur attendue, souvent à cause de synergies surestimées ou d'une intégration post-rachat mal exécutée."},
+  {id:"q-mape-003", niveau:"intermediaire", categorie:"M&A et Private Equity", type:"qcm", question:"À quoi sert la due diligence avant un rachat d'entreprise ?", choix:["À fixer le prix final sans aucune vérification", "À vérifier en détail la réalité des comptes, contrats et risques de l'entreprise ciblée avant de finaliser l'achat", "À financer l'opération par de la dette", "À introduire l'entreprise en bourse"], bonneReponse:1, explication:"La due diligence est l'ensemble des vérifications approfondies (comptables, juridiques, commerciales) menées par l'acheteur pour confirmer les informations données par le vendeur et détecter d'éventuels risques cachés."},
+  {id:"q-mape-004", niveau:"avance", categorie:"M&A et Private Equity", type:"qcm", question:"Quelle est la principale différence entre le capital-risque (venture capital) et le private equity ?", choix:["Aucune, ce sont deux noms pour la même activité", "Le capital-risque finance de jeunes entreprises à fort potentiel de croissance, le private equity cible plutôt des entreprises déjà matures", "Le private equity n'investit jamais dans des entreprises non cotées", "Le capital-risque utilise toujours de la dette, le private equity jamais"], bonneReponse:1, explication:"Le capital-risque finance des entreprises jeunes au modèle encore incertain, en misant sur une forte croissance future ; le private equity cible en général des entreprises plus matures, avec des revenus et une rentabilité déjà établis."},
+  {id:"q-mape-005", niveau:"avance", categorie:"M&A et Private Equity", type:"qcm", question:"Dans un LBO (rachat par effet de levier), qu'est-ce qui amplifie le rendement sur le capital des investisseurs si l'entreprise rachetée performe bien ?", choix:["Le fait que la dette utilisée pour l'achat soit fixe alors que la valeur de l'entreprise, elle, peut croître", "Le fait qu'aucune dette ne soit jamais utilisée dans ce type de montage", "Une garantie de l'État sur le rendement", "Le fait que l'entreprise change automatiquement de secteur d'activité"], bonneReponse:0, explication:"Comme le remboursement de la dette est fixe et ne dépend pas de la performance de l'entreprise au-delà du minimum contractuel, toute croissance de valeur de l'entreprise profite proportionnellement plus au capital des investisseurs — c'est le principe de l'effet de levier."},
+  {id:"q-mape-006", niveau:"avance", categorie:"M&A et Private Equity", type:"vraifaux", question:"Dans un LBO, l'effet de levier amplifie les gains si l'entreprise performe bien, mais amplifie tout autant les pertes si elle sous-performe.", choix:["Vrai","Faux"], bonneReponse:0, explication:"L'effet de levier est symétrique : il amplifie le rendement sur le capital investi dans les deux sens, à la hausse comme à la baisse, selon que l'entreprise performe mieux ou moins bien que prévu."},
+  {id:"q-mape-007", niveau:"intermediaire", categorie:"M&A et Private Equity", type:"qcm", question:"Que mesure le multiple EV/EBITDA ?", choix:["Le bénéfice net divisé par le nombre d'actions", "Combien de fois l'EBITDA annuel d'une entreprise représente sa valeur d'entreprise totale", "Le montant total de la dette d'une entreprise", "Le taux de croissance du chiffre d'affaires"], bonneReponse:1, explication:"Le multiple EV/EBITDA (Enterprise Value / EBITDA) exprime combien de fois l'EBITDA annuel d'une entreprise représente sa valeur d'entreprise totale — un indicateur très utilisé en M&A et en private equity pour comparer rapidement des valorisations."},
+  {id:"q-mape-008", niveau:"intermediaire", categorie:"M&A et Private Equity", type:"qcm", question:"Quelles sont les voies de sortie (« exit ») les plus courantes pour un fonds d'investissement ?", choix:["Uniquement la faillite de l'entreprise", "L'introduction en bourse, la cession industrielle à une autre entreprise, ou la cession secondaire à un autre fonds", "Le remboursement automatique par l'État", "La transformation en association à but non lucratif"], bonneReponse:1, explication:"Les trois voies de sortie les plus courantes sont l'introduction en bourse (IPO), la cession industrielle (rachat par une autre entreprise du secteur) et la cession secondaire (revente à un autre fonds d'investissement)."}
 ];
 // ===EXPORT:QUIZ_BANK:END===
 
@@ -1287,7 +1297,7 @@ const DOMAINS = [
     deepQuizHook:{title:'Penses-tu vraiment comprendre la Bourse ?', subtitle:'Des situations concrètes pour découvrir tes forces.'}},
   {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
     mentalChallengeDomain:'Business',
-    quizCategories:["Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds'],
+    quizCategories:["Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds', 'M&A et Private Equity'],
     libraryCategories:['Business', 'Entreprise'],
     deepQuizHook:{title:'Quel type d\'entrepreneur es-tu ?', subtitle:'Découvre tes forces et les notions que tu pourrais approfondir.'}},
   {key:'economics', label:'Économie', displayLabel:"l'économie", icon:'🌍',
@@ -1535,7 +1545,43 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"Face à cette poussée d'inflation, plusieurs banques centrales (dont la BCE et la Fed) ont relevé leurs taux directeurs de façon marquée à partir de 2022 — un mécanisme déjà vu dans le scénario « hausse des taux » du Laboratoire économique, appliqué ici à un épisode réel et récent."}
       ]}
     ]},
-  {id:'entreprise-essentiels', titre:"Comprendre l'entreprise", niveau:'Intermédiaire', libraryTermes:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds'], quizCategories:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds']}
+  {id:'entreprise-essentiels', titre:"Comprendre l'entreprise", niveau:'Intermédiaire', libraryTermes:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds'], quizCategories:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds']},
+  {id:'ma-private-equity', titre:"Comprendre les fusions-acquisitions et le private equity", niveau:'Avancé',
+    libraryTermes:['Fusion-acquisition (M&A)','Due diligence','Private equity (capital-investissement)','LBO (rachat par effet de levier)','Multiple de valorisation (EV/EBITDA)','Exit (sortie d\'un investisseur)','Capital-risque et business angels','Effet de levier'],
+    quizCategories:['M&A et Private Equity'],
+    applyUrl:'finance.html', applyLabel:"Essayer le simulateur LBO",
+    acquis:["Comprendre pourquoi et comment une entreprise en rachète une autre", "Comprendre le mécanisme de l'effet de levier dans un LBO, ses gains comme ses risques", "Distinguer capital-risque, private equity et M&A stratégique selon le stade de vie de l'entreprise", "Comprendre les différentes voies de sortie d'un investisseur"],
+    chapitres:[
+      {titre:"Pourquoi une entreprise en rachète une autre", blocs:[
+        {type:'texte', texte:"Une fusion-acquisition (M&A) désigne le rachat d'une entreprise par une autre, ou le rapprochement de deux entreprises en une seule structure. C'est l'une des décisions stratégiques les plus lourdes de conséquences qu'une entreprise puisse prendre."},
+        {type:'definition', texte:"On distingue l'acquisition (une entreprise en rachète une autre, qui perd son indépendance) de la fusion (deux entreprises se rapprochent pour n'en former qu'une, en théorie sur un pied d'égalité — même si en pratique l'une des deux prend souvent le dessus dans la nouvelle structure)."},
+        {type:'pourquoi', texte:"Les motivations les plus courantes sont la recherche de synergies (économies de coûts ou nouvelles ventes rendues possibles par le rapprochement, par exemple en mutualisant des équipes ou en croisant deux bases de clients), l'accès à une nouvelle technologie ou un nouveau marché plus vite qu'un développement interne, ou l'élimination d'un concurrent. Ces motivations sont rarement uniques : plusieurs se combinent en général dans une même opération."},
+        {type:'attention', texte:"De nombreuses études montrent qu'une part significative des opérations de M&A ne créent finalement pas la valeur espérée au moment de l'annonce — le plus souvent parce que les synergies annoncées étaient surestimées, ou parce que l'intégration post-rachat (équipes, systèmes informatiques, culture d'entreprise) a été mal exécutée. Une acquisition n'est donc pas une garantie de création de valeur, seulement une tentative dont le succès dépend largement de son exécution."},
+        {type:'definition', texte:"Avant de finaliser un rachat, l'acheteur mène une due diligence : un ensemble de vérifications approfondies (comptables, juridiques, commerciales, techniques) destinées à confirmer les informations données par le vendeur et à détecter d'éventuels risques cachés (litiges en cours, dépendance excessive à un client, dettes non déclarées...)."},
+        {type:'retenir', texte:"Un problème découvert après le rachat (plutôt que pendant la due diligence) ne peut plus être négocié dans le prix — c'est l'une des raisons pour lesquelles une due diligence bâclée est une des causes les plus citées d'échec d'une opération de M&A."}
+      ]},
+      {titre:"Private equity et LBO", blocs:[
+        {type:'texte', texte:"Le private equity (capital-investissement) désigne des fonds d'investissement qui rachètent des entreprises déjà établies, généralement pour en améliorer la performance puis les revendre quelques années plus tard."},
+        {type:'definition', texte:"Contrairement au capital-risque, qui finance de jeunes entreprises à fort potentiel de croissance mais au modèle encore incertain, le private equity cible en général des entreprises plus matures, avec des revenus et une rentabilité déjà établis."},
+        {type:'pourquoi', texte:"Une grande partie des opérations de private equity se fait via un montage appelé LBO (Leveraged Buy-Out, rachat par effet de levier) : l'achat est financé par une part importante de dette, en plus du capital apporté par les investisseurs. La dette est en général remboursée dans les années qui suivent grâce aux bénéfices générés par l'entreprise rachetée elle-même."},
+        {type:'calcul', texte:"Le mécanisme central : la dette est fixe (son remboursement ne dépend pas de la performance de l'entreprise au-delà du minimum contractuel), alors que la valeur du capital investi (l'« equity ») absorbe toute la variation de valeur de l'entreprise. Exemple simplifié : un fonds rachète une entreprise pour 100 M€ (60 M€ de dette + 40 M€ de capital). Si l'entreprise vaut 140 M€ 5 ans plus tard et que la dette a été remboursée, le capital des investisseurs (initialement 40 M€) peut valoir bien plus que sa simple part proportionnelle de la hausse de 40% de l'entreprise — c'est l'effet de levier, déjà vu de façon similaire pour l'immobilier."},
+        {type:'exerciceErreur', affirmation:"L'effet de levier d'un LBO ne fait qu'amplifier les gains pour les investisseurs, jamais les pertes.", pourquoi:"L'effet de levier est symétrique : si l'entreprise sous-performe ou peine à rembourser sa dette, le même mécanisme qui amplifie les gains en cas de succès amplifie tout autant les pertes sur le capital investi — la dette continue d'exiger son remboursement, quelle que soit la performance réelle de l'entreprise."},
+        {type:'retenir', texte:"La dette d'un LBO impose des remboursements réguliers qui contraignent la trésorerie de l'entreprise rachetée, quelle que soit sa performance opérationnelle — un LBO mal dimensionné (trop de dette pour la capacité réelle de l'entreprise à générer du cash) est l'une des principales causes d'échec de ce type de montage."}
+      ]},
+      {titre:"Capital-risque, private equity et M&A stratégique", blocs:[
+        {type:'texte', texte:"Ces trois formes d'opérations sur le capital d'une entreprise interviennent en général à des stades de vie très différents, ce qui explique pourquoi elles sont souvent confondues alors qu'elles répondent à des logiques distinctes."},
+        {type:'visualisation', schema:"Stade de l'entreprise           Type d'opération typique\n─────────────────────           ─────────────────────────\nJeune, forte incertitude    →   Capital-risque / business angels\n(modèle en cours de preuve)     (financement en fonds propres, sans dette)\n\nMature, rentable, stable    →   Private equity / LBO\n(revenus établis)                (souvent avec effet de levier / dette)\n\nStratégie d'un acteur        →   M&A stratégique\nindustriel du secteur             (rachat par un concurrent ou un acteur\n                                   complémentaire, motivé par des synergies)"},
+        {type:'pourquoi', texte:"Un fonds de capital-risque accepte un risque élevé de perte totale sur chaque investissement individuel, en misant sur le fait qu'un petit nombre de réussites majeures compense les nombreux échecs de son portefeuille — un montage avec de la dette (comme un LBO) serait inadapté à ce niveau de risque, car l'entreprise n'a souvent pas encore de revenus stables pour rembourser une dette. Un fonds de private equity, à l'inverse, recherche des entreprises aux revenus déjà prévisibles, précisément parce que cette prévisibilité permet d'utiliser de la dette sans risque excessif de défaut."},
+        {type:'retenir', texte:"Le choix entre capital-risque, private equity et M&A stratégique n'est pas une question de préférence : il dépend directement du stade de maturité et de la prévisibilité des revenus de l'entreprise concernée."}
+      ]},
+      {titre:"Sortir d'un investissement : les voies de exit", blocs:[
+        {type:'texte', texte:"Un investisseur (fonds de capital-risque ou de private equity) ne réalise véritablement son gain — ou sa perte — qu'au moment où il revend sa participation : c'est ce qu'on appelle l'exit."},
+        {type:'definition', texte:"Les trois voies de sortie les plus courantes sont l'introduction en bourse (IPO, l'entreprise devient cotée et les investisseurs peuvent vendre leurs actions sur le marché), la cession industrielle (rachat par une autre entreprise du secteur, qui rejoint alors la logique du M&A stratégique vu au premier chapitre) et la cession secondaire (revente à un autre fonds d'investissement)."},
+        {type:'pourquoi', texte:"Entre deux levées de fonds ou deux transactions, la valorisation affichée d'une entreprise non cotée repose sur une estimation (comparaison avec des entreprises similaires, dernière transaction connue...), pas sur un prix réellement validé par un acheteur au moment présent. Ce n'est qu'à l'exit — quand un acheteur réel paie un prix réel pour la participation — que ce gain théorique se transforme en un montant effectivement encaissé, éventuellement très différent de la dernière valorisation affichée."},
+        {type:'attention', texte:"Le calendrier et la voie de sortie ne sont jamais garantis à l'avance, et peuvent fortement dépendre de conditions de marché (fenêtre d'IPO favorable ou non, appétit des acheteurs industriels...) indépendantes de la performance réelle de l'entreprise."},
+        {type:'retenir', texte:"Une performance d'investissement non réalisée (avant exit) doit toujours être interprétée avec prudence — c'est une estimation, jamais un gain acquis."}
+      ]}
+    ]}
 ];
 
 // ---------- Actions suivies (bourse / comparateur) ----------
@@ -3263,6 +3309,84 @@ const LIBRARY = [
     avantages:["Apporte des capitaux importants sans dette à rembourser", "Les investisseurs apportent souvent aussi expérience et réseau"],
     inconvenients:["Dilue la propriété des fondateurs", "Impose souvent des attentes de croissance rapide"],
     erreurs:["Rechercher du capital-risque pour un projet dont le modèle économique ne vise pas une forte croissance"]
+  },
+  {
+    terme:"Fusion-acquisition (M&A)",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Une fusion-acquisition (M&A, pour \"Mergers & Acquisitions\") désigne le rachat d'une entreprise par une autre, ou le rapprochement de deux entreprises en une seule structure.",
+    detail:"Une acquisition se produit quand une entreprise en rachète une autre, qui perd son indépendance ; une fusion se produit quand deux entreprises se rapprochent pour n'en former qu'une, en théorie sur un pied d'égalité (même si en pratique l'une des deux prend souvent le dessus dans la nouvelle structure).",
+    avance:"Les motivations les plus courantes d'un rachat sont la recherche de synergies (économies de coûts ou nouvelles ventes rendues possibles par le rapprochement), l'accès à une nouvelle technologie ou un nouveau marché, ou l'élimination d'un concurrent — mais de nombreuses études montrent qu'une part importante des opérations de M&A ne créent pas la valeur espérée, souvent à cause de synergies surestimées ou d'une intégration mal exécutée après le rachat.",
+    exemple:"Une entreprise technologique qui rachète une startup pour intégrer sa technologie à son propre produit, plutôt que de la développer elle-même en interne, réalise une acquisition stratégique.",
+    avantages:["Peut accélérer une croissance ou un accès à une technologie/un marché plus vite qu'un développement interne"],
+    inconvenients:["Le prix payé intègre souvent une prime par rapport à la valeur actuelle de l'entreprise rachetée, qui doit être justifiée par les synergies réellement obtenues", "L'intégration post-rachat (équipes, systèmes, culture d'entreprise) est une étape risquée et souvent sous-estimée"],
+    erreurs:["Supposer qu'une acquisition crée automatiquement de la valeur du simple fait qu'elle a eu lieu, sans vérifier si les synergies annoncées se sont réellement matérialisées"]
+  },
+  {
+    terme:"Due diligence",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"La due diligence est l'ensemble des vérifications approfondies (comptables, juridiques, commerciales, techniques) qu'un acheteur mène sur une entreprise avant de finaliser son rachat.",
+    detail:"Elle vise à confirmer que les informations données par le vendeur sont exactes, et à identifier d'éventuels risques cachés (litiges en cours, dépendance excessive à un client ou un fournisseur, dettes non déclarées, problèmes de conformité) avant d'engager le prix d'achat final.",
+    avance:"Une due diligence insuffisante ou bâclée est l'une des causes les plus citées d'échec d'une opération de M&A : des problèmes découverts après le rachat (plutôt qu'avant) ne peuvent plus être négociés dans le prix, et peuvent directement dégrader la rentabilité attendue de l'opération.",
+    exemple:"Avant de finaliser le rachat d'une entreprise, un acheteur fait auditer ses comptes par des experts-comptables indépendants et fait vérifier ses contrats clients par des avocats, pour confirmer que la réalité correspond à ce qui a été présenté.",
+    avantages:["Permet de détecter des risques avant de s'engager, et éventuellement de renégocier le prix ou les conditions en conséquence"],
+    inconvenients:["Prend du temps et représente un coût significatif (experts-comptables, avocats, consultants), même si l'opération n'aboutit finalement pas"],
+    erreurs:["Réduire la due diligence à une simple formalité administrative plutôt qu'à une vérification réelle et approfondie des risques"]
+  },
+  {
+    terme:"Private equity (capital-investissement)",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le private equity (capital-investissement) désigne des fonds d'investissement qui rachètent des entreprises déjà établies (souvent non cotées en bourse), généralement pour en améliorer la performance puis les revendre quelques années plus tard.",
+    detail:"Contrairement au capital-risque (voir Capital-risque et business angels), qui finance de jeunes entreprises à fort potentiel de croissance mais au modèle encore incertain, le private equity cible en général des entreprises plus matures, avec des revenus et une rentabilité déjà établis.",
+    avance:"Une grande partie des opérations de private equity se fait via un montage appelé LBO (rachat par effet de levier), qui utilise de la dette en plus du capital des investisseurs pour financer l'achat — voir le terme LBO pour le mécanisme complet.",
+    exemple:"Un fonds de private equity qui rachète une entreprise industrielle rentable mais familiale, pour en professionnaliser la gestion et en accélérer la croissance avant de la revendre 5 à 7 ans plus tard, réalise une opération de capital-investissement classique.",
+    avantages:["Peut apporter des capitaux et une expertise de gestion à des entreprises matures qui n'ont pas accès aux marchés boursiers"],
+    inconvenients:["L'horizon de sortie (revente) contraint souvent les décisions de gestion à un calendrier fixé par le fonds plutôt que par les besoins de long terme de l'entreprise elle-même"],
+    erreurs:["Confondre private equity (entreprises matures, souvent avec effet de levier) et capital-risque (jeunes entreprises, financement en fonds propres uniquement)"]
+  },
+  {
+    terme:"LBO (rachat par effet de levier)",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un LBO (Leveraged Buy-Out, rachat par effet de levier) est un montage financier dans lequel une entreprise est rachetée en utilisant une part importante de dette, en plus du capital apporté par les investisseurs (l'\"equity\").",
+    detail:"La dette est en général remboursée dans les années qui suivent grâce aux bénéfices générés par l'entreprise rachetée elle-même. Cela permet aux investisseurs de contrôler une entreprise en n'apportant qu'une fraction de son prix d'achat en capital propre — voir aussi le terme Effet de levier, utilisé de façon similaire en immobilier.",
+    avance:"Le mécanisme central du LBO est que la dette est fixe (son remboursement ne dépend pas de la performance de l'entreprise au-delà du minimum contractuel), alors que la valeur de l'equity absorbe toute la variation de valeur de l'entreprise. Si l'entreprise croît et que la dette est remboursée, le rendement sur le capital investi est mécaniquement amplifié par rapport à la croissance de l'entreprise elle-même — mais ce même effet de levier amplifie aussi les pertes si l'entreprise sous-performe ou ne parvient pas à rembourser sa dette.",
+    exemple:"Un fonds rachète une entreprise pour 100 millions d'euros, financés par 60 millions de dette et 40 millions de capital des investisseurs. Si l'entreprise croît et que sa valeur atteint 140 millions d'euros au bout de 5 ans, une fois la dette remboursée, le capital des investisseurs (initialement 40 millions) peut valoir bien plus que 40 millions × (140/100) — c'est l'effet de levier.",
+    avantages:["Permet de contrôler une entreprise avec un apport en capital inférieur à son prix total", "Amplifie le rendement sur le capital investi si l'entreprise performe bien"],
+    inconvenients:["Amplifie tout autant les pertes en cas de sous-performance", "La dette impose des remboursements réguliers qui contraignent la trésorerie de l'entreprise rachetée, quelle que soit sa performance opérationnelle"],
+    erreurs:["Croire que l'effet de levier ne fait qu'amplifier les gains — il amplifie symétriquement les pertes si l'entreprise ne performe pas comme prévu"]
+  },
+  {
+    terme:"Multiple de valorisation (EV/EBITDA)",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le multiple de valorisation EV/EBITDA compare la valeur d'entreprise (Enterprise Value) d'une société à son EBITDA, pour exprimer combien de fois son EBITDA annuel représente sa valeur totale.",
+    detail:"C'est l'un des indicateurs les plus utilisés en M&A et en private equity pour comparer rapidement la valorisation de plusieurs entreprises d'un même secteur, un peu comme le PER (voir ce terme) le fait pour les actions cotées en bourse via le bénéfice plutôt que l'EBITDA.",
+    avance:"Le niveau normal d'un multiple EV/EBITDA varie fortement selon le secteur, la taille de l'entreprise et ses perspectives de croissance : un secteur en forte croissance ou peu cyclique se négocie généralement à des multiples plus élevés qu'un secteur mature ou cyclique, à rentabilité comparable.",
+    exemple:"Une entreprise avec un EBITDA annuel de 10 millions d'euros et une valeur d'entreprise de 80 millions d'euros se négocie à un multiple de 8x EV/EBITDA.",
+    avantages:["Permet une comparaison rapide entre entreprises d'un même secteur, y compris celles qui ne sont pas encore rentables au niveau du résultat net"],
+    inconvenients:["Un multiple seul ne dit rien de la qualité de la croissance ou du niveau de risque de l'entreprise — il doit toujours être comparé à celui d'entreprises réellement similaires"],
+    erreurs:["Comparer les multiples EV/EBITDA d'entreprises de secteurs très différents sans tenir compte de leurs perspectives de croissance et de risque respectives"]
+  },
+  {
+    terme:"Exit (sortie d'un investisseur)",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"L'exit désigne le moment où un investisseur (fonds de capital-risque ou de private equity) revend sa participation dans une entreprise, pour transformer en argent réel le gain (ou la perte) réalisé sur son investissement.",
+    detail:"Les trois voies de sortie les plus courantes sont l'introduction en bourse (IPO, l'entreprise devient cotée et les investisseurs peuvent vendre leurs actions sur le marché), la cession industrielle (rachat par une autre entreprise du secteur) et la cession secondaire (revente à un autre fonds d'investissement).",
+    avance:"Tant qu'un investisseur n'a pas réalisé sa sortie, le gain affiché sur son investissement n'est que théorique (\"sur le papier\") : il dépend de la valorisation retenue, pas d'un montant réellement encaissé — un point souvent oublié quand on compare des performances d'investissement non encore réalisées.",
+    exemple:"Un fonds de capital-risque qui a investi dans une startup peut réaliser sa sortie plusieurs années plus tard, soit lors de l'introduction en bourse de l'entreprise, soit lors de son rachat par un acteur plus grand du secteur.",
+    avantages:[],
+    inconvenients:["Le calendrier et la voie de sortie ne sont jamais garantis à l'avance, et peuvent fortement dépendre de conditions de marché indépendantes de la performance de l'entreprise elle-même"],
+    erreurs:["Considérer un gain \"sur le papier\" (avant sortie réalisée) comme équivalent à un gain réellement encaissé"]
   },
   {
     terme:"Valorisation",
