@@ -1338,6 +1338,50 @@ const COURS_CATALOG = [
         {type:'texte', texte:"Le PER n'est qu'un premier outil parmi d'autres pour interpréter un prix — la partie Bourse de Likanza permet de voir le PER réel, calculé et daté, de n'importe quelle action suivie, avec les autres indicateurs financiers qui l'entourent."}
       ]}
     ]},
+  {id:'lire-une-entreprise', titre:'Apprendre à lire une entreprise', niveau:'Intermédiaire',
+    libraryTermes:['Actif','Passif','Capitaux propres','Bilan comptable','Compte de résultat','Chiffre d\'affaires','Marge nette','Résultat net','Amortissement','BFR','Provisions','Goodwill','Consolidation'],
+    quizCategories:['Bilan comptable','Chiffre d\'affaires','Marge nette','Amortissement'],
+    applyUrl:'business.html', applyLabel:'Explorer le Business Center Likanza',
+    acquis:[
+      "Distinguer l'actif, le passif et les capitaux propres d'un bilan",
+      "Suivre le chemin du chiffre d'affaires jusqu'au résultat net dans un compte de résultat",
+      "Expliquer pourquoi un bénéfice comptable et une trésorerie réelle peuvent diverger",
+      "Comprendre à quoi servent les provisions, le goodwill et les comptes consolidés"
+    ],
+    chapitres:[
+      {titre:"1. Le bilan : ce que possède l'entreprise, et comment elle le finance", blocs:[
+        {type:'texte', texte:"Le bilan répond à une question simple : à un instant précis, qu'est-ce que l'entreprise possède, et qui a payé pour ça ?"},
+        {type:'definition', texte:"L'actif regroupe tout ce que l'entreprise possède (trésorerie, stocks, machines, créances clients...). Le passif indique comment c'est financé : par les actionnaires (capitaux propres) ou par des créanciers (dettes)."},
+        {type:'visualisation', schema:
+"ACTIF                              PASSIF\n(ce que l'entreprise possède)      (comment c'est financé)\n────────────────────────           ─────────────────────────\nTrésorerie                         Capitaux propres\nStocks                             (apports actionnaires\nCréances clients                    + bénéfices accumulés)\nMachines, locaux...\n                                    Dettes\n                                    (banques, fournisseurs...)\n────────────────────────           ─────────────────────────\n     TOTAL ACTIF          =             TOTAL PASSIF"},
+        {type:'calcul', texte:"Les capitaux propres se déduisent directement de l'équation du bilan.", schema:
+"Actif total = Capitaux propres + Dettes\n\nExemple :\nActif total : 50 M€\nDettes      : 30 M€\n\nCapitaux propres = 50 − 30 = 20 M€\n(l'entreprise est financée à 40% par ses actionnaires, 60% par des créanciers)"},
+        {type:'exerciceErreur', affirmation:"Un bilan qui affiche 80 M€ d'actif et 65 M€ de passif montre que l'entreprise a 15 M€ de bénéfice non comptabilisé.", pourquoi:"Par construction comptable, l'actif et le passif d'un bilan sont TOUJOURS égaux — s'ils ne le sont pas, c'est qu'une ligne manque ou qu'il y a une erreur de saisie, jamais un « bénéfice caché ». Ici, il manquerait 15 M€ quelque part au passif (probablement dans les capitaux propres ou une dette non comptabilisée) pour que le bilan s'équilibre."},
+        {type:'attention', texte:"Le bilan est une photographie à un instant T, pas un film : il ne dit rien de l'évolution récente de l'entreprise ni de sa rentabilité sur l'année — c'est le rôle du compte de résultat, vu au chapitre suivant."}
+      ]},
+      {titre:"2. Le compte de résultat : du chiffre d'affaires au résultat net", blocs:[
+        {type:'texte', texte:"Si le bilan est une photo, le compte de résultat est un film : il retrace la performance de l'entreprise sur une période (généralement un an), du chiffre d'affaires jusqu'au bénéfice final."},
+        {type:'calcul', texte:"Chaque ligne du compte de résultat retire une catégorie de charges à la précédente, jusqu'au résultat net.", schema:
+"Chiffre d'affaires                          10 000 000 €\n− Charges d'exploitation (hors amort.)      − 6 500 000 €\n= EBITDA                                    =  3 500 000 €\n− Amortissements et provisions              −   800 000 €\n= Résultat d'exploitation                   =  2 700 000 €\n− Charges financières (intérêts de la dette)−   500 000 €\n= Résultat avant impôt                      =  2 200 000 €\n− Impôt sur les sociétés                    −   600 000 €\n= RÉSULTAT NET                              =  1 600 000 €"},
+        {type:'definition', texte:"L'EBITDA mesure la rentabilité de l'activité opérationnelle, avant amortissements, charges financières et impôts. Le résultat net, en bas du tableau, est ce qui reste réellement pour les actionnaires une fois TOUTES les charges déduites."},
+        {type:'pourquoi', texte:"Pourquoi ne pas regarder uniquement le résultat net ? Parce qu'il mélange la performance opérationnelle réelle avec des éléments qui n'en dépendent pas directement — le niveau d'endettement (charges financières) ou le taux d'imposition. Deux entreprises tout aussi bien gérées peuvent avoir des résultats nets très différents si l'une est plus endettée que l'autre : l'EBITDA permet de comparer leur performance opérationnelle indépendamment de ce facteur."},
+        {type:'casReel', texte:"Deux entreprises avec le même EBITDA de 3,5 M€ peuvent afficher des résultats nets très différents : celle qui n'a aucune dette n'a pas de charges financières à déduire, celle qui est fortement endettée verra son résultat net rogné par les intérêts payés à ses créanciers — la Bibliothèque Likanza détaille cette nuance dans sa fiche EBITDA."}
+      ]},
+      {titre:"3. Pourquoi le bénéfice peut augmenter alors que la trésorerie baisse", blocs:[
+        {type:'texte', texte:"C'est l'un des pièges les plus fréquents en lecture financière : une entreprise peut afficher un résultat net en hausse tout en voyant sa trésorerie (l'argent réellement disponible sur son compte) diminuer au même moment. Comment est-ce possible ?"},
+        {type:'definition', texte:"Le résultat net comptabilise des éléments qui ne correspondent à aucun mouvement d'argent réel l'année où ils sont constatés — notamment les amortissements et les provisions. À l'inverse, la trésorerie dépend aussi du BFR (besoin en fonds de roulement) : le décalage entre le moment où l'entreprise paie ses charges et celui où elle encaisse ses ventes."},
+        {type:'casReel', texte:"Une entreprise en forte croissance vend davantage (chiffre d'affaires et résultat net en hausse), mais doit financer plus de stocks et attend plus longtemps d'être payée par ses nouveaux clients : son BFR augmente, ce qui absorbe de la trésorerie — même si, sur le papier, elle est plus rentable que jamais."},
+        {type:'exerciceErreur', affirmation:"Une entreprise dont le résultat net augmente d'une année sur l'autre est nécessairement en meilleure santé financière immédiate.", pourquoi:"Un résultat net en hausse est un bon signal de rentabilité, mais ne garantit rien sur la trésorerie disponible à court terme : une hausse du BFR (croissance rapide, clients qui payent plus lentement) ou de fortes provisions peuvent faire baisser la trésorerie la même année, même avec un résultat net en progression. Il faut lire résultat net ET variation de trésorerie ensemble, jamais l'un sans l'autre."},
+        {type:'attention', texte:"C'est précisément pour cette raison que les analystes financiers regardent toujours le tableau des flux de trésorerie en complément du compte de résultat — un résultat net positif n'empêche pas une entreprise de se retrouver en difficulté de paiement si sa trésorerie s'assèche."}
+      ]},
+      {titre:"4. Au-delà d'une seule entreprise : goodwill et comptes consolidés", blocs:[
+        {type:'texte', texte:"Les grands groupes ne sont presque jamais une seule entité juridique : ils regroupent une société mère et de nombreuses filiales. Deux notions permettent de comprendre comment leurs comptes reflètent cette réalité."},
+        {type:'definition', texte:"Le goodwill apparaît au bilan de l'acheteur quand une entreprise en rachète une autre pour un prix supérieur à la valeur de ses actifs nets — il capture ce qui est payé en plus pour la marque, la clientèle ou le savoir-faire de la cible. La consolidation, elle, regroupe les comptes de toutes les filiales d'un groupe en un seul jeu de comptes."},
+        {type:'exemple', texte:"Un groupe qui rachète une entreprise valorisée 50 M€ d'actifs nets pour 80 M€ fait apparaître 30 M€ de goodwill à son bilan — puis publie des comptes consolidés qui intègrent les résultats de cette nouvelle filiale avec ceux du reste du groupe."},
+        {type:'attention', texte:"Le goodwill n'est pas un bien qu'on peut revendre séparément : s'il s'avère que l'acquisition ne tient pas ses promesses, ce goodwill peut être dévalorisé (déprécié) dans les comptes, ce qui pèse directement sur le résultat net du groupe — parfois plusieurs années après l'acquisition initiale."},
+        {type:'approfondir', texte:"Le niveau de détail de la consolidation dépend du contrôle exercé sur chaque filiale : une filiale détenue à 100% est intégrée globalement (100% de son actif, passif et résultat repris) ; une participation minoritaire peut n'être reprise qu'à hauteur de la quote-part détenue (mise en équivalence) — deux méthodes qui donnent une image très différente de la taille réelle du groupe."}
+      ]}
+    ]},
   {id:'epargne-interets', titre:"Épargne et intérêts composés", niveau:'Débutant', libraryTermes:['Intérêts composés','Assurance-vie'], quizCategories:['Épargne','Intérêts composés','Intérêts simples','Livret A','Assurance-vie']},
   {id:'fiscalite-pea', titre:'Fiscalité et enveloppes fiscales', niveau:'Intermédiaire', libraryTermes:['PEA'], quizCategories:['PEA','Fiscalité de base','Retraite et PER']},
   {id:'risque-diversification', titre:'Risque, volatilité et diversification', niveau:'Intermédiaire', libraryTermes:['Diversification','Volatilité'], quizCategories:['Diversification','Risque et volatilité',"Psychologie de l'investisseur"]},
@@ -1955,6 +1999,123 @@ const LIBRARY = [
     avantages:[],
     inconvenients:[],
     erreurs:["Analyser un bilan isolément sans le compte de résultat"]
+  },
+  {
+    terme:"Actif",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"L'actif regroupe tout ce que possède une entreprise et qui a une valeur économique : trésorerie, stocks, équipements, créances clients, brevets...",
+    detail:"On distingue généralement l'actif immobilisé (biens destinés à rester durablement dans l'entreprise : locaux, machines, brevets) de l'actif circulant (éléments qui changent rapidement dans le cycle d'exploitation : stocks, créances clients, trésorerie).",
+    avance:"La valeur comptable d'un actif (son coût d'acquisition moins les amortissements déjà constatés) ne correspond pas toujours à sa valeur de marché réelle — un terrain acheté il y a 30 ans peut valoir bien plus aujourd'hui que sa valeur inscrite au bilan.",
+    exemple:"Pour une usine, l'actif comprend le bâtiment, les machines, les stocks de matières premières et de produits finis, ainsi que l'argent en caisse.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Confondre la valeur comptable d'un actif (au bilan) et sa valeur de marché réelle"]
+  },
+  {
+    terme:"Passif",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le passif indique comment l'entreprise finance ce qu'elle possède (son actif) : par les capitaux apportés par les actionnaires, ou par des dettes envers des tiers.",
+    detail:"Il se décompose en capitaux propres (argent apporté par les actionnaires + bénéfices non distribués accumulés) et en dettes (envers les banques, les fournisseurs, l'État...). Par construction comptable, le passif est toujours égal à l'actif.",
+    avance:"La structure du passif (part de capitaux propres vs part de dette) est un indicateur clé du risque financier d'une entreprise : plus la part de dette est élevée, plus l'entreprise est sensible à une hausse des taux ou à une baisse de son activité.",
+    exemple:"Un passif de 50 M€ composé de 20 M€ de capitaux propres et 30 M€ de dettes signifie que 60% du financement de l'entreprise provient de créanciers, pas des actionnaires.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Penser que le passif ne représente que les dettes — il inclut aussi les capitaux propres"]
+  },
+  {
+    terme:"Capitaux propres",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Les capitaux propres représentent ce qui appartient réellement aux actionnaires d'une entreprise : leurs apports initiaux plus les bénéfices accumulés et non redistribués au fil du temps.",
+    detail:"Ils se calculent comme la différence entre l'actif total et les dettes : c'est ce qu'il resterait aux actionnaires si l'entreprise vendait tous ses actifs et remboursait toutes ses dettes.",
+    avance:"Des capitaux propres négatifs (dettes supérieures à l'actif) signalent une situation financière très dégradée, potentiellement proche du dépôt de bilan — un signal d'alerte que les analystes surveillent en priorité.",
+    exemple:"Une entreprise avec 50 M€ d'actif et 30 M€ de dettes a 20 M€ de capitaux propres.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Confondre capitaux propres et trésorerie disponible — les capitaux propres ne sont pas de l'argent liquide"]
+  },
+  {
+    terme:"Compte de résultat",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le compte de résultat mesure la performance d'une entreprise sur une période donnée (généralement un an) : tous les produits (ventes) moins toutes les charges, pour aboutir au résultat net.",
+    detail:"Contrairement au bilan (une photographie à un instant donné), le compte de résultat est un film sur une période : il retrace le chiffre d'affaires, les charges d'exploitation, les charges financières et les impôts pour aboutir au bénéfice ou à la perte de l'exercice.",
+    avance:"Le compte de résultat s'organise généralement en plusieurs niveaux de résultat intermédiaires (résultat d'exploitation, résultat financier, résultat exceptionnel) qui permettent d'isoler la performance de l'activité courante des éléments ponctuels ou financiers.",
+    exemple:"Une entreprise avec 10 M€ de chiffre d'affaires, 7 M€ de charges d'exploitation, 0,5 M€ de charges financières et 0,6 M€ d'impôts affiche un résultat net de 1,9 M€.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Lire le compte de résultat sans le bilan et en déduire une situation financière complète"]
+  },
+  {
+    terme:"Résultat net",
+    categorie:"Entreprise",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Le résultat net est le bénéfice (ou la perte) final d'une entreprise sur une période, une fois toutes les charges déduites de tous les produits — y compris les impôts.",
+    detail:"C'est la toute dernière ligne du compte de résultat : chiffre d'affaires moins l'ensemble des charges d'exploitation, financières et exceptionnelles, moins l'impôt sur les sociétés.",
+    avance:"Un résultat net positif ne garantit pas une trésorerie saine, et inversement : des éléments non monétaires (amortissements, provisions) et le décalage entre facturation et encaissement (BFR) peuvent créer un écart important entre bénéfice comptable et argent réellement disponible.",
+    exemple:"Une entreprise rentable (résultat net positif) peut malgré tout manquer de trésorerie si ses clients la paient très en retard.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Assimiler résultat net positif et trésorerie abondante — les deux peuvent diverger fortement"]
+  },
+  {
+    terme:"Provisions",
+    categorie:"Entreprise",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Une provision est une charge comptabilisée par anticipation pour un risque ou une perte probable, même si la dépense réelle n'a pas encore eu lieu.",
+    detail:"Une entreprise qui anticipe un litige, une créance client qui risque de ne pas être payée, ou une garantie à honorer sur des produits vendus, comptabilise une provision : cela réduit son résultat dès maintenant, avant même la sortie de trésorerie effective.",
+    avance:"Les provisions reposent sur une estimation, donc un jugement de la direction — leur ampleur peut être un levier de gestion du résultat (une entreprise peut sur- ou sous-provisionner pour lisser ses bénéfices d'une année sur l'autre), ce que les analystes surveillent.",
+    exemple:"Une entreprise poursuivie en justice pour 2 M€ peut provisionner tout ou partie de ce montant avant même l'issue du procès, si une perte est jugée probable.",
+    avantages:["Anticipe des risques réels plutôt que de les découvrir brutalement au moment où ils se matérialisent"],
+    inconvenients:["Repose sur une estimation, donc un jugement potentiellement biaisé de la direction"],
+    erreurs:["Confondre une provision (risque probable, estimé) et une dette certaine déjà due"]
+  },
+  {
+    terme:"Goodwill",
+    categorie:"Entreprise",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le goodwill (écart d'acquisition) est la différence entre le prix payé pour racheter une entreprise et la valeur comptable réelle de ses actifs nets — il reflète ce qu'on paie en plus pour sa marque, sa clientèle ou son savoir-faire.",
+    detail:"Quand une entreprise en rachète une autre pour un prix supérieur à la valeur de ses actifs nets identifiables, la différence est inscrite au bilan de l'acheteur sous forme de goodwill — un actif immatériel qui ne correspond à aucun bien physique précis.",
+    avance:"Le goodwill n'est pas amorti mais testé régulièrement pour dépréciation (impairment test) : si l'entreprise rachetée sous-performe par rapport aux attentes initiales, une partie du goodwill peut être dépréciée, ce qui pèse directement sur le résultat de l'acheteur, parfois plusieurs années après l'acquisition.",
+    exemple:"Racheter une entreprise valorisée 50 M€ d'actifs nets pour 80 M€ fait apparaître 30 M€ de goodwill au bilan de l'acheteur.",
+    avantages:[],
+    inconvenients:["Une dépréciation ultérieure du goodwill peut peser lourdement sur le résultat, parfois des années après l'acquisition"],
+    erreurs:["Considérer le goodwill comme un actif liquide ou revendable en tant que tel"]
+  },
+  {
+    terme:"Consolidation",
+    categorie:"Entreprise",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"La consolidation, c'est l'opération comptable qui regroupe les comptes d'une société mère et de ses filiales en un seul jeu de comptes, comme s'il s'agissait d'une seule entité économique.",
+    detail:"Sans consolidation, chaque filiale publierait ses propres comptes séparément, rendant difficile d'évaluer la performance globale d'un groupe. Les comptes consolidés éliminent les opérations internes entre sociétés du même groupe (ventes entre filiales, par exemple) pour ne montrer que ce qui se passe avec l'extérieur.",
+    avance:"Le périmètre et la méthode de consolidation (intégration globale, proportionnelle, mise en équivalence) dépendent du niveau de contrôle exercé sur chaque filiale — un groupe qui détient 30% d'une société n'applique pas la même méthode que pour une filiale détenue à 100%.",
+    exemple:"Un groupe possédant 5 filiales dans différents pays publie des comptes consolidés qui additionnent leurs résultats, en retirant les ventes qu'elles se sont facturées entre elles.",
+    avantages:["Donne une vision économique globale d'un groupe, plutôt que des comptes fragmentés par filiale"],
+    inconvenients:["Peut masquer des difficultés propres à une filiale précise, diluées dans l'ensemble du groupe"],
+    erreurs:["Analyser les comptes sociaux (non consolidés) d'une société mère en pensant qu'ils reflètent toute l'activité du groupe"]
+  },
+  {
+    terme:"OPEX",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Les OPEX (operating expenses, charges d'exploitation) sont les dépenses courantes nécessaires au fonctionnement quotidien d'une entreprise — loyers, salaires, marketing, fournitures — par opposition aux investissements (CAPEX).",
+    detail:"Contrairement au CAPEX (achat d'un bien durable, immobilisé au bilan et amorti sur plusieurs années), une charge OPEX est directement déduite du résultat de l'année où elle est engagée.",
+    avance:"La frontière entre CAPEX et OPEX n'est pas toujours évidente et peut faire l'objet de choix comptables : un abonnement logiciel en mode SaaS est généralement classé en OPEX, alors que l'achat d'une licence perpétuelle équivalente pouvait historiquement être immobilisé en CAPEX — un choix qui modifie directement le résultat affiché.",
+    exemple:"Le salaire des équipes, le loyer des bureaux et les dépenses publicitaires sont des OPEX ; l'achat d'un nouveau bâtiment est un CAPEX.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Confondre une dépense OPEX (déduite immédiatement du résultat) et un investissement CAPEX (immobilisé puis amorti)"]
   },
   {
     terme:"Amortissement",
