@@ -6,7 +6,8 @@ const BOURSE_TABS = [
   {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale'},
   {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
   {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
-  {id:'tab-portefeuille', title:'Portefeuille', desc:'Déclaratif, tes transactions', icon:'wallet'}
+  {id:'tab-portefeuille', title:'Portefeuille', desc:'Déclaratif, tes transactions', icon:'wallet'},
+  {id:'tab-marches', title:'Autres marchés', desc:'ETF, Forex, matières premières, taux', icon:'landmark'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
@@ -26,6 +27,7 @@ function setBourseTab(tabId){
   bourseActiveTab = tabId;
   document.querySelectorAll('#bourseTabsGrid .quick-access-card').forEach(c=>c.classList.toggle('active', c.dataset.tab===tabId));
   document.querySelectorAll('.home-tab-panel').forEach(p=>p.classList.toggle('active', p.id===tabId));
+  if(tabId === 'tab-marches') safeRun('onglet Autres marchés', renderMarketsHub);
 }
 renderBourseTabs();
 setBourseTab(bourseActiveTab);
@@ -1058,3 +1060,87 @@ if(portfolioAddBtn) portfolioAddBtn.addEventListener('click', () => {
 });
 
 renderPortfolioTab();
+
+// ---------- Onglet "Autres marchés" : ETF, Obligations, Indices, Forex,
+// Matières premières, Taux (extension du prompt "refonte Bourse", phase 1).
+// Chaque tuile s'appuie sur MARKET_DATA, chargé à la demande uniquement à
+// l'ouverture de cet onglet (voir loadMarketCategoryQuotes, scripts/data.js) —
+// jamais dans le poll global du bandeau. "Voir tout" renvoie vers marche.html,
+// dont les valeurs "sœurs" (renderMarcheSiblings) sont désormais filtrées par
+// assetType : cette fiche fait donc office de liste complète par catégorie,
+// sans avoir à construire un second composant de liste ici. ----------
+function renderMarketHubMiniRows(items){
+  if(!items.length) return `<p style="font-size:12px;color:var(--text-dim);">Aucune valeur dans cette catégorie.</p>`;
+  return items.slice(0,3).map(m=>{
+    const val = m.statut === 'reel' ? `${m.valeur}${m.unite ? ' ' + m.unite : ''}` : '…';
+    const varia = m.sens === 'na' ? '' : `<span class="${m.sens}" style="font-size:11.5px;">${m.variation}</span>`;
+    return `<div style="display:flex;justify-content:space-between;gap:8px;font-size:12.5px;margin-top:5px;">
+      <span>${m.nom}</span><span class="mono" style="display:flex;gap:6px;align-items:center;">${val} ${varia}</span>
+    </div>`;
+  }).join('');
+}
+function renderMarketsHub(){
+  const el = document.getElementById('marketsHubGrid');
+  if(!el) return;
+  const categories = [
+    {icon:'📦', title:'ETF', desc:'Frais, composition et encours réels du fonds', items: MARKET_DATA.filter(m=>m.assetType==='etf')},
+    {icon:'💵', title:'Obligations', desc:'Courbe des taux et ETF obligataires réels', items: MARKET_DATA.filter(m=>m.assetType==='etf' && m.categorie==='Obligataire')},
+    {icon:'📊', title:'Indices', desc:'Grands indices boursiers mondiaux', items: MARKET_DATA.filter(m=>m.assetType==='index')},
+    {icon:'💱', title:'Forex', desc:'Principales paires de devises', items: MARKET_DATA.filter(m=>m.assetType==='forex')},
+    {icon:'🛢️', title:'Matières premières', desc:'Énergie, métaux, agriculture', items: MARKET_DATA.filter(m=>m.assetType==='commodity')},
+    {icon:'🏦', title:'Taux', desc:'Courbe des taux US (référence mondiale)', items: MARKET_DATA.filter(m=>m.assetType==='rate')},
+  ];
+  el.innerHTML = categories.map(cat => `
+    <div class="card">
+      <span class="icon">${cat.icon}</span>
+      <h3 style="margin:8px 0 4px;">${cat.title}</h3>
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">${cat.desc}</p>
+      <div>${renderMarketHubMiniRows(cat.items)}</div>
+      ${cat.items.length ? `<a href="marche.html#${encodeURIComponent(cat.items[0].symbol)}" class="btn btn-sm" style="margin-top:12px;">Voir tout →</a>` : ''}
+    </div>`).join('');
+  renderRatesAndBondsExtra('marketsHubExtra');
+
+  // Chargement à la demande, une seule fois par page : une fois chargé, le
+  // statut d'une entrée passe à 'reel' et n'est plus proposé au rechargement.
+  const pending = [...FOREX_PAIRS, ...EXTRA_INDICES, ...EXTRA_COMMODITIES, ...YIELD_CURVE_TICKERS, ...ETF_CATALOG]
+    .filter(m => m.statut === 'chargement')
+    .map(m => m.symbol);
+  if(pending.length) loadMarketCategoryQuotes(pending);
+}
+document.addEventListener('fzr:quotes-updated', () => {
+  if(bourseActiveTab === 'tab-marches') safeRun('onglet Autres marchés (cotations)', renderMarketsHub);
+});
+
+// Taux de dépôt BCE (réel, /api/eco-rate — jusqu'ici inutilisé sur aucune
+// page du site) + pédagogie prix/rendement obligataire (calcul en pur,
+// jamais une cotation d'obligation individuelle inventée : aucune source
+// retail disponible pour ça, voir le plan).
+function renderRatesAndBondsExtra(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<div class="card"><p style="font-size:12.5px;color:var(--text-dim);">Chargement du taux de dépôt BCE…</p></div>`;
+  fetch('/api/eco-rate')
+    .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(data=>{
+      el.innerHTML = `
+        <div class="card">
+          <span class="smallcaps">🏦 Taux de dépôt BCE</span>
+          <div class="result-big" style="margin-top:8px;">${data.rate} %</div>
+          <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">Source : ${data.source}${data.asOf ? ' · au ' + data.asOf : ''}</p>
+        </div>
+        <div class="card" style="margin-top:14px;">
+          <h3>Pourquoi le prix d'une obligation baisse quand les taux montent ?</h3>
+          <div style="margin-top:8px;">${renderDataBadge('calcul')}</div>
+          ${renderMethodologyPanel({
+            calcul: "Une obligation existante verse un coupon fixe, décidé à son émission. Si les taux du marché montent, les nouvelles obligations émises offrent un coupon plus élevé — l'ancienne, moins attractive, doit baisser de prix pour offrir à un nouvel acheteur un rendement comparable.",
+            donnees: "Exemple chiffré (calcul simplifié, obligation perpétuelle sans échéance) : une obligation de 1000 € versant un coupon fixe de 3 %/an (30 €/an). Si le taux de marché passe à 5 %, un acheteur exige un rendement équivalent : prix ≈ 30 ÷ 0,05 = 600 €, soit une baisse d'environ 40 %.",
+            hypotheses: "Exemple simplifié à titre pédagogique — une obligation réelle a une échéance fixe et revient à sa valeur nominale au remboursement ; sa sensibilité réelle au taux (duration) dépend de la maturité restante.",
+            limites: "Aucune cotation d'obligation individuelle n'est disponible via notre source de données (marché de gré à gré, peu accessible aux particuliers) : la courbe des taux ci-dessus et les ETF obligataires ci-contre (catégorie Obligations) sont les substituts réels utilisés sur cette page.",
+            comprendre: "Plus la maturité d'une obligation est longue, plus son prix est sensible aux variations de taux (duration élevée) — c'est pourquoi un ETF obligataire long terme (ex. TLT, 20 ans et plus) bouge davantage qu'un ETF obligataire toutes échéances (ex. AGG) pour une même variation de taux."
+          })}
+        </div>`;
+    })
+    .catch(err=>{
+      el.innerHTML = `<div class="card"><p style="font-size:12.5px;color:var(--text-dim);">Taux BCE indisponible pour le moment (${err.message}).</p></div>`;
+    });
+}

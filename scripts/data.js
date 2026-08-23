@@ -189,29 +189,69 @@ const LIVE_STATUS_LABELS = {
 function currencySymbol(code){
   return {USD:'$', EUR:'€', GBP:'£'}[code] || code || '';
 }
+// Normalise une cotation Yahoo/CoinGecko (q) sur une entrée MARKET_DATA (it) —
+// factorisé pour être partagé entre le poll global du bandeau (applyLiveQuotes,
+// via /api/quotes) et le chargement à la demande d'une nouvelle classe d'actif
+// (loadMarketCategoryQuotes, via /api/custom-quotes) : même normalisation
+// partout, jamais deux formats différents pour la même donnée.
+function applyOneQuoteToMarketItem(it, q){
+  if(!it || typeof q.price !== 'number' || typeof q.changePercent !== 'number') return false;
+  it.valeur = q.price.toLocaleString('fr-FR', q.price >= 1000
+    ? {maximumFractionDigits:0}
+    : {minimumFractionDigits:2, maximumFractionDigits:2});
+  if(!it.unite) it.unite = currencySymbol(q.currency);
+  it.variation = (q.changePercent >= 0 ? '+' : '−') + Math.abs(q.changePercent).toFixed(1) + '%';
+  it.sens = q.changePercent >= 0 ? 'up' : 'down';
+  if(q.source) it.source = q.source;
+  it.statut = 'reel';
+  it.statusLabel = LIVE_STATUS_LABELS[q.status] || q.status || 'DIFFÉRÉ';
+  const when = q.timestamp ? new Date(q.timestamp) : null;
+  if(when && !isNaN(when)){
+    it.maj = when.toLocaleDateString('fr-FR');
+    it.heure = when.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+  }
+  if(Array.isArray(q.history) && q.history.length >= 2) it.history = q.history;
+  return true;
+}
 function applyLiveQuotes(quotes){
   let applied = 0;
   quotes.forEach(q=>{
     const it = MARKET_DATA.find(m=>m.symbol===q.symbol);
-    if(!it || typeof q.price !== 'number' || typeof q.changePercent !== 'number') return;
-    it.valeur = q.price.toLocaleString('fr-FR', q.price >= 1000
-      ? {maximumFractionDigits:0}
-      : {minimumFractionDigits:2, maximumFractionDigits:2});
-    if(!it.unite) it.unite = currencySymbol(q.currency);
-    it.variation = (q.changePercent >= 0 ? '+' : '−') + Math.abs(q.changePercent).toFixed(1) + '%';
-    it.sens = q.changePercent >= 0 ? 'up' : 'down';
-    if(q.source) it.source = q.source;
-    it.statut = 'reel';
-    it.statusLabel = LIVE_STATUS_LABELS[q.status] || q.status || 'DIFFÉRÉ';
-    const when = q.timestamp ? new Date(q.timestamp) : null;
-    if(when && !isNaN(when)){
-      it.maj = when.toLocaleDateString('fr-FR');
-      it.heure = when.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
-    }
-    if(Array.isArray(q.history) && q.history.length >= 2) it.history = q.history;
-    applied++;
+    if(applyOneQuoteToMarketItem(it, q)) applied++;
   });
   return applied;
+}
+
+// Chargement à la demande (jamais dans le poll global du bandeau, voir
+// ARCHITECTURE.md) des classes d'actifs étendues (ETF/Forex/Indices
+// supplémentaires/Matières premières supplémentaires/Taux) : appelé
+// uniquement quand l'utilisateur ouvre l'onglet Marchés ou une fiche
+// marche.html correspondante, jamais au chargement du site. Ne déclenche
+// jamais renderTicker() : le bandeau du site reste strictement les valeurs
+// historiques (5 indices + 2 matières premières + 2 cryptos), quel que soit
+// ce que l'utilisateur a chargé ailleurs.
+function loadMarketCategoryQuotes(symbols){
+  if(!Array.isArray(symbols) || symbols.length === 0) return Promise.resolve(0);
+  // /api/custom-quotes plafonne à 20 symboles par requête (voir api/custom-quotes.js) :
+  // au-delà (catalogue ETF + Forex + Indices/Matières premières supplémentaires +
+  // courbe des taux dépasse 20 au total), découper en plusieurs requêtes plutôt
+  // que de laisser le plafond tronquer silencieusement la liste.
+  const chunks = [];
+  for(let i=0;i<symbols.length;i+=20) chunks.push(symbols.slice(i, i+20));
+  return Promise.all(chunks.map(chunk =>
+    fetch('/api/custom-quotes?symbols=' + encodeURIComponent(chunk.join(',')))
+      .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+      .then(payload => (payload && Array.isArray(payload.quotes)) ? payload.quotes : [])
+      .catch(err=>{
+        console.info('Likanza Academy — cotations de marché étendues indisponibles :', err.message);
+        return [];
+      })
+  )).then(results=>{
+    const allQuotes = [].concat(...results);
+    const applied = applyLiveQuotes(allQuotes);
+    if(applied > 0) document.dispatchEvent(new CustomEvent('fzr:quotes-updated'));
+    return applied;
+  });
 }
 function initLiveMarketData(){
   if(location.protocol === 'file:') return; // aperçu local sans backend

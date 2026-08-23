@@ -27,6 +27,75 @@ const MARKET_DATA = [
   {symbol:'BRENT', nom:'Pétrole Brent', assetType:'commodity', exchange:null, valeur:'~90', unite:'$/baril', devise:'USD', variation:'+6.6%', sens:'up', source:'Presse financière', statut:'reel', statusLabel:'LAST CLOSE', maj:'29/07/2026', heure:'—'},
 ];
 
+// ---------- Marché étendu (onglet "Marchés" de la page Bourse) : ETF, Forex,
+// Indices/Matières premières supplémentaires, Taux. Contrairement aux entrées
+// ci-dessus, ces symboles ne sont JAMAIS interrogés par le poll global du
+// bandeau (/api/quotes, toutes les 5 min sur tout le site) — uniquement à la
+// demande via loadMarketCategoryQuotes() (scripts/data.js), quand l'utilisateur
+// ouvre l'onglet Marchés ou une fiche marche.html correspondante (contrainte
+// de performance du prompt "refonte Bourse"). statut initial 'chargement' :
+// jamais présenté comme une vraie cotation tant que la donnée réelle n'est
+// pas arrivée (voir applyOneQuoteToMarketItem). Tous les tickers ci-dessous
+// vérifiés en direct contre Yahoo Finance le 2026-08-23.
+const FOREX_PAIRS = [
+  {symbol:'EURUSD=X', nom:'EUR / USD', assetType:'forex', exchange:null, valeur:'—', unite:'', devise:'USD', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'GBPUSD=X', nom:'GBP / USD', assetType:'forex', exchange:null, valeur:'—', unite:'', devise:'USD', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'USDJPY=X', nom:'USD / JPY', assetType:'forex', exchange:null, valeur:'—', unite:'', devise:'JPY', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'USDCHF=X', nom:'USD / CHF', assetType:'forex', exchange:null, valeur:'—', unite:'', devise:'CHF', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'AUDUSD=X', nom:'AUD / USD', assetType:'forex', exchange:null, valeur:'—', unite:'', devise:'USD', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+];
+const EXTRA_INDICES = [
+  {symbol:'^GDAXI', nom:'DAX', assetType:'index', exchange:null, valeur:'—', unite:'pts', devise:'EUR', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'^FTSE', nom:'FTSE 100', assetType:'index', exchange:'london', valeur:'—', unite:'pts', devise:'GBP', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'^N225', nom:'Nikkei 225', assetType:'index', exchange:'tokyo', valeur:'—', unite:'pts', devise:'JPY', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+];
+const EXTRA_COMMODITIES = [
+  {symbol:'SI=F', nom:'Argent', assetType:'commodity', exchange:null, valeur:'—', unite:'$/once', devise:'USD', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'HG=F', nom:'Cuivre', assetType:'commodity', exchange:null, valeur:'—', unite:'$/livre', devise:'USD', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'NG=F', nom:'Gaz naturel', assetType:'commodity', exchange:null, valeur:'—', unite:'$/MMBtu', devise:'USD', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'ZW=F', nom:'Blé', assetType:'commodity', exchange:null, valeur:'—', unite:'¢/boisseau', devise:'USD', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'KC=F', nom:'Café', assetType:'commodity', exchange:null, valeur:'—', unite:'¢/livre', devise:'USD', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+];
+// Courbe des taux US (seule courbe fiable et gratuite trouvée via les sources
+// déjà utilisées par le site — pas de courbe France/zone euro équivalente
+// disponible sans fournisseur payant). unite:'%' fixé en dur : le "prix" Yahoo
+// pour ces tickers EST directement le taux en pourcentage, jamais une devise.
+const YIELD_CURVE_TICKERS = [
+  {symbol:'^IRX', nom:'Taux US 13 semaines', assetType:'rate', exchange:null, valeur:'—', unite:'%', devise:'', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'^FVX', nom:'Taux US 5 ans', assetType:'rate', exchange:null, valeur:'—', unite:'%', devise:'', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'^TNX', nom:'Taux US 10 ans', assetType:'rate', exchange:null, valeur:'—', unite:'%', devise:'', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+  {symbol:'^TYX', nom:'Taux US 30 ans', assetType:'rate', exchange:null, valeur:'—', unite:'%', devise:'', variation:'n.d.', sens:'na', source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—'},
+];
+// Catalogue ETF curaté (même principe que STOCKS_DEMO : classification réelle
+// en dur — émetteur/indice suivi/catégorie — le prix et les fondamentaux du
+// fonds (frais, holdings...) sont toujours récupérés en direct, jamais ici).
+// CW8.PA et EXS1.DE illustrent volontairement le cas UCITS (fondamentaux
+// partiels côté Yahoo, voir /api/etf-profile) à côté des ETF US (fondamentaux
+// complets) — ne pas retirer, c'est un cas réel à assumer honnêtement dans
+// l'UI, pas à cacher en ne montrant que des ETF US.
+const ETF_CATALOG = [
+  {ticker:'SPY', nom:'SPDR S&P 500 ETF Trust', emetteur:'State Street', indiceSuivi:'S&P 500', categorie:'Actions US'},
+  {ticker:'QQQ', nom:'Invesco QQQ Trust', emetteur:'Invesco', indiceSuivi:'Nasdaq 100', categorie:'Actions technologie US'},
+  {ticker:'URTH', nom:'iShares MSCI World ETF', emetteur:'BlackRock (iShares)', indiceSuivi:'MSCI World', categorie:'Actions monde'},
+  {ticker:'EEM', nom:'iShares MSCI Emerging Markets ETF', emetteur:'BlackRock (iShares)', indiceSuivi:'MSCI Emerging Markets', categorie:'Actions émergentes'},
+  {ticker:'XLK', nom:'Technology Select Sector SPDR Fund', emetteur:'State Street', indiceSuivi:'S&P 500 Technology', categorie:'Actions sectoriel'},
+  {ticker:'GLD', nom:'SPDR Gold Shares', emetteur:'State Street', indiceSuivi:"Cours de l'or physique", categorie:'Matières premières'},
+  {ticker:'AGG', nom:'iShares Core U.S. Aggregate Bond ETF', emetteur:'BlackRock (iShares)', indiceSuivi:'Bloomberg US Aggregate Bond', categorie:'Obligataire'},
+  {ticker:'TLT', nom:'iShares 20+ Year Treasury Bond ETF', emetteur:'BlackRock (iShares)', indiceSuivi:'ICE US Treasury 20+ Year Bond', categorie:'Obligataire'},
+  {ticker:'CW8.PA', nom:'Amundi MSCI World UCITS ETF', emetteur:'Amundi', indiceSuivi:'MSCI World', categorie:'Actions monde'},
+  {ticker:'EXS1.DE', nom:'iShares Core DAX UCITS ETF', emetteur:'BlackRock (iShares)', indiceSuivi:'DAX', categorie:'Actions Europe'},
+].map(e => ({
+  symbol:e.ticker, nom:e.nom, assetType:'etf', exchange:null, valeur:'—', unite:'', devise:'', variation:'n.d.', sens:'na',
+  source:'Yahoo Finance', statut:'chargement', statusLabel:'CHARGEMENT', maj:'—', heure:'—',
+  emetteur:e.emetteur, indiceSuivi:e.indiceSuivi, categorie:e.categorie
+}));
+// Ajout unique au tableau partagé MARKET_DATA — toujours en fin de tableau
+// (jamais au début : scripts/pages/index.js:304 fait MARKET_DATA.slice(0,4)
+// pour l'aperçu d'accueil et suppose que les 4 premiers restent les indices
+// historiques). Coût nul : simple ajout en mémoire, aucun appel réseau tant
+// que loadMarketCategoryQuotes() n'a pas été appelé.
+MARKET_DATA.push(...FOREX_PAIRS, ...EXTRA_INDICES, ...EXTRA_COMMODITIES, ...YIELD_CURVE_TICKERS, ...ETF_CATALOG);
+
 // ---------- Horaires des places boursières (pour le calcul ouvert/fermé, sans API) ----------
 const MARKET_HOURS = {
   paris:   {label:'Euronext Paris', tz:'Europe/Paris',    open:9,  close:17.5},
@@ -1466,6 +1535,45 @@ const LIBRARY = [
     avantages:["Revenu généralement plus prévisible que les actions"],
     inconvenients:["Sensible aux variations de taux d'intérêt","Risque de défaut de l'émetteur"],
     erreurs:["Croire qu'une obligation ne peut jamais perdre de valeur avant l'échéance"]
+  },
+  {
+    terme:"Taux directeur",
+    categorie:"Taux",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Le taux directeur, c'est le taux fixé par une banque centrale (comme la BCE) qui influence tous les autres taux de l'économie.",
+    detail:"Quand une banque centrale relève son taux directeur, emprunter coûte plus cher partout dans l'économie (crédits, obligations) : elle cherche généralement à freiner l'inflation. Quand elle le baisse, elle cherche plutôt à soutenir l'activité économique.",
+    avance:"La courbe des taux représente le rendement d'une même catégorie d'obligations (souvent d'État) selon leur échéance. Une courbe \"inversée\" (taux courts plus élevés que les taux longs) est historiquement associée par certains analystes à un risque de ralentissement économique — une observation statistique, jamais une certitude.",
+    exemple:"La BCE relève son taux de dépôt : les nouveaux crédits immobiliers deviennent plus chers en zone euro.",
+    avantages:["Un outil de pilotage macroéconomique suivi de près par les marchés"],
+    inconvenients:["Effet différé et indirect sur l'économie réelle, pas immédiat"],
+    erreurs:["Penser qu'une hausse de taux affecte instantanément tous les prix"]
+  },
+  {
+    terme:"Pip",
+    categorie:"Forex",
+    niveau:"Débutant",
+    lecture:"1 min",
+    simple:"Un pip est la plus petite variation de prix habituellement mesurée sur une paire de devises.",
+    detail:"Pour la plupart des paires (ex. EUR/USD), un pip correspond à 0,0001 sur le taux de change. Si l'EUR/USD passe de 1,1678 à 1,1688, c'est une variation de 10 pips.",
+    avance:"Certaines paires impliquant le yen japonais (ex. USD/JPY) comptent les pips à la deuxième décimale (0,01) et non la quatrième, en raison de l'ordre de grandeur différent du taux de change.",
+    exemple:"L'EUR/USD passe de 1,1678 à 1,1668 : une baisse de 10 pips.",
+    avantages:["Unité standard qui permet de comparer des variations entre paires différentes"],
+    inconvenients:["Peut donner une fausse impression de faible ampleur : avec du levier, quelques pips suffisent à générer une perte significative"],
+    erreurs:["Confondre un pip et un point de pourcentage"]
+  },
+  {
+    terme:"Spread (Forex)",
+    categorie:"Forex",
+    niveau:"Débutant",
+    lecture:"1 min",
+    simple:"Le spread, c'est l'écart entre le prix d'achat et le prix de vente affichés pour une paire de devises au même instant.",
+    detail:"C'est une forme de coût de transaction implicite : plus le spread est large, plus il faut que le cours évolue en ta faveur avant d'être en gain. Les paires les plus échangées (EUR/USD) ont généralement les spreads les plus faibles.",
+    avance:"Le spread s'élargit souvent lors d'annonces économiques majeures ou en dehors des heures de forte liquidité, car les intermédiaires exigent une compensation plus élevée pour le risque accru.",
+    exemple:"Un spread de 1 pip sur l'EUR/USD signifie que le prix d'achat et le prix de vente diffèrent d'environ 0,0001.",
+    avantages:["Un spread faible reflète en général un marché très liquide"],
+    inconvenients:["Coût réel à chaque opération, même sans commission explicite"],
+    erreurs:["Ignorer le spread dans le calcul du seuil de rentabilité d'une position"]
   },
   {
     terme:"Volatilité",
