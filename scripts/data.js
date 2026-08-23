@@ -1446,6 +1446,17 @@ function getSkillMastery(){
     .sort((a, b) => a.pct - b.pct);
 }
 
+// Score de maîtrise global (moyenne simple des catégories réellement
+// pratiquées) — affiché sur le tableau de bord Défis. Volontairement
+// distinct d'un futur "Financial IQ" par domaine (chantier séparé, pas
+// encore construit) : ici, une seule moyenne honnête sur ce qui existe déjà
+// (getSkillMastery), jamais une note fabriquée sans donnée réelle.
+function computeGlobalMasteryPct(){
+  const mastery = getSkillMastery();
+  if(mastery.length === 0) return null;
+  return Math.round(mastery.reduce((s, m) => s + m.pct, 0) / mastery.length);
+}
+
 // ---------- Maîtrise par concept, 4 paliers (Découvert → Compris → Appliqué → Maîtrisé) ----------
 // Même source de vérité que getSkillMastery (fzr-quiz-stats.categoryStats) —
 // jamais un second système qui pourrait diverger. "Concept" = les mêmes ~50
@@ -2118,6 +2129,57 @@ function pickDefiDuJourItems(){
     i++;
   }
   return picked;
+}
+
+// ---------- Barre de statistiques du tableau de bord Défis (niveau, XP,
+// série, ligue, score de maîtrise) — uniquement des valeurs déjà réellement
+// suivies ailleurs sur le site (getGamification/levelFromXP/currentLeague/
+// computeGlobalMasteryPct), jamais un nouveau compteur inventé pour ce
+// widget. Le score de maîtrise affiche un tiret honnête tant qu'il n'y a pas
+// assez de vraies réponses pour le calculer. ----------
+function renderDefisStatsBar(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const g = getGamification();
+  const lvl = levelFromXP(g.xp);
+  const league = currentLeague(g.xp);
+  const masteryPct = computeGlobalMasteryPct();
+  const stats = [
+    {label: 'Niveau', value: lvl.level, sub: lvl.title},
+    {label: 'XP', value: g.xp},
+    {label: 'Série', value: `${g.streak} 🔥`},
+    {label: 'Ligue', value: league.name},
+    {label: 'Score de maîtrise', value: masteryPct !== null ? masteryPct + ' %' : '—', sub: masteryPct === null ? 'Réponds à quelques défis pour le débloquer' : null}
+  ];
+  el.innerHTML = `<div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:14px;">
+    ${stats.map(s => `<div class="card" style="padding:12px 14px;">
+      <span class="smallcaps">${s.label}</span>
+      <div class="result-big" style="font-size:20px;margin-top:4px;">${s.value}</div>
+      ${s.sub ? `<p style="font-size:11px;color:var(--text-dim);margin-top:2px;">${s.sub}</p>` : ''}
+    </div>`).join('')}
+  </div>`;
+}
+
+// ---------- Casse-têtes : le pool MENTAL_CHALLENGES (formats de
+// raisonnement — trouve l'erreur, vrai-mais-incomplet, remets dans l'ordre,
+// info manquante, classement) plutôt que le mélange générique QCM + casse-
+// têtes de "Modes d'entraînement" — un vrai onglet dédié au raisonnement,
+// jamais juste une redite de Formation/Laboratoire (jamais "calcule le PER",
+// toujours un raisonnement à démêler autour d'une vraie situation). ----------
+function renderDefisCassesTetes(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;max-width:70ch;">Pas de définition à réciter, ni de calcul isolé : un raisonnement à démêler à chaque fois — trouve l'erreur dans un raisonnement, ce qui manque pour vraiment conclure, remets des événements dans l'ordre logique, ou classe des éléments selon un critère.</p>
+    <button class="btn btn-gold" id="${elId}-start">Lancer une session de casse-têtes</button>
+    <div id="${elId}-session" style="margin-top:16px;"></div>`;
+  document.getElementById(`${elId}-start`).addEventListener('click', () => {
+    const pool = [...MENTAL_CHALLENGES];
+    for(let i = pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const sessionEl = document.getElementById(`${elId}-session`);
+    startMixedSession(`${elId}-session`, pool.slice(0, 6), {onRestart: () => renderDefisCassesTetes(elId)});
+    if(sessionEl && sessionEl.scrollIntoView) sessionEl.scrollIntoView({behavior: 'smooth', block: 'nearest'});
+  });
 }
 function renderDefiDuJour(elId){
   const el = document.getElementById(elId);

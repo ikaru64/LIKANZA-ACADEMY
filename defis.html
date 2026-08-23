@@ -80,46 +80,58 @@
 <h1 class="visually-hidden">Défis</h1>
 
 <section class="section" style="padding-bottom:14px;">
-  <div class="section-head"><h2>Défis</h2><span class="meta-line">entraîne ton raisonnement</span></div>
-  <p style="font-size:13px;color:var(--text-dim);max-width:70ch;">Des exercices courts pour vérifier si tu comprends réellement la finance, la bourse, l'économie et le business — pas seulement si tu connais une définition. Academy t'apprend, la Bibliothèque explique, le Laboratoire fait expérimenter : Défis vérifie que ça tient debout face à une vraie situation.</p>
+  <div class="section-head"><h2>🎯 Défis</h2><span class="meta-line">Teste ton raisonnement financier</span></div>
+  <p style="font-size:13px;color:var(--text-dim);max-width:70ch;">Des exercices courts pour vérifier si tu comprends réellement la finance, la bourse, l'économie et le business — pas seulement si tu connais une définition. Formation t'apprend, la Bibliothèque explique, le Laboratoire fait expérimenter : Défis vérifie que ça tient debout face à une vraie situation.</p>
+  <div id="defisStatsBar"></div>
 </section>
 
 <section class="section" style="padding-top:0;">
   <div class="defi-hero-card" id="defiDuJour"><p style="color:var(--text-dim);font-size:13px;">Chargement…</p></div>
 </section>
 
-<section class="section" style="padding-top:0;">
-  <div class="dual-grid">
-    <div class="card" id="recommandePourToi"></div>
-    <div class="card" id="defisARevoir"></div>
-  </div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Modes d'entraînement</h2><span class="meta-line">choisis un thème, un niveau, une longueur</span></div>
-  <div class="card" style="max-width:640px;" id="modesEntrainement"></div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Autres formats</h2><span class="meta-line">teste-toi librement</span></div>
-  <div class="card-grid">
-    <a href="jeu-vrai-faux.html" class="card play-tile">
-      <span class="icon" data-icon="shield" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">Vrai ou faux</h3>
-      <p>Démasque les affirmations trompeuses sur l'argent et les arnaques financières.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Jouer →</span></div>
-    </a>
-  </div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Parcours de défis</h2><span class="meta-line">séries thématiques, sans obligation d'ordre</span></div>
-  <div id="defisParcours"></div>
-</section>
-
 <section class="section" style="padding-top:0;padding-bottom:34px;">
-  <div class="section-head"><h2>Tes performances</h2><span class="meta-line">basé sur tes vraies réponses, jamais un chiffre inventé</span></div>
-  <div id="defisPerformances"></div>
+  <div class="quick-access-grid" id="defisTabsGrid"></div>
+
+  <div class="home-tab-panel" id="tab-defis-express">
+    <div class="section-head"><h2>⚡ Quiz Express</h2><span class="meta-line">choisis un thème, un niveau, une longueur</span></div>
+    <div class="card" style="max-width:640px;" id="modesEntrainement"></div>
+    <div class="card-grid" style="margin-top:16px;">
+      <a href="jeu-vrai-faux.html" class="card play-tile">
+        <span class="icon" data-icon="shield" style="color:var(--gold-bright);"></span>
+        <h3 style="font-size:16px;margin-top:10px;">Vrai ou faux</h3>
+        <p>Démasque les affirmations trompeuses sur l'argent et les arnaques financières.</p>
+        <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Jouer →</span></div>
+      </a>
+    </div>
+  </div>
+
+  <div class="home-tab-panel" id="tab-defis-cassetetes">
+    <div class="section-head"><h2>🧠 Casse-têtes</h2><span class="meta-line">raisonnement, pas des définitions</span></div>
+    <div id="defisCassesTetes"></div>
+  </div>
+
+  <div class="home-tab-panel" id="tab-defis-pourtoi">
+    <div class="section-head"><h2>🎯 Pour toi</h2><span class="meta-line">recommandé et à revoir</span></div>
+    <div class="dual-grid">
+      <div class="card" id="recommandePourToi"></div>
+      <div class="card" id="defisARevoir"></div>
+    </div>
+  </div>
+
+  <div class="home-tab-panel" id="tab-defis-parcours">
+    <div class="section-head"><h2>🗺️ Parcours thématiques</h2><span class="meta-line">séries thématiques, sans obligation d'ordre</span></div>
+    <div id="defisParcours"></div>
+  </div>
+
+  <div class="home-tab-panel" id="tab-defis-perf">
+    <div class="section-head"><h2>📊 Mes performances</h2><span class="meta-line">basé sur tes vraies réponses, jamais un chiffre inventé</span></div>
+    <div id="defisPerformances"></div>
+  </div>
+
+  <div class="home-tab-panel" id="tab-defis-classement">
+    <div class="section-head"><h2>🏆 Classement</h2><span class="meta-line">par ligue</span></div>
+    <div id="defisClassement"></div>
+  </div>
 </section>
 
 <footer class="site-footer">
