@@ -1446,15 +1446,96 @@ function getSkillMastery(){
     .sort((a, b) => a.pct - b.pct);
 }
 
-// Score de maîtrise global (moyenne simple des catégories réellement
-// pratiquées) — affiché sur le tableau de bord Défis. Volontairement
-// distinct d'un futur "Financial IQ" par domaine (chantier séparé, pas
-// encore construit) : ici, une seule moyenne honnête sur ce qui existe déjà
-// (getSkillMastery), jamais une note fabriquée sans donnée réelle.
-function computeGlobalMasteryPct(){
+// ---------- Financial IQ : score de maîtrise composite par domaine, séparé
+// de l'XP (sections 19-20 du plan Défis). L'XP (levelFromXP/LEVEL_TITLES)
+// mesure la régularité/participation ; le Financial IQ mesure la vraie
+// qualité des réponses par domaine — jamais un chiffre à l'apparence
+// scientifique inventé (pas de note façon "742" sans échelle expliquée) :
+// reste un vrai pourcentage de bonnes réponses, pondéré par le nombre réel
+// de réponses par domaine, jamais une simple moyenne des moyennes qui
+// donnerait le même poids à un domaine testé 2 fois et à un domaine testé
+// 50 fois. Distinct du système "niveau évalué" de Mon Parcours (quiz
+// approfondi ponctuel par domaine) : ici, un score qui évolue en continu
+// avec CHAQUE réponse donnée, dans Défis comme ailleurs sur le site. ----------
+function categorieDomainKey(categorie){
+  const domain = DOMAINS.find(d => (d.quizCategories || []).includes(categorie));
+  return domain ? domain.key : null;
+}
+function computeDomainMastery(){
   const mastery = getSkillMastery();
-  if(mastery.length === 0) return null;
-  return Math.round(mastery.reduce((s, m) => s + m.pct, 0) / mastery.length);
+  const byDomain = {};
+  DOMAINS.forEach(d => { byDomain[d.key] = {key: d.key, label: d.label, icon: d.icon, correct: 0, total: 0}; });
+  mastery.forEach(m => {
+    const key = categorieDomainKey(m.categorie);
+    if(!key) return;
+    byDomain[key].correct += m.correct;
+    byDomain[key].total += m.total;
+  });
+  return Object.values(byDomain)
+    .map(d => ({...d, pct: d.total > 0 ? Math.round((d.correct / d.total) * 100) : null}))
+    .filter(d => d.total > 0)
+    .sort((a, b) => b.total - a.total);
+}
+const FINANCIAL_IQ_MIN_ANSWERS = 15; // jamais un rang affiché sur un échantillon trop faible pour être honnête
+function computeFinancialIQ(){
+  const domains = computeDomainMastery();
+  const totalAnswers = domains.reduce((s, d) => s + d.total, 0);
+  if(totalAnswers < FINANCIAL_IQ_MIN_ANSWERS) return null;
+  const totalCorrect = domains.reduce((s, d) => s + d.correct, 0);
+  return {pct: Math.round((totalCorrect / totalAnswers) * 100), totalAnswers, domains};
+}
+// Noms volontairement distincts de LEVEL_TITLES (XP) — jamais le même mot
+// pour deux systèmes différents (un utilisateur pourrait être "Analyste" en
+// XP et à un tout autre niveau de maîtrise réelle en même temps).
+const MASTERY_RANKS = [
+  {min: 0, name: 'Novice', emoji: '🌱'},
+  {min: 40, name: 'Perspicace', emoji: '🔎'},
+  {min: 60, name: 'Rigoureux', emoji: '📊'},
+  {min: 75, name: 'Aguerri', emoji: '🎯'},
+  {min: 90, name: 'Virtuose', emoji: '💎'}
+];
+function masteryRankFromPct(pct){
+  let rank = MASTERY_RANKS[0];
+  MASTERY_RANKS.forEach(r => { if(pct >= r.min) rank = r; });
+  return rank;
+}
+function renderFinancialIQDetail(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const iq = computeFinancialIQ();
+  if(!iq){
+    const domains = computeDomainMastery();
+    const totalAnswers = domains.reduce((s, d) => s + d.total, 0);
+    el.innerHTML = `
+      <span class="smallcaps">🧠 Financial IQ</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Pas encore assez de réponses réelles pour calculer un score fiable (${totalAnswers} / ${FINANCIAL_IQ_MIN_ANSWERS} nécessaires) — continue à répondre aux Défis pour le débloquer.</p>`;
+    return;
+  }
+  const rank = masteryRankFromPct(iq.pct);
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+      <div>
+        <span class="smallcaps">🧠 Financial IQ</span>
+        <div class="result-big" style="font-size:26px;margin-top:4px;">${iq.pct} %</div>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:2px;">${rank.emoji} Rang de maîtrise : ${rank.name}</p>
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;flex-direction:column;gap:8px;">
+      ${iq.domains.map(d => `
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;">
+            <span>${d.icon} ${d.label}</span>
+            <span class="mono" style="color:var(--text-dim);">${d.pct} % (${d.correct}/${d.total})</span>
+          </div>
+          <div class="dash-weekbar" style="width:100%;"><div class="dash-weekfill" style="width:${d.pct}%;"></div></div>
+        </div>`).join('')}
+    </div>
+    ${renderMethodologyPanel({
+      calcul: "Financial IQ = (total des bonnes réponses ÷ total des réponses données) × 100, tous domaines confondus — une vraie moyenne pondérée par le nombre de réponses, jamais une simple moyenne des pourcentages par domaine (qui donnerait autant de poids à un domaine testé 2 fois qu'à un domaine testé 50 fois).",
+      donnees: "Toutes tes réponses réellement enregistrées sur le site (Défis, quiz de cours, missions) qui appartiennent à une catégorie rattachée à l'un des 6 domaines Likanza.",
+      limites: `Un score n'est affiché qu'à partir de ${FINANCIAL_IQ_MIN_ANSWERS} réponses au total, pour éviter un chiffre trompeur sur un trop petit échantillon. Distinct du "niveau évalué" par domaine sur Mon Parcours, qui vient d'un quiz approfondi ponctuel, pas d'un score qui évolue en continu.`,
+      comprendre: "Contrairement à l'XP (qui récompense la régularité, quelle que soit la réussite), le Financial IQ ne progresse que si tes réponses sont réellement correctes — répondre 100 fois à des questions faciles sans être juste ne le fait pas progresser."
+    })}`;
 }
 
 // ---------- Maîtrise par concept, 4 paliers (Découvert → Compris → Appliqué → Maîtrisé) ----------
@@ -2197,24 +2278,26 @@ function pickDefiDuJourItems(){
 }
 
 // ---------- Barre de statistiques du tableau de bord Défis (niveau, XP,
-// série, ligue, score de maîtrise) — uniquement des valeurs déjà réellement
+// série, ligue, Financial IQ) — uniquement des valeurs déjà réellement
 // suivies ailleurs sur le site (getGamification/levelFromXP/currentLeague/
-// computeGlobalMasteryPct), jamais un nouveau compteur inventé pour ce
-// widget. Le score de maîtrise affiche un tiret honnête tant qu'il n'y a pas
-// assez de vraies réponses pour le calculer. ----------
+// computeFinancialIQ), jamais un nouveau compteur inventé pour ce widget.
+// Le Financial IQ affiche un tiret honnête tant qu'il n'y a pas assez de
+// vraies réponses pour le calculer (voir renderFinancialIQDetail pour le
+// détail par domaine + méthodologie).----------
 function renderDefisStatsBar(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const g = getGamification();
   const lvl = levelFromXP(g.xp);
   const league = currentLeague(g.xp);
-  const masteryPct = computeGlobalMasteryPct();
+  const iq = computeFinancialIQ();
+  const rank = iq ? masteryRankFromPct(iq.pct) : null;
   const stats = [
     {label: 'Niveau', value: lvl.level, sub: lvl.title},
     {label: 'XP', value: g.xp},
     {label: 'Série', value: `${g.streak} 🔥`},
     {label: 'Ligue', value: league.name},
-    {label: 'Score de maîtrise', value: masteryPct !== null ? masteryPct + ' %' : '—', sub: masteryPct === null ? 'Réponds à quelques défis pour le débloquer' : null}
+    {label: 'Financial IQ', value: iq !== null ? iq.pct + ' %' : '—', sub: iq !== null ? `${rank.emoji} ${rank.name}` : 'Réponds à quelques défis pour le débloquer'}
   ];
   el.innerHTML = `<div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px;margin-top:14px;">
     ${stats.map(s => `<div class="card" style="padding:12px 14px;">
@@ -2486,7 +2569,8 @@ function renderDefisSemaine(elId){
 function renderDefisPerformances(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  el.innerHTML = `<div id="${elId}-semaine" style="margin-bottom:20px;"></div><div id="${elId}-mastery"></div>`;
+  el.innerHTML = `<div class="card" id="${elId}-iq" style="margin-bottom:20px;"></div><div id="${elId}-semaine" style="margin-bottom:20px;"></div><div id="${elId}-mastery"></div>`;
+  renderFinancialIQDetail(`${elId}-iq`);
   renderDefisSemaine(`${elId}-semaine`);
   renderMasteryList(`${elId}-mastery`);
 }

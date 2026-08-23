@@ -19,6 +19,7 @@ function initParcoursHero(){
   document.getElementById('parcoursMainSection').style.display = 'block';
   renderParcoursProfileSummary('parcoursProfileSummary');
   renderNextStepRecommendation('parcoursNextStep');
+  renderFinancialIQDetail('parcoursFinancialIQ');
   renderDomainDashboard('domainDashboard');
 }
 
