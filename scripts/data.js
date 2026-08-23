@@ -1713,17 +1713,68 @@ function renderMasteryList(elId){
 // le même besoin (sélection niveau/thème/longueur) sur un pool combiné
 // QUIZ_BANK_FULL + MENTAL_CHALLENGES, avec plusieurs formats possibles.
 
+// ---------- Recommandation Likanza après un échec (Learning Engine, "ne
+// jamais se limiter à Pas tout à fait") ----------
+// Relie une catégorie de quiz/défi aux vraies destinations existantes pour
+// cette catégorie précise — cours (COURS_CATALOG.quizCategories, déjà la
+// vraie taxonomie de compétences), définition (LIBRARY), simulateur
+// (Laboratoire, uniquement les 3 domaines réellement couverts aujourd'hui)
+// et défi (MENTAL_CHALLENGES). Un lien n'apparaît que si sa destination
+// existe réellement pour CETTE catégorie — jamais une recommandation
+// générique déconnectée de l'erreur, jamais un lien vers du contenu absent.
+const DOMAIN_LAB_LINK = {
+  personalFinance: {url:'laboratoire.html#tab-budget-epargne', label:'Simuler dans le Laboratoire'},
+  stockMarket: {url:'laboratoire.html#tab-investissement', label:'Simuler dans le Laboratoire'},
+  realEstate: {url:'laboratoire.html#tab-logement', label:'Simuler dans le Laboratoire'}
+};
+function findLibraryEntryForCategorie(categorie, domain){
+  const norm = s => s.toLowerCase().trim();
+  const target = norm(categorie);
+  const singular = target.replace(/s$/, '');
+  let entry = LIBRARY.find(l => norm(l.terme) === target || norm(l.terme) === singular);
+  if(!entry && domain) entry = LIBRARY.find(l => (domain.libraryCategories || []).includes(l.categorie));
+  return entry || null;
+}
+function renderRecommendationPanel(categorie){
+  if(!categorie) return '';
+  const domainKey = categorieDomainKey(categorie);
+  const domain = DOMAINS.find(d => d.key === domainKey);
+
+  const cours = COURS_CATALOG.find(c => (c.quizCategories || []).includes(categorie))
+    || (domainKey ? COURS_CATALOG.find(c => coursDomainKey(c) === domainKey) : null);
+  const def = findLibraryEntryForCategorie(categorie, domain);
+  const defi = MENTAL_CHALLENGES.find(m => m.categorie === categorie);
+  const labo = domainKey ? DOMAIN_LAB_LINK[domainKey] : null;
+  const hasRetryContent = QUIZ_BANK_FULL.concat(MENTAL_CHALLENGES).some(i => i.categorie === categorie);
+
+  const links = [];
+  if(cours && domainKey) links.push(`<a class="btn btn-sm" href="formations.html#tab-formation-${domainKey}">${ICONS['book-open']} Cours : ${cours.titre}</a>`);
+  if(def) links.push(`<a class="btn btn-sm" href="bibliotheque.html#${encodeURIComponent(def.terme.replace(/\s+/g,'-'))}">${ICONS.lightbulb} Définition : ${def.terme}</a>`);
+  if(labo) links.push(`<a class="btn btn-sm" href="${labo.url}">${ICONS.calculator} ${labo.label}</a>`);
+  if(defi) links.push(`<a class="btn btn-sm" href="defis.html?cat=${encodeURIComponent(categorie)}">${ICONS.target} Refaire un défi sur ce thème</a>`);
+  else if(hasRetryContent) links.push(`<a class="btn btn-sm" href="defis.html?cat=${encodeURIComponent(categorie)}">${ICONS.target} Refaire le test</a>`);
+
+  if(links.length === 0) return '';
+  return `
+    <div class="feedback-recommendation" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--hairline);">
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Tu dois renforcer cette compétence — quelques pistes :</p>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;">${links.join('')}</div>
+    </div>`;
+}
+
 // ---------- Feedback pédagogique partagé (Défis) ----------
 // Utilisé par tous les moteurs de quiz/défis, anciens et nouveaux : un
 // verdict court suivi de la vraie explication — jamais un simple ✅/❌ nu,
-// jamais un ton enfantin ("Oups ! Essaie encore champion 😜").
-function renderFeedbackHtml(correct, explication, xpMsg){
+// jamais un ton enfantin ("Oups ! Essaie encore champion 😜"). categorie
+// (optionnel, 4e argument) déclenche renderRecommendationPanel sur échec.
+function renderFeedbackHtml(correct, explication, xpMsg, categorie){
   return `
     <p class="feedback-verdict ${correct ? 'feedback-correct' : 'feedback-incorrect'}">
       <span aria-hidden="true">${correct ? '✓' : '✗'}</span> ${correct ? 'Exact.' : 'Pas tout à fait.'}
     </p>
     <p class="feedback-explanation">${explication}</p>
-    ${xpMsg ? `<p class="feedback-xp">${xpMsg}</p>` : ''}`;
+    ${xpMsg ? `<p class="feedback-xp">${xpMsg}</p>` : ''}
+    ${!correct ? renderRecommendationPanel(categorie) : ''}`;
 }
 
 
@@ -1772,7 +1823,7 @@ function renderVraiFaux(elId){
           if(rightBtn) rightBtn.classList.add('vf-correct');
           recordMistake(item);
         }
-        document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+        document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg, item.categorie);
         setTimeout(()=>{ qIndex++; renderQuestion(); }, 1700);
       }, {once:true});
     });
@@ -1844,7 +1895,7 @@ function renderChoiceItem(elId, introHtml, item, onAnswered){
       } else {
         recordMistake(item);
       }
-      document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+      document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg, item.categorie);
       onAnswered(correct, correct ? xp : 0);
     }, {once:true});
     opts.appendChild(btn);
@@ -1887,7 +1938,7 @@ function renderVraiFauxItem(elId, item, onAnswered){
         if(rightBtn) rightBtn.classList.add('vf-correct');
         recordMistake(item);
       }
-      document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+      document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg, item.categorie);
       onAnswered(correct, correct ? xp : 0);
     }, {once:true});
   });
@@ -1961,7 +2012,7 @@ function renderCalculItem(elId, item, onAnswered){
     } else {
       recordMistake(item);
     }
-    feedbackEl.innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+    feedbackEl.innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg, item.categorie);
     onAnswered(correct, correct ? xp : 0);
   };
   btn.addEventListener('click', check);
@@ -2028,7 +2079,7 @@ function renderSequenceItem(elId, item, onAnswered){
     } else {
       recordMistake(item);
     }
-    document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg);
+    document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg, item.categorie);
     onAnswered(correct, correct ? xp : 0);
   }
   render();
@@ -2118,7 +2169,7 @@ function renderClasseItem(elId, item, onAnswered){
     } else {
       recordMistake(item);
     }
-    document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, `${correctCount}/${item.items.length} bien classés. ${item.explication}`, xpMsg);
+    document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, `${correctCount}/${item.items.length} bien classés. ${item.explication}`, xpMsg, item.categorie);
     onAnswered(correct, correct ? xp : 0);
   }, {once:true});
 }
