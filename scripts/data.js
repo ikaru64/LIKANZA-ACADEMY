@@ -408,13 +408,18 @@ function getEvaluatedLevel(domainKey){
   }
 
   const stats = getQuizStats().categoryStats;
-  let correct = 0, total = 0;
+  let correct = 0, total = 0, weightedCorrect = 0, weightedTotal = 0;
   domain.quizCategories.forEach(cat => {
     const s = stats[cat];
-    if(s){ correct += s.correct; total += s.total; }
+    if(!s) return;
+    correct += s.correct; total += s.total;
+    weightedCorrect += s.weightedCorrect !== undefined ? s.weightedCorrect : s.correct;
+    weightedTotal += s.weightedTotal !== undefined ? s.weightedTotal : s.total;
   });
   if(total < 10) return null;
-  const pct = Math.round((correct / total) * 100);
+  // pct pondéré par difficulté (section 6) ; confiance basée sur le nombre
+  // RÉEL de réponses (total brut), jamais gonflé par la pondération.
+  const pct = Math.round((weightedCorrect / weightedTotal) * 100);
   return {niveau: levelFromPct(pct), pct, confiance: total >= 20 ? 'moyenne' : 'faible', source: 'activité récente (Défis, cours)', correct, total};
 }
 
@@ -1443,16 +1448,27 @@ function isAppliedItem(item){
 // vient d'un item de raisonnement (voir isAppliedItem). Alimente uniquement
 // getConceptMastery — categoryStats[cat].correct/total restent la même
 // source de vérité qu'avant pour getSkillMastery, aucune dérive possible.
-function recordAnswer(categorie, correct, applied){
+// Poids par difficulté (section 6 du prompt Learning Engine : "les exercices
+// difficiles doivent avoir davantage de poids que les questions très
+// faciles"). Multiplicateurs modérés, jamais extrêmes — une seule question
+// experte ne doit pas faire basculer un niveau à elle seule (section 6 :
+// "éviter les changements absurdes après une seule question").
+const DIFFICULTY_WEIGHT = {debutant:1, intermediaire:1.3, avance:1.7, expert:2};
+function recordAnswer(categorie, correct, applied, niveau){
   const stats = getQuizStats();
   const c = stats.categoryStats[categorie] || (stats.categoryStats[categorie] = {correct:0, total:0});
   if(c.appliedCorrect === undefined) c.appliedCorrect = 0;
   if(c.appliedTotal === undefined) c.appliedTotal = 0;
+  if(c.weightedCorrect === undefined) c.weightedCorrect = 0;
+  if(c.weightedTotal === undefined) c.weightedTotal = 0;
   if(!c.correctDates) c.correctDates = [];
+  const weight = DIFFICULTY_WEIGHT[niveau] || 1;
   c.total++;
+  c.weightedTotal += weight;
   if(applied) c.appliedTotal++;
   if(correct){
     c.correct++;
+    c.weightedCorrect += weight;
     if(applied) c.appliedCorrect++;
     const today = new Date().toDateString();
     if(!c.correctDates.includes(today)){
@@ -1476,12 +1492,17 @@ function getSkillMastery(){
   const stats = getQuizStats();
   return Object.entries(stats.categoryStats)
     .filter(([, s]) => s.total >= 2)
+    // weightedCorrect/weightedTotal absents (données enregistrées avant la
+    // pondération par difficulté, section 6) -> repli sur les comptes bruts,
+    // jamais un NaN ni un pourcentage inventé pour les anciennes données.
     .map(([categorie, s]) => {
-      const pct = Math.round((s.correct / s.total) * 100);
+      const wCorrect = s.weightedCorrect !== undefined ? s.weightedCorrect : s.correct;
+      const wTotal = s.weightedTotal !== undefined ? s.weightedTotal : s.total;
+      const pct = Math.round((wCorrect / wTotal) * 100);
       let niveau = 'en cours';
       if(pct >= 75) niveau = 'maîtrisé';
       else if(pct < 50) niveau = 'faible';
-      return {categorie, pct, correct: s.correct, total: s.total, niveau};
+      return {categorie, pct, correct: s.correct, total: s.total, weightedCorrect: wCorrect, weightedTotal: wTotal, niveau};
     })
     .sort((a, b) => a.pct - b.pct);
 }
@@ -1501,18 +1522,25 @@ function categorieDomainKey(categorie){
   const domain = DOMAINS.find(d => (d.quizCategories || []).includes(categorie));
   return domain ? domain.key : null;
 }
+// pct pondéré par difficulté (section 6) ; total/correct restent des
+// comptes BRUTS (nombre réel de réponses) — utilisés pour les seuils de
+// confiance/échantillon (badges de maîtrise, getEvaluatedLevel, Financial
+// IQ) qui doivent représenter un vrai nombre de réponses, jamais un total
+// gonflé artificiellement par la pondération.
 function computeDomainMastery(){
   const mastery = getSkillMastery();
   const byDomain = {};
-  DOMAINS.forEach(d => { byDomain[d.key] = {key: d.key, label: d.label, icon: d.icon, correct: 0, total: 0}; });
+  DOMAINS.forEach(d => { byDomain[d.key] = {key: d.key, label: d.label, icon: d.icon, correct: 0, total: 0, weightedCorrect: 0, weightedTotal: 0}; });
   mastery.forEach(m => {
     const key = categorieDomainKey(m.categorie);
     if(!key) return;
     byDomain[key].correct += m.correct;
     byDomain[key].total += m.total;
+    byDomain[key].weightedCorrect += m.weightedCorrect;
+    byDomain[key].weightedTotal += m.weightedTotal;
   });
   return Object.values(byDomain)
-    .map(d => ({...d, pct: d.total > 0 ? Math.round((d.correct / d.total) * 100) : null}))
+    .map(d => ({...d, pct: d.total > 0 ? Math.round((d.weightedCorrect / d.weightedTotal) * 100) : null}))
     .filter(d => d.total > 0)
     .sort((a, b) => b.total - a.total);
 }
@@ -1546,10 +1574,14 @@ BADGES.push(...MASTERY_BADGES);
 const FINANCIAL_IQ_MIN_ANSWERS = 15; // jamais un rang affiché sur un échantillon trop faible pour être honnête
 function computeFinancialIQ(){
   const domains = computeDomainMastery();
+  // Seuil de déblocage basé sur le nombre RÉEL de réponses (jamais gonflé
+  // par la pondération par difficulté) ; le score affiché, lui, est
+  // pondéré (section 6) — un vrai reflet de compétence, pas juste un ratio brut.
   const totalAnswers = domains.reduce((s, d) => s + d.total, 0);
   if(totalAnswers < FINANCIAL_IQ_MIN_ANSWERS) return null;
-  const totalCorrect = domains.reduce((s, d) => s + d.correct, 0);
-  return {pct: Math.round((totalCorrect / totalAnswers) * 100), totalAnswers, domains};
+  const weightedTotal = domains.reduce((s, d) => s + d.weightedTotal, 0);
+  const weightedCorrect = domains.reduce((s, d) => s + d.weightedCorrect, 0);
+  return {pct: Math.round((weightedCorrect / weightedTotal) * 100), totalAnswers, domains};
 }
 // Noms volontairement distincts de LEVEL_TITLES (XP) — jamais le même mot
 // pour deux systèmes différents (un utilisateur pourrait être "Analyste" en
@@ -1876,7 +1908,7 @@ function renderVraiFaux(elId){
         const choice = +btn.dataset.choice;
         el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
         const correct = choice === item.bonneReponse;
-        recordAnswer(item.categorie, correct, isAppliedItem(item));
+        recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
         let xpMsg = '';
         if(correct){
           btn.classList.add('vf-correct'); score++;
@@ -1951,7 +1983,7 @@ function renderChoiceItem(elId, introHtml, item, onAnswered){
         else if(ci === i) c.style.borderColor = 'var(--bordeaux)';
       });
       const correct = i === item.bonneReponse;
-      recordAnswer(item.categorie, correct, isAppliedItem(item));
+      recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
       const xp = item.xp || 10;
       let xpMsg = '';
       if(correct){
@@ -1990,7 +2022,7 @@ function renderVraiFauxItem(elId, item, onAnswered){
       const choice = +btn.dataset.choice;
       host.querySelectorAll('.vf-btn').forEach(b => b.disabled = true);
       const correct = choice === item.bonneReponse;
-      recordAnswer(item.categorie, correct, isAppliedItem(item));
+      recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
       const xp = item.xp || 10;
       let xpMsg = '';
       if(correct){
@@ -2068,7 +2100,7 @@ function renderCalculItem(elId, item, onAnswered){
     btn.disabled = true;
     input.disabled = true;
     const correct = Math.abs(val - item.reponse) <= item.tolerance;
-    recordAnswer(item.categorie, correct, isAppliedItem(item));
+    recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
     const xp = item.xp || 10;
     let xpMsg = '';
     if(correct){
@@ -2135,7 +2167,7 @@ function renderSequenceItem(elId, item, onAnswered){
     host.querySelectorAll('.defi-seq-row').forEach((row, pos) => {
       row.classList.add(order[pos] === pos ? 'defi-seq-correct' : 'defi-seq-wrong');
     });
-    recordAnswer(item.categorie, correct, isAppliedItem(item));
+    recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
     const xp = item.xp || 12;
     let xpMsg = '';
     if(correct){
@@ -2225,7 +2257,7 @@ function renderClasseItem(elId, item, onAnswered){
     });
     document.getElementById(`${elId}-validate`).disabled = true;
     const correct = (correctCount / item.items.length) >= 0.7;
-    recordAnswer(item.categorie, correct, isAppliedItem(item));
+    recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
     const xp = item.xp || 12;
     let xpMsg = '';
     if(correct){
@@ -2268,7 +2300,7 @@ function renderDilemmeItem(elId, item, onAnswered){
         if(ci === i) c.style.borderColor = opt.defensible ? 'var(--emerald)' : 'var(--bordeaux)';
       });
       const correct = !!opt.defensible;
-      recordAnswer(item.categorie, correct, isAppliedItem(item));
+      recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
       const xp = item.xp || 15;
       let xpMsg = '';
       if(correct){
@@ -3352,7 +3384,7 @@ function renderCoursQuiz(elId, cours, onComplete){
           else if(ci===i) c.style.borderColor = 'var(--bordeaux)';
         });
         const correct = i===item.bonneReponse;
-        recordAnswer(item.categorie, correct, isAppliedItem(item));
+        recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
         if(correct){ score++; resolveMistake(item.id); }
         else recordMistake(item);
         document.getElementById(`${elId}-feedback`).textContent = item.explication;
@@ -3489,7 +3521,7 @@ function renderMissionDetail(elId, level, index, onComplete){
       const val = parseFloat(input.value);
       if(isNaN(val)){ feedback.textContent = "Entre un nombre avant de vérifier."; feedback.style.color = 'var(--text-dim)'; return; }
       const correct = Math.abs(val - q.reponse) <= q.tolerance;
-      recordAnswer(q.categorie, correct, isAppliedItem(q));
+      recordAnswer(q.categorie, correct, isAppliedItem(q), q.niveau);
       if(correct){
         completeMission(level, index, onComplete);
         renderMissionDetail(elId, level, index, onComplete);
@@ -3505,7 +3537,7 @@ function renderMissionDetail(elId, level, index, onComplete){
     Array.from(choicesEl.children).forEach((btn, oi)=>{
       btn.addEventListener('click', ()=>{
         const correct = oi === q.bonneReponse;
-        recordAnswer(q.categorie, correct, isAppliedItem(q));
+        recordAnswer(q.categorie, correct, isAppliedItem(q), q.niveau);
         if(correct){
           completeMission(level, index, onComplete);
           renderMissionDetail(elId, level, index, onComplete);
@@ -3582,7 +3614,7 @@ function renderBusinessQuestionDuJour(elId){
       const choice = +btn.dataset.choice;
       el.querySelectorAll('.vf-btn').forEach(b=>b.disabled = true);
       const correct = choice === item.bonneReponse;
-      recordAnswer(item.categorie, correct, isAppliedItem(item));
+      recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
       if(correct){ btn.classList.add('vf-correct'); tryAwardQuizPoints(item.id, 10); resolveMistake(item.id); }
       else {
         btn.classList.add('vf-wrong');
