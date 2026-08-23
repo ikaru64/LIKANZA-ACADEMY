@@ -27,3 +27,28 @@ document.getElementById('cryptoCourses').innerHTML = cryptoLib.map(l=>`
     <button type="button" class="head" style="background:none;border:none;width:100%;text-align:left;font:inherit;" onclick="this.nextElementSibling.classList.toggle('open')"><h4>${l.terme}</h4><span class="idx">${l.niveau}</span></button>
     <div class="glossary-body">${l.detail}</div>
   </div>`).join('');
+
+// ---------- Maîtrise crypto par sous-compétence (section 16 du prompt
+// Learning Engine : "Blockchain, Tokenomics, DeFi, Security, Trading,
+// Analyse" — un profil crypto indépendant mais intégré au profil global,
+// jamais un seul score "crypto" agrégé qui masquerait les écarts entre
+// sous-compétences). Réutilise getSkillMastery (même source que Mon
+// Parcours/Financial IQ) — aucune donnée dupliquée ni recalculée ici. ----------
+function renderCryptoMasteryPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const categories = DOMAINS.find(d => d.key === 'crypto').quizCategories;
+  const mastery = getSkillMastery();
+  el.innerHTML = categories.map(cat => {
+    const m = mastery.find(x => x.categorie === cat);
+    return `
+    <div class="card">
+      <span class="smallcaps">${cat}</span>
+      ${m
+        ? `<div class="result-big" style="font-size:22px;margin-top:6px;">${m.pct}%</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">${m.correct}/${m.total} bonnes réponses</p>`
+        : `<p style="font-size:12px;color:var(--text-dim);margin-top:8px;">Pas encore de données</p>`}
+      <a href="defis.html?cat=${encodeURIComponent(cat)}" class="btn btn-sm" style="margin-top:10px;">S'entraîner →</a>
+    </div>`;
+  }).join('');
+}
+safeRun('maîtrise crypto', () => renderCryptoMasteryPanel('cryptoMastery'));
