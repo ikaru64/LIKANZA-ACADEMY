@@ -1516,6 +1516,33 @@ function computeDomainMastery(){
     .filter(d => d.total > 0)
     .sort((a, b) => b.total - a.total);
 }
+
+// ---------- Badges de maîtrise réelle (section 21/23 du prompt Learning
+// Engine) : jusqu'ici tous les badges de BADGES mesuraient de l'activité
+// (streak, XP, nombre de thèmes touchés) — jamais une vraie compétence. Un
+// badge par domaine, calculé à partir de computeDomainMastery() (même
+// source que Financial IQ), avec le même seuil minimal que
+// getEvaluatedLevel (10 réponses réelles) pour ne jamais l'attribuer sur un
+// échantillon trop faible pour être honnête. Générés depuis DOMAINS : un
+// nouveau domaine obtient automatiquement son badge, jamais codé en dur
+// à la main (section 29 du prompt, "ajouter facilement de nouvelles
+// compétences"). ----------
+const MASTERY_BADGE_MIN_TOTAL = 10;
+const MASTERY_BADGE_THRESHOLD = 75;
+const MASTERY_BADGE_LABELS = {
+  personalFinance: 'Personal Finance', stockMarket: 'Analyste Bourse', business: 'Business Strategist',
+  economics: 'Économiste en herbe', realEstate: 'Expert Immobilier', crypto: 'Crypto Fundamentals'
+};
+const MASTERY_BADGES = DOMAINS.map(d => ({
+  id: 'mastery_' + d.key,
+  name: MASTERY_BADGE_LABELS[d.key] || `Maîtrise ${d.label}`,
+  desc: `Atteindre ${MASTERY_BADGE_THRESHOLD}% de bonnes réponses en ${d.displayLabel} (au moins ${MASTERY_BADGE_MIN_TOTAL} réponses réelles).`,
+  check: () => {
+    const dom = computeDomainMastery().find(x => x.key === d.key);
+    return !!(dom && dom.total >= MASTERY_BADGE_MIN_TOTAL && dom.pct >= MASTERY_BADGE_THRESHOLD);
+  }
+}));
+BADGES.push(...MASTERY_BADGES);
 const FINANCIAL_IQ_MIN_ANSWERS = 15; // jamais un rang affiché sur un échantillon trop faible pour être honnête
 function computeFinancialIQ(){
   const domains = computeDomainMastery();
