@@ -3126,6 +3126,42 @@ function renderCourseLibraryLinks(libraryTermes){
   return `<p style="font-size:12px;color:var(--text-dim);margin-top:16px;">📚 Voir aussi dans la Bibliothèque : ${termes.map(t => `<a href="bibliotheque.html#${encodeURIComponent(t.replace(/\s+/g,'-'))}" style="color:var(--gold-bright);">${t}</a>`).join(' · ')}</p>`;
 }
 
+// ---------- Feedback qualité pédagogique (section 26 du prompt Learning
+// Engine) : simple, jamais bloquant, un avis par contenu (pas un vote répété
+// à chaque relecture) — sert uniquement à repérer les cours à améliorer,
+// jamais affiché comme une note publique. ----------
+function getClarityFeedback(){ return safeGetJSON('fzr-clarity-feedback', {}); }
+function saveClarityFeedbackEntry(contentId, rating){
+  const all = getClarityFeedback();
+  all[contentId] = {rating, date: new Date().toISOString()};
+  safeSetJSON('fzr-clarity-feedback', all);
+}
+const CLARITY_OPTIONS = [
+  {value:'tres-claire', label:'Très claire'},
+  {value:'claire', label:'Claire'},
+  {value:'moyenne', label:'Moyenne'},
+  {value:'pas-claire', label:'Pas claire'}
+];
+function renderClarityFeedback(elId, contentId){
+  const el = document.getElementById(elId);
+  if(!el || !contentId) return;
+  const existing = getClarityFeedback()[contentId];
+  if(existing){
+    const opt = CLARITY_OPTIONS.find(o => o.value === existing.rating);
+    el.innerHTML = `<p style="font-size:12px;color:var(--text-dim);">Merci pour ton retour${opt ? ` (${opt.label})` : ''}.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:8px;">Cette explication était-elle claire ?</p>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;">${CLARITY_OPTIONS.map(o => `<button class="pill" data-value="${o.value}" type="button">${o.label}</button>`).join('')}</div>`;
+  el.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      saveClarityFeedbackEntry(contentId, btn.dataset.value);
+      renderClarityFeedback(elId, contentId);
+    });
+  });
+}
+
 // Navigation chapitre par chapitre (même forme que la pagination existante
 // de renderCoursDetail — barre de progression, bouton Suivant/Précédent),
 // puis bascule sur le quiz de validation déjà existant (renderCoursQuiz,
@@ -3146,6 +3182,7 @@ function renderCoursRich(elId, cours, onComplete){
       <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
       ${renderCourseChapter(chapitres[chapIndex])}
       ${isLast ? renderCourseLibraryLinks(cours.libraryTermes) : ''}
+      ${isLast ? `<div id="${elId}-clarity" style="margin-top:16px;"></div>` : ''}
       <div style="display:flex;gap:8px;margin-top:18px;">
         ${chapIndex > 0 ? `<button class="btn btn-sm" id="${elId}-prev">← Précédent</button>` : ''}
         <button class="btn btn-sm btn-gold" id="${elId}-next">${isLast ? 'Passer au quiz →' : 'Chapitre suivant →'}</button>
@@ -3156,6 +3193,7 @@ function renderCoursRich(elId, cours, onComplete){
     });
     const prevBtn = document.getElementById(`${elId}-prev`);
     if(prevBtn) prevBtn.addEventListener('click', () => { chapIndex--; renderChapterStep(); });
+    if(isLast) renderClarityFeedback(`${elId}-clarity`, cours.id);
   }
 
   function renderQuizStep(){
