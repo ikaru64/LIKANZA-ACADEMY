@@ -898,7 +898,164 @@ const MENTAL_CHALLENGES = [
       {label:"Bitcoin (grande capitalisation, marché établi)", bucket:"Élevé"},
       {label:"Petite cryptomonnaie récente et peu connue", bucket:"Très élevé"}
     ],
-    explication:"Même au sein des cryptoactifs, les niveaux de risque diffèrent : un stablecoin vise une valeur stable (mais garde un risque lié à son émetteur et à sa réserve), un actif établi comme le bitcoin reste très volatil mais bénéficie d'un marché profond, tandis qu'un projet récent et peu connu cumule volatilité, faible liquidité et risque d'échec du projet lui-même."}
+    explication:"Même au sein des cryptoactifs, les niveaux de risque diffèrent : un stablecoin vise une valeur stable (mais garde un risque lié à son émetteur et à sa réserve), un actif établi comme le bitcoin reste très volatil mais bénéficie d'un marché profond, tandis qu'un projet récent et peu connu cumule volatilité, faible liquidité et risque d'échec du projet lui-même."},
+
+  // ---------- Format "dilemme" (plusieurs choix défendables selon le contexte,
+  // jamais une seule bonne réponse fabriquée artificiellement) ----------
+  {id:"mc-dil-001", domain:"Finance personnelle", categorie:"Constitution d'un patrimoine", niveau:"intermediaire", format:"dilemme", estimatedTime:3, xp:20,
+    conceptsTested:["arbitrage épargne/investissement", "contexte personnel"],
+    situation:"Tu as 20 000 € d'épargne de côté, un revenu stable, aucune dette, et un fonds d'urgence déjà constitué.",
+    question:"Que ferais-tu de cette somme ?",
+    options:[
+      {label:"Tout investir en bourse (ETF diversifié)", defensible:true, analyse:"Avec un horizon long et un fonds d'urgence déjà en place, investir la totalité maximise le temps passé sur le marché — mais expose 100% de la somme à la volatilité à court terme."},
+      {label:"Investir progressivement sur plusieurs mois (DCA)", defensible:true, analyse:"Réduit le risque de tout investir au plus mauvais moment, au prix d'un rendement statistiquement un peu plus faible en moyenne sur longue période — un compromis psychologique autant que financier."},
+      {label:"Tout garder en épargne liquide, par précaution", defensible:false, analyse:"Avec un fonds d'urgence déjà constitué et un horizon long, garder 20 000 € entièrement liquides revient à accepter une perte de pouvoir d'achat quasi certaine face à l'inflation, sans bénéfice de sécurité supplémentaire réel dans cette situation précise."},
+      {label:"Répartir entre investissement et un nouveau projet (formation, achat professionnel...)", defensible:true, analyse:"Défendable si ce projet a un rendement attendu réel (revenu futur, compétence monétisable) — mais seulement si ce n'est pas un choix par défaut sans analyse du retour attendu."}
+    ],
+    conclusion:"Il n'y a pas une seule bonne réponse ici : investir intégralement et investir progressivement sont tous deux raisonnables selon la tolérance à la volatilité à court terme, et répartir vers un projet peut l'être aussi selon sa qualité. Tout garder en liquide est la seule option sans justification solide dans ce contexte précis (fonds d'urgence déjà là, horizon long)."},
+  {id:"mc-dil-002", domain:"Bourse", categorie:"Risque et volatilité", niveau:"intermediaire", format:"dilemme", estimatedTime:3, xp:20,
+    conceptsTested:["comportement face à une baisse de marché", "horizon d'investissement"],
+    situation:"Le marché vient de chuter de 20% en quelques semaines. Ton portefeuille, investi pour la retraite dans 25 ans, a perdu 20% de sa valeur.",
+    question:"Que fais-tu ?",
+    options:[
+      {label:"Je vends tout pour éviter d'autres pertes", defensible:false, analyse:"Vendre après une chute transforme une perte latente (qui peut se résorber avec le temps, sur un horizon de 25 ans) en perte réelle et définitive — souvent la pire décision au pire moment, sauf si l'horizon ou la tolérance au risque ont réellement changé entre-temps."},
+      {label:"Je ne touche à rien et je continue mes versements programmés", defensible:true, analyse:"Avec un horizon de 25 ans, une baisse de 20% reste un épisode temporaire statistiquement fréquent ; continuer ses versements achète même des parts à prix réduit."},
+      {label:"J'augmente temporairement mes versements, si mes finances le permettent", defensible:true, analyse:"Défendable si la situation financière personnelle le permet réellement (pas d'endettement pour le faire, fonds d'urgence intact) : acheter davantage pendant une baisse, sur un horizon long, est une stratégie reconnue — jamais une martingale garantie."},
+      {label:"Je regarde les cours toutes les heures pour décider", defensible:false, analyse:"Une décision d'investissement de long terme ne devrait jamais dépendre d'un suivi compulsif des cours à court terme — ce comportement est justement ce qui pousse à vendre au plus mauvais moment."}
+    ],
+    conclusion:"Ne rien changer et augmenter ses versements sont tous deux raisonnables pour un horizon de 25 ans ; ce qui les distingue est uniquement la capacité financière réelle à investir davantage, jamais une garantie de gain. Vendre dans la panique et suivre les cours en continu sont les deux réactions les plus corrélées aux pertes réelles des investisseurs particuliers."},
+  {id:"mc-dil-003", domain:"Business", categorie:"Levée de fonds", niveau:"avance", format:"dilemme", estimatedTime:4, xp:25,
+    conceptsTested:["dette vs capital", "dilution", "coût du financement"],
+    situation:"Ta startup a besoin de 200 000 € pour continuer à se développer. Une banque propose un prêt à taux fixe ; un investisseur propose la même somme contre 15% du capital.",
+    question:"Quelle option choisis-tu ?",
+    options:[
+      {label:"Le prêt bancaire", defensible:true, analyse:"Tu gardes 100% du capital et le contrôle de l'entreprise, mais tu dois rembourser quoi qu'il arrive, y compris si l'activité ne décolle pas comme prévu — un vrai risque si les revenus sont encore incertains."},
+      {label:"L'investisseur", defensible:true, analyse:"Aucun remboursement obligatoire si l'entreprise échoue, et l'investisseur peut apporter réseau et expertise — mais tu cèdes une part réelle et durable du capital, et une partie du pouvoir de décision."},
+      {label:"Refuser les deux et attendre d'avoir plus de revenus propres", defensible:true, analyse:"Défendable si l'activité peut réellement attendre sans perdre d'opportunité concurrentielle — mais risque de laisser un concurrent occuper le terrain pendant l'attente."},
+      {label:"Prendre les deux en même temps pour maximiser les moyens disponibles", defensible:false, analyse:"Cumuler dette et dilution du capital pour le même besoin de financement, sans plan clair distinguant ce que chaque euro va financer, revient à maximiser les deux contraintes (remboursement fixe et perte de contrôle) sans raison financière de le faire."}
+    ],
+    conclusion:"Le choix entre le prêt, l'investisseur et l'attente dépend surtout de la confiance dans la stabilité des revenus futurs, de la valeur ajoutée réelle d'un investisseur au-delà de l'argent, et du coût réel d'attendre. Aucune de ces trois options n'est universellement supérieure aux deux autres."},
+
+  // ---------- Format "enquete" (plusieurs indices réels à croiser avant de conclure) ----------
+  {id:"mc-enq-001", domain:"Business", categorie:"Bilan comptable", niveau:"avance", format:"enquete", estimatedTime:5, xp:25,
+    conceptsTested:["cash-flow vs résultat comptable", "cohérence des indicateurs financiers"],
+    affirmation:"« Notre entreprise a fortement amélioré sa situation financière cette année », déclare le PDG dans son rapport annuel.",
+    indices:[
+      {label:"Chiffre d'affaires", valeur:"+18% sur un an"},
+      {label:"Bénéfice net", valeur:"+5% sur un an"},
+      {label:"Dette totale", valeur:"+40% sur un an"},
+      {label:"Cash-flow opérationnel", valeur:"-12% sur un an"},
+      {label:"Créances clients", valeur:"+35% sur un an"},
+      {label:"Stocks", valeur:"+28% sur un an"}
+    ],
+    question:"Qu'est-ce qui est le plus incohérent avec l'affirmation du PDG ?",
+    choix:[
+      "Le chiffre d'affaires n'a pas assez augmenté",
+      "Le cash-flow opérationnel baisse alors que le chiffre d'affaires et les créances augmentent fortement — signe possible que les ventes ne sont pas encore encaissées, voire de difficultés à recouvrer les paiements",
+      "Le bénéfice net a augmenté, donc tout va bien",
+      "La dette a augmenté, ce qui est toujours un mauvais signe"
+    ],
+    bonneReponse:1,
+    explication:"Une hausse du chiffre d'affaires et des créances clients accompagnée d'une baisse du cash-flow opérationnel est un vrai signal d'alerte : l'entreprise vend plus mais encaisse moins, ou les délais de paiement clients s'allongent. C'est un cas classique où le compte de résultat semble bon mais la trésorerie réelle se dégrade — la dette augmente probablement pour compenser ce manque de cash. La dette seule n'est jamais automatiquement un mauvais signe (tout dépend de son usage), et un bénéfice en hausse ne suffit jamais à conclure seul."},
+  {id:"mc-enq-002", domain:"Bourse", categorie:"Actions", niveau:"avance", format:"enquete", estimatedTime:5, xp:25,
+    conceptsTested:["PER dans son contexte", "signaux de détérioration"],
+    affirmation:"Un ami te dit : « Cette action est vraiment bon marché en ce moment, il faut en profiter. »",
+    indices:[
+      {label:"PER de l'action", valeur:"8 (moyenne du secteur : 18)"},
+      {label:"Croissance du chiffre d'affaires", valeur:"-15% sur 3 ans"},
+      {label:"Dette nette / EBITDA", valeur:"6× (secteur : 2× en moyenne)"},
+      {label:"Dividende", valeur:"supprimé il y a 6 mois"},
+      {label:"Cours de l'action", valeur:"-70% sur 2 ans"}
+    ],
+    question:"Que suggère le plus fortement ce dossier ?",
+    choix:[
+      "L'action est sous-évaluée par le marché, c'est une opportunité claire",
+      "Un PER faible associé à une croissance négative, un endettement élevé et un dividende supprimé suggère plutôt que le marché anticipe des difficultés réelles, pas une erreur de valorisation",
+      "Le PER est le seul chiffre qui compte pour juger si une action est chère",
+      "La baisse du cours sur 2 ans garantit un rebond prochain"
+    ],
+    bonneReponse:1,
+    explication:"Un PER faible peut parfois signaler une vraie sous-évaluation, mais ici il est accompagné de plusieurs signaux cohérents de détérioration réelle (croissance négative, endettement élevé, dividende supprimé) — le marché intègre probablement ces risques dans le prix plutôt que de se tromper. Un PER isolé ne permet jamais de conclure seul."},
+  {id:"mc-enq-003", domain:"Finance personnelle", categorie:"Crédit", niveau:"intermediaire", format:"enquete", estimatedTime:4, xp:20,
+    conceptsTested:["coût comparé de plusieurs dettes", "fonds d'urgence"],
+    affirmation:"Un proche affirme : « Je rembourse ma maison plus vite que prévu, ma situation financière s'améliore clairement. »",
+    indices:[
+      {label:"Épargne de précaution", valeur:"200 € (recommandé : plusieurs mois de dépenses)"},
+      {label:"Solde de la carte de crédit à la consommation", valeur:"en hausse"},
+      {label:"Remboursement immobilier anticipé", valeur:"+300 €/mois"},
+      {label:"Taux du crédit immobilier", valeur:"1,8 % (fixé il y a 5 ans)"},
+      {label:"Taux moyen d'une carte de crédit à la consommation", valeur:"environ 18 %"}
+    ],
+    question:"Quel est le problème le plus probable dans ce raisonnement ?",
+    choix:[
+      "Rembourser plus vite un crédit immobilier est toujours la meilleure décision possible",
+      "Rembourser par anticipation un crédit à 1,8% pendant que le solde d'une carte à environ 18% augmente revient probablement à perdre de l'argent au global, en plus de réduire l'épargne de précaution en dessous du seuil recommandé",
+      "Le taux du crédit immobilier n'a aucune importance dans ce calcul",
+      "L'absence d'épargne de précaution n'est pas liée à la question du remboursement anticipé"
+    ],
+    bonneReponse:1,
+    explication:"Rembourser par anticipation un crédit peu coûteux (1,8%) a beaucoup moins de valeur que d'éponger une dette à un taux bien plus élevé (environ 18%) — chaque euro utilisé pour l'un est un euro qui ne sert pas à l'autre. Une épargne de précaution insuffisante aggrave encore le risque : un imprévu obligerait probablement à emprunter de nouveau, potentiellement au taux élevé de la carte."},
+  {id:"mc-dil-004", domain:"Finance personnelle", categorie:"Retraite et PER", niveau:"intermediaire", format:"dilemme", estimatedTime:3, xp:20,
+    conceptsTested:["avantage fiscal vs liquidité", "horizon long terme"],
+    situation:"Tu as 35 ans, un revenu confortable, et tu hésites entre plusieurs façons de préparer ta retraite.",
+    question:"Quelle stratégie choisis-tu ?",
+    options:[
+      {label:"Verser sur un PER (Plan d'Épargne Retraite), bloqué jusqu'à la retraite", defensible:true, analyse:"L'avantage fiscal à l'entrée peut être réel selon ta tranche d'imposition actuelle, mais l'argent reste bloqué (sauf cas exceptionnels) jusqu'à la retraite — un vrai arbitrage entre avantage fiscal immédiat et perte de liquidité pendant des décennies."},
+      {label:"Investir en bourse via un compte-titres ou une assurance-vie, sans blocage", defensible:true, analyse:"Moins d'avantage fiscal immédiat qu'un PER dans certains cas, mais une vraie liberté : l'argent reste disponible si un besoin réel survient avant la retraite."},
+      {label:"Ne rien mettre de côté maintenant, on verra plus tard", defensible:false, analyse:"Avec un horizon de plusieurs décennies, chaque année d'attente est une année d'intérêts composés perdue — repousser sans raison financière réelle (pas de dette prioritaire, pas de contrainte de trésorerie) a un vrai coût, même si rien de dramatique ne se passe visiblement à court terme."},
+      {label:"Répartir entre un PER et un support plus liquide", defensible:true, analyse:"Défendable : diversifie l'avantage fiscal du PER avec la liberté d'un support non bloqué, au prix d'une allocation un peu plus complexe à suivre."}
+    ],
+    conclusion:"Verser sur un PER, investir librement et répartir entre les deux sont tous défendables selon l'importance donnée à l'avantage fiscal immédiat face à la liberté de disposer de l'argent avant la retraite. Ne rien faire est la seule option sans justification financière ici (revenu confortable, aucune contrainte particulière évoquée)."},
+  {id:"mc-dil-005", domain:"Bourse", categorie:"Diversification", niveau:"debutant", format:"dilemme", estimatedTime:3, xp:18,
+    conceptsTested:["concentration vs diversification", "vérification personnelle"],
+    situation:"Tu as 15 000 € à investir. Un ami te conseille de tout mettre sur une seule action qu'il juge « certaine d'exploser ». Un autre te conseille un ETF monde diversifié.",
+    question:"Que fais-tu ?",
+    options:[
+      {label:"Je mets tout sur l'action recommandée par mon ami", defensible:false, analyse:"Concentrer 100% du capital sur une seule action expose à un risque spécifique énorme (si cette entreprise se trompe, l'intégralité du capital est affectée) — aucune conviction transmise par un tiers, même forte, ne rend cette concentration prudente pour un particulier."},
+      {label:"Je mets tout sur l'ETF diversifié", defensible:true, analyse:"Réduit fortement le risque spécifique à une seule entreprise, tout en restant exposé au risque de marché global — une approche raisonnable par défaut, en particulier sans expertise personnelle sur l'action recommandée."},
+      {label:"Je mets une petite partie sur l'action (par exemple 5-10%) et le reste sur l'ETF", defensible:true, analyse:"Défendable si tu as une vraie thèse d'investissement sur cette action (analysée par toi-même, pas juste une conviction transmise) : limite le risque de concentration tout en gardant une exposition ciblée."},
+      {label:"Je ne fais rien tant que je n'ai pas vérifié moi-même les chiffres de l'entreprise recommandée", defensible:true, analyse:"Toujours raisonnable de ne jamais investir uniquement sur la recommandation de quelqu'un d'autre sans vérification personnelle — la prudence n'est jamais un mauvais choix face à une incertitude réelle."}
+    ],
+    conclusion:"Investir dans l'ETF, répartir avec une petite part ciblée, ou vérifier avant d'agir sont tous défendables selon le niveau de conviction réel (et vérifié) sur l'action recommandée. Tout miser sur une seule action, sur simple recommandation d'un tiers, concentre un risque énorme sans base solide."},
+
+  {id:"mc-enq-004", domain:"Économie", categorie:"Taux directeur", niveau:"avance", format:"enquete", estimatedTime:5, xp:25,
+    conceptsTested:["délai de transmission monétaire", "limites d'une baisse de taux"],
+    affirmation:"Un analyste déclare : « La banque centrale vient de baisser ses taux directeurs, c'est excellent pour l'économie, tout le monde va en profiter immédiatement. »",
+    indices:[
+      {label:"Taux directeur", valeur:"-0,5 point ce mois-ci"},
+      {label:"Inflation", valeur:"encore à 6% (bien au-dessus de la cible de 2%)"},
+      {label:"Chômage", valeur:"en hausse depuis 6 mois"},
+      {label:"Délai de transmission historique d'une baisse de taux à l'économie réelle", valeur:"généralement plusieurs trimestres"},
+      {label:"Confiance des ménages", valeur:"en baisse"}
+    ],
+    question:"Quel est le problème le plus important dans cette affirmation ?",
+    choix:[
+      "Une baisse de taux n'a jamais d'effet positif sur l'économie",
+      "L'effet d'une baisse de taux se propage généralement avec un délai de plusieurs trimestres, et une inflation encore élevée limite la marge de manœuvre pour de nouvelles baisses — l'effet n'est ni immédiat, ni garanti pour tout le monde",
+      "Le chômage n'a aucun rapport avec les taux directeurs",
+      "Une seule baisse de taux suffit toujours à relancer une économie"
+    ],
+    bonneReponse:1,
+    explication:"Les baisses de taux directeurs agissent avec un décalage réel (crédit moins cher, mais les effets sur l'investissement et la consommation prennent du temps à se matérialiser) — parler d'un effet « immédiat » est trompeur. Une inflation encore élevée limite aussi la capacité de la banque centrale à baisser davantage ses taux sans risquer de la relancer. Enfin, « tout le monde en profite immédiatement » ignore que les effets touchent différemment emprunteurs, épargnants et secteurs économiques."},
+  {id:"mc-enq-005", domain:"Immobilier", categorie:"Immobilier", niveau:"intermediaire", format:"enquete", estimatedTime:5, xp:22,
+    conceptsTested:["rendement brut vs net", "charges réelles d'un investissement locatif"],
+    affirmation:"Un vendeur immobilier affirme : « Ce bien est un investissement locatif exceptionnel, le rendement affiché est de 8% brut, largement au-dessus du marché. »",
+    indices:[
+      {label:"Rendement brut affiché", valeur:"8%"},
+      {label:"Charges de copropriété", valeur:"non incluses dans le calcul affiché"},
+      {label:"Taxe foncière", valeur:"non incluse non plus"},
+      {label:"Taux de vacance locative moyen du quartier", valeur:"élevé (immeuble ancien, forte rotation de locataires)"},
+      {label:"Travaux de rénovation énergétique obligatoires", valeur:"à prévoir dans les 5 prochaines années, d'après le diagnostic"}
+    ],
+    question:"Que suggère le plus fortement ce dossier ?",
+    choix:[
+      "Le rendement brut de 8% est le seul chiffre à regarder pour juger de la qualité de l'investissement",
+      "Le rendement brut ignore les charges, la taxe foncière, la vacance locative et les travaux à venir — le rendement net réel est probablement bien inférieur aux 8% annoncés",
+      "Un rendement affiché au-dessus du marché est toujours une bonne nouvelle, sans autre vérification nécessaire",
+      "Les travaux de rénovation énergétique n'ont aucun impact sur la rentabilité réelle"
+    ],
+    bonneReponse:1,
+    explication:"Le rendement BRUT (loyer annuel ÷ prix d'achat) ne déduit aucune charge réelle — pour connaître la rentabilité réelle, il faut soustraire les charges de copropriété, la taxe foncière, les périodes de vacance locative probables, et anticiper les travaux obligatoires à venir. Un rendement affiché nettement au-dessus du marché, sans que ces éléments soient précisés, est souvent présenté sous son angle le plus favorable — pas nécessairement trompeur en soi, mais incomplet tant que le calcul net n'est pas fait."}
 ];
 
 // ---------- Registre unique des 6 domaines Likanza ----------

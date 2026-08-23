@@ -2002,6 +2002,69 @@ function renderClasseItem(elId, item, onAnswered){
   }, {once:true});
 }
 
+// ---------- Format "dilemme" : plusieurs choix peuvent être raisonnables
+// selon le contexte — jamais une seule bonne réponse fabriquée
+// artificiellement. Chaque option porte un booléen `defensible` décidé par
+// le contenu du défi lui-même (pas un simple index unique de bonne réponse) ;
+// plusieurs options peuvent être `defensible:true` en même temps. La
+// réponse est "correcte" si l'option choisie est défendable dans CE
+// contexte précis — le feedback affiche toujours l'analyse propre à
+// l'option choisie, jamais un jugement générique. ----------
+function renderDilemmeItem(elId, item, onAnswered){
+  const host = document.getElementById(elId);
+  if(!host) return;
+  host.innerHTML = `
+    <div class="defi-intro"><p class="defi-intro-statement">${item.situation}</p></div>
+    <div class="defi-q-prompt" style="font-size:15px;font-weight:500;margin-bottom:12px;">${item.question}</div>
+    <div id="${elId}-opts" style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;"></div>
+    <div id="${elId}-feedback"></div>`;
+  const opts = document.getElementById(`${elId}-opts`);
+  item.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'pill';
+    btn.style.textAlign = 'left';
+    btn.textContent = opt.label;
+    btn.addEventListener('click', () => {
+      Array.from(opts.children).forEach((c, ci) => {
+        c.disabled = true;
+        if(ci === i) c.style.borderColor = opt.defensible ? 'var(--emerald)' : 'var(--bordeaux)';
+      });
+      const correct = !!opt.defensible;
+      recordAnswer(item.categorie, correct, isAppliedItem(item));
+      const xp = item.xp || 15;
+      let xpMsg = '';
+      if(correct){
+        const got = tryAwardQuizPoints(item.id, xp);
+        if(got) xpMsg = `+${got} XP · +${got} Finance Points`;
+        resolveMistake(item.id);
+      } else {
+        recordMistake(item);
+      }
+      document.getElementById(`${elId}-feedback`).innerHTML = `
+        <p class="feedback-verdict ${correct ? 'feedback-correct' : 'feedback-incorrect'}">
+          <span aria-hidden="true">${correct ? '✓' : '⚠'}</span> ${correct ? 'Choix défendable dans ce contexte.' : 'Contestable dans ce contexte précis.'}
+        </p>
+        <p class="feedback-explanation">${opt.analyse}</p>
+        ${item.conclusion ? `<p class="feedback-explanation" style="margin-top:8px;font-style:italic;">${item.conclusion}</p>` : ''}
+        ${xpMsg ? `<p class="feedback-xp">${xpMsg}</p>` : ''}`;
+      onAnswered(correct, correct ? xp : 0);
+    }, {once:true});
+    opts.appendChild(btn);
+  });
+}
+
+// ---------- Format "enquete" : plusieurs indices réels à croiser avant de
+// répondre, présentés comme un dossier — jamais une conclusion évidente en
+// un coup d'œil. Réutilise le moteur QCM déjà partagé (renderChoiceItem,
+// même mécanique que "cas"/"vraimais") : seule la présentation change. ----------
+function renderEnqueteItem(elId, item, onAnswered){
+  const introHtml = `<div class="defi-intro">
+    ${item.affirmation ? `<p class="defi-intro-statement" style="margin-bottom:10px;">${item.affirmation}</p>` : ''}
+    <ul class="defi-intro-facts">${(item.indices || []).map(ind => `<li>• <strong>${ind.label}</strong> : ${ind.valeur}</li>`).join('')}</ul>
+  </div>`;
+  renderChoiceItem(elId, introHtml, item, onAnswered);
+}
+
 // ---------- Orchestrateur : session mêlant plusieurs formats/domaines ----------
 // Détermine le format réel d'un item (les items QUIZ_BANK_FULL utilisent
 // `type`, les items MENTAL_CHALLENGES utilisent `format` directement).
@@ -2018,7 +2081,9 @@ const DEFI_FORMAT_RENDERERS = {
   calcul: renderCalculItem,
   sequence: renderSequenceItem,
   infomanquante: renderInfoManquanteItem,
-  classe: renderClasseItem
+  classe: renderClasseItem,
+  dilemme: renderDilemmeItem,
+  enquete: renderEnqueteItem
 };
 
 // Contrairement à startQuizSession/renderVraiFaux (avance automatiquement
@@ -2160,26 +2225,48 @@ function renderDefisStatsBar(elId){
   </div>`;
 }
 
-// ---------- Casse-têtes : le pool MENTAL_CHALLENGES (formats de
-// raisonnement — trouve l'erreur, vrai-mais-incomplet, remets dans l'ordre,
-// info manquante, classement) plutôt que le mélange générique QCM + casse-
-// têtes de "Modes d'entraînement" — un vrai onglet dédié au raisonnement,
-// jamais juste une redite de Formation/Laboratoire (jamais "calcule le PER",
-// toujours un raisonnement à démêler autour d'une vraie situation). ----------
-function renderDefisCassesTetes(elId){
+// ---------- Lanceur générique de session filtrée par format (Casse-têtes,
+// Dilemmes, Enquêtes) : un seul moteur de lancement/mélange/relance, jamais
+// dupliqué pour chaque nouvel onglet de raisonnement. ----------
+function renderDefisFormatLauncher(elId, pool, intro, buttonLabel){
   const el = document.getElementById(elId);
   if(!el) return;
   el.innerHTML = `
-    <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;max-width:70ch;">Pas de définition à réciter, ni de calcul isolé : un raisonnement à démêler à chaque fois — trouve l'erreur dans un raisonnement, ce qui manque pour vraiment conclure, remets des événements dans l'ordre logique, ou classe des éléments selon un critère.</p>
-    <button class="btn btn-gold" id="${elId}-start">Lancer une session de casse-têtes</button>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;max-width:70ch;">${intro}</p>
+    <button class="btn btn-gold" id="${elId}-start">${buttonLabel}</button>
     <div id="${elId}-session" style="margin-top:16px;"></div>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
-    const pool = [...MENTAL_CHALLENGES];
-    for(let i = pool.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
+    const shuffled = [...pool];
+    for(let i = shuffled.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
     const sessionEl = document.getElementById(`${elId}-session`);
-    startMixedSession(`${elId}-session`, pool.slice(0, 6), {onRestart: () => renderDefisCassesTetes(elId)});
+    startMixedSession(`${elId}-session`, shuffled.slice(0, Math.min(6, shuffled.length)), {onRestart: () => renderDefisFormatLauncher(elId, pool, intro, buttonLabel)});
     if(sessionEl && sessionEl.scrollIntoView) sessionEl.scrollIntoView({behavior: 'smooth', block: 'nearest'});
   });
+}
+// Casse-têtes : formats de raisonnement "classiques" (trouve l'erreur,
+// vrai-mais-incomplet, remets dans l'ordre, info manquante, classement,
+// calcul) — Dilemmes et Enquêtes ont chacun leur propre onglet dédié
+// ci-dessous, jamais le même contenu dupliqué dans deux onglets à la fois.
+function renderDefisCassesTetes(elId){
+  const pool = MENTAL_CHALLENGES.filter(c => c.format !== 'dilemme' && c.format !== 'enquete');
+  renderDefisFormatLauncher(elId, pool,
+    "Pas de définition à réciter, ni de calcul isolé : un raisonnement à démêler à chaque fois — trouve l'erreur dans un raisonnement, ce qui manque pour vraiment conclure, remets des événements dans l'ordre logique, ou classe des éléments selon un critère.",
+    "Lancer une session de casse-têtes");
+}
+// Dilemmes : plusieurs choix défendables selon le contexte, jamais une seule
+// bonne réponse fabriquée — voir renderDilemmeItem.
+function renderDefisDilemmes(elId){
+  const pool = MENTAL_CHALLENGES.filter(c => c.format === 'dilemme');
+  renderDefisFormatLauncher(elId, pool,
+    "Pas de bonne réponse unique : plusieurs choix peuvent être raisonnables selon le contexte. À chaque fois, découvre pourquoi une option se défend — et pourquoi une autre ne se défend pas dans cette situation précise.",
+    "Lancer un dilemme");
+}
+// Enquêtes : un dossier de vrais indices à croiser avant de conclure — voir renderEnqueteItem.
+function renderDefisEnquetes(elId){
+  const pool = MENTAL_CHALLENGES.filter(c => c.format === 'enquete');
+  renderDefisFormatLauncher(elId, pool,
+    "Un dossier d'indices à croiser avant de conclure — comme un vrai enquêteur financier, jamais une conclusion évidente en un coup d'œil.",
+    "Ouvrir un dossier");
 }
 function renderDefiDuJour(elId){
   const el = document.getElementById(elId);

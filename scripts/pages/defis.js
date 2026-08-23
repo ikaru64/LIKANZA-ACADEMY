@@ -3,22 +3,24 @@
    Terrain d'entraînement mental : Défi du jour, statistiques réelles
    (niveau/XP/série/ligue/maîtrise), puis un hub par onglet (même pattern que
    bourse.js/BOURSE_TABS, laboratoire.js/LAB_TABS, formations.js/
-   FORMATION_TABS) : Quiz Express, Casse-têtes, Pour toi, Parcours
-   thématiques, Mes performances, Classement. Toute la logique de rendu vit
-   dans scripts/data.js — ce fichier déclenche, gère la navigation par
-   onglets et l'arrivée via ?cat=.
+   FORMATION_TABS) : Quiz Express, Casse-têtes, Dilemmes, Enquêtes, Pour toi,
+   Parcours thématiques, Mes performances, Classement. Toute la logique de
+   rendu vit dans scripts/data.js — ce fichier déclenche, gère la navigation
+   par onglets et l'arrivée via ?cat=.
    ============================================================ */
 
 renderDefisStatsBar('defisStatsBar');
 renderDefiDuJour('defiDuJour');
 
 // ---------- Hub par onglet : chaque onglet correspond à une vraie
-// destination fonctionnelle aujourd'hui — jamais un onglet "Enquêtes",
-// "Dilemmes", "Escape Rooms" ou "Battles" tant que ce contenu réel n'existe
-// pas (chantiers séparés, pas encore construits). ----------
+// destination fonctionnelle aujourd'hui — jamais un onglet "Escape Rooms",
+// "Boss Challenges" ou "Battles" tant que ce contenu réel n'existe pas
+// (chantiers séparés, pas encore construits). ----------
 const DEFIS_TABS = [
   {id:'tab-defis-express', title:'Quiz Express', desc:'20 s à quelques minutes', icon:'⚡'},
   {id:'tab-defis-cassetetes', title:'Casse-têtes', desc:'Raisonnement, pas des définitions', icon:'🧠'},
+  {id:'tab-defis-dilemmes', title:'Dilemmes', desc:'Plusieurs choix raisonnables', icon:'🎭'},
+  {id:'tab-defis-enquetes', title:'Enquêtes', desc:'Croise les indices', icon:'🕵️'},
   {id:'tab-defis-pourtoi', title:'Pour toi', desc:'Recommandé et à revoir', icon:'🎯'},
   {id:'tab-defis-parcours', title:'Parcours thématiques', desc:'Séries par thème', icon:'🗺️'},
   {id:'tab-defis-perf', title:'Mes performances', desc:'Basé sur tes vraies réponses', icon:'📊'},
@@ -52,6 +54,8 @@ window.addEventListener('hashchange', () => {
 
 renderModesEntrainement('modesEntrainement');
 renderDefisCassesTetes('defisCassesTetes');
+renderDefisDilemmes('defisDilemmes');
+renderDefisEnquetes('defisEnquetes');
 renderRecommandePourToi('recommandePourToi');
 renderDefisARevoir('defisARevoir');
 renderDefisParcours('defisParcours');
