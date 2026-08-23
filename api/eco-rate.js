@@ -7,12 +7,18 @@
    Étendu pour le Laboratoire financier : d'autres séries réelles de
    la même famille d'API (BCE SDW) sont exposées via ?series=... au
    lieu de créer une fonction serverless par série (garder le nombre
-   de fonctions Vercel bas).
+   de fonctions Vercel bas). Étendu à nouveau pour la page Économie
+   (chômage/PIB/dette publique) avec des séries Eurostat (lib/eurostat.js,
+   format JSON-stat — différent de BCE SDW, mais même contrat de
+   réponse pour l'appelant), toujours via ce même ?series=.
 
    Requête : GET /api/eco-rate                    (défaut : taux de dépôt BCE, réponse inchangée)
              GET /api/eco-rate?series=inflation-fr       (indice HICP France, mensuel, 2016→aujourd'hui)
              GET /api/eco-rate?series=mortgage-rate-fr   (taux crédit immobilier ménages France, mensuel)
              GET /api/eco-rate?series=home-price-fr      (indice prix immobilier résidentiel France, trimestriel)
+             GET /api/eco-rate?series=unemployment-fr    (taux de chômage France, mensuel, Eurostat)
+             GET /api/eco-rate?series=gdp-growth-fr      (croissance du PIB France, trimestrielle, Eurostat)
+             GET /api/eco-rate?series=gov-debt-fr        (dette publique France, % du PIB, trimestrielle, Eurostat)
 
    Réponse (défaut) : { rate, asOf, source, instrument }
    Réponse (séries)  : { points, source, sourceUrl, seriesKey, instrument, frequency }
@@ -21,11 +27,15 @@
    ============================================================ */
 
 const { fetchEcbDepositRate, fetchEcbInflationFR, fetchEcbMortgageRateFR, fetchEcbHomePriceIndexFR } = require('../lib/ecb');
+const { fetchEurostatUnemploymentFR, fetchEurostatGdpGrowthFR, fetchEurostatGovDebtFR } = require('../lib/eurostat');
 
 const SERIES_FETCHERS = {
   'inflation-fr': fetchEcbInflationFR,
   'mortgage-rate-fr': fetchEcbMortgageRateFR,
-  'home-price-fr': fetchEcbHomePriceIndexFR
+  'home-price-fr': fetchEcbHomePriceIndexFR,
+  'unemployment-fr': fetchEurostatUnemploymentFR,
+  'gdp-growth-fr': fetchEurostatGdpGrowthFR,
+  'gov-debt-fr': fetchEurostatGovDebtFR
 };
 
 module.exports = async (req, res) => {

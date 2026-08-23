@@ -91,6 +91,27 @@ const HISTORICAL_SERIES = {
     sourceUrl: 'https://data.ecb.europa.eu/data/datasets/RESR',
     frequency: 'Trimestrielle',
     kind: 'live'
+  },
+  unemploymentFR: {
+    label: 'Taux de chômage (France)',
+    source: 'Eurostat — Enquête sur les forces de travail (une_rt_m)',
+    sourceUrl: 'https://ec.europa.eu/eurostat/databrowser/product/view/une_rt_m',
+    frequency: 'Mensuelle',
+    kind: 'live'
+  },
+  gdpGrowthFR: {
+    label: 'Croissance du PIB (France)',
+    source: 'Eurostat — Comptes nationaux trimestriels (namq_10_gdp)',
+    sourceUrl: 'https://ec.europa.eu/eurostat/databrowser/product/view/namq_10_gdp',
+    frequency: 'Trimestrielle',
+    kind: 'live'
+  },
+  govDebtFR: {
+    label: 'Dette publique (France, % du PIB)',
+    source: 'Eurostat — Statistiques des administrations publiques (gov_10q_ggdebt)',
+    sourceUrl: 'https://ec.europa.eu/eurostat/databrowser/product/view/gov_10q_ggdebt',
+    frequency: 'Trimestrielle',
+    kind: 'live'
   }
 };
 

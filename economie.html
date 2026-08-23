@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Business Game · Likanza Academy</title>
-<meta name="description" content="Crée une entreprise et prends des décisions, mois après mois : chaque choix a des conséquences qui s'accumulent, sur un modèle transparent et jamais aléatoire.">
-<meta property="og:title" content="Business Game · Likanza Academy">
-<meta property="og:description" content="Crée une entreprise et prends des décisions, mois après mois : chaque choix a des conséquences qui s'accumulent, sur un modèle transparent et jamais aléatoire.">
+<title>Économie · Likanza Academy</title>
+<meta name="description" content="PIB, inflation, chômage, dette publique et taux directeur : les grands indicateurs macroéconomiques, avec de vraies données et leur méthodologie.">
+<meta property="og:title" content="Économie · Likanza Academy">
+<meta property="og:description" content="PIB, inflation, chômage, dette publique et taux directeur : les grands indicateurs macroéconomiques, avec de vraies données et leur méthodologie.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://likanza-academy.vercel.app/jeu-business.html">
+<meta property="og:url" content="https://likanza-academy.vercel.app/economie.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -24,12 +24,12 @@
   <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
   <a href="laboratoire.html"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
-  <a href="play.html" class="active"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
+  <a href="play.html"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
   <span class="sidebar-group-label">Marchés</span>
   <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
   <a href="crypto.html"><span class="icon" data-icon="bitcoin"></span><span>Crypto</span></a>
   <a href="business.html"><span class="icon" data-icon="briefcase"></span><span>Business</span></a>
-  <a href="economie.html"><span class="icon" data-icon="landmark"></span><span>Économie</span></a>
+  <a href="economie.html" class="active"><span class="icon" data-icon="landmark"></span><span>Économie</span></a>
   <span class="sidebar-group-label">Compte</span>
   <a href="compte.html"><span class="icon" data-icon="trophy"></span><span>Mon compte</span></a>
 </aside>
@@ -78,33 +78,44 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / <a href="play.html">Play</a> / Business Game</div>
-<h1 class="visually-hidden">Business Game</h1>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / Économie</div>
+<h1 class="visually-hidden">Économie</h1>
 
 <section class="section">
-  <div class="section-head"><h2>🎮 Business Game</h2><span class="meta-line">crée une entreprise, décide, observe les conséquences</span></div>
-  <div class="card" style="max-width:none;">
-    <div id="businessGame"></div>
+  <div class="section-head"><h2>Indicateurs macroéconomiques</h2><span class="meta-line">France, données réelles</span></div>
+  <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;max-width:70ch;">Chaque indicateur vient d'une source officielle (BCE, Eurostat), avec sa vraie fréquence de publication et ses limites — jamais une valeur inventée pour combler une case vide.</p>
+  <div class="card-grid" id="ecoIndicators"></div>
+</section>
+
+<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);">
+  <div class="card" style="max-width:640px;">
+    <span class="smallcaps">🧪 Aller plus loin</span>
+    <h3 style="margin:8px 0 6px;">Laboratoire économique</h3>
+    <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Que se passe-t-il sur les obligations, les actions, l'immobilier ou le crédit quand un choc macro survient ? Des scénarios qualitatifs, avec le mécanisme expliqué — jamais une prédiction.</p>
+    <a href="laboratoire.html#tab-economie" class="btn btn-sm btn-gold">Explorer les scénarios →</a>
   </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Comprendre les concepts clés</h2></div>
+  <div class="glossary-list" id="ecoGlossary"></div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
-    <div><h4>Apprendre</h4><ul><li><a href="formations.html">Formations</a></li><li><a href="bibliotheque.html">Bibliothèque</a></li></ul></div>
-    <div><h4>Jouer</h4><ul><li><a href="play.html">Tous les jeux</a></li><li><a href="business.html">Business</a></li><li><a href="construire-son-projet.html">Business Strategy</a></li></ul></div>
+    <div><h4>Explorer</h4><ul><li><a href="bourse.html">Bourse</a></li><li><a href="laboratoire.html">Laboratoire financier</a></li></ul></div>
+    <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
-  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Simulation pédagogique, ne constitue pas un conseil professionnel.</span></div>
+  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
 </footer>
 
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/historical-data.js"></script>
-<script src="scripts/games/business-game-data.js"></script>
-<script src="scripts/games/business-game.js"></script>
-<script src="scripts/pages/jeu-business.js"></script>
+<script src="scripts/pages/economie.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>

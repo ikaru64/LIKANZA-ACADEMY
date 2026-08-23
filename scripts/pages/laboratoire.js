@@ -25,7 +25,8 @@ const LAB_TABS = [
   {id:'tab-dettes', title:'Dettes & crédits', desc:'Coût et stratégies', icon:'landmark'},
   {id:'tab-transport', title:'Transport', desc:'Achat, crédit, LOA', icon:'compass'},
   {id:'tab-budget-epargne', title:'Budget & épargne', desc:'Comprendre son argent', icon:'coins'},
-  {id:'tab-planification', title:'Planification', desc:'Comparer des décisions', icon:'scale'}
+  {id:'tab-planification', title:'Planification', desc:'Comparer des décisions', icon:'scale'},
+  {id:'tab-economie', title:'Économie', desc:'Effets des chocs macro', icon:'telescope'}
 ];
 let labActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-investissement';
 function renderLabTabs(){
@@ -1185,3 +1186,77 @@ function updateDca(){
 }
 addDcaRow(10, 95); addDcaRow(5, 110);
 updateDca();
+
+// ============================================================
+// ---------- Laboratoire économique (tab-economie, section 4 du prompt
+// "Extension intelligente des domaines") : scénarios qualitatifs de choc
+// macro. Jamais une prédiction chiffrée — chaque effet explique son
+// mécanisme, jamais un simple "X monte donc Y baisse" (section 30). 3 des
+// 5 scénarios du prompt (taux, inflation, chômage) ; dépenses publiques et
+// récession en phase suivante, jamais un onglet à moitié rempli pour
+// atteindre un chiffre rond. ----------
+// ============================================================
+const ECO_LAB_SCENARIOS = [
+  {
+    id: 'taux-hausse',
+    icon: '🏦',
+    titre: 'La banque centrale augmente son taux directeur de 1 point',
+    hypotheses: "Hausse isolée de 1 point de pourcentage, toutes choses égales par ailleurs — dans la réalité, plusieurs variables évoluent en même temps (croissance, anticipations déjà présentes dans les prix, contexte international).",
+    effets: [
+      {domaine: 'Obligations', effet: 'Le prix des obligations déjà émises baisse généralement.', mecanisme: "Une obligation existante verse un coupon fixe, décidé à son émission. Si les nouvelles obligations offrent un coupon plus élevé (aligné sur le nouveau taux), l'ancienne devient relativement moins attractive : son prix doit baisser pour offrir à un nouvel acheteur un rendement comparable."},
+      {domaine: 'Actions', effet: 'Peut peser sur certaines valorisations, plus particulièrement les entreprises à forte croissance attendue.', mecanisme: "La valorisation d'une action reflète en théorie l'actualisation de ses bénéfices futurs ; un taux d'actualisation plus élevé réduit la valeur actuelle de bénéfices lointains. L'effet varie fortement selon le secteur, l'endettement de l'entreprise et si la hausse était déjà anticipée par le marché."},
+      {domaine: 'Immobilier', effet: "Le crédit devient plus cher, ce qui peut réduire la capacité d'emprunt des acheteurs.", mecanisme: "Les taux des nouveaux crédits immobiliers suivent généralement, avec un délai, l'évolution du taux directeur. À mensualité égale, un taux plus élevé réduit le capital empruntable — ce qui peut peser sur la demande et donc sur les prix."},
+      {domaine: 'Crédit', effet: 'Le coût de tout nouvel emprunt (consommation, entreprise) augmente.', mecanisme: "Les banques répercutent en partie la hausse du taux directeur sur leurs propres taux, avec une ampleur et un délai qui dépendent de la concurrence bancaire et de leur coût de refinancement sur le marché interbancaire."}
+    ],
+    limites: "Scénario simplifié et isolé : dans la réalité, l'ampleur et la rapidité de ces effets dépendent fortement du contexte (croissance déjà forte ou faible, niveau de dette, anticipations déjà intégrées dans les prix)."
+  },
+  {
+    id: 'inflation-choc',
+    icon: '📉',
+    titre: "L'inflation passe de 2 % à 6 %",
+    hypotheses: "Choc d'inflation isolé — sans présumer de la réaction de la banque centrale ni de sa durée (une inflation temporaire et une inflation durablement ancrée n'ont pas les mêmes conséquences).",
+    effets: [
+      {domaine: 'Pouvoir d\'achat', effet: 'Le pouvoir d\'achat de l\'épargne non rémunérée diminue.', mecanisme: "Si les prix augmentent de 6 %/an et qu'une épargne rapporte 2 %, son rendement réel (rendement nominal moins inflation) devient négatif : le montant affiché augmente, mais ce qu'il permet d'acheter diminue."},
+      {domaine: 'Banque centrale', effet: 'Incite généralement la banque centrale à relever ses taux directeurs pour contenir l\'inflation.', mecanisme: "La plupart des banques centrales ciblent une inflation proche de 2 %/an. Un écart important les pousse typiquement à durcir leur politique monétaire (hausse des taux) pour freiner la demande — avec les effets décrits dans le scénario \"hausse des taux\" ci-dessus."},
+      {domaine: 'Obligations', effet: 'Le rendement réel des obligations à taux fixe déjà émises se dégrade.', mecanisme: "Un coupon fixe perd de sa valeur réelle si l'inflation augmente, puisqu'il achète de moins en moins de biens et services au fil du temps — sauf pour les obligations indexées sur l'inflation, conçues spécifiquement pour ce risque."},
+      {domaine: 'Salaires & entreprises', effet: "Les entreprises dont les coûts augmentent plus vite que leurs prix de vente voient leurs marges se compresser.", mecanisme: "Toutes les entreprises ne peuvent pas répercuter une hausse de coûts sur leurs prix de vente au même rythme (pouvoir de fixation des prix inégal selon le secteur et la concurrence) — d'où des effets très hétérogènes d'un secteur à l'autre."}
+    ],
+    limites: "L'ampleur des effets dépend fortement de si le choc est perçu comme temporaire (ex. lié à l'énergie) ou durable, et de la crédibilité de la banque centrale à le contenir — deux éléments impossibles à connaître à l'avance avec certitude."
+  },
+  {
+    id: 'chomage-hausse',
+    icon: '💼',
+    titre: 'Le chômage augmente fortement',
+    hypotheses: "Hausse marquée et rapide du taux de chômage, sans présumer de sa cause (choc externe, ralentissement conjoncturel, restructuration sectorielle...).",
+    effets: [
+      {domaine: 'Consommation', effet: 'La consommation des ménages tend à ralentir.', mecanisme: "Une hausse du chômage réduit le revenu agrégé des ménages et augmente l'incertitude sur l'emploi futur, ce qui pousse généralement à une épargne de précaution plus élevée et des achats différés, notamment pour les biens durables."},
+      {domaine: 'Banque centrale', effet: 'Peut inciter la banque centrale à assouplir sa politique monétaire (baisse des taux), selon son mandat.', mecanisme: "Certaines banques centrales (comme la Fed) ont un double mandat stabilité des prix + emploi maximum ; une hausse du chômage peut alors peser en faveur d'une baisse des taux pour soutenir l'activité — sauf si l'inflation reste elle-même élevée, ce qui crée un arbitrage difficile."},
+      {domaine: 'Immobilier', effet: 'La demande de logements peut se tasser, en particulier dans les secteurs/régions les plus touchés.', mecanisme: "L'achat d'un logement dépend fortement de la stabilité perçue des revenus futurs (nécessaire pour obtenir un crédit et s'engager sur 15-25 ans) : une hausse du chômage rend les banques plus prudentes sur l'octroi de crédit et les ménages plus hésitants à s'engager."},
+      {domaine: 'Entreprises', effet: 'Le risque de crédit (impayés, défauts) augmente pour les entreprises exposées à la consommation.', mecanisme: "Une baisse de la consommation et des revenus des ménages réduit le chiffre d'affaires des entreprises qui en dépendent le plus directement (commerce, services), ce qui peut fragiliser leur capacité à rembourser leurs propres dettes."}
+    ],
+    limites: "L'ampleur de ces effets dépend du secteur touché, de la rapidité de la hausse, et des filets de sécurité sociale en place (assurance chômage) qui amortissent en partie le choc sur la consommation."
+  }
+];
+
+function renderEcoLabScenarios(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = ECO_LAB_SCENARIOS.map(s => `
+    <details class="card" style="margin-bottom:14px;">
+      <summary style="cursor:pointer;list-style:none;">
+        <span class="smallcaps">${s.icon} Scénario</span>
+        <h3 style="margin:8px 0 0;font-size:17px;">${s.titre}</h3>
+      </summary>
+      <div style="margin-top:14px;">
+        ${renderDataBadge('scenario')}
+        <p style="font-size:12.5px;color:var(--text-dim);margin:10px 0 14px;"><strong style="color:var(--text);">Hypothèses :</strong> ${s.hypotheses}</p>
+        ${s.effets.map(e => `
+          <div style="margin-bottom:12px;padding-left:12px;border-left:2px solid var(--hairline);">
+            <p style="font-size:13.5px;font-weight:600;">${e.domaine} <span style="font-weight:400;color:var(--text-dim);">— ${e.effet}</span></p>
+            <p style="font-size:12.5px;color:var(--text-dim);margin-top:4px;">${e.mecanisme}</p>
+          </div>`).join('')}
+        <p class="disclaimer-box" style="margin-top:12px;">${s.limites} Ce scénario est une illustration pédagogique du mécanisme économique, jamais une prédiction sur ce qui va réellement se passer.</p>
+      </div>
+    </details>`).join('');
+}
+safeRun('laboratoire économique', () => renderEcoLabScenarios('ecoLabScenarios'));

@@ -1892,6 +1892,32 @@ const LIBRARY = [
     erreurs:["Croire que les prix reflètent toujours un marché parfaitement équilibré"]
   },
   {
+    terme:"Chômage",
+    categorie:"Économie",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Le taux de chômage mesure la part de la population active qui n'a pas d'emploi mais en recherche un activement.",
+    detail:"Il rapporte le nombre de chômeurs (au sens du Bureau International du Travail : sans emploi, disponible et recherchant activement) à la population active totale (personnes en emploi + chômeurs). Il ne compte donc ni les inactifs (retraités, étudiants non en recherche) ni les personnes découragées qui ont cessé de chercher.",
+    avance:"Le taux de chômage est un indicateur retardé (lagging indicator) : il continue souvent de se dégrader un temps après le début d'une reprise économique, car les entreprises n'embauchent qu'une fois leur activité réellement repartie.",
+    exemple:"Un taux de chômage de 8% signifie que, parmi les personnes en emploi ou en recherche active d'emploi, 8% sont sans emploi.",
+    avantages:["Indicateur suivi de longue date, comparable dans le temps et entre pays"],
+    inconvenients:["Ne compte pas le sous-emploi (temps partiel subi) ni le halo autour du chômage (personnes découragées)", "Indicateur retardé par rapport à l'activité économique réelle"],
+    erreurs:["Confondre taux de chômage et part de la population totale sans emploi (qui inclut aussi les inactifs)"]
+  },
+  {
+    terme:"Dette publique",
+    categorie:"Économie",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La dette publique est le cumul de tout ce qu'un État (et les administrations publiques) doit à ses créanciers, généralement exprimé en % du PIB pour permettre les comparaisons.",
+    detail:"Elle résulte de l'accumulation des déficits publics passés (dépenses supérieures aux recettes) financés par emprunt. L'exprimer en % du PIB permet de comparer des pays de tailles différentes et de suivre si la dette croît plus vite que la richesse produite.",
+    avance:"Un ratio dette/PIB élevé n'est pas automatiquement synonyme de crise : il dépend aussi du coût de la dette (taux d'intérêt payés), de sa maturité, de la devise dans laquelle elle est émise et de la capacité de l'État à lever de nouveaux impôts.",
+    exemple:"Une dette publique de 117% du PIB signifie que la dette cumulée de l'État représente 1,17 fois la richesse produite dans le pays en un an.",
+    avantages:["Permet à un État de financer des investissements ou de lisser un choc économique sans augmenter les impôts immédiatement"],
+    inconvenients:["Le service de la dette (intérêts à payer) réduit la marge de manœuvre budgétaire future", "Une dette perçue comme insoutenable peut faire monter les taux exigés par les créanciers"],
+    erreurs:["Comparer des niveaux de dette publique entre pays sans tenir compte du taux d'intérêt payé ni de la devise d'émission"]
+  },
+  {
     terme:"Chiffre d'affaires",
     categorie:"Entreprise",
     niveau:"Débutant",
