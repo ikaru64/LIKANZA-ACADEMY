@@ -973,6 +973,7 @@ function getGamification(){
   const g = safeGetJSON('fzr-gamification', {xp:0, financePoints:0, streak:0, lastVisit:null, badges:[]});
   if(g.financePoints === undefined) g.financePoints = g.xp; // migration en douceur depuis l'ancien système à monnaie unique
   if(g.streakFreezes === undefined) g.streakFreezes = 0; // migration en douceur : tolérance de série (voir checkDailyStreak)
+  if(g.pendingStreakBonus === undefined) g.pendingStreakBonus = 0; // migration en douceur : voir checkDailyStreak/awardXP
   return g;
 }
 function saveGamification(g){ safeSetJSON('fzr-gamification', g); }
@@ -1014,11 +1015,15 @@ function checkDailyStreak(){
   }
   if(g.streak > 0 && g.streak % 7 === 0) g.streakFreezes = Math.min(2, g.streakFreezes + 1);
   g.lastVisit = today;
-  const bonus = Math.round(15 * streakMultiplier(g.streak));
-  g.xp += bonus;
-  g.financePoints += bonus;
+  // Le bonus de série n'est JAMAIS crédité ici (une simple ouverture de page,
+  // sans aucune activité réelle) : il est mis en attente et crédité par
+  // awardXP() dès la première vraie activité pédagogique du jour (quiz,
+  // défi, cours, jeu...). Avant ce correctif, ouvrir n'importe quelle page
+  // une fois par jour suffisait à faire progresser XP et niveau sans jamais
+  // rien apprendre — audit du 2026-08-20, section G.
+  g.pendingStreakBonus = Math.round(15 * streakMultiplier(g.streak));
   saveGamification(g);
-  checkBadges(g, {});
+  checkBadges(g, {}); // les badges de série (streak_3/7/30) restent liés au nombre de jours, pas à l'XP
   logActivity();
   return g;
 }
@@ -1046,7 +1051,14 @@ function getWeeklyActivityDays(){
 // pour l'instant, mais sont stockés et affichés séparément.
 function awardXP(amount, ctx){
   const g = getGamification();
-  const finalAmount = Math.round(amount * streakMultiplier(g.streak));
+  let finalAmount = Math.round(amount * streakMultiplier(g.streak));
+  // Première vraie activité du jour : encaisse aussi le bonus de série mis
+  // en attente par checkDailyStreak (jamais crédité pour la seule ouverture
+  // d'une page — voir ce commentaire).
+  if(g.pendingStreakBonus > 0){
+    finalAmount += g.pendingStreakBonus;
+    g.pendingStreakBonus = 0;
+  }
   g.xp += finalAmount;
   g.financePoints += finalAmount;
   logActivity();
