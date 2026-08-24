@@ -471,6 +471,14 @@ const QUIZ_BANK_FULL = [
   {id:"q-financequant-007", niveau:"intermediaire", categorie:"Finance quantitative", type:"qcm", question:"Pourquoi la corrélation entre deux actifs est-elle un concept central de la diversification ?", choix:["Parce qu'une corrélation élevée entre actifs réduit toujours le risque du portefeuille", "Parce que combiner des actifs faiblement ou négativement corrélés réduit davantage le risque global qu'en combinant des actifs qui évoluent toujours ensemble", "Parce que la corrélation détermine directement le rendement futur d'un portefeuille", "Parce que la corrélation entre deux actifs ne change jamais dans le temps"], bonneReponse:1, explication:"La diversification est d'autant plus efficace que les actifs combinés sont faiblement corrélés : leurs mouvements ne se renforcent pas mutuellement, ce qui réduit la volatilité globale du portefeuille."},
   {id:"q-financequant-008", niveau:"avance", categorie:"Finance quantitative", type:"qcm", question:"À quoi sert une simulation de Monte Carlo en finance ?", choix:["À garantir un rendement futur précis", "À générer un grand nombre de scénarios aléatoires pour estimer une distribution de résultats possibles, plutôt qu'un chiffre unique", "À remplacer entièrement le besoin de données réelles historiques", "À calculer un impôt sur les plus-values"], bonneReponse:1, explication:"Une simulation de Monte Carlo génère de nombreux scénarios aléatoires selon des hypothèses statistiques données, pour explorer la distribution des résultats possibles plutôt que de produire une seule projection déterministe."},
 
+  // ---- Analyse technique ----
+  {id:"q-analysetech-001", niveau:"intermediaire", categorie:"Analyse technique", type:"qcm", question:"Que mesure le RSI (indice de force relative) ?", choix:["Le montant du dividende versé par une entreprise", "La vitesse et l'ampleur récentes des variations de prix d'un actif, sur une échelle de 0 à 100", "Le taux d'endettement d'une entreprise", "La capitalisation boursière d'une entreprise"], bonneReponse:1, explication:"Le RSI mesure le momentum récent d'un actif à partir du rapport entre l'ampleur moyenne de ses hausses et de ses baisses récentes, sur une échelle de 0 à 100."},
+  {id:"q-analysetech-002", niveau:"avance", categorie:"Analyse technique", type:"vraifaux", question:"Un RSI au-dessus de 70 garantit qu'un actif va bientôt baisser.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Un RSI élevé (>70) signale par convention une « zone de surachat », mais ne garantit rien : un actif en tendance haussière forte peut rester en zone de surachat longtemps sans que son prix ne baisse pour autant."},
+  {id:"q-analysetech-003", niveau:"intermediaire", categorie:"Analyse technique", type:"qcm", question:"Que représentent les bandes de Bollinger sur un graphique de prix ?", choix:["Le montant des frais de courtage", "Un canal centré sur une moyenne mobile, dont la largeur reflète la volatilité récente de l'actif", "La liste des prochains versements de dividendes", "Le nombre d'actionnaires d'une entreprise"], bonneReponse:1, explication:"Les bandes de Bollinger tracent un canal autour de la moyenne mobile d'un actif, large de plusieurs écarts-types : plus la volatilité récente est élevée, plus le canal est large."},
+  {id:"q-analysetech-004", niveau:"debutant", categorie:"Analyse technique", type:"qcm", question:"Quelle est la différence principale entre trading et investissement ?", choix:["Il n'y a aucune différence, ce sont deux noms pour la même pratique", "Le trading vise des horizons courts en misant sur les variations de prix, l'investissement vise plutôt à détenir des actifs sur le long terme", "Le trading est toujours sans risque, contrairement à l'investissement", "L'investissement nécessite toujours plus de capital que le trading"], bonneReponse:1, explication:"Le trading désigne l'achat/vente fréquent d'actifs sur des horizons courts pour profiter des variations de prix, tandis que l'investissement vise plutôt une détention longue durée fondée sur les perspectives de l'actif."},
+  {id:"q-analysetech-005", niveau:"avance", categorie:"Analyse technique", type:"vraifaux", question:"Un niveau de support ou de résistance identifié sur un graphique est garanti de tenir à l'avenir.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Un support ou une résistance est une observation tirée de l'historique des prix, pas une garantie : ces niveaux sont régulièrement franchis, et leur identification reste largement subjective d'un analyste à l'autre."},
+  {id:"q-analysetech-006", niveau:"avance", categorie:"Analyse technique", type:"qcm", question:"Pourquoi de nombreuses études montrent-elles qu'une majorité de traders particuliers actifs sous-performent en moyenne un investissement passif long terme ?", choix:["Parce que le trading est interdit aux particuliers", "Parce que les frais de transaction fréquents et les biais comportementaux (excès de confiance, réactions émotionnelles) pèsent sur la performance nette", "Parce que les marchés financiers ne montent jamais sur le long terme", "Parce que le trading garantit toujours une perte totale du capital"], bonneReponse:1, explication:"Les frais de transaction répétés et les biais comportementaux (excès de confiance, décisions émotionnelles) pèsent en moyenne sur la performance nette des traders particuliers actifs, une fois ces coûts pris en compte."},
+
   // ---- PEA ----
   {id:"q-pea-001", niveau:"intermediaire", categorie:"PEA", type:"qcm", question:"Le PEA permet notamment de...", choix:["Investir en actions européennes avec une fiscalité allégée après 5 ans","Garantir un capital sans aucun risque","Emprunter de l'argent sans intérêt","Éviter totalement tout impôt sur le revenu, quel que soit le placement"], bonneReponse:0, explication:"Le PEA offre un cadre fiscal avantageux après 5 ans de détention, mais le capital investi en actions n'est jamais garanti."},
   {id:"q-pea-002", niveau:"intermediaire", categorie:"PEA", type:"qcm", question:"Que se passe-t-il généralement en cas de retrait sur un PEA avant 5 ans ?", choix:["Aucune conséquence particulière","Cela entraîne en principe la clôture du plan, sauf exceptions prévues par la loi","Le plafond de versement double automatiquement","Le PEA devient un Livret A"], bonneReponse:1, explication:"Un retrait avant 5 ans entraîne en général la clôture du PEA (sauf cas particuliers prévus par la loi), ce qui en fait un outil pensé pour le long terme."},
@@ -1302,7 +1310,7 @@ const DOMAINS = [
     deepQuizHook:{title:'Comprends-tu vraiment tes finances ?', subtitle:'Découvre tes forces et les notions à approfondir.'}},
   {key:'stockMarket', label:'Bourse', displayLabel:'la bourse', icon:'📈',
     mentalChallengeDomain:'Bourse',
-    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative'],
+    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative', 'Analyse technique'],
     libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque', "Psychologie de l'investisseur"],
     deepQuizHook:{title:'Penses-tu vraiment comprendre la Bourse ?', subtitle:'Des situations concrètes pour découvrir tes forces.'}},
   {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
@@ -1667,6 +1675,19 @@ const LIBRARY = [
     erreurs:["Investir sans diversifier","Vendre en panique lors d'une baisse"]
   },
   {
+    terme:"Trading",
+    categorie:"Bourse",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Le trading désigne l'achat et la vente fréquents d'actifs financiers sur des horizons courts (de la seconde à quelques semaines), dans le but de profiter des variations de prix — à distinguer de l'investissement, qui vise plutôt à détenir des actifs sur le long terme.",
+    detail:"Le trading s'appuie souvent sur l'analyse technique (étude des graphiques de prix et d'indicateurs comme le RSI ou les bandes de Bollinger) plutôt que sur l'analyse fondamentale (étude des résultats et perspectives d'une entreprise), même si les deux approches peuvent se combiner.",
+    avance:"De nombreuses études montrent qu'une majorité de traders particuliers actifs sur de courts horizons sous-performent en moyenne un investissement passif long terme, une fois les frais de transaction et l'impact des biais comportementaux pris en compte (voir Excès de confiance, FOMO dans la Bibliothèque) — le trading actif exige du temps, une discipline stricte et accepte un risque de perte plus élevé que l'investissement long terme.",
+    exemple:"Un trader qui achète une action le matin en espérant la revendre avec un petit gain l'après-midi pratique du trading intrajournalier (day trading) ; un investisseur qui achète la même action pour la conserver 10 ans pratique de l'investissement.",
+    avantages:["Peut générer des gains sur des mouvements de prix à court terme, indépendamment des fondamentaux de long terme d'une entreprise"],
+    inconvenients:["Frais de transaction plus fréquents", "Exige du temps et une discipline importante", "Risque de perte plus élevé qu'un investissement diversifié long terme, notamment pour un débutant"],
+    erreurs:["Confondre trading et investissement, et appliquer les réflexes de l'un à l'autre (ex. réagir à chaque variation de prix d'un placement pensé pour le long terme)"]
+  },
+  {
     terme:"ETF",
     categorie:"Bourse",
     niveau:"Débutant",
@@ -2003,6 +2024,45 @@ const LIBRARY = [
     avantages:["Donne une vision de la distribution des résultats possibles, pas seulement un scénario moyen unique"],
     inconvenients:["Le résultat dépend entièrement de la qualité des hypothèses statistiques utilisées en entrée — \"garbage in, garbage out\""],
     erreurs:["Présenter le résultat d'une simulation de Monte Carlo comme une prédiction précise plutôt que comme une exploration de scénarios possibles sous des hypothèses données"]
+  },
+  {
+    terme:"RSI (indice de force relative)",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le RSI (Relative Strength Index) est un indicateur qui mesure la vitesse et l'ampleur récentes des variations de prix d'un actif, sur une échelle de 0 à 100, pour évaluer si un mouvement récent a été particulièrement fort dans un sens ou dans l'autre.",
+    detail:"Il se calcule généralement sur 14 séances, à partir du rapport entre l'ampleur moyenne des hausses et celle des baisses récentes. Par convention, un RSI au-dessus de 70 est souvent qualifié de « zone de surachat » (hausse récente jugée forte) et en dessous de 30 de « zone de survente » (baisse récente jugée forte).",
+    avance:"Ces seuils (70/30) sont des conventions largement utilisées, pas des règles garanties : un actif en tendance haussière forte et durable peut rester en zone de surachat pendant longtemps sans que son prix ne baisse pour autant — le RSI mesure un momentum récent, il ne prédit pas un retournement.",
+    exemple:"Après une hausse rapide et continue sur quelques semaines, le RSI d'une action peut dépasser 70, signalant que la hausse récente a été particulièrement rapide par rapport aux séances précédentes — sans que cela garantisse une baisse à venir.",
+    avantages:["Donne une mesure chiffrée et standardisée du momentum récent d'un actif"],
+    inconvenients:["Un RSI élevé ou faible seul ne constitue jamais un signal d'achat ou de vente fiable, isolé de tout autre contexte"],
+    erreurs:["Utiliser le RSI seul comme signal d'achat/vente automatique, sans tenir compte du contexte plus large (tendance générale, actualité de l'entreprise, autres indicateurs)"]
+  },
+  {
+    terme:"Bandes de Bollinger",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Les bandes de Bollinger tracent un canal autour du prix d'un actif, centré sur sa moyenne mobile (généralement 20 jours) et large de deux écarts-types au-dessus et en dessous — une façon de visualiser si le prix actuel est inhabituel par rapport à sa propre volatilité récente.",
+    detail:"Plus la volatilité récente de l'actif est élevée, plus le canal est large ; plus elle est faible, plus il est étroit. Un prix qui sort du canal (au-dessus de la bande haute ou en dessous de la bande basse) s'écarte donc de son comportement statistique récent.",
+    avance:"Un prix qui touche ou dépasse une bande n'est ni automatiquement un signal de retournement, ni automatiquement un signal de poursuite de tendance : les deux interprétations sont utilisées par différents praticiens selon le contexte, ce qui illustre bien les limites de cet indicateur pris isolément.",
+    exemple:"Pendant une période de forte volatilité (annonce inattendue, résultats surprenants...), les bandes de Bollinger s'élargissent automatiquement pour refléter l'ampleur inhabituelle des mouvements de prix récents.",
+    avantages:["Visualise directement la volatilité récente d'un actif, contrairement à un simple prix ou une simple moyenne mobile"],
+    inconvenients:["Sujet à des interprétations contradictoires selon les praticiens, sans consensus sur sa signification exacte à un instant donné"],
+    erreurs:["Interpréter un prix qui touche une bande comme un signal univoque, alors que les praticiens eux-mêmes ne s'accordent pas sur son interprétation"]
+  },
+  {
+    terme:"Support et résistance",
+    categorie:"Gestion du risque",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un support est un niveau de prix qu'un actif a eu tendance à ne pas franchir vers le bas par le passé ; une résistance est un niveau qu'il a eu tendance à ne pas franchir vers le haut — des repères tirés de l'historique des prix, pas des lignes garanties pour l'avenir.",
+    detail:"L'idée est que ces niveaux ont pu, par le passé, correspondre à des zones où suffisamment d'acheteurs (au support) ou de vendeurs (à la résistance) sont intervenus pour freiner ou inverser un mouvement de prix — sans qu'aucune loi ne garantisse que ce comportement se reproduise.",
+    avance:"L'identification d'un support ou d'une résistance reste largement subjective : deux analystes peuvent tracer des niveaux différents sur le même graphique. Une fois franchi, un ancien niveau de résistance devient d'ailleurs souvent interprété comme un nouveau support (et inversement) — une observation a posteriori, pas une règle prédictive fiable.",
+    exemple:"Un plus haut/plus bas de période (déjà affiché dans l'analyse technique de chaque valeur suivie) est l'exemple le plus simple de repère de ce type : un niveau de prix marquant, sans garantie qu'il tienne à l'avenir.",
+    avantages:[],
+    inconvenients:["Identification largement subjective, sans définition unique ni garantie de validité future"],
+    erreurs:["Présenter un support ou une résistance comme un niveau de prix qui ne peut objectivement pas être franchi, plutôt que comme une observation historique parmi d'autres"]
   },
   {
     terme:"Horizon de placement",

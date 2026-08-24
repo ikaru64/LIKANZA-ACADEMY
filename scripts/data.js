@@ -5556,6 +5556,46 @@ function computeTrendIndicator(history){
 // d'achat/vente/renforcement. Nécessite un historique suffisant (au moins
 // 5 séances) ; les moyennes 20/50 jours sont omises si l'historique fourni
 // est trop court plutôt que calculées sur un échantillon non représentatif.
+// RSI (14 jours, méthode de lissage de Wilder — la méthode standard, pas une
+// simple moyenne mobile sur la fenêtre de calcul) et bandes de Bollinger
+// (20 jours, ±2 écarts-types — paramètres standards). Formules vérifiées en
+// direct contre l'exemple de référence du RSI de Wilder (RSI ≈ 70,5 sur sa
+// série de 15 clôtures) avant intégration ici. Comme pour les moyennes
+// mobiles ci-dessous, omis (null) si l'historique fourni est trop court,
+// jamais calculé sur un échantillon non représentatif.
+function computeRSI(closes, period){
+  period = period || 14;
+  if(!Array.isArray(closes) || closes.length < period + 1) return null;
+  let gains = 0, losses = 0;
+  for(let i = 1; i <= period; i++){
+    const diff = closes[i] - closes[i - 1];
+    if(diff >= 0) gains += diff; else losses += -diff;
+  }
+  let avgGain = gains / period, avgLoss = losses / period;
+  for(let i = period + 1; i < closes.length; i++){
+    const diff = closes[i] - closes[i - 1];
+    const gain = diff > 0 ? diff : 0, loss = diff < 0 ? -diff : 0;
+    avgGain = (avgGain * (period - 1) + gain) / period;
+    avgLoss = (avgLoss * (period - 1) + loss) / period;
+  }
+  if(avgGain === 0 && avgLoss === 0) return 50;
+  if(avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - (100 / (1 + rs));
+}
+function computeBollingerBands(closes, period, numStdDev){
+  period = period || 20; numStdDev = numStdDev || 2;
+  if(!Array.isArray(closes) || closes.length < period) return null;
+  const window = closes.slice(closes.length - period);
+  const mean = window.reduce((a, b) => a + b, 0) / period;
+  const variance = window.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / period;
+  const stdDev = Math.sqrt(variance);
+  const last = closes[closes.length - 1];
+  return {
+    middle: mean, upper: mean + numStdDev * stdDev, lower: mean - numStdDev * stdDev, stdDev, last,
+    position: last > mean + numStdDev * stdDev ? 'above' : last < mean - numStdDev * stdDev ? 'below' : 'inside'
+  };
+}
 function computeTechnicalIndicators(history){
   if(!Array.isArray(history) || history.length < 5) return null;
   const closes = history.map(h => h.close).filter(c => typeof c === 'number');
@@ -5575,20 +5615,38 @@ function computeTechnicalIndicators(history){
     periodHigh: Math.max(...closes),
     periodLow: Math.min(...closes),
     ma20: movingAverageVsLast(20),
-    ma50: movingAverageVsLast(50)
+    ma50: movingAverageVsLast(50),
+    rsi14: computeRSI(closes, 14),
+    bollinger: computeBollingerBands(closes, 20, 2)
   };
 }
 // Rendu textuel partagé d'un résultat computeTechnicalIndicators — factorisé
 // depuis action.js (Phase 2 de la refonte Bourse) pour être réutilisé tel
 // quel dans bourse.js (Fiches actions, Comparateur), jamais une seconde
-// rédaction des mêmes trois phrases. unite optionnel (ex. "€", "pts",
-// devise d'un actif de marché) — "€" par défaut pour les actions.
+// rédaction des mêmes phrases. unite optionnel (ex. "€", "pts",
+// devise d'un actif de marché) — "€" par défaut pour les actions. RSI/
+// Bollinger (section "Trading" de la refonte Bourse) : le RSI est présenté
+// comme un indicateur de momentum, jamais un signal d'achat/vente — les
+// seuils 70/30 sont des conventions largement utilisées, pas une règle
+// garantie (voir aussi le terme RSI dans la Bibliothèque).
 function renderTechnicalIndicatorsLines(tech, unite){
   const u = unite || '€';
   if(!tech) return null;
   const lines = [`Plus haut sur ${tech.days} séances : ${tech.periodHigh.toFixed(2)} ${u} · Plus bas : ${tech.periodLow.toFixed(2)} ${u}`];
   if(tech.ma20) lines.push(`Le cours est actuellement ${tech.ma20.above ? 'au-dessus' : 'en dessous'} de sa moyenne mobile 20 jours (${tech.ma20.value.toFixed(2)} ${u}, ${tech.ma20.diffPct>=0?'+':''}${tech.ma20.diffPct.toFixed(1)}%)`);
   if(tech.ma50) lines.push(`Le cours est actuellement ${tech.ma50.above ? 'au-dessus' : 'en dessous'} de sa moyenne mobile 50 jours (${tech.ma50.value.toFixed(2)} ${u}, ${tech.ma50.diffPct>=0?'+':''}${tech.ma50.diffPct.toFixed(1)}%)`);
+  if(typeof tech.rsi14 === 'number'){
+    const zone = tech.rsi14 >= 70 ? 'zone de surachat (>70), une convention utilisée par certains pour repérer un possible essoufflement, jamais un signal fiable à lui seul'
+      : tech.rsi14 <= 30 ? 'zone de survente (<30), une convention utilisée par certains pour repérer un possible rebond, jamais un signal fiable à lui seul'
+      : 'zone neutre (entre 30 et 70)';
+    lines.push(`RSI (14 jours) : ${tech.rsi14.toFixed(1)} — ${zone}`);
+  }
+  if(tech.bollinger){
+    const posLabel = tech.bollinger.position === 'above' ? 'au-dessus de la bande haute'
+      : tech.bollinger.position === 'below' ? 'en dessous de la bande basse'
+      : 'à l\'intérieur du canal';
+    lines.push(`Bandes de Bollinger (20 jours, ±2 écarts-types) : le cours est ${posLabel} (${tech.bollinger.lower.toFixed(2)} ${u} — ${tech.bollinger.upper.toFixed(2)} ${u})`);
+  }
   return lines;
 }
 
