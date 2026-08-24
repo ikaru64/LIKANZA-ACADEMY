@@ -1088,8 +1088,12 @@ function getWeeklyActivityDays(){
 }
 
 // awardXP fait gagner à la fois de l'XP (fait progresser le niveau/rang) et des
-// Finance Points (monnaie à dépenser plus tard) — les deux progressent ensemble
-// pour l'instant, mais sont stockés et affichés séparément.
+// Finance Points. Les deux valeurs sont aujourd'hui strictement identiques
+// (aucun mécanisme de dépense n'existe nulle part dans le code) — stockées et
+// affichées séparément pour pouvoir diverger plus tard si un vrai mécanisme
+// de dépense est construit, mais l'interface ne doit jamais promettre un
+// usage ("à dépenser") qui n'existe pas encore (audit du 2026-08-20,
+// section G) : voir le libellé dans renderGamificationWidget.
 function awardXP(amount, ctx){
   const g = getGamification();
   let finalAmount = Math.round(amount * streakMultiplier(g.streak));
@@ -1147,7 +1151,7 @@ function renderGamificationWidget(elId, full){
         <div class="gami-streak">${ICONS.flame} <strong>${g.streak}</strong><span>jour${g.streak>1?'s':''}</span></div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:14px;padding-top:14px;border-top:1px solid var(--hairline);">
-        <span style="font-size:12.5px;color:var(--text-dim);">${ICONS.coins} Finance Points (à dépenser)</span>
+        <span style="font-size:12.5px;color:var(--text-dim);">${ICONS.coins} Finance Points (récompense cumulée)</span>
         <span class="mono" style="font-size:15px;color:var(--gold-bright);font-weight:600;">${g.financePoints}</span>
       </div>
       ${full ? `<div class="gami-badges">${BADGES.map(b=>{
