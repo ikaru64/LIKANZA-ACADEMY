@@ -479,6 +479,15 @@ const QUIZ_BANK_FULL = [
   {id:"q-analysetech-005", niveau:"avance", categorie:"Analyse technique", type:"vraifaux", question:"Un niveau de support ou de résistance identifié sur un graphique est garanti de tenir à l'avenir.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Un support ou une résistance est une observation tirée de l'historique des prix, pas une garantie : ces niveaux sont régulièrement franchis, et leur identification reste largement subjective d'un analyste à l'autre."},
   {id:"q-analysetech-006", niveau:"avance", categorie:"Analyse technique", type:"qcm", question:"Pourquoi de nombreuses études montrent-elles qu'une majorité de traders particuliers actifs sous-performent en moyenne un investissement passif long terme ?", choix:["Parce que le trading est interdit aux particuliers", "Parce que les frais de transaction fréquents et les biais comportementaux (excès de confiance, réactions émotionnelles) pèsent sur la performance nette", "Parce que les marchés financiers ne montent jamais sur le long terme", "Parce que le trading garantit toujours une perte totale du capital"], bonneReponse:1, explication:"Les frais de transaction répétés et les biais comportementaux (excès de confiance, décisions émotionnelles) pèsent en moyenne sur la performance nette des traders particuliers actifs, une fois ces coûts pris en compte."},
 
+  // ---- Options ----
+  {id:"q-options-001", niveau:"intermediaire", categorie:"Options", type:"qcm", question:"Qu'est-ce qu'un call ?", choix:["Une option qui donne le droit de vendre un actif à un prix fixé à l'avance", "Une option qui donne le droit d'acheter un actif à un prix fixé à l'avance", "L'obligation d'acheter une action à son cours actuel", "Un type d'ordre boursier qui garantit un prix d'exécution"], bonneReponse:1, explication:"Un call donne à son acheteur le droit, jamais l'obligation, d'acheter l'actif sous-jacent à un prix d'exercice fixé à l'avance."},
+  {id:"q-options-002", niveau:"intermediaire", categorie:"Options", type:"qcm", question:"Qu'est-ce qu'un put ?", choix:["Une option qui donne le droit d'acheter un actif à un prix fixé à l'avance", "Une option qui donne le droit de vendre un actif à un prix fixé à l'avance", "Un ordre de vente automatique déclenché par une baisse de prix", "Un dividende versé en actions plutôt qu'en numéraire"], bonneReponse:1, explication:"Un put donne à son acheteur le droit, jamais l'obligation, de vendre l'actif sous-jacent à un prix d'exercice fixé à l'avance."},
+  {id:"q-options-003", niveau:"avance", categorie:"Options", type:"qcm", question:"Pour l'acheteur d'une option (call ou put), quelle est la perte maximale possible ?", choix:["Illimitée", "La prime payée à l'achat de l'option, jamais plus", "Le double de la prime payée", "Il n'y a jamais de perte possible pour un acheteur d'option"], bonneReponse:1, explication:"L'acheteur d'une option ne peut jamais perdre plus que la prime qu'il a payée : si l'option n'est jamais profitable à exercer, il la laisse simplement expirer, sans obligation supplémentaire."},
+  {id:"q-options-004", niveau:"avance", categorie:"Options", type:"vraifaux", question:"Le vendeur d'un call (qui a reçu la prime) s'expose à une perte potentiellement illimitée si le prix de l'actif sous-jacent monte fortement.", choix:["Vrai","Faux"], bonneReponse:0, explication:"Le vendeur d'un call a l'obligation de vendre l'actif au prix d'exercice si l'acheteur exerce son droit : si le prix de marché monte très fortement, sa perte (par rapport à ce qu'il aurait pu vendre l'actif) n'est théoriquement pas plafonnée."},
+  {id:"q-options-005", niveau:"avance", categorie:"Options", type:"qcm", question:"Quels facteurs influencent réellement le montant de la prime d'une option ?", choix:["Uniquement le prix d'exercice choisi", "L'écart entre le prix actuel de l'actif et le prix d'exercice, le temps restant avant l'échéance, et la volatilité anticipée de l'actif", "Uniquement l'humeur générale du marché ce jour-là", "La prime est toujours fixée à un montant identique, quel que soit l'actif"], bonneReponse:1, explication:"La prime d'une option dépend de plusieurs facteurs réels : la distance entre le prix actuel et le prix d'exercice, le temps restant avant l'échéance, et la volatilité anticipée du sous-jacent (une volatilité anticipée plus élevée renchérit la prime)."},
+  {id:"q-options-006", niveau:"debutant", categorie:"Options", type:"qcm", question:"Que signifie « dans la monnaie » pour une option ?", choix:["L'option a été achetée avec de l'argent réel, contrairement aux autres", "L'exercer immédiatement serait profitable, compte tenu du prix actuel de l'actif par rapport au prix d'exercice", "L'option arrive à échéance aujourd'hui", "L'option a été vendue plutôt qu'achetée"], bonneReponse:1, explication:"Une option « dans la monnaie » est une option dont l'exercice immédiat serait profitable : le prix actuel de l'actif est au-dessus du prix d'exercice pour un call, ou en dessous pour un put."},
+  {id:"q-options-007", niveau:"avance", categorie:"Options", type:"qcm", question:"Pour l'acheteur d'un put, quel est le gain maximal théoriquement possible ?", choix:["Illimité, comme pour l'acheteur d'un call", "Plafonné, car le prix de l'actif sous-jacent ne peut pas descendre en dessous de 0", "Toujours égal à la prime payée", "Il n'y a jamais de gain possible pour l'acheteur d'un put"], bonneReponse:1, explication:"Contrairement à l'acheteur d'un call (dont le gain n'est pas plafonné, le prix pouvant monter indéfiniment), le gain de l'acheteur d'un put est plafonné : le prix de l'actif sous-jacent ne peut pas descendre en dessous de 0."},
+
   // ---- PEA ----
   {id:"q-pea-001", niveau:"intermediaire", categorie:"PEA", type:"qcm", question:"Le PEA permet notamment de...", choix:["Investir en actions européennes avec une fiscalité allégée après 5 ans","Garantir un capital sans aucun risque","Emprunter de l'argent sans intérêt","Éviter totalement tout impôt sur le revenu, quel que soit le placement"], bonneReponse:0, explication:"Le PEA offre un cadre fiscal avantageux après 5 ans de détention, mais le capital investi en actions n'est jamais garanti."},
   {id:"q-pea-002", niveau:"intermediaire", categorie:"PEA", type:"qcm", question:"Que se passe-t-il généralement en cas de retrait sur un PEA avant 5 ans ?", choix:["Aucune conséquence particulière","Cela entraîne en principe la clôture du plan, sauf exceptions prévues par la loi","Le plafond de versement double automatiquement","Le PEA devient un Livret A"], bonneReponse:1, explication:"Un retrait avant 5 ans entraîne en général la clôture du PEA (sauf cas particuliers prévus par la loi), ce qui en fait un outil pensé pour le long terme."},
@@ -1310,7 +1319,7 @@ const DOMAINS = [
     deepQuizHook:{title:'Comprends-tu vraiment tes finances ?', subtitle:'Découvre tes forces et les notions à approfondir.'}},
   {key:'stockMarket', label:'Bourse', displayLabel:'la bourse', icon:'📈',
     mentalChallengeDomain:'Bourse',
-    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative', 'Analyse technique'],
+    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative', 'Analyse technique', 'Options'],
     libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque', "Psychologie de l'investisseur"],
     deepQuizHook:{title:'Penses-tu vraiment comprendre la Bourse ?', subtitle:'Des situations concrètes pour découvrir tes forces.'}},
   {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
@@ -1635,6 +1644,35 @@ const COURS_CATALOG = [
         {type:'casReel', texte:"Plusieurs krachs boursiers historiques (dont celui de 1987) ont représenté des mouvements de marché qu'une loi normale calibrée sur la volatilité habituelle aurait qualifiés de quasiment impossibles — un rappel régulièrement cité des limites de cette hypothèse simplificatrice, largement utilisée malgré tout pour sa simplicité et sa standardisation dans l'industrie."},
         {type:'retenir', texte:"Un outil quantitatif comme la VaR est utile pour standardiser et comparer des risques, mais reste construit sur des hypothèses simplificatrices dont il faut connaître les limites, jamais un chiffre à interpréter comme une certitude absolue."}
       ]}
+    ]},
+  {id:'options-introduction', titre:"Comprendre les options (call, put, payoff)", niveau:'Avancé',
+    libraryTermes:['Option (financière)','Call (option d\'achat)','Put (option de vente)','Prime (option)','Prix d\'exercice (strike)','Effet de levier'],
+    quizCategories:['Options'],
+    applyUrl:'bourse.html#tab-options', applyLabel:"Essayer le simulateur de payoff",
+    acquis:["Comprendre ce qu'est une option et pourquoi son prix (la prime) est le risque maximal pour un acheteur", "Savoir lire un diagramme de payoff à l'échéance pour un call comme pour un put", "Comprendre pourquoi vendre une option n'est pas symétrique à en acheter une, en termes de risque"],
+    chapitres:[
+      {titre:"Qu'est-ce qu'une option ?", blocs:[
+        {type:'texte', texte:"Une option est un contrat qui donne à son acheteur un droit — jamais une obligation — d'acheter ou de vendre un actif à un prix fixé à l'avance, avant ou à une date donnée. C'est cette asymétrie (droit pour l'acheteur, obligation pour le vendeur) qui structure tout le reste."},
+        {type:'definition', texte:"Un call donne le droit d'acheter (pari sur la hausse). Un put donne le droit de vendre (pari sur la baisse, ou protection contre une baisse). Le prix d'exercice (ou strike) est le prix fixé au contrat. La prime est le prix payé par l'acheteur au vendeur pour obtenir ce droit."},
+        {type:'pourquoi', texte:"Le vendeur d'une option accepte une obligation (vendre ou acheter si l'acheteur exerce son droit) en échange d'un paiement immédiat garanti (la prime) — un peu comme un assureur qui encaisse une prime en échange de l'obligation d'indemniser en cas de sinistre. C'est cette logique d'échange qui explique pourquoi une option a un prix."},
+        {type:'exemple', texte:"Un call sur une action à prix d'exercice 100€ pour une prime de 5€ : l'acheteur a le droit d'acheter cette action à 100€ jusqu'à l'échéance, quel que soit son cours de marché réel à ce moment-là — un droit qu'il a payé 5€."},
+        {type:'retenir', texte:"Le prix d'exercice ne bouge jamais après la signature du contrat — c'est le prix de marché de l'actif sous-jacent qui varie en continu, déterminant si exercer l'option deviendrait profitable ou non."}
+      ]},
+      {titre:"Comprendre le payoff à l'échéance", blocs:[
+        {type:'texte', texte:"Le payoff d'une option à son échéance est un calcul mécanique et certain, contrairement à son prix (la prime) avant l'échéance, qui lui dépend d'anticipations. C'est ce payoff, pas un modèle de valorisation, qui est présenté ici — une mécanique contractuelle, pas une estimation."},
+        {type:'calcul', texte:"Pour l'acheteur (position « longue ») : payoff = valeur intrinsèque à l'échéance − prime payée. La valeur intrinsèque d'un call = max(prix de l'actif − prix d'exercice, 0) ; celle d'un put = max(prix d'exercice − prix de l'actif, 0). Pour le vendeur (position « courte ») : payoff = prime reçue − valeur intrinsèque (l'exact opposé de l'acheteur, prime en moins)."},
+        {type:'exemple', texte:"Call, strike 100€, prime 5€. Si le prix à l'échéance est 130€ : l'acheteur gagne (130−100)−5 = 25€, le vendeur perd symétriquement 25€. Si le prix reste à 90€ : l'acheteur perd sa prime (−5€, il n'exerce pas), le vendeur gagne les 5€ de prime, encaissés sans rien devoir faire."},
+        {type:'pourquoi', texte:"La formule utilise un maximum avec 0 (jamais une valeur négative) parce que l'acheteur n'a qu'un droit, pas une obligation : si exercer l'option lui serait défavorable (le prix de l'actif est resté sous le prix d'exercice pour un call), il choisit simplement de ne pas l'exercer — sa valeur intrinsèque tombe à 0, jamais en dessous, quelle que soit l'ampleur de l'écart."},
+        {type:'exerciceErreur', affirmation:"Le seuil de rentabilité (breakeven) d'un call est simplement son prix d'exercice.", pourquoi:"Le breakeven d'un call est le prix d'exercice PLUS la prime payée (ex. strike 100€ + prime 5€ = breakeven à 105€) : en dessous de ce seuil, l'acheteur est encore en perte nette une fois la prime prise en compte, même si l'option a une valeur intrinsèque positive dès que le prix dépasse 100€."},
+        {type:'retenir', texte:"Un diagramme de payoff se lit toujours par rapport à deux repères : le prix d'exercice (où la valeur intrinsèque démarre) et le seuil de rentabilité (où le payoff net, prime comprise, devient positif)."}
+      ]},
+      {titre:"Les risques spécifiques aux options", blocs:[
+        {type:'texte', texte:"Les quatre positions de base (acheteur de call, vendeur de call, acheteur de put, vendeur de put) n'ont pas du tout le même profil de risque — une distinction essentielle avant d'utiliser des options."},
+        {type:'visualisation', schema:"Position                  Perte maximale         Gain maximal\n────────────────────      ─────────────────      ──────────────────\nAcheteur de call           Prime payée             Illimité (en théorie)\nVendeur de call             Illimité (en théorie)   Prime reçue\nAcheteur de put             Prime payée             Plafonné (prix ne peut pas\n                                                     descendre sous 0)\nVendeur de put              Plafonné (idem)         Prime reçue"},
+        {type:'pourquoi', texte:"Un acheteur d'option ne peut jamais perdre plus que sa prime, car il n'a qu'un droit, jamais une obligation : dans le pire des cas, il laisse simplement l'option expirer sans l'exercer. Un vendeur, lui, a une obligation contractuelle : si le marché évolue fortement contre sa position, il doit l'honorer, quelle que soit l'ampleur du mouvement — d'où un risque structurellement asymétrique entre acheteur et vendeur."},
+        {type:'attention', texte:"L'effet de levier d'une option (une mise de départ, la prime, bien inférieure au prix de l'actif sous-jacent) amplifie les gains ET les pertes en proportion de cette mise — le même mécanisme qui rend un LBO ou un crédit immobilier à fort effet de levier plus risqué qu'un achat comptant (voir le terme Effet de levier)."},
+        {type:'retenir', texte:"Avant toute position sur une option, la première question à se poser n'est pas « combien puis-je gagner ? » mais « quelle est ma perte maximale possible, et est-elle plafonnée ou non ? »."}
+      ]}
     ]}
 ];
 
@@ -1686,6 +1724,71 @@ const LIBRARY = [
     avantages:["Peut générer des gains sur des mouvements de prix à court terme, indépendamment des fondamentaux de long terme d'une entreprise"],
     inconvenients:["Frais de transaction plus fréquents", "Exige du temps et une discipline importante", "Risque de perte plus élevé qu'un investissement diversifié long terme, notamment pour un débutant"],
     erreurs:["Confondre trading et investissement, et appliquer les réflexes de l'un à l'autre (ex. réagir à chaque variation de prix d'un placement pensé pour le long terme)"]
+  },
+  {
+    terme:"Option (financière)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Une option est un contrat qui donne à son acheteur le droit, mais jamais l'obligation, d'acheter ou de vendre un actif à un prix fixé à l'avance (le prix d'exercice), avant ou à une date donnée (l'échéance) — en échange du paiement d'une prime.",
+    detail:"Il existe deux types d'options : le call (droit d'acheter) et le put (droit de vendre). Pour chaque option achetée par quelqu'un, quelqu'un d'autre l'a vendue et a l'obligation, elle, d'honorer le contrat si l'acheteur exerce son droit.",
+    avance:"Une option se caractérise par un effet de levier important : son prix (la prime) est généralement bien inférieur au prix de l'actif sous-jacent, ce qui amplifie les gains ET les pertes en proportion de la mise engagée — un mécanisme similaire à l'effet de levier d'un LBO ou d'un crédit immobilier, mais sur un horizon beaucoup plus court.",
+    exemple:"Un call sur une action à un prix d'exercice de 100€ donne le droit (pas l'obligation) de l'acheter à 100€, même si son cours de marché a entre-temps grimpé à 130€.",
+    avantages:["Permet de miser sur un mouvement de prix avec une mise de départ (la prime) bien inférieure au prix de l'actif sous-jacent"],
+    inconvenients:["La prime payée est intégralement perdue si l'option n'est jamais exercée avant son échéance", "La vente d'options expose à un risque potentiellement illimité (voir le terme Call ou Put pour le détail par position)"],
+    erreurs:["Confondre le droit d'exercer une option (pour l'acheteur) et une obligation — seul le vendeur d'une option a une obligation contractuelle"]
+  },
+  {
+    terme:"Call (option d'achat)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un call est une option qui donne à son acheteur le droit d'acheter un actif à un prix fixé à l'avance (le prix d'exercice), avant ou à une date donnée — un pari sur la hausse du prix de l'actif.",
+    detail:"L'acheteur d'un call profite si le prix de l'actif dépasse le prix d'exercice plus la prime payée (son seuil de rentabilité, ou breakeven) : sa perte est plafonnée à la prime payée si le prix reste bas, mais son gain potentiel n'est pas plafonné si le prix continue de monter.",
+    avance:"Le vendeur d'un call (qui a reçu la prime en échange de l'obligation de vendre si l'acheteur exerce) a le profil inverse : gain plafonné à la prime reçue, mais perte potentiellement illimitée si le prix de l'actif monte fortement — un rappel important que vendre des options n'est pas symétrique à en acheter.",
+    exemple:"Un investisseur achète un call à 100€ de prix d'exercice pour une prime de 5€. Si le prix de l'actif atteint 130€ à l'échéance, son gain est de (130−100)−5 = 25€ par action ; si le prix reste sous 100€, sa perte est plafonnée aux 5€ de prime payée.",
+    avantages:["Perte plafonnée à la prime payée pour l'acheteur, quel que soit l'ampleur de la baisse du sous-jacent"],
+    inconvenients:["La prime est intégralement perdue si le prix de l'actif ne dépasse jamais le seuil de rentabilité avant l'échéance"],
+    erreurs:["Croire que vendre un call présente le même profil de risque qu'en acheter un — le vendeur s'expose à une perte potentiellement illimitée, l'acheteur non"]
+  },
+  {
+    terme:"Put (option de vente)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un put est une option qui donne à son acheteur le droit de vendre un actif à un prix fixé à l'avance (le prix d'exercice), avant ou à une date donnée — un pari sur la baisse du prix de l'actif, ou une protection contre cette baisse.",
+    detail:"L'acheteur d'un put profite si le prix de l'actif descend sous le prix d'exercice moins la prime payée (son seuil de rentabilité) : sa perte est plafonnée à la prime payée, et son gain potentiel est plafonné par le fait que le prix de l'actif ne peut pas descendre sous 0.",
+    avance:"Un put est aussi utilisé comme assurance : un investisseur détenant déjà l'actif peut acheter un put pour se protéger d'une forte baisse, moyennant le coût de la prime — un usage défensif, à distinguer d'un usage spéculatif pur.",
+    exemple:"Un investisseur achète un put à 100€ de prix d'exercice pour une prime de 5€. Si le prix de l'actif tombe à 70€ à l'échéance, son gain est de (100−70)−5 = 25€ par action ; si le prix reste au-dessus de 100€, sa perte est plafonnée aux 5€ de prime payée.",
+    avantages:["Peut servir de protection (assurance) contre une baisse d'un actif déjà détenu, pas seulement d'outil spéculatif"],
+    inconvenients:["Le vendeur d'un put s'expose à une perte importante (bien que plafonnée, contrairement au call) si le prix de l'actif s'effondre"],
+    erreurs:["Oublier que le gain d'un put, bien que plafonné, peut représenter un multiple important de la prime payée si le prix chute fortement — jamais un instrument à faible enjeu par nature"]
+  },
+  {
+    terme:"Prime (option)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"La prime est le prix payé par l'acheteur d'une option à son vendeur, pour obtenir le droit (mais pas l'obligation) d'acheter ou de vendre l'actif sous-jacent au prix d'exercice convenu.",
+    detail:"C'est la seule somme que l'acheteur d'une option peut perdre (son risque est plafonné à la prime payée) ; c'est aussi le seul gain garanti que peut espérer le vendeur d'une option, quelle que soit l'évolution du prix de l'actif par la suite.",
+    avance:"Le montant d'une prime dépend de plusieurs facteurs réels : l'écart entre le prix actuel de l'actif et le prix d'exercice, le temps restant avant l'échéance, et la volatilité anticipée de l'actif — plus la volatilité anticipée est élevée, plus la prime est chère, car le mouvement de prix nécessaire pour que l'option devienne profitable est jugé plus probable.",
+    exemple:"Une option sur une action très volatile (comme une jeune entreprise technologique) coûte généralement plus cher (prime plus élevée) que la même structure d'option sur une action peu volatile, à écart de prix d'exercice identique.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Comparer le coût de deux options sans tenir compte de leur échéance ou de la volatilité de leur actif sous-jacent respectif, deux facteurs qui influencent fortement la prime"]
+  },
+  {
+    terme:"Prix d'exercice (strike)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"1 min",
+    simple:"Le prix d'exercice (ou strike) est le prix auquel l'acheteur d'une option a le droit d'acheter (call) ou de vendre (put) l'actif sous-jacent, fixé dès la conclusion du contrat et jamais modifié ensuite.",
+    detail:"Une option est dite « dans la monnaie » si l'exercer immédiatement serait profitable (prix actuel au-dessus du strike pour un call, en dessous pour un put), et « hors de la monnaie » dans le cas contraire.",
+    avance:"Pour un même actif et une même échéance, plusieurs prix d'exercice sont généralement proposés simultanément sur le marché : plus un call a un strike élevé (ou un put un strike bas), moins il est cher à l'achat, mais plus le mouvement de prix nécessaire pour qu'il devienne profitable est important.",
+    exemple:"Un call de prix d'exercice 100€ sur une action cotant actuellement 95€ est dit « hors de la monnaie » : l'exercer immédiatement (acheter à 100€ un titre qui vaut 95€) ne serait pas profitable.",
+    avantages:[],
+    inconvenients:[],
+    erreurs:["Confondre le prix d'exercice (fixé au contrat, ne bouge jamais) et le prix de marché de l'actif sous-jacent (qui varie en continu)"]
   },
   {
     terme:"ETF",

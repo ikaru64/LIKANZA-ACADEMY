@@ -254,6 +254,37 @@
     <div id="marketsHubExtra" style="margin-top:22px;"></div>
   </div>
 
+  <div class="home-tab-panel" id="tab-options">
+    <div class="section-head"><h2>⚔️ Options</h2><span class="meta-line">Call/Put, payoff à l'échéance — jamais une prédiction de prix</span></div>
+    <p class="disclaimer-box" style="max-width:70ch;">Ceci calcule uniquement le payoff mécanique d'une option à son échéance à partir des hypothèses que tu saisis — jamais un prix théorique d'option avant échéance (qui dépendrait d'une volatilité anticipée invérifiable), ni une prédiction sur l'évolution future du prix de l'actif.</p>
+    <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:16px;">
+      <div class="card">
+        <div class="field"><label for="optType">Type d'option</label>
+          <select id="optType">
+            <option value="call">Call (droit d'acheter)</option>
+            <option value="put">Put (droit de vendre)</option>
+          </select>
+        </div>
+        <div class="field"><label for="optPosition">Ta position</label>
+          <select id="optPosition">
+            <option value="long">Acheteur (position longue)</option>
+            <option value="short">Vendeur (position courte)</option>
+          </select>
+        </div>
+        <div class="field"><label for="optStrike">Prix d'exercice / strike (€)</label><input type="number" id="optStrike" min="0" step="1" value="100"></div>
+        <div class="field" style="margin-bottom:0;"><label for="optPremium">Prime (€)</label><input type="number" id="optPremium" min="0" step="0.5" value="5"></div>
+      </div>
+      <div class="card">
+        <h3>Payoff à l'échéance</h3>
+        <div id="optResult" style="margin-top:12px;"></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:16px;">
+      <span class="smallcaps">Diagramme de payoff</span>
+      <div id="optChart" style="margin-top:10px;"></div>
+    </div>
+  </div>
+
 </section>
 
 <footer class="site-footer">

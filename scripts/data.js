@@ -5143,6 +5143,63 @@ function renderMultiLineChart(seriesList, label){
   </svg>`;
 }
 
+// ---------- Options : payoff à l'échéance (section "Options" de la refonte
+// Bourse). Volontairement PAS un modèle de valorisation (type Black-Scholes) :
+// un tel modèle exige des hypothèses de volatilité/taux qui donneraient une
+// fausse impression de précision sur un prix théorique avant échéance. Ici,
+// uniquement la mécanique certaine et non ambiguë du payoff à l'échéance
+// (valeur intrinsèque − prime, ou l'inverse pour un vendeur) — un fait
+// contractuel, pas une estimation. Formules vérifiées en direct sur des cas
+// connus (long call/short put) avant intégration. ----------
+function computeOptionPayoff(optionType, position, strike, premium, priceAtExpiry){
+  if(!(strike >= 0) || !(premium >= 0) || !(priceAtExpiry >= 0)) return null;
+  const intrinsic = optionType === 'call' ? Math.max(priceAtExpiry - strike, 0) : Math.max(strike - priceAtExpiry, 0);
+  return position === 'long' ? intrinsic - premium : premium - intrinsic;
+}
+// maxGain/maxLoss null = perte ou gain non plafonné (jamais un chiffre inventé
+// pour un risque qui, contractuellement, n'a pas de plafond).
+function computeOptionMetrics(optionType, position, strike, premium){
+  if(!(strike >= 0) || !(premium >= 0)) return null;
+  const breakeven = optionType === 'call' ? strike + premium : strike - premium;
+  let maxGain, maxLoss;
+  if(optionType === 'call'){
+    if(position === 'long'){ maxLoss = premium; maxGain = null; }
+    else { maxGain = premium; maxLoss = null; }
+  } else {
+    const capped = Math.max(strike - premium, 0);
+    if(position === 'long'){ maxLoss = premium; maxGain = capped; }
+    else { maxGain = premium; maxLoss = capped; }
+  }
+  return {breakeven, maxGain, maxLoss};
+}
+// Diagramme de payoff (SVG, fonction profit/perte vs prix du sous-jacent à
+// l'échéance — distinct de renderMultiLineChart, qui trace des séries
+// temporelles par index, pas une fonction sur un axe de prix continu).
+function renderPayoffDiagramSVG(optionType, position, strike, premium, priceMin, priceMax){
+  const w = 640, h = 240, padX = 16, padY = 16;
+  const innerW = w - padX * 2, innerH = h - padY * 2;
+  const steps = 60;
+  const points = [];
+  for(let i = 0; i <= steps; i++){
+    const price = priceMin + (i / steps) * (priceMax - priceMin);
+    points.push({price, payoff: computeOptionPayoff(optionType, position, strike, premium, price)});
+  }
+  const payoffs = points.map(p => p.payoff);
+  const maxAbs = Math.max(...payoffs.map(Math.abs), 1);
+  const priceSpan = (priceMax - priceMin) || 1;
+  function toX(price){ return padX + ((price - priceMin) / priceSpan) * innerW; }
+  function toY(payoff){ return padY + innerH / 2 - (payoff / maxAbs) * (innerH / 2); }
+  const pathPoints = points.map(p => `${toX(p.price).toFixed(1)},${toY(p.payoff).toFixed(1)}`).join(' ');
+  const zeroY = toY(0);
+  const strikeX = toX(strike);
+  const color = position === 'long' ? 'var(--emerald)' : 'var(--bordeaux)';
+  return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="${h}" preserveAspectRatio="none" style="display:block;" role="img" aria-label="Diagramme de payoff à l'échéance">
+    <line x1="${padX}" y1="${zeroY.toFixed(1)}" x2="${w - padX}" y2="${zeroY.toFixed(1)}" stroke="var(--hairline)" stroke-width="1"/>
+    <line x1="${strikeX.toFixed(1)}" y1="${padY}" x2="${strikeX.toFixed(1)}" y2="${h - padY}" stroke="var(--hairline)" stroke-width="1" stroke-dasharray="3 3"/>
+    <polyline points="${pathPoints}" fill="none" stroke="${color}" stroke-width="2.5" stroke-linejoin="round"/>
+  </svg>`;
+}
+
 // ---------- Explication "pourquoi" (section 39) ----------
 // Génère un court texte à partir des vrais chiffres calculés — jamais un
 // commentaire générique pré-écrit indépendant du résultat.

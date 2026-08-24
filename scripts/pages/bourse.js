@@ -7,7 +7,8 @@ const BOURSE_TABS = [
   {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
   {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
   {id:'tab-portefeuille', title:'Portefeuille', desc:'Déclaratif, tes transactions', icon:'wallet'},
-  {id:'tab-marches', title:'Autres marchés', desc:'ETF, Forex, matières premières, taux', icon:'landmark'}
+  {id:'tab-marches', title:'Autres marchés', desc:'ETF, Forex, matières premières, taux', icon:'landmark'},
+  {id:'tab-options', title:'Options', desc:'Call/Put, payoff à l\'échéance', icon:'swords'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
@@ -1279,3 +1280,63 @@ function renderRatesAndBondsExtra(elId){
       el.innerHTML = `<div class="card"><p style="font-size:12.5px;color:var(--text-dim);">Taux BCE indisponible pour le moment (${err.message}).</p></div>`;
     });
 }
+
+// ---------- Onglet "Options" : payoff à l'échéance (computeOptionPayoff/
+// computeOptionMetrics/renderPayoffDiagramSVG, scripts/data.js) à partir
+// d'hypothèses saisies par l'utilisateur — jamais un prix théorique d'option
+// avant échéance (qui exigerait une hypothèse de volatilité invérifiable),
+// uniquement la mécanique certaine du payoff contractuel. ----------
+function renderOptionsSimulator(){
+  const strikeEl = document.getElementById('optStrike');
+  if(!strikeEl) return;
+  const ids = ['optType', 'optPosition', 'optStrike', 'optPremium'];
+
+  function update(){
+    const optionType = document.getElementById('optType').value;
+    const position = document.getElementById('optPosition').value;
+    const strike = +document.getElementById('optStrike').value || 0;
+    const premium = +document.getElementById('optPremium').value || 0;
+
+    const resultEl = document.getElementById('optResult');
+    const metrics = computeOptionMetrics(optionType, position, strike, premium);
+    if(!metrics){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : le prix d'exercice et la prime doivent être positifs ou nuls.</p>`;
+      document.getElementById('optChart').innerHTML = '';
+      return;
+    }
+    const optionLabel = optionType === 'call' ? 'call' : 'put';
+    const positionLabel = position === 'long' ? 'acheteur' : 'vendeur';
+    const fmtMax = v => v === null ? 'Illimité' : fmtEUR(v);
+
+    resultEl.innerHTML = `
+      ${renderDataBadge('calcul')}
+      <div class="result-row" style="margin-top:10px;">
+        <span>Seuil de rentabilité (breakeven)</span><span class="mono">${fmtEUR(metrics.breakeven)}</span>
+      </div>
+      <div class="result-row">
+        <span>Gain maximal</span><span class="mono" style="color:var(--emerald);">${fmtMax(metrics.maxGain)}</span>
+      </div>
+      <div class="result-row">
+        <span>Perte maximale</span><span class="mono" style="color:var(--bordeaux);">${fmtMax(metrics.maxLoss)}</span>
+      </div>
+      <p style="font-size:13px;margin-top:14px;color:var(--text-dim);">En tant que <strong style="color:var(--text);">${positionLabel}</strong> de ce <strong style="color:var(--text);">${optionLabel}</strong>, ton résultat à l'échéance dépend uniquement du prix de l'actif sous-jacent à ce moment-là — jamais de son évolution avant l'échéance.</p>
+      ${metrics.maxLoss === null || metrics.maxGain === null ? `<p class="disclaimer-box" style="margin-top:10px;">${metrics.maxLoss === null ? 'En tant que vendeur, ta perte n\'est théoriquement pas plafonnée' : 'Ton gain n\'est théoriquement pas plafonné'} — un profil de risque très différent de l'achat d'une action classique, où la perte reste toujours limitée à la mise investie.</p>` : ''}
+      ${renderMethodologyPanel({
+        calcul: "Valeur intrinsèque à l'échéance : max(prix de l'actif − prix d'exercice, 0) pour un call, max(prix d'exercice − prix de l'actif, 0) pour un put. Payoff acheteur = valeur intrinsèque − prime payée. Payoff vendeur = prime reçue − valeur intrinsèque (l'exact opposé, prime en moins).",
+        donnees: `Calcul à partir de tes hypothèses saisies ci-contre : prix d'exercice de ${fmtEUR(strike)}, prime de ${fmtEUR(premium)} — jamais une cotation d'option réelle, uniquement les valeurs que tu as saisies.`,
+        hypotheses: "L'option est supposée conservée jusqu'à son échéance et exercée ou non selon son intérêt à ce moment précis — aucun ajustement ni clôture anticipée de la position n'est pris en compte.",
+        limites: "Ceci ne calcule jamais le prix théorique d'une option AVANT son échéance (un tel calcul, type Black-Scholes, exigerait une hypothèse de volatilité future invérifiable) — uniquement son payoff certain une fois l'échéance atteinte, à un prix du sous-jacent donné.",
+        comprendre: "Le seuil de rentabilité (breakeven) est le prix du sous-jacent à partir duquel la position devient profitable une fois la prime prise en compte — toujours décalé du prix d'exercice par le montant de la prime."
+      })}`;
+
+    const priceMin = Math.max(0, strike * 0.5);
+    const priceMax = strike * 1.5 + premium * 2;
+    document.getElementById('optChart').innerHTML = renderPayoffDiagramSVG(optionType, position, strike, premium, priceMin, priceMax);
+  }
+
+  ids.forEach(id => document.getElementById(id).addEventListener('input', update));
+  ids.forEach(id => document.getElementById(id).addEventListener('change', update));
+  update();
+  tryAwardQuizPoints(`options-lab-${new Date().toDateString()}`, 8, {usedSimulator: true});
+}
+safeRun('simulateur Options', renderOptionsSimulator);
