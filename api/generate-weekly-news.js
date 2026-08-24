@@ -13,7 +13,7 @@
 
 const { WEEKLY_CATEGORY_FEEDS } = require('../lib/news-sources');
 const { fetchFeedItems } = require('../lib/rss');
-const { generateCategoryArticle } = require('../lib/gemini');
+const { generateCategoryArticle, filterSourcesUsed } = require('../lib/gemini');
 const { getSql, ensureWeeklyNewsTable } = require('../lib/db');
 
 function mondayOfWeek(date){
@@ -62,9 +62,24 @@ module.exports = async (req, res) => {
 
         const distinctSourceNames = [...new Set(items.map(a => a.source))];
         const article = await generateCategoryArticle(entry.categorie, items, distinctSourceNames);
-        const sourceName = distinctSourceNames.map(n => n.split(' — ')[0]).join(' + ');
-        const lien = items[0].link;
-        const sources = items.map(a => ({title: a.title, link: a.link, source: a.source}));
+
+        // sources = uniquement les items RÉELLEMENT cités par Gemini
+        // (filterSourcesUsed, lib/gemini.js) — fini le pool RSS brut entier
+        // stocké tel quel, qui pouvait faire croire à un chevauchement de
+        // sources entre catégories qui n'existait pas dans le résumé lui-même.
+        let {sources, sourceCount} = filterSourcesUsed(items, article.sourcesUsed);
+        // Repli honnête : si Gemini n'a renvoyé aucun index exploitable (sortie
+        // malformée), on retombe sur le premier item du pool plutôt que de ne
+        // publier aucune source du tout — jamais un article sans aucune trace vérifiable.
+        if(sources.length === 0 && items.length > 0){
+          sources = [{title: items[0].title, link: items[0].link, source: items[0].source}];
+          sourceCount = 1;
+        }
+        // Nom de source affiché : les flux réellement cités, distingués par leur
+        // nom complet (pas écrasé au préfixe éditeur) pour ne plus donner une
+        // fausse impression d'identité entre deux flux distincts du même éditeur.
+        const sourceName = [...new Set(sources.map(s => s.source))].join(' + ');
+        const lien = sources[0].link;
 
         await sql`
           INSERT INTO weekly_news (week_start, categorie, slug, titre, resume, points, pourquoi, impact, lecture, source, lien, sources, a_surveiller, accord_sources)

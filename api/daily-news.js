@@ -16,7 +16,7 @@ module.exports = async (req, res) => {
     const sql = getSql();
     await ensureDailyNewsTable(sql);
     const rows = await sql`
-      SELECT news_date, title, summary, sources, created_at
+      SELECT news_date, title, summary, sources, items, created_at
       FROM daily_news
       ORDER BY news_date DESC
       LIMIT 1
@@ -35,6 +35,12 @@ module.exports = async (req, res) => {
       title: row.title,
       summary: row.summary,
       sources: row.sources,
+      // items : chantier "vraies sources par article" — 3 à 5 actualités
+      // distinctes, chacune avec ses sources réellement citées et sa
+      // corroboration calculée. Absent (tableau vide) pour toute ligne
+      // générée avant ce champ — le frontend replie proprement sur
+      // title/summary dans ce cas (voir scripts/pages/actualites.js).
+      items: row.items || [],
       generatedAt: row.created_at
     });
   } catch(err){
