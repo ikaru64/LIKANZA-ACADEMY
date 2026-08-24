@@ -44,7 +44,7 @@ async function renderDailyRecap(){
   try {
     const resp = await fetch('/api/daily-news');
     if(resp.status === 404){
-      el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Le récap du jour n'est pas encore disponible : il est généré automatiquement chaque matin entre 8h et 10h.</p>`;
+      el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Le récap du jour n'est pas encore disponible : il est généré automatiquement chaque matin, en fin de matinée (vers 10h-11h), pour laisser le temps aux articles du jour d'être publiés.</p>`;
       return;
     }
     if(!resp.ok) throw new Error('HTTP ' + resp.status);

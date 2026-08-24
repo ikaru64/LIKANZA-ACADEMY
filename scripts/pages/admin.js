@@ -121,7 +121,7 @@ async function renderNewsPipelineStatus(){
   const dailyCard = (() => {
     if(dailyResult.status === 'rejected') return `<div class="card"><span class="smallcaps">Récap du jour</span><p style="color:var(--bordeaux);font-size:13px;margin-top:8px;">État impossible à vérifier (erreur réseau ou API).</p></div>`;
     const daily = dailyResult.value;
-    if(!daily) return `<div class="card"><span class="smallcaps">Récap du jour</span><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Aucun récap encore généré. Prévu chaque jour à 7h30 UTC.</p></div>`;
+    if(!daily) return `<div class="card"><span class="smallcaps">Récap du jour</span><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Aucun récap encore généré. Prévu chaque jour à 9h UTC.</p></div>`;
     return `<div class="card">
       <span class="smallcaps">Récap du jour</span>
       <h4 style="margin-top:8px;font-size:15px;">${daily.title}</h4>
