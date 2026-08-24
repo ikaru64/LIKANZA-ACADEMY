@@ -5456,7 +5456,8 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-cours-progress', 'fzr-defis-parcours-progress', 'fzr-daily-missions-log',
   'fzr-weekly-missions-log', 'fzr-activity-log', 'fzr-positioning-result',
   'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
-  'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio'
+  'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
+  'fzr-paper-trading'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
@@ -6020,6 +6021,102 @@ function renderRealPortfolioHTML(positions, totals){
       <tbody>${rows}</tbody>
     </table></div>
     <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">Portefeuille déclaratif : ces positions viennent des transactions que tu as toi-même saisies, jamais d'un compte-titres réel connecté. Le gain/perte est latent (non réalisé) et calculé sur le cours actuel réel.</p>`;
+}
+
+// ---------- Paper Trading : argent fictif, exécuté à de vrais cours en direct
+// (section "Bourse" — distinct du portefeuille réel/déclaratif ci-dessus, qui
+// loggue les VRAIES transactions de l'utilisateur). Généralise
+// computeRealPortfolioPositions (achat seul, additif) pour supporter la vente
+// (réduction de position au coût moyen pondéré courant, P&L réalisé) et un
+// solde de trésorerie fictif — jamais un ordre exécuté silencieusement au-delà
+// des fonds disponibles ou de la position détenue. ----------
+const PAPER_TRADING_KEY = 'fzr-paper-trading';
+const PAPER_TRADING_STARTING_CASH = 10000;
+function getPaperTradingState(){
+  const raw = safeGetJSON(PAPER_TRADING_KEY, null);
+  if(!raw || typeof raw.cash !== 'number' || !Array.isArray(raw.transactions)){
+    return {cash: PAPER_TRADING_STARTING_CASH, transactions: []};
+  }
+  return raw;
+}
+function savePaperTradingState(state){ safeSetJSON(PAPER_TRADING_KEY, state); }
+function resetPaperTradingState(){
+  const state = {cash: PAPER_TRADING_STARTING_CASH, transactions: []};
+  savePaperTradingState(state);
+  return state;
+}
+// livePrices : {symbol: prixActuelRéel} — utilisé uniquement pour valider
+// qu'une vente ne dépasse pas la position réellement détenue ; le prix
+// d'EXÉCUTION de l'ordre, lui, vient toujours de `price` (le cours affiché à
+// l'utilisateur au moment de passer l'ordre), jamais recalculé ici.
+function executePaperTrade(symbol, name, assetType, action, qty, price){
+  if(typeof symbol !== 'string' || !symbol || !(qty > 0) || !(price > 0)){
+    return {ok: false, reason: 'Hypothèses invalides : symbole, quantité et prix doivent être renseignés et positifs.'};
+  }
+  const state = getPaperTradingState();
+  const total = qty * price;
+  if(action === 'buy'){
+    if(total > state.cash){
+      return {ok: false, reason: `Fonds insuffisants : cet achat coûterait ${total.toFixed(2)} €, il ne te reste que ${state.cash.toFixed(2)} € disponibles.`};
+    }
+    state.cash -= total;
+  } else if(action === 'sell'){
+    const {positions} = computePaperTradingPositions(state.transactions, {});
+    const held = positions.find(p => p.symbol === symbol);
+    const heldQty = held ? held.qty : 0;
+    if(qty > heldQty){
+      return {ok: false, reason: `Tu ne détiens que ${heldQty} unité${heldQty > 1 ? 's' : ''} de ${name || symbol} dans cette simulation, tu ne peux pas en vendre ${qty}.`};
+    }
+    state.cash += total;
+  } else {
+    return {ok: false, reason: 'Type d\'ordre inconnu.'};
+  }
+  const entry = {
+    id: 'ptx-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    date: new Date().toISOString(), symbol, name: name || symbol, assetType: assetType || 'stock',
+    action, qty, price, total
+  };
+  state.transactions.push(entry);
+  savePaperTradingState(state);
+  return {ok: true, entry, state};
+}
+// Traite les transactions dans l'ordre chronologique (pas l'ordre de saisie,
+// qui peut différer) : méthode du coût moyen pondéré, même principe que le
+// simulateur "Prix moyen d'achat" du Laboratoire — une vente réduit la
+// position au coût moyen COURANT (pas au coût moyen final), et réalise un
+// gain/perte à ce moment précis de la séquence.
+function computePaperTradingPositions(transactions, livePrices){
+  livePrices = livePrices || {};
+  const bySymbol = {};
+  let realizedGainTotal = 0;
+  const sorted = [...(transactions || [])].sort((a, b) => new Date(a.date) - new Date(b.date));
+  sorted.forEach(tx => {
+    if(!tx || typeof tx.symbol !== 'string' || !(tx.qty > 0) || !(tx.price > 0)) return;
+    if(!bySymbol[tx.symbol]) bySymbol[tx.symbol] = {symbol: tx.symbol, name: tx.name || tx.symbol, assetType: tx.assetType || 'stock', qty: 0, totalInvested: 0};
+    const pos = bySymbol[tx.symbol];
+    if(tx.action === 'buy'){
+      pos.qty += tx.qty;
+      pos.totalInvested += tx.qty * tx.price;
+    } else if(tx.action === 'sell'){
+      const avgCost = pos.qty > 0 ? pos.totalInvested / pos.qty : 0;
+      const sellQty = Math.min(tx.qty, pos.qty);
+      realizedGainTotal += sellQty * (tx.price - avgCost);
+      pos.totalInvested -= sellQty * avgCost;
+      pos.qty -= sellQty;
+    }
+  });
+  const positions = Object.values(bySymbol)
+    .filter(p => p.qty > 1e-9)
+    .map(pos => {
+      const currentPrice = typeof livePrices[pos.symbol] === 'number' ? livePrices[pos.symbol] : null;
+      const avgBuyPrice = pos.totalInvested / pos.qty;
+      const currentValue = currentPrice !== null ? currentPrice * pos.qty : null;
+      const unrealizedGain = currentValue !== null ? currentValue - pos.totalInvested : null;
+      const unrealizedGainPct = (currentValue !== null && pos.totalInvested > 0) ? (unrealizedGain / pos.totalInvested) * 100 : null;
+      return {symbol: pos.symbol, name: pos.name, assetType: pos.assetType, qty: pos.qty, totalInvested: pos.totalInvested, avgBuyPrice, currentPrice, currentValue, unrealizedGain, unrealizedGainPct};
+    })
+    .sort((a, b) => (b.currentValue !== null ? b.currentValue : b.totalInvested) - (a.currentValue !== null ? a.currentValue : a.totalInvested));
+  return {positions, realizedGainTotal};
 }
 
 // ---------- Contenu éditorial (résumé business / business model / risques) ----------

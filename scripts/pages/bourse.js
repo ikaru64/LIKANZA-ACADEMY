@@ -8,7 +8,8 @@ const BOURSE_TABS = [
   {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
   {id:'tab-portefeuille', title:'Portefeuille', desc:'Déclaratif, tes transactions', icon:'wallet'},
   {id:'tab-marches', title:'Autres marchés', desc:'ETF, Forex, matières premières, taux', icon:'landmark'},
-  {id:'tab-options', title:'Options', desc:'Call/Put, payoff à l\'échéance', icon:'swords'}
+  {id:'tab-options', title:'Options', desc:'Call/Put, payoff à l\'échéance', icon:'swords'},
+  {id:'tab-paper-trading', title:'Paper Trading', desc:'Argent fictif, vrais cours', icon:'flame'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
@@ -1340,3 +1341,160 @@ function renderOptionsSimulator(){
   tryAwardQuizPoints(`options-lab-${new Date().toDateString()}`, 8, {usedSimulator: true});
 }
 safeRun('simulateur Options', renderOptionsSimulator);
+
+// ---------- Onglet "Paper Trading" : argent fictif, exécuté à de vrais cours
+// en direct (executePaperTrade/computePaperTradingPositions, scripts/data.js).
+// Univers négociable = les valeurs déjà suivies (getFollowedStocks), actions
+// ET actifs de marché (resolveFollowedAsset, généralisé Phase 2) — aucun
+// nouveau système de recherche construit ici. ----------
+function renderPaperTradingSymbolOptions(){
+  const sel = document.getElementById('ptSymbol');
+  if(!sel) return;
+  const previous = sel.value;
+  const list = getFollowedStocks();
+  sel.innerHTML = list.map(entry => `<option value="${entry.symbol}">${entry.name} (${entry.symbol})</option>`).join('');
+  if(previous && list.some(e => e.symbol === previous)) sel.value = previous;
+}
+function renderPaperTradingQuote(){
+  const sel = document.getElementById('ptSymbol');
+  const quoteEl = document.getElementById('ptQuote');
+  if(!sel || !quoteEl || !sel.value){ if(quoteEl) quoteEl.textContent = ''; return; }
+  const asset = resolveFollowedAsset(sel.value);
+  if(typeof asset.prix !== 'number'){
+    quoteEl.textContent = 'Cours actuel indisponible pour le moment.';
+    return;
+  }
+  const unite = typeof asset.unite === 'string' && asset.unite ? asset.unite : '€';
+  quoteEl.textContent = `Cours actuel : ${asset.prix.toFixed(2)} ${unite}`;
+}
+function renderPaperTradingSummary(){
+  const el = document.getElementById('paperTradingSummary');
+  if(!el) return;
+  const state = getPaperTradingState();
+  const livePrices = {};
+  state.transactions.forEach(tx => {
+    const asset = resolveFollowedAsset(tx.symbol);
+    if(typeof asset.prix === 'number') livePrices[tx.symbol] = asset.prix;
+  });
+  const {positions, realizedGainTotal} = computePaperTradingPositions(state.transactions, livePrices);
+  const known = positions.filter(p => p.currentValue !== null);
+  const positionsValue = known.length === positions.length ? known.reduce((s, p) => s + p.currentValue, 0) : null;
+  const totalValue = positionsValue !== null ? state.cash + positionsValue : null;
+  const unrealizedTotal = known.length === positions.length ? known.reduce((s, p) => s + p.unrealizedGain, 0) : null;
+
+  el.innerHTML = `
+    <div class="card"><span class="smallcaps">Cash disponible</span><div class="result-big" style="margin-top:6px;">${fmtEUR(state.cash)}</div></div>
+    <div class="card"><span class="smallcaps">Valeur totale simulée</span><div class="result-big" style="margin-top:6px;">${totalValue !== null ? fmtEUR(totalValue) : FUNDAMENTALS_UNAVAILABLE_TEXT}</div></div>
+    <div class="card"><span class="smallcaps">P&amp;L latent (positions ouvertes)</span><div class="result-big" style="margin-top:6px;color:${unrealizedTotal === null ? 'var(--text-dim)' : unrealizedTotal >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${unrealizedTotal !== null ? (unrealizedTotal >= 0 ? '+' : '') + fmtEUR(unrealizedTotal) : FUNDAMENTALS_UNAVAILABLE_TEXT}</div></div>
+    <div class="card"><span class="smallcaps">P&amp;L réalisé (ventes déjà passées)</span><div class="result-big" style="margin-top:6px;color:${realizedGainTotal >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${realizedGainTotal >= 0 ? '+' : ''}${fmtEUR(realizedGainTotal)}</div></div>`;
+}
+function renderPaperTradingPositions(){
+  const el = document.getElementById('paperTradingPositions');
+  if(!el) return;
+  const state = getPaperTradingState();
+  const livePrices = {};
+  state.transactions.forEach(tx => {
+    const asset = resolveFollowedAsset(tx.symbol);
+    if(typeof asset.prix === 'number') livePrices[tx.symbol] = asset.prix;
+  });
+  const {positions} = computePaperTradingPositions(state.transactions, livePrices);
+  if(positions.length === 0){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Aucune position ouverte — passe ton premier ordre ci-dessus.</p>`;
+    return;
+  }
+  const rows = positions.map(p => `
+    <tr>
+      <td style="padding:6px 8px;">${p.name} <span class="mono" style="font-size:11.5px;color:var(--text-dim);">${p.symbol}</span></td>
+      <td style="text-align:right;padding:6px 8px;">${p.qty}</td>
+      <td style="text-align:right;padding:6px 8px;">${fmtEUR(p.avgBuyPrice)}</td>
+      <td style="text-align:right;padding:6px 8px;">${p.currentPrice !== null ? fmtEUR(p.currentPrice) : FUNDAMENTALS_UNAVAILABLE_TEXT}</td>
+      <td style="text-align:right;padding:6px 8px;${p.unrealizedGain !== null ? `color:${p.unrealizedGain >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};` : ''}">${p.unrealizedGain !== null ? `${p.unrealizedGain >= 0 ? '+' : ''}${fmtEUR(p.unrealizedGain)}` : FUNDAMENTALS_UNAVAILABLE_TEXT}</td>
+    </tr>`).join('');
+  el.innerHTML = `
+    <span class="smallcaps">Positions ouvertes (simulation)</span>
+    <div style="overflow-x:auto;margin-top:10px;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 8px;">Valeur</th>
+        <th style="text-align:right;padding:6px 8px;">Quantité</th>
+        <th style="text-align:right;padding:6px 8px;">Prix moyen</th>
+        <th style="text-align:right;padding:6px 8px;">Cours actuel</th>
+        <th style="text-align:right;padding:6px 8px;">Gain / perte latent</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+function renderPaperTradingHistory(){
+  const el = document.getElementById('paperTradingHistory');
+  if(!el) return;
+  const state = getPaperTradingState();
+  if(state.transactions.length === 0){ el.innerHTML = ''; return; }
+  const sorted = [...state.transactions].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const rows = sorted.map(tx => `
+    <tr>
+      <td style="padding:6px 8px;">${new Date(tx.date).toLocaleDateString('fr-FR')}</td>
+      <td style="padding:6px 8px;">${tx.name} <span class="mono" style="font-size:11.5px;color:var(--text-dim);">${tx.symbol}</span></td>
+      <td style="padding:6px 8px;color:${tx.action === 'buy' ? 'var(--emerald)' : 'var(--bordeaux)'};">${tx.action === 'buy' ? 'Achat' : 'Vente'}</td>
+      <td style="text-align:right;padding:6px 8px;">${tx.qty}</td>
+      <td style="text-align:right;padding:6px 8px;">${fmtEUR(tx.price)}</td>
+      <td style="text-align:right;padding:6px 8px;">${fmtEUR(tx.total)}</td>
+    </tr>`).join('');
+  el.innerHTML = `
+    <span class="smallcaps">Historique des ordres (simulation)</span>
+    <div style="overflow-x:auto;margin-top:10px;"><table style="width:100%;border-collapse:collapse;font-size:12.5px;">
+      <thead><tr>
+        <th style="text-align:left;padding:6px 8px;">Date</th>
+        <th style="text-align:left;padding:6px 8px;">Valeur</th>
+        <th style="text-align:left;padding:6px 8px;">Ordre</th>
+        <th style="text-align:right;padding:6px 8px;">Quantité</th>
+        <th style="text-align:right;padding:6px 8px;">Prix</th>
+        <th style="text-align:right;padding:6px 8px;">Total</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+function refreshPaperTradingViews(){
+  renderPaperTradingSummary();
+  renderPaperTradingPositions();
+  renderPaperTradingHistory();
+}
+function renderPaperTrading(){
+  const symbolEl = document.getElementById('ptSymbol');
+  if(!symbolEl) return;
+  renderPaperTradingSymbolOptions();
+  renderPaperTradingQuote();
+  refreshPaperTradingViews();
+
+  document.getElementById('ptSymbol').addEventListener('change', renderPaperTradingQuote);
+  document.getElementById('ptSubmit').addEventListener('click', () => {
+    const feedbackEl = document.getElementById('ptFeedback');
+    const symbol = document.getElementById('ptSymbol').value;
+    const action = document.getElementById('ptAction').value;
+    const qty = +document.getElementById('ptQty').value || 0;
+    if(!symbol){ feedbackEl.textContent = 'Ajoute d\'abord au moins une valeur suivie (depuis Fiches actions ou Autres marchés).'; feedbackEl.style.color = 'var(--bordeaux)'; return; }
+    const asset = resolveFollowedAsset(symbol);
+    if(typeof asset.prix !== 'number'){
+      feedbackEl.textContent = 'Cours actuel indisponible pour le moment — réessaie une fois la cotation chargée.';
+      feedbackEl.style.color = 'var(--bordeaux)';
+      return;
+    }
+    const result = executePaperTrade(symbol, asset.nom, asset.assetType, action, qty, asset.prix);
+    if(!result.ok){
+      feedbackEl.textContent = result.reason;
+      feedbackEl.style.color = 'var(--bordeaux)';
+      return;
+    }
+    feedbackEl.textContent = `${action === 'buy' ? 'Achat' : 'Vente'} de ${qty} ${asset.nom} exécuté${qty>1?'s':''} à ${asset.prix.toFixed(2)} ${asset.unite || '€'} (simulation).`;
+    feedbackEl.style.color = 'var(--emerald)';
+    refreshPaperTradingViews();
+    tryAwardQuizPoints(`paper-trading-${new Date().toDateString()}`, 8, {usedSimulator: true});
+  });
+  document.getElementById('ptReset').addEventListener('click', () => {
+    if(!confirm('Réinitialiser la simulation de Paper Trading ? Toutes les positions et l\'historique fictifs seront effacés.')) return;
+    resetPaperTradingState();
+    refreshPaperTradingViews();
+  });
+}
+document.addEventListener('fzr:quotes-updated', () => {
+  if(bourseActiveTab === 'tab-paper-trading') safeRun('Paper Trading (cotations)', refreshPaperTradingViews);
+});
+safeRun('Paper Trading', renderPaperTrading);

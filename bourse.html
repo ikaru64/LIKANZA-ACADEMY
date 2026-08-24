@@ -285,6 +285,31 @@
     </div>
   </div>
 
+  <div class="home-tab-panel" id="tab-paper-trading">
+    <div class="section-head"><h2>🔥 Paper Trading</h2><span class="meta-line">Argent fictif, exécuté à de vrais cours en direct</span></div>
+    <p class="disclaimer-box" style="max-width:70ch;">Argent entièrement fictif, aucune exécution réelle. Le prix d'exécution est le dernier cours connu affiché — jamais un carnet d'ordres ni un spread modélisé : une exécution réelle en conditions de marché diffère toujours légèrement. Aucun frais de courtage simulé.</p>
+    <div class="card-grid" id="paperTradingSummary" style="margin-top:16px;"></div>
+    <div class="card" style="margin-top:16px;">
+      <span class="smallcaps">Passer un ordre</span>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;">
+        <div class="field" style="flex:2;min-width:200px;"><label for="ptSymbol">Valeur suivie</label><select id="ptSymbol"></select></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="ptAction">Ordre</label>
+          <select id="ptAction">
+            <option value="buy">Acheter</option>
+            <option value="sell">Vendre</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="ptQty">Quantité</label><input type="number" id="ptQty" min="1" step="1" value="1"></div>
+      </div>
+      <div id="ptQuote" style="margin-top:6px;font-size:12.5px;color:var(--text-dim);"></div>
+      <button class="btn btn-sm btn-gold" id="ptSubmit" style="margin-top:12px;">Exécuter l'ordre</button>
+      <p id="ptFeedback" style="font-size:12.5px;margin-top:8px;"></p>
+    </div>
+    <div id="paperTradingPositions" style="margin-top:16px;"></div>
+    <div id="paperTradingHistory" style="margin-top:20px;"></div>
+    <button class="btn btn-sm" id="ptReset" style="margin-top:16px;">Réinitialiser la simulation</button>
+  </div>
+
 </section>
 
 <footer class="site-footer">
