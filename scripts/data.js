@@ -4414,6 +4414,147 @@ function computeHistoricalInvestment(monthlyPoints, initial, monthlyContribution
   };
 }
 
+// ---------- Décision face à un vrai krach (Market Panic, jeu-market-panic.html) ----------
+// Repère le pire drawdown RÉELLEMENT survenu dans la série mensuelle fournie
+// (même algorithme peak/trough que computeHistoricalInvestment ci-dessus, mais
+// appliqué directement aux cours, pas à une valeur de portefeuille), puis
+// calcule 3 issues réelles à partir de ce même vrai sommet/creux jusqu'à la
+// dernière donnée disponible : vendre au creux (capital gelé, aucune
+// croissance après la vente), rester investi (le cours réel continue de
+// courir), racheter au creux (un capital supplémentaire investi exactement au
+// plus bas, au vrai cours de ce mois). Jamais un chiffre inventé : les 3
+// issues ne sont que le même vrai historique de prix, rejoué depuis 3 points
+// de décision différents.
+function computeCrashDecisionOutcome(monthlyPoints, capital, extraAtTrough){
+  if(!monthlyPoints || monthlyPoints.length < 3) return null;
+  const points = monthlyPoints;
+
+  let peak = points[0].close, peakIdx = 0, maxDD = 0, troughIdx = 0, ddPeakIdx = 0;
+  for(let i = 1; i < points.length; i++){
+    if(points[i].close > peak){ peak = points[i].close; peakIdx = i; }
+    else {
+      const dd = (peak - points[i].close) / peak;
+      if(dd > maxDD){ maxDD = dd; troughIdx = i; ddPeakIdx = peakIdx; }
+    }
+  }
+  if(maxDD <= 0) return null; // série toujours en hausse : aucun vrai drawdown à jouer
+
+  const peakClose = points[ddPeakIdx].close;
+  const troughClose = points[troughIdx].close;
+  const lastIdx = points.length - 1;
+  const lastClose = points[lastIdx].close;
+
+  const units = capital > 0 ? capital / peakClose : 0;
+  const extraUnits = extraAtTrough > 0 ? extraAtTrough / troughClose : 0;
+
+  const vendu = {finalValue: units * troughClose};
+  const garde = {finalValue: units * lastClose};
+  const achete = {finalValue: units * lastClose + extraUnits * lastClose, extraInvested: extraAtTrough};
+
+  let recoveryMonths = null;
+  for(let i = troughIdx + 1; i <= lastIdx; i++){
+    if(points[i].close >= peakClose){ recoveryMonths = i - ddPeakIdx; break; }
+  }
+
+  return {
+    peakDate: points[ddPeakIdx].period, troughDate: points[troughIdx].period, lastDate: points[lastIdx].period,
+    peakClose, troughClose, lastClose,
+    drawdownPct: maxDD * 100,
+    monthsPeakToTrough: troughIdx - ddPeakIdx,
+    monthsTroughToLast: lastIdx - troughIdx,
+    recoveryMonths,
+    recovered: lastClose >= peakClose,
+    outcomes: {vendu, garde, achete}
+  };
+}
+
+// ---------- Simulateur "Gouverneur de banque centrale" (laboratoire.html, tab-economie) ----------
+// Modèle pédagogique volontairement simplifié, jamais une prédiction ni des
+// données réelles (contrairement au reste du Laboratoire) — même esprit que
+// les scénarios qualitatifs ECO_LAB_SCENARIOS (scripts/pages/laboratoire.js) :
+// chaque choc est écrit à l'avance (jamais généré aléatoirement), et l'effet
+// du taux directeur sur l'inflation/le chômage/la croissance n'agit qu'AU TOUR
+// SUIVANT (délai de transmission de la politique monétaire, comme expliqué
+// dans le scénario "hausse des taux" du laboratoire économique) — jamais un
+// effet instantané. Objectif pédagogique : le double mandat (inflation proche
+// d'une cible, chômage proche de son niveau "naturel"), un arbitrage réel des
+// banques centrales, pas juste "monter les taux = toujours bien".
+const GOVERNOR_TARGET_INFLATION = 2;
+const GOVERNOR_NATURAL_UNEMPLOYMENT = 5;
+const GOVERNOR_NEUTRAL_RATE = 2;
+const GOVERNOR_ROUNDS = 6;
+
+const GOVERNOR_EVENTS = [
+  {titre: "Un choc énergétique fait grimper les prix à l'importation.", deltaInflation: 1.5, deltaChomage: 0, deltaCroissance: -0.2},
+  {titre: "La consommation ralentit après plusieurs mois de prix élevés.", deltaInflation: 0, deltaChomage: 0.3, deltaCroissance: -0.5},
+  {titre: "Les tensions commerciales internationales s'apaisent légèrement.", deltaInflation: -0.3, deltaChomage: 0, deltaCroissance: 0.2},
+  {titre: "Une vague d'investissement dynamise un secteur clé de l'économie.", deltaInflation: 0.2, deltaChomage: -0.4, deltaCroissance: 1.0},
+  {titre: "Une incertitude géopolitique pèse sur la confiance des ménages.", deltaInflation: 0, deltaChomage: 0.2, deltaCroissance: -0.6},
+  {titre: "Les prix de l'énergie se stabilisent après les chocs précédents.", deltaInflation: -0.4, deltaChomage: 0, deltaCroissance: 0.3}
+];
+
+function initGovernorState(){
+  return {
+    round: 0,
+    tauxDirecteur: GOVERNOR_NEUTRAL_RATE,
+    inflation: 4.5,
+    chomage: 7,
+    croissance: 1.5,
+    history: [],
+    done: false
+  };
+}
+
+// Applique la décision du joueur (variation du taux directeur, en points de %,
+// pas de 0,25) puis fait évoluer l'état vers le tour suivant : le choc du
+// tour suivant (fixe, jamais inventé au vol) + l'effet DÉCALÉ du taux qui
+// vient d'être décidé (jamais du taux déjà en vigueur ce tour-ci).
+function applyGovernorDecision(state, deltaTaux){
+  const clampedDelta = Math.max(-1, Math.min(1, Math.round(deltaTaux * 4) / 4));
+  const newTaux = Math.max(0, Math.min(15, state.tauxDirecteur + clampedDelta));
+
+  const event = GOVERNOR_EVENTS[state.round % GOVERNOR_EVENTS.length];
+  const gap = newTaux - GOVERNOR_NEUTRAL_RATE;
+
+  const inflation = Math.max(0, Math.min(20, state.inflation + event.deltaInflation - 0.4 * gap));
+  const chomage = Math.max(0, Math.min(25, state.chomage + event.deltaChomage + 0.25 * gap));
+  const croissance = Math.max(-8, Math.min(10, state.croissance + event.deltaCroissance - 0.5 * gap));
+
+  const historyEntry = {
+    round: state.round, tauxAvant: state.tauxDirecteur, decision: clampedDelta, tauxApres: newTaux,
+    inflationAvant: state.inflation, chomageAvant: state.chomage, croissanceAvant: state.croissance,
+    evenement: event.titre
+  };
+
+  const nextRound = state.round + 1;
+  return {
+    round: nextRound,
+    tauxDirecteur: newTaux,
+    inflation, chomage, croissance,
+    history: state.history.concat([historyEntry]),
+    done: nextRound >= GOVERNOR_ROUNDS
+  };
+}
+
+// Perte quadratique à double mandat (inflation + chômage), même logique que
+// la fonction de perte réellement utilisée par certaines banques centrales
+// pour formaliser leur arbitrage — jamais une seule métrique isolée.
+function scoreGovernorGame(state){
+  const allInflation = state.history.map(h => h.inflationAvant).concat([state.inflation]);
+  const allChomage = state.history.map(h => h.chomageAvant).concat([state.chomage]);
+  let loss = 0;
+  allInflation.forEach((v, i) => {
+    loss += Math.pow(v - GOVERNOR_TARGET_INFLATION, 2) + Math.pow(allChomage[i] - GOVERNOR_NATURAL_UNEMPLOYMENT, 2);
+  });
+  const avgLoss = loss / allInflation.length;
+  const score = Math.max(0, Math.round(1000 - avgLoss * 20));
+  let label;
+  if(score >= 800) label = 'Pilotage maîtrisé';
+  else if(score >= 550) label = 'Pilotage correct, quelques déséquilibres';
+  else label = 'Déséquilibres importants';
+  return {avgLoss, score, label};
+}
+
 // ---------- Livret A réel (comparaison "Et si j'avais investi ?") ----------
 // Aucune API n'est déjà branchée sur ce site pour le taux du Livret A (BCE
 // SDW/lib/ecb.js ne couvre pas les taux réglementés français) — traité
@@ -5457,7 +5598,7 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-weekly-missions-log', 'fzr-activity-log', 'fzr-positioning-result',
   'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
   'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
-  'fzr-paper-trading'
+  'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de

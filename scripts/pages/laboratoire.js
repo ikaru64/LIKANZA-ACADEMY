@@ -1318,3 +1318,96 @@ function renderEcoLabScenarios(elId){
     </details>`).join('');
 }
 safeRun('laboratoire économique', () => renderEcoLabScenarios('ecoLabScenarios'));
+
+// ---------- Simulateur "Gouverneur de banque centrale" (tab-economie) : moteur
+// pur dans scripts/data.js (initGovernorState/applyGovernorDecision/
+// scoreGovernorGame), aucune donnée réelle ici — modèle pédagogique simplifié,
+// même esprit que les scénarios qualitatifs ci-dessus (jamais présenté comme
+// une prédiction). Historique de parties : fzr-gouverneur-history. ----------
+function getGovernorHistory(){ return safeGetJSON('fzr-gouverneur-history', []); }
+function saveGovernorResult(entry){
+  const history = getGovernorHistory();
+  history.unshift(entry);
+  safeSetJSON('fzr-gouverneur-history', history.slice(0, 20));
+}
+
+function renderGovernorSim(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  let state = null;
+
+  function fmtPt(x){ return `${x >= 0 ? '+' : ''}${x.toFixed(2)} pt`; }
+
+  function renderIntro(){
+    el.innerHTML = `
+      <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin-bottom:14px;max-width:70ch;">Tu es gouverneur de banque centrale pendant ${GOVERNOR_ROUNDS} trimestres. À chaque tour, ajuste le taux directeur en réaction à l'inflation et au chômage — l'effet de ta décision ne se voit qu'au tour SUIVANT (délai de transmission réel de la politique monétaire), jamais instantanément. Objectif : rapprocher l'inflation de sa cible (${GOVERNOR_TARGET_INFLATION}%) et le chômage de son niveau "naturel" (${GOVERNOR_NATURAL_UNEMPLOYMENT}%) — un double mandat, comme dans la réalité.</p>
+      <div class="disclaimer-box">Modèle pédagogique volontairement simplifié : les chocs et les coefficients de transmission sont illustratifs, jamais une prédiction réelle. Voir le laboratoire économique ci-dessus pour les mécanismes qualitatifs détaillés.</div>
+      <button class="btn btn-gold" id="${elId}-start" type="button" style="margin-top:16px;">Prendre mes fonctions</button>`;
+    document.getElementById(`${elId}-start`).addEventListener('click', () => { state = initGovernorState(); renderRound(); });
+  }
+
+  function renderRound(){
+    const s = state;
+    const event = GOVERNOR_EVENTS[s.round % GOVERNOR_EVENTS.length];
+    const pct = Math.round((s.round / GOVERNOR_ROUNDS) * 100);
+    const lastEntry = s.history[s.history.length - 1];
+
+    el.innerHTML = `
+      <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
+        <span>Trimestre ${s.round + 1} / ${GOVERNOR_ROUNDS}</span><span>Taux directeur actuel : ${s.tauxDirecteur.toFixed(2)}%</span>
+      </div>
+      <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+      ${lastEntry ? `<p class="disclaimer-box" style="margin-bottom:14px;">Au tour précédent, tu as ${lastEntry.decision >= 0 ? 'monté' : 'baissé'} le taux de ${fmtPt(lastEntry.decision)} (${lastEntry.tauxAvant.toFixed(2)}% → ${lastEntry.tauxApres.toFixed(2)}%). Effet visible ce tour-ci (avec délai).</p>` : ''}
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr));margin-bottom:16px;">
+        <div class="card"><span class="smallcaps">Inflation</span><div class="result-big" style="font-size:20px;margin-top:6px;color:${Math.abs(s.inflation - GOVERNOR_TARGET_INFLATION) <= 0.5 ? 'var(--emerald)' : 'var(--bordeaux)'};">${s.inflation.toFixed(1)}%</div><p style="font-size:11px;color:var(--text-dim);margin-top:4px;">Cible : ${GOVERNOR_TARGET_INFLATION}%</p></div>
+        <div class="card"><span class="smallcaps">Chômage</span><div class="result-big" style="font-size:20px;margin-top:6px;color:${Math.abs(s.chomage - GOVERNOR_NATURAL_UNEMPLOYMENT) <= 0.5 ? 'var(--emerald)' : 'var(--bordeaux)'};">${s.chomage.toFixed(1)}%</div><p style="font-size:11px;color:var(--text-dim);margin-top:4px;">Niveau naturel : ${GOVERNOR_NATURAL_UNEMPLOYMENT}%</p></div>
+        <div class="card"><span class="smallcaps">Croissance</span><div class="result-big" style="font-size:20px;margin-top:6px;color:${s.croissance >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${s.croissance >= 0 ? '+' : ''}${s.croissance.toFixed(1)}%</div></div>
+      </div>
+      <p style="font-size:13px;margin-bottom:14px;">📰 ${event.titre}</p>
+      <span class="smallcaps" style="display:block;margin-bottom:8px;">Ta décision sur le taux directeur</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;" id="${elId}-decisions">
+        ${[-1, -0.5, -0.25, 0, 0.25, 0.5, 1].map(d => `<button type="button" class="pill decision-btn" data-delta="${d}">${d > 0 ? '+' : ''}${d}</button>`).join('')}
+      </div>`;
+
+    el.querySelectorAll('.decision-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state = applyGovernorDecision(state, +btn.dataset.delta);
+        if(state.done) renderBilan(); else renderRound();
+      });
+    });
+  }
+
+  function renderBilan(){
+    const s = state;
+    const {score, avgLoss, label} = scoreGovernorGame(s);
+
+    tryAwardQuizPoints(`gouverneur-${new Date().toDateString()}`, 15, {usedSimulator: true});
+    recordAnswer('Inflation', score >= 550, true, 'intermediaire');
+    saveGovernorResult({date: new Date().toISOString(), score, label, history: s.history});
+
+    el.innerHTML = `
+      <div class="card">
+        <span class="smallcaps">Bilan de mandat</span>
+        <div class="result-big" style="margin-top:6px;">${score} / 1000</div>
+        <p style="font-size:14px;margin-top:4px;color:${score >= 800 ? 'var(--emerald)' : score >= 550 ? 'var(--gold-bright)' : 'var(--bordeaux)'};">${label}</p>
+      </div>
+      <p style="font-size:13px;color:var(--text-dim);margin:14px 0;">Ce score mesure l'écart moyen (au carré) entre l'inflation/le chômage observés à chaque tour et leurs cibles (${GOVERNOR_TARGET_INFLATION}% et ${GOVERNOR_NATURAL_UNEMPLOYMENT}%) — plus l'écart cumulé est faible, plus le score est élevé. C'est une version simplifiée du type d'arbitrage que formalisent certaines banques centrales à double mandat (stabilité des prix + emploi).</p>
+      <span class="smallcaps" style="display:block;margin-bottom:8px;">Historique du mandat</span>
+      <div style="overflow-x:auto;">
+        <table class="mono" style="width:100%;font-size:12px;border-collapse:collapse;">
+          <thead><tr style="text-align:left;color:var(--text-dim);"><th style="padding:4px 8px;">Trimestre</th><th style="padding:4px 8px;">Taux</th><th style="padding:4px 8px;">Décision</th><th style="padding:4px 8px;">Inflation</th><th style="padding:4px 8px;">Chômage</th></tr></thead>
+          <tbody>
+            ${s.history.map(h => `<tr style="border-top:1px solid var(--hairline);"><td style="padding:4px 8px;">${h.round + 1}</td><td style="padding:4px 8px;">${h.tauxAvant.toFixed(2)}%</td><td style="padding:4px 8px;">${fmtPt(h.decision)}</td><td style="padding:4px 8px;">${h.inflationAvant.toFixed(1)}%</td><td style="padding:4px 8px;">${h.chomageAvant.toFixed(1)}%</td></tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+      <p class="disclaimer-box" style="margin-top:14px;">Modèle pédagogique simplifié : en réalité, une banque centrale agit avec bien plus d'informations, d'incertitude sur les délais de transmission, et de contraintes (crédibilité, coordination internationale...) que ce moteur illustratif ne peut représenter.</p>
+      <button class="btn btn-sm btn-gold" id="${elId}-restart" style="margin-top:10px;">Nouveau mandat</button>
+      <div id="${elId}-nextstep"></div>`;
+    document.getElementById(`${elId}-restart`).addEventListener('click', renderIntro);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'economics'});
+  }
+
+  renderIntro();
+}
+safeRun('simulateur gouverneur de banque centrale', () => renderGovernorSim('governorSim'));
