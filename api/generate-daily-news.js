@@ -1,6 +1,11 @@
 /* ============================================================
    LIKANZA ACADEMY — Fonction serverless Vercel : /api/generate-daily-news
-   Déclenchée une fois par jour par Vercel Cron (voir vercel.json).
+   Déclenchée DEUX fois par jour par Vercel Cron (voir vercel.json) : 9h UTC
+   puis 15h UTC en repli. Volontairement redondant — l'écriture est
+   idempotente (ON CONFLICT ... DO UPDATE sur news_date), donc la 2e
+   exécution ne fait que rafraîchir le même jour si la 1re a réussi, et sert
+   de filet de sécurité automatique si elle a échoué silencieusement (flux
+   RSS temporairement indisponible, base de données en veille...).
    Lit de vraies actus financières (lib/rss.js + lib/news-sources.js),
    les fait résumer par Gemini (lib/gemini.js, sans invention de faits —
    voir la consigne dans lib/gemini.js), et enregistre le résultat dans

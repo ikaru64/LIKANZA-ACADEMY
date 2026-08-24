@@ -5,6 +5,10 @@
       "schedule": "0 9 * * *"
     },
     {
+      "path": "/api/generate-daily-news",
+      "schedule": "0 15 * * *"
+    },
+    {
       "path": "/api/generate-weekly-news",
       "schedule": "0 6 * * 1"
     }
