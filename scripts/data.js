@@ -961,7 +961,13 @@ const BADGES = [
   {id:'fp_500', name:'500 Finance Points', desc:"Accumuler 500 Finance Points.", check:(g)=> g.financePoints >= 500},
   {id:'fp_1000', name:'1000 Finance Points', desc:"Accumuler 1000 Finance Points.", check:(g)=> g.financePoints >= 1000},
   {id:'first_dca', name:'Premier DCA', desc:"Utiliser le comparateur DCA vs investissement unique.", check:(g,ctx)=> !!(ctx && ctx.usedDCA)},
-  {id:'first_sim', name:'Premier laboratoire', desc:"Lancer une simulation financière.", check:(g,ctx)=> !!(ctx && ctx.usedSimulator)},
+  // Le flag usedSimulator est partagé par >10 fonctionnalités très différentes
+  // (Laboratoire, Paper Trading, Business Game, Portfolio Game, Market Panic,
+  // simulateur Gouverneur...) — le nom du badge doit rester assez générique
+  // pour être vrai quel que soit le déclencheur réel (audit du 2026-08-20,
+  // section G) : jamais "Premier laboratoire" pour quelqu'un qui n'a jamais
+  // ouvert laboratoire.html.
+  {id:'first_sim', name:'Première simulation', desc:"Utiliser un simulateur du site (Laboratoire, Paper Trading, Business Game, Portfolio Game, Market Panic...).", check:(g,ctx)=> !!(ctx && ctx.usedSimulator)},
   {id:'positioning_test', name:'Bilan effectué', desc:"Terminer le test de positionnement.", check:(g,ctx)=> !!(ctx && ctx.positioningTestDone)},
   {id:'first_cours', name:'Premier cours', desc:"Réussir le quiz de validation d'un cours.", check:(g,ctx)=> !!(ctx && ctx.coursCompleted)},
   {id:'mistake_slayer', name:'Retour gagnant', desc:"Corriger 5 anciennes erreurs.", check:(g,ctx)=> !!(ctx && ctx.totalResolved >= 5)},
