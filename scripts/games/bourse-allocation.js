@@ -15,10 +15,16 @@ const ALLOCATION_TIER_META = {
   dynamique: {emoji: '🔴', label: 'Profil dynamique', desc: 'valeurs les plus risquées relativement aux autres analysées ici — potentiel de gain plus élevé, mais aussi de perte.'}
 };
 
+// Depuis la Phase 2 de la refonte Bourse, getFollowedStocks() peut aussi
+// contenir des actifs de marché (ETF/Forex/matières premières/taux) : le
+// classement par risque ci-dessous repose sur des fondamentales d'entreprise
+// (endettement, via loadCompanyFundamentals) qui n'existent que pour les
+// actions — filtré ici pour ne jamais tenter de les fabriquer pour un ETF ou
+// une paire de devises.
 async function renderAllocationScenarios(elId, capital){
   const el = document.getElementById(elId);
   if(!el) return;
-  const followed = getFollowedStocks();
+  const followed = getFollowedStocks().filter(s => (s.assetType || 'stock') === 'stock');
   if(followed.length < 3){
     el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Tu suis actuellement ${followed.length} valeur${followed.length>1?'s':''} — ajoute au moins 3 valeurs suivies (depuis Bourse) pour obtenir un classement par risque pertinent.</p>`;
     return;
@@ -99,7 +105,7 @@ async function renderAllocationScenarios(elId, capital){
 function renderPortfolioSimulator(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const followed = getFollowedStocks();
+  const followed = getFollowedStocks().filter(s => (s.assetType || 'stock') === 'stock');
   if(followed.length < 2){
     el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Suis au moins 2 valeurs (depuis Bourse) pour construire un portefeuille.</p>`;
     return;

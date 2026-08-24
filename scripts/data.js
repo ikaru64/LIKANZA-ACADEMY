@@ -196,6 +196,11 @@ function currencySymbol(code){
 // partout, jamais deux formats différents pour la même donnée.
 function applyOneQuoteToMarketItem(it, q){
   if(!it || typeof q.price !== 'number' || typeof q.changePercent !== 'number') return false;
+  // Valeurs numériques brutes, en plus des chaînes déjà formatées en français
+  // ci-dessous — nécessaires pour tout calcul réel (comparateur, indicateurs
+  // techniques) : jamais un re-parsing fragile de "8 408" ou "+1,5%".
+  it.prixNum = q.price;
+  it.variationNum = q.changePercent;
   it.valeur = q.price.toLocaleString('fr-FR', q.price >= 1000
     ? {maximumFractionDigits:0}
     : {minimumFractionDigits:2, maximumFractionDigits:2});
@@ -230,8 +235,17 @@ function applyLiveQuotes(quotes){
 // jamais renderTicker() : le bandeau du site reste strictement les valeurs
 // historiques (5 indices + 2 matières premières + 2 cryptos), quel que soit
 // ce que l'utilisateur a chargé ailleurs.
-function loadMarketCategoryQuotes(symbols){
+function loadMarketCategoryQuotes(symbols, opts){
   if(!Array.isArray(symbols) || symbols.length === 0) return Promise.resolve(0);
+  // opts.range/opts.interval (optionnels) : transmis tels quels à
+  // /api/custom-quotes, qui les supporte déjà pour tout symbole. Par défaut
+  // (rafraîchissement léger de l'onglet "Autres marchés"), on ne les envoie
+  // pas — l'API retombe sur 5 jours, largement suffisant pour une simple
+  // cotation. Un historique plus long (ex. 6 mois, pour les indicateurs
+  // techniques ou le comparateur) n'est demandé qu'explicitement par
+  // l'appelant qui en a besoin.
+  const extra = opts && opts.range ? '&range=' + encodeURIComponent(opts.range) : '';
+  const extraInterval = opts && opts.interval ? '&interval=' + encodeURIComponent(opts.interval) : '';
   // /api/custom-quotes plafonne à 20 symboles par requête (voir api/custom-quotes.js) :
   // au-delà (catalogue ETF + Forex + Indices/Matières premières supplémentaires +
   // courbe des taux dépasse 20 au total), découper en plusieurs requêtes plutôt
@@ -239,7 +253,7 @@ function loadMarketCategoryQuotes(symbols){
   const chunks = [];
   for(let i=0;i<symbols.length;i+=20) chunks.push(symbols.slice(i, i+20));
   return Promise.all(chunks.map(chunk =>
-    fetch('/api/custom-quotes?symbols=' + encodeURIComponent(chunk.join(',')))
+    fetch('/api/custom-quotes?symbols=' + encodeURIComponent(chunk.join(',')) + extra + extraInterval)
       .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
       .then(payload => (payload && Array.isArray(payload.quotes)) ? payload.quotes : [])
       .catch(err=>{
@@ -5276,32 +5290,39 @@ function parseNumericValue(str){
 // fondamentales (PER, dividende...) : les autres n'affichent qu'un cours en
 // direct réel et ne participent pas au Comparateur/Scénarios/Dividendes.
 const FOLLOWED_STOCKS_MAX = 20;
+// assetType ('stock'|'etf'|'index'|'forex'|'commodity'|'rate') distingue les
+// actions des actifs de marché suivis (section "Autres marchés") — stocké à
+// l'ajout plutôt que déduit du symbole, car certains tickers ETF (ex.
+// "CW8.PA") ont exactement la même forme qu'un ticker action. Toute entrée
+// déjà en localStorage sans ce champ (avant cette extension) est traitée
+// comme 'stock', rétrocompatible avec les listes déjà suivies par les
+// utilisateurs.
 function getFollowedStocks(){
   let list = safeGetJSON('fzr-followed-stocks', null);
   if(list === null){
     // Premier chargement : on part des 8 valeurs de démonstration, en
     // reprenant une éventuelle liste de l'ancienne fonctionnalité séparée
     // (fzr-custom-stocks) pour ne rien perdre de ce qui avait déjà été ajouté.
-    const defaults = STOCKS_DEMO.map(s => ({symbol: s.ticker, name: s.nom}));
-    const legacy = safeGetJSON('fzr-custom-stocks', []).map(s => ({symbol: s.symbol, name: s.name}));
+    const defaults = STOCKS_DEMO.map(s => ({symbol: s.ticker, name: s.nom, assetType: 'stock'}));
+    const legacy = safeGetJSON('fzr-custom-stocks', []).map(s => ({symbol: s.symbol, name: s.name, assetType: 'stock'}));
     const seen = new Set(defaults.map(s => s.symbol));
     legacy.forEach(s => { if(!seen.has(s.symbol)){ defaults.push(s); seen.add(s.symbol); } });
     list = defaults;
     saveFollowedStocks(list);
   }
-  return list;
+  return list.map(s => ({...s, assetType: s.assetType || 'stock'}));
 }
 function saveFollowedStocks(list){ safeSetJSON('fzr-followed-stocks', list); }
 function addFollowedStock(stock){
   const list = getFollowedStocks().filter(s => s.symbol !== stock.symbol);
-  list.push({symbol: stock.symbol, name: stock.name});
+  list.push({symbol: stock.symbol, name: stock.name, assetType: stock.assetType || 'stock'});
   saveFollowedStocks(list.slice(0, FOLLOWED_STOCKS_MAX));
 }
 function removeFollowedStock(symbol){
   saveFollowedStocks(getFollowedStocks().filter(s => s.symbol !== symbol));
 }
 function resetFollowedStocks(){
-  saveFollowedStocks(STOCKS_DEMO.map(s => ({symbol: s.ticker, name: s.nom})));
+  saveFollowedStocks(STOCKS_DEMO.map(s => ({symbol: s.ticker, name: s.nom, assetType: 'stock'})));
 }
 
 // ---------- Recherche d'une action à ajouter (/api/stock-search) ----------
@@ -5557,6 +5578,19 @@ function computeTechnicalIndicators(history){
     ma50: movingAverageVsLast(50)
   };
 }
+// Rendu textuel partagé d'un résultat computeTechnicalIndicators — factorisé
+// depuis action.js (Phase 2 de la refonte Bourse) pour être réutilisé tel
+// quel dans bourse.js (Fiches actions, Comparateur), jamais une seconde
+// rédaction des mêmes trois phrases. unite optionnel (ex. "€", "pts",
+// devise d'un actif de marché) — "€" par défaut pour les actions.
+function renderTechnicalIndicatorsLines(tech, unite){
+  const u = unite || '€';
+  if(!tech) return null;
+  const lines = [`Plus haut sur ${tech.days} séances : ${tech.periodHigh.toFixed(2)} ${u} · Plus bas : ${tech.periodLow.toFixed(2)} ${u}`];
+  if(tech.ma20) lines.push(`Le cours est actuellement ${tech.ma20.above ? 'au-dessus' : 'en dessous'} de sa moyenne mobile 20 jours (${tech.ma20.value.toFixed(2)} ${u}, ${tech.ma20.diffPct>=0?'+':''}${tech.ma20.diffPct.toFixed(1)}%)`);
+  if(tech.ma50) lines.push(`Le cours est actuellement ${tech.ma50.above ? 'au-dessus' : 'en dessous'} de sa moyenne mobile 50 jours (${tech.ma50.value.toFixed(2)} ${u}, ${tech.ma50.diffPct>=0?'+':''}${tech.ma50.diffPct.toFixed(1)}%)`);
+  return lines;
+}
 
 // ================================================================
 // ---------- Fondamentaux réels (Comparateur, Scénarios, Dividendes, fiche action) ----------
@@ -5721,18 +5755,42 @@ function loadCompanyFundamentals(symbols){
 }
 
 // ---------- Descripteur générique d'une valeur suivie (dépasse les 8 valeurs
-// curatées STOCKS_DEMO) — remplace les lookups STOCKS_DEMO.find dispersés
-// dans bourse.js/action.js. secteur/pays/pea restent explicitement `null`
-// quand non curatés (jamais une valeur par défaut inventée) : permet de
-// distinguer "non éligible confirmé" de "non déterminé" côté affichage. ----------
+// curatées STOCKS_DEMO, et depuis la Phase 2 de la refonte Bourse, dépasse
+// aussi les actions : résout également les actifs de marché suivis
+// (ETF/Forex/matières premières/taux/indices, MARKET_DATA) — remplace les
+// lookups STOCKS_DEMO.find dispersés dans bourse.js/action.js. secteur/pays/
+// pea restent explicitement `null` quand non curatés OU non applicables à ce
+// type d'actif (jamais une valeur par défaut inventée) : permet de
+// distinguer "non éligible confirmé" de "non déterminé" côté affichage.
+// assetType MARKET_DATA n'a jamais de fondamentales (PER/dividende/secteur) :
+// aucune tentative de les fabriquer ici, les consommateurs (Screener/
+// Comparateur) doivent dégrader proprement sur assetType !== 'stock'. ----------
 let followedQuotesCache = {};
-function resolveFollowedStock(symbol){
+function resolveFollowedAsset(symbol){
   const demo = STOCKS_DEMO.find(s => s.ticker === symbol);
   if(demo){
     return {
       ticker: demo.ticker, nom: demo.nom, secteur: demo.secteur, pays: demo.pays,
       pea: demo.pea, prix: demo.prix, variation: demo.variation, history: demo.history,
-      curated: true
+      devise: null, unite: null, assetType: 'stock', curated: true
+    };
+  }
+  const market = MARKET_DATA.find(m => m.symbol === symbol);
+  if(market){
+    // followedQuotesCache, alimenté par loadCustomQuotesForGrid pour TOUTE
+    // valeur suivie (y compris les actifs de marché), porte un historique
+    // plus riche (6 mois) que MARKET_DATA lui-même (rafraîchi en léger sur
+    // l'onglet "Autres marchés", 5 jours par défaut) — préféré ici quand
+    // disponible, jamais un repli sur des données plus pauvres si le riche
+    // existe déjà en cache.
+    const cached = followedQuotesCache[symbol];
+    return {
+      ticker: market.symbol, nom: market.nom, secteur: null, pays: null, pea: null,
+      prix: cached && typeof cached.price === 'number' ? cached.price : (typeof market.prixNum === 'number' ? market.prixNum : null),
+      variation: cached && typeof cached.changePercent === 'number' ? cached.changePercent : (typeof market.variationNum === 'number' ? market.variationNum : null),
+      history: (cached && Array.isArray(cached.history)) ? cached.history : (Array.isArray(market.history) ? market.history : null),
+      devise: market.devise || null, unite: market.unite || null,
+      assetType: market.assetType, curated: true
     };
   }
   const followed = getFollowedStocks().find(s => s.symbol === symbol);
@@ -5741,7 +5799,7 @@ function resolveFollowedStock(symbol){
     ticker: symbol, nom: followed ? followed.name : symbol,
     secteur: null, pays: null, pea: null,
     prix: q ? q.price : null, variation: q ? q.changePercent : null, history: q ? q.history : null,
-    curated: false
+    devise: null, unite: null, assetType: (followed && followed.assetType) || 'stock', curated: false
   };
 }
 
@@ -5749,7 +5807,7 @@ function resolveFollowedStock(symbol){
 // compte-titres réel — chaque transaction (action, quantité, prix, date) est
 // saisie manuellement par l'utilisateur. Les positions sont agrégées à
 // partir de ces transactions réellement saisies, valorisées avec un cours
-// ACTUEL réel déjà chargé ailleurs (resolveFollowedStock, jamais un nouvel
+// ACTUEL réel déjà chargé ailleurs (resolveFollowedAsset, jamais un nouvel
 // appel réseau dédié). Une transaction malformée (quantité/prix non
 // positifs, ticker manquant) est ignorée, jamais complétée par une valeur
 // par défaut inventée. ----------
@@ -5778,7 +5836,7 @@ function removeRealPortfolioTransaction(id){
   localStorage.setItem(REAL_PORTFOLIO_KEY, JSON.stringify(list));
 }
 // livePrices : {ticker: prixActuelRéel|null} — construit par l'appelant à
-// partir de resolveFollowedStock, jamais recalculé ici. Un ticker absent de
+// partir de resolveFollowedAsset, jamais recalculé ici. Un ticker absent de
 // livePrices (cours indisponible) laisse currentValue/gainLoss à `null`,
 // jamais un chiffre approximé à partir du prix d'achat.
 function computeRealPortfolioPositions(transactions, livePrices){

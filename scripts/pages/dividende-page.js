@@ -65,12 +65,16 @@ function renderCalcNote(title, bodyHtml){
   </details>`;
 }
 
+// Depuis la Phase 2 de la refonte Bourse, getFollowedStocks() peut aussi
+// contenir des actifs de marché (ETF/Forex/matières premières/taux) — le
+// dividende n'a de sens réel que pour une action (voire un ETF, non couvert
+// ici), donc cette page filtre systématiquement sur assetType==='stock'.
 function populateDivTickerSelect(){
   const sel = document.getElementById('divTickerSelect');
   if(!sel) return;
-  const followed = getFollowedStocks();
+  const followed = getFollowedStocks().filter(s => (s.assetType || 'stock') === 'stock');
   sel.innerHTML = followed.map(entry => {
-    const s = resolveFollowedStock(entry.symbol);
+    const s = resolveFollowedAsset(entry.symbol);
     return `<option value="${entry.symbol}">${s.nom}</option>`;
   }).join('');
   const current = divCurrentSymbol();
@@ -101,7 +105,7 @@ function wireDivSearch(){
 // prix/dividendes convertis en EUR) — un seul chargement par ticker, partagé
 // par tous les onglets pour ne jamais afficher deux vues incohérentes. ----------
 async function loadDivTicker(symbol){
-  const stock = resolveFollowedStock(symbol);
+  const stock = resolveFollowedAsset(symbol);
   DIV = {ticker: symbol, nom: stock.nom, fields: null, points: null, dividends: null, yearlyHistory: null, safetyScore: null};
   document.title = `${stock.nom} · Dividend Intelligence · Likanza Academy`;
   const crumb = document.getElementById('crumbName'); if(crumb) crumb.textContent = `${stock.nom} · Dividendes`;
@@ -428,7 +432,7 @@ let divCompareSelected = [];
 function renderComparerTab(){
   const el = document.getElementById('dtab-comparer');
   if(!el) return;
-  const followed = getFollowedStocks();
+  const followed = getFollowedStocks().filter(s => (s.assetType || 'stock') === 'stock');
   if(divCompareSelected.length === 0 && DIV.ticker) divCompareSelected = [DIV.ticker];
 
   el.innerHTML = `
@@ -465,7 +469,7 @@ async function runDivComparison(){
   ]);
 
   const rows = symbols.map((symbol, i) => {
-    const stock = resolveFollowedStock(symbol);
+    const stock = resolveFollowedAsset(symbol);
     const profile = fundamentalsCache[symbol];
     const ff = profile && profile.fundamentals ? profile.fundamentals.fields : null;
     const hist = histories[i];
@@ -515,7 +519,7 @@ function initDividendePage(){
   const noTickerEl = document.getElementById('divNoTicker');
   if(!el) return;
   wireDivSearch();
-  const followed = getFollowedStocks();
+  const followed = getFollowedStocks().filter(s => (s.assetType || 'stock') === 'stock');
   if(followed.length === 0){
     el.style.display = 'none';
     if(noTickerEl) noTickerEl.style.display = '';

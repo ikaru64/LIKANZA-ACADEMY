@@ -38,11 +38,22 @@ window.addEventListener('hashchange', ()=>{
   if(target && target.classList.contains('home-tab-panel')) setBourseTab(tab);
 });
 
-// ---------- Fiches actions (liste modifiable : STOCKS_DEMO + actions ajoutées par recherche) ----------
+// ---------- Fiches actions (liste modifiable : STOCKS_DEMO + actions
+// ajoutées par recherche + actifs de marché suivis depuis "Autres marchés",
+// Phase 2 de la refonte Bourse) ----------
 function renderTrendHtml(trend){
   if(!trend) return '';
   return `<p style="font-size:11.5px;color:${trend.changePct>=0?'var(--emerald)':'var(--bordeaux)'};margin-top:6px;">Tendance ${trend.days}j : ${trend.changePct>=0?'+':''}${trend.changePct.toFixed(1)}% · ${trend.posLabel}</p>`;
 }
+// Réutilisé pour toute carte (action ou actif de marché) disposant déjà d'un
+// historique synchrone (STOCKS_DEMO) — pour les valeurs en direct uniquement,
+// voir le placeholder tech-${symbol} rempli par loadCustomQuotesForGrid.
+function renderTechIndicatorsHtml(history, unite){
+  const lines = renderTechnicalIndicatorsLines(computeTechnicalIndicators(history), unite);
+  if(!lines) return '';
+  return `<p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">${lines.join(' · ')}</p>`;
+}
+const ASSET_TYPE_LABELS = {stock:'Action', etf:'ETF', index:'Indice', forex:'Forex', commodity:'Matière première', rate:'Taux'};
 
 function renderStockGrid(){
   const list = getFollowedStocks();
@@ -68,6 +79,7 @@ function renderStockGrid(){
         <p style="font-size:13px;color:var(--text-dim);">${fundLine} ${s.pea ? '· <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
         ${ff ? `<p style="margin-top:2px;">${renderDataBadge('fait')}</p>` : ''}
         ${renderTrendHtml(computeTrendIndicator(s.history))}
+        ${renderTechIndicatorsHtml(s.history)}
         ${s._live ? `<span class="badge status-reel" style="margin-top:6px;">Cotation différée (Yahoo Finance)</span>` : `<span class="demo-flag" style="margin-top:6px;">Donnée de démonstration</span>`}
         <div class="card-footer">
           <a href="action.html#${encodeURIComponent(s.ticker)}" class="btn btn-sm btn-gold">Voir la fiche →</a>
@@ -76,14 +88,25 @@ function renderStockGrid(){
         </div>
       </div>`;
     }
+    // Actions ajoutées par recherche ET actifs de marché suivis (ETF/Forex/
+    // matières premières/taux/indices) partagent la même carte "cours en
+    // direct uniquement" : ni l'un ni l'autre n'a de fondamentales pré-
+    // chargées, et /api/custom-quotes (loadCustomQuotesForGrid) résout
+    // n'importe quel symbole indifféremment. Seuls le libellé de type et le
+    // lien de détail diffèrent (marche.html pour les actifs de marché,
+    // action.html — spécifique aux actions — pour le reste).
+    const assetType = entry.assetType || 'stock';
+    const isMarketAsset = assetType !== 'stock';
+    const detailHref = isMarketAsset ? `marche.html#${encodeURIComponent(entry.symbol)}` : `action.html#${encodeURIComponent(entry.symbol)}`;
     return `
       <div class="card" id="custom-${entry.symbol}">
-        <span class="smallcaps">Cours en direct uniquement</span>
+        <span class="smallcaps">${isMarketAsset ? (ASSET_TYPE_LABELS[assetType] || 'Actif de marché') + ' · cours en direct' : 'Cours en direct uniquement'}</span>
         <h3>${entry.name} <span class="mono" style="font-size:13px;color:var(--text-dim);">${entry.symbol}</span></h3>
         <div class="result-row" id="quote-${entry.symbol}" style="margin:0 0 10px;"><span class="mono" style="color:var(--text-dim);">Chargement…</span></div>
         <div id="trend-${entry.symbol}"></div>
+        <div id="tech-${entry.symbol}"></div>
         <div class="card-footer">
-          <a href="action.html#${encodeURIComponent(entry.symbol)}" class="btn btn-sm btn-gold">Voir la fiche →</a>
+          <a href="${detailHref}" class="btn btn-sm btn-gold">Voir la fiche →</a>
           <button class="btn btn-sm" data-remove-stock="${entry.symbol}">Retirer</button>
         </div>
       </div>`;
@@ -110,7 +133,7 @@ function renderCompareChecks(){
   const previouslyChecked = new Set(Array.from(document.querySelectorAll('.compareCheck:checked')).map(c=>c.value));
   const list = getFollowedStocks();
   checksEl.innerHTML = list.map((entry,i)=>{
-    const s = resolveFollowedStock(entry.symbol);
+    const s = resolveFollowedAsset(entry.symbol);
     const checked = previouslyChecked.size ? previouslyChecked.has(entry.symbol) : i < 3;
     return `<label class="pill" style="display:flex;gap:6px;align-items:center;cursor:pointer;">
     <input type="checkbox" class="compareCheck" value="${entry.symbol}" ${checked?'checked':''} style="accent-color:var(--gold);"> ${s.nom}
@@ -159,13 +182,23 @@ function renderCompare(){
   const selected = Array.from(document.querySelectorAll('.compareCheck:checked')).map(c=>c.value);
   const table = document.getElementById('compareTable');
   if(selected.length < 2){
-    table.innerHTML = '<tr><td style="padding:16px 0;color:var(--text-dim);">Sélectionne au moins 2 actions pour lancer la comparaison.</td></tr>';
+    table.innerHTML = '<tr><td style="padding:16px 0;color:var(--text-dim);">Sélectionne au moins 2 valeurs pour lancer la comparaison.</td></tr>';
     const analysisEl = document.getElementById('compareAnalysis');
     if(analysisEl) analysisEl.innerHTML = '';
+    const techEl = document.getElementById('compareTech');
+    if(techEl) techEl.innerHTML = '';
+    const chartEl = document.getElementById('compareChart');
+    if(chartEl) chartEl.innerHTML = '';
     return;
   }
-  const stocks = selected.slice(0,5).map(t=>resolveFollowedStock(t));
-  const criteria = advancedMode ? CRITERIA_ADV : CRITERIA_BASIC;
+  const stocks = selected.slice(0,5).map(t=>resolveFollowedAsset(t));
+  // Un ETF/une paire Forex/une matière première n'a aucune fondamentale
+  // réelle (PER, dividende, marge...) dans ce projet — dès qu'une sélection
+  // mixte inclut un actif non-action, on n'affiche que les critères
+  // réellement communs (cours/variation) plutôt que des colonnes fondamentales
+  // vides pour certaines lignes, ou pire, une valeur fabriquée.
+  const hasNonStock = stocks.some(s => s.assetType !== 'stock');
+  const criteria = hasNonStock ? CRITERIA_BASIC.filter(c=>c.source==='stock') : (advancedMode ? CRITERIA_ADV : CRITERIA_BASIC);
   let html = '<tr><th>Critère</th>' + stocks.map(s=>`<th>${s.nom}</th>`).join('') + '</tr>';
   criteria.forEach(c=>{
     const values = stocks.map(s => c.source === 'stock'
@@ -182,21 +215,84 @@ function renderCompare(){
     }
     html += `<tr><td>${c.label}</td>` + stocks.map((s,i)=>{
       const raw = values[i];
+      // Le "cours" d'une action est en €, mais celui d'un indice/d'une
+      // matière première/d'une paire Forex a sa propre unité réelle (pts,
+      // $/baril...) — on préfère l'unité réelle de l'actif (s.unite) au
+      // suffixe générique de CRITERIA_BASIC quand elle est renseignée.
+      const unit = c.key === 'prix' && typeof s.unite === 'string' ? (s.unite ? ' ' + s.unite : '') : c.unit;
       const display = c.source === 'stock'
-        ? (typeof raw === 'number' ? raw.toFixed(1) + c.unit : FUNDAMENTALS_UNAVAILABLE_TEXT)
+        ? (typeof raw === 'number' ? raw.toFixed(1) + unit : FUNDAMENTALS_UNAVAILABLE_TEXT)
         : formatFundamentalValue(c.key, raw);
       return `<td class="${i===bestIdx?'best':''}">${display}</td>`;
     }).join('') + '</tr>';
   });
-  // pea/secteur/pays restent des champs curatés (8 valeurs STOCKS_DEMO) :
-  // "Non déterminé" pour toute autre valeur suivie, jamais une valeur
-  // inventée ou un "Non" par défaut qui laisserait croire à une exclusion
-  // PEA confirmée alors qu'elle n'a simplement jamais été vérifiée.
-  html += '<tr><td>Éligible PEA</td>' + stocks.map(s=>`<td>${s.pea===true?'Oui':s.pea===false?'Non':'Non déterminé'}</td>`).join('') + '</tr>';
-  html += '<tr><td>Secteur</td>' + stocks.map(s=>`<td>${s.secteur || 'Non déterminé'}</td>`).join('') + '</tr>';
-  html += '<tr><td>Pays</td>' + stocks.map(s=>`<td>${s.pays || 'Non déterminé'}</td>`).join('') + '</tr>';
+  // pea/secteur/pays restent des champs curatés (8 valeurs STOCKS_DEMO),
+  // sans aucun sens pour un actif de marché (une paire Forex n'a pas de
+  // "secteur") : masqués dès qu'un actif non-action est sélectionné, plutôt
+  // que "Non déterminé" partout.
+  if(!hasNonStock){
+    html += '<tr><td>Éligible PEA</td>' + stocks.map(s=>`<td>${s.pea===true?'Oui':s.pea===false?'Non':'Non déterminé'}</td>`).join('') + '</tr>';
+    html += '<tr><td>Secteur</td>' + stocks.map(s=>`<td>${s.secteur || 'Non déterminé'}</td>`).join('') + '</tr>';
+    html += '<tr><td>Pays</td>' + stocks.map(s=>`<td>${s.pays || 'Non déterminé'}</td>`).join('') + '</tr>';
+  } else {
+    html += '<tr><td>Type d\'actif</td>' + stocks.map(s=>`<td>${ASSET_TYPE_LABELS[s.assetType] || 'Non déterminé'}</td>`).join('') + '</tr>';
+  }
   table.innerHTML = html;
+  renderCompareTech(stocks);
+  renderCompareChart(stocks);
   renderCompareAnalysis(stocks);
+}
+
+// ---------- Indicateurs techniques par valeur sélectionnée (réutilise
+// computeTechnicalIndicators/renderTechnicalIndicatorsLines tel quel, section
+// 3 de la Phase 2 de la refonte Bourse) — s'affiche pour toute valeur ayant
+// un historique réel, action ou actif de marché. ----------
+function renderCompareTech(stocks){
+  const el = document.getElementById('compareTech');
+  if(!el) return;
+  const blocks = stocks.map(s => {
+    const lines = renderTechnicalIndicatorsLines(computeTechnicalIndicators(s.history), s.unite);
+    if(!lines) return '';
+    return `<div class="card" style="margin-top:10px;"><h4 style="margin:0 0 6px;">${s.nom}</h4>${lines.map(l=>`<p style="font-size:12px;color:var(--text-dim);margin-top:4px;">→ ${l}</p>`).join('')}</div>`;
+  }).filter(Boolean);
+  el.innerHTML = blocks.length ? `<span class="smallcaps">Indicateurs techniques</span>${blocks.join('')}` : '';
+}
+
+// ---------- Graphique comparé (réutilise renderMultiLineChart, data.js —
+// déjà construit, jamais utilisé jusqu'ici dans bourse.js) : les séries sont
+// normalisées en variation % depuis le premier point, jamais en prix brut —
+// sans cela, une action à ~180€ écraserait visuellement un indice à
+// ~8000pts sur la même échelle. ----------
+function normalizeSeriesToPercentChange(closes){
+  if(!Array.isArray(closes) || closes.length === 0 || typeof closes[0] !== 'number' || closes[0] === 0) return null;
+  return closes.map(c => typeof c === 'number' ? ((c / closes[0]) - 1) * 100 : null);
+}
+// 5 couleurs déjà définies dans la palette du site (var(--gold-bright) etc.),
+// jamais une couleur inventée — au plus 5 valeurs sélectionnables dans le
+// comparateur, une couleur par valeur suffit toujours.
+const COMPARE_CHART_COLORS = ['var(--gold-bright)', 'var(--emerald)', 'var(--bordeaux)', 'var(--text-dim)', 'var(--gold)'];
+function renderCompareChart(stocks){
+  const el = document.getElementById('compareChart');
+  if(!el) return;
+  const withHistory = stocks.filter(s => Array.isArray(s.history) && s.history.length >= 2);
+  if(withHistory.length < 2){
+    el.innerHTML = '';
+    return;
+  }
+  const named = withHistory.map((s, i) => ({
+    nom: s.nom,
+    color: COMPARE_CHART_COLORS[i % COMPARE_CHART_COLORS.length],
+    data: normalizeSeriesToPercentChange(s.history.map(h => h.close))
+  })).filter(s => Array.isArray(s.data));
+  if(named.length < 2){ el.innerHTML = ''; return; }
+  const legend = named.map(s => `<span><span style="display:inline-block;width:10px;height:10px;background:${s.color};border-radius:50%;margin-right:6px;"></span>${s.nom}</span>`).join('');
+  el.innerHTML = `
+    <details class="card" style="margin-top:14px;">
+      <summary class="smallcaps" style="cursor:pointer;">📈 Voir le graphique comparé (variation % depuis le début de la période)</summary>
+      <div style="margin-top:10px;">${renderMultiLineChart(named.map(s=>({data:s.data, color:s.color, width:2})), 'Variation depuis le début de la période (%)')}</div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--text-dim);">${legend}</div>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">Chaque série part de 0% pour permettre de comparer des valeurs d'échelles très différentes (ex. une action et un indice) sur le même graphique — jamais le prix brut de chacune.</p>
+    </details>`;
 }
 
 // ---------- Analyse complète : résumé, business model, croissance/rentabilité/
@@ -212,6 +308,15 @@ function renderCompareAnalysis(stocks){
     return;
   }
   const [sA, sB] = stocks;
+  // Un ETF/une paire Forex/une matière première n'a pas de fondamentales
+  // d'entreprise à charger : sans ce garde-fou, la vérification suivante
+  // (fundA/fundB === undefined, qui signifie normalement "encore en cours de
+  // chargement") resterait bloquée indéfiniment sur "Chargement…", puisque
+  // ces fondamentales ne seront jamais demandées pour un actif non-action.
+  if(sA.assetType !== 'stock' || sB.assetType !== 'stock'){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">L'analyse complète (résumé, business model, scénarios...) n'est disponible que pour deux actions — les ETF/Forex/matières premières n'ont pas de fondamentales d'entreprise à analyser.</p>`;
+    return;
+  }
   const fundA = companyFundamentalsCache[sA.ticker], fundB = companyFundamentalsCache[sB.ticker];
   if(fundA === undefined || fundB === undefined){
     el.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Chargement de l'analyse complète…</p>`;
@@ -413,7 +518,7 @@ function renderScreenerFilters(){
   });
 }
 function screenerUniverse(){
-  return getFollowedStocks().map(entry => resolveFollowedStock(entry.symbol));
+  return getFollowedStocks().map(entry => resolveFollowedAsset(entry.symbol));
 }
 
 // ---------- Screener « mode avancé » : critères numériques + tri, sur le
@@ -492,11 +597,19 @@ function renderScreenerAdvancedTable(list){
       <th style="text-align:left;padding:6px 8px;">Secteur</th>
       ${SCREENER_ADV_COLUMNS.map(c => `<th data-sort-key="${c.key}" style="text-align:right;padding:6px 8px;cursor:pointer;white-space:nowrap;">${c.label}${arrow(c.key)}</th>`).join('')}
     </tr></thead>
-    <tbody>${rows.map(({stock, ff}) => `<tr>
-      <td style="padding:6px 8px;"><a href="action.html#${encodeURIComponent(stock.ticker)}" style="color:var(--gold-bright);">${stock.nom}</a></td>
-      <td style="padding:6px 8px;color:var(--text-dim);">${stock.secteur || 'Non déterminé'}</td>
+    <tbody>${rows.map(({stock, ff}) => {
+      const isStock = (stock.assetType || 'stock') === 'stock';
+      const href = isStock ? `action.html#${encodeURIComponent(stock.ticker)}` : `marche.html#${encodeURIComponent(stock.ticker)}`;
+      // Un ETF/Forex/matière première n'a pas de secteur réel : affiche son
+      // type d'actif à la place de "Non déterminé", pour expliquer
+      // pourquoi les colonnes fondamentales à droite sont vides sur sa ligne.
+      const secteurCell = isStock ? (stock.secteur || 'Non déterminé') : (ASSET_TYPE_LABELS[stock.assetType] || 'Actif de marché');
+      return `<tr>
+      <td style="padding:6px 8px;"><a href="${href}" style="color:var(--gold-bright);">${stock.nom}</a></td>
+      <td style="padding:6px 8px;color:var(--text-dim);">${secteurCell}</td>
       ${SCREENER_ADV_COLUMNS.map(c => `<td style="text-align:right;padding:6px 8px;">${formatFundamentalValue(c.key, ff[c.key])}</td>`).join('')}
-    </tr>`).join('')}</tbody>
+    </tr>`;
+    }).join('')}</tbody>
   </table></div>`;
 }
 
@@ -517,12 +630,17 @@ function renderScreener(){
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px;">${summary}</p>
     ${list.length === 0
       ? `<p style="color:var(--text-dim);font-size:13px;">Aucune de tes valeurs suivies ne correspond à cette combinaison de critères.</p>`
-      : (screenerAdvancedMode ? renderScreenerAdvancedTable(list) : `<div class="card-grid">${list.map(s => `
-        <a href="action.html#${encodeURIComponent(s.ticker)}" class="card play-tile">
-          <span class="smallcaps">${s.secteur || 'Non déterminé'} · ${s.pays || 'Non déterminé'}</span>
+      : (screenerAdvancedMode ? renderScreenerAdvancedTable(list) : `<div class="card-grid">${list.map(s => {
+          const isStock = (s.assetType || 'stock') === 'stock';
+          const href = isStock ? `action.html#${encodeURIComponent(s.ticker)}` : `marche.html#${encodeURIComponent(s.ticker)}`;
+          const metaLine = isStock ? `${s.secteur || 'Non déterminé'} · ${s.pays || 'Non déterminé'}` : (ASSET_TYPE_LABELS[s.assetType] || 'Actif de marché');
+          return `
+        <a href="${href}" class="card play-tile">
+          <span class="smallcaps">${metaLine}</span>
           <h4 style="margin:6px 0;">${s.nom} <span class="mono" style="font-size:12px;color:var(--text-dim);">${s.ticker}</span></h4>
-          <p style="font-size:12.5px;color:var(--text-dim);">${typeof s.prix === 'number' ? s.prix.toFixed(1) + ' €' : 'Cours indisponible'} ${typeof s.variation === 'number' ? `<span style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span>` : ''}</p>
-        </a>`).join('')}</div>`)}
+          <p style="font-size:12.5px;color:var(--text-dim);">${typeof s.prix === 'number' ? s.prix.toFixed(1) + (typeof s.unite === 'string' ? (s.unite ? ' ' + s.unite : '') : ' €') : 'Cours indisponible'} ${typeof s.variation === 'number' ? `<span style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation.toFixed(1)}%</span>` : ''}</p>
+        </a>`;
+        }).join('')}</div>`)}
     ${activeFilters.some(f => f.id === 'pea') ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:12px;">Le filtre « Éligible PEA » ne retient que les valeurs dont l'éligibilité est confirmée — une valeur suivie hors des 8 démo n'apparaît pas ici tant que cette information n'est pas vérifiée, jamais parce qu'elle est explicitement non éligible.</p>` : ''}`;
   if(screenerAdvancedMode){
     el.querySelectorAll('[data-sort-key]').forEach(th => th.addEventListener('click', () => {
@@ -568,7 +686,7 @@ const scenSelect = document.getElementById('scenStock');
 function renderScenSelect(){
   const previous = scenSelect.value;
   scenSelect.innerHTML = getFollowedStocks().map(entry => {
-    const s = resolveFollowedStock(entry.symbol);
+    const s = resolveFollowedAsset(entry.symbol);
     return `<option value="${entry.symbol}">${s.nom}</option>`;
   }).join('');
   if(previous && getFollowedStocks().some(e => e.symbol === previous)) scenSelect.value = previous;
@@ -584,7 +702,7 @@ const CASE_META = {
 function renderAnalystScenarios(){
   const symbol = scenSelect.value || (getFollowedStocks()[0] && getFollowedStocks()[0].symbol);
   if(!symbol) return;
-  const stock = resolveFollowedStock(symbol);
+  const stock = resolveFollowedAsset(symbol);
   const investAmount = +document.getElementById('scenInvestAmount').value || 0;
   const consensusEl = document.getElementById('scenConsensus');
   const gridEl = document.getElementById('scenCasesGrid');
@@ -655,7 +773,7 @@ const scenInputs = ['scenGrowth','scenPer','scenHorizon'].map(id=>document.getEl
 function updateScenario(){
   const symbol = scenSelect.value || (getFollowedStocks()[0] && getFollowedStocks()[0].symbol);
   if(!symbol) return;
-  const stock = resolveFollowedStock(symbol);
+  const stock = resolveFollowedAsset(symbol);
   const growth = +document.getElementById('scenGrowth').value;
   const perTarget = +document.getElementById('scenPer').value;
   const horizon = +document.getElementById('scenHorizon').value;
@@ -886,9 +1004,16 @@ function refreshAllStockViews(){
 // démo, coeur du chantier "supprimer la logique 8 actions premium + le reste
 // au prix seul") puis rafraîchit — jamais un repli sur un champ fictif en cas
 // d'échec (loadCompanyFundamentals laisse `null` en cache, voir data.js).
+// Depuis la Phase 2, ne demande ces fondamentales que pour les actions
+// (assetType==='stock') : un ETF/une paire Forex n'a pas de fondamentales
+// d'entreprise, /api/company-profile échouerait ou renverrait du bruit pour
+// ces symboles — les consommateurs (Screener/Comparateur) affichent déjà
+// FUNDAMENTALS_UNAVAILABLE_TEXT quand companyFundamentalsCache[ticker] n'a
+// jamais été demandé, sans code de dégradation supplémentaire à écrire ici.
 function loadFundamentalsAndRefresh(){
   if(location.protocol === 'file:') return Promise.resolve();
-  return loadCompanyFundamentals(getFollowedStocks().map(s => s.symbol))
+  const stockSymbols = getFollowedStocks().filter(s => (s.assetType || 'stock') === 'stock').map(s => s.symbol);
+  return loadCompanyFundamentals(stockSymbols)
     .then(() => refreshAllStockViews())
     .catch(err => {
       console.info('Likanza Academy — fondamentaux réels indisponibles :', err.message);
@@ -902,7 +1027,11 @@ renderMarketWatch();
 
 // ================= Cotations réelles (dégradation silencieuse si indisponibles) =================
 if(location.protocol !== 'file:'){
-  fetch('/api/stock-quotes')
+  // range=6mo : nécessaire pour que computeTechnicalIndicators (indicateurs
+  // techniques, Fiches actions) dispose d'assez d'historique pour de vraies
+  // moyennes mobiles 20/50 jours sur les 8 valeurs de démonstration — le
+  // défaut 5j de l'API ne suffirait qu'au plus haut/bas de période.
+  fetch('/api/stock-quotes?range=6mo')
     .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(payload=>{
       if(!payload || !Array.isArray(payload.quotes) || !payload.quotes.length) return;
@@ -917,13 +1046,17 @@ if(location.protocol !== 'file:'){
 
 // ---------- Cours en direct des actions ajoutées par recherche (/api/custom-quotes) ----------
 // Alimente aussi followedQuotesCache (scripts/data.js), partagé avec
-// resolveFollowedStock : Comparateur/Scénarios/Dividendes/action.js peuvent
+// resolveFollowedAsset : Comparateur/Scénarios/Dividendes/action.js peuvent
 // ainsi lire le prix/historique de n'importe quelle valeur suivie non-démo,
 // pas seulement l'afficher une fois dans cette grille.
 function loadCustomQuotesForGrid(list){
   const liteSymbols = list.filter(e => !STOCKS_DEMO.find(s=>s.ticker===e.symbol)).map(e=>e.symbol);
   if(liteSymbols.length === 0 || location.protocol === 'file:') return;
-  fetch('/api/custom-quotes?symbols=' + encodeURIComponent(liteSymbols.join(',')))
+  // range=6mo (au lieu du défaut 5j de l'API) : nécessaire pour que
+  // computeTechnicalIndicators dispose d'assez d'historique pour calculer de
+  // vraies moyennes mobiles 20/50 jours (tech-${symbol} ci-dessous), pas
+  // seulement un plus haut/bas sur quelques séances.
+  fetch('/api/custom-quotes?symbols=' + encodeURIComponent(liteSymbols.join(',')) + '&range=6mo')
     .then(r=>{ if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
     .then(payload=>{
       let appliedAny = false;
@@ -938,6 +1071,8 @@ function loadCustomQuotesForGrid(list){
         }
         const trendEl = document.getElementById(`trend-${q.symbol}`);
         if(trendEl) trendEl.innerHTML = renderTrendHtml(computeTrendIndicator(q.history));
+        const techEl = document.getElementById(`tech-${q.symbol}`);
+        if(techEl) techEl.innerHTML = renderTechIndicatorsHtml(q.history, q.currency==='EUR'?'€':q.currency);
       });
       // Une fois les cotations en cache, le Comparateur/Scénarios peuvent
       // afficher un vrai prix pour ces valeurs (pas seulement la grille).
@@ -976,7 +1111,7 @@ if(resetStocksBtn) resetStocksBtn.addEventListener('click', ()=>{
 });
 
 // ---------- Portefeuille réel (déclaratif) : les cours actuels réutilisent
-// resolveFollowedStock, déjà alimenté par les cotations live ci-dessus
+// resolveFollowedAsset, déjà alimenté par les cotations live ci-dessus
 // (applyLiveStockQuotes/loadCustomQuotesForGrid) — aucun nouvel appel réseau
 // dédié à ce tableau. L'action choisie via la recherche devient aussi une
 // valeur suivie (même wireStockSearch que partout ailleurs), pour que son
@@ -991,7 +1126,7 @@ function renderPortfolioTab(){
   const transactions = getRealPortfolio();
   const livePrices = {};
   [...new Set(transactions.map(t => t.ticker))].forEach(ticker => {
-    const s = resolveFollowedStock(ticker);
+    const s = resolveFollowedAsset(ticker);
     if(typeof s.prix === 'number') livePrices[ticker] = s.prix;
   });
   const positions = computeRealPortfolioPositions(transactions, livePrices);

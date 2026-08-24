@@ -6,7 +6,7 @@
    — jamais un signal d'achat/vente. Le ticker est lu dans le hash
    de l'URL, même convention que marche.html/marche.js.
 
-   Ouvert à TOUTE valeur suivie (getFollowedStocks/resolveFollowedStock,
+   Ouvert à TOUTE valeur suivie (getFollowedStocks/resolveFollowedAsset,
    scripts/data.js), pas seulement aux 8 valeurs curatées STOCKS_DEMO :
    /api/company-profile accepte n'importe quel symbole Yahoo valide, la
    restriction aux 8 valeurs était une limitation de câblage UI, pas une
@@ -182,7 +182,7 @@ async function renderActionDetail(){
     return;
   }
 
-  const stock = resolveFollowedStock(ticker);
+  const stock = resolveFollowedAsset(ticker);
   const nom = stock.nom;
   document.title = `${nom} · Fiche action · Likanza Academy`;
   const crumb = document.getElementById('crumbName'); if(crumb) crumb.textContent = nom;
@@ -281,10 +281,8 @@ async function renderActionDetail(){
     const techEl = document.getElementById('technicalCard');
     if(!techEl) return;
     const tech = hist ? computeTechnicalIndicators(hist) : null;
-    if(tech){
-      const lines = [`Plus haut sur ${tech.days} séances : ${tech.periodHigh.toFixed(2)} € · Plus bas : ${tech.periodLow.toFixed(2)} €`];
-      if(tech.ma20) lines.push(`Le cours est actuellement ${tech.ma20.above ? 'au-dessus' : 'en dessous'} de sa moyenne mobile 20 jours (${tech.ma20.value.toFixed(2)} €, ${tech.ma20.diffPct>=0?'+':''}${tech.ma20.diffPct.toFixed(1)}%)`);
-      if(tech.ma50) lines.push(`Le cours est actuellement ${tech.ma50.above ? 'au-dessus' : 'en dessous'} de sa moyenne mobile 50 jours (${tech.ma50.value.toFixed(2)} €, ${tech.ma50.diffPct>=0?'+':''}${tech.ma50.diffPct.toFixed(1)}%)`);
+    const lines = renderTechnicalIndicatorsLines(tech);
+    if(lines){
       techEl.innerHTML = `<h3>Analyse technique</h3>${lines.map(l=>`<p class="coach-msg" style="margin-top:8px;">→ ${l}</p>`).join('')}<p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">Indicateurs factuels calculés sur les prix réels — ne constituent jamais un conseil d'achat ou de vente.</p>`;
     } else {
       techEl.innerHTML = `<h3>Analyse technique</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Historique insuffisant pour calculer des indicateurs techniques.</p>`;

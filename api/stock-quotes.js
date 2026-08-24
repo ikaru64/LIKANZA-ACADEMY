@@ -31,8 +31,19 @@ const STOCKS_YAHOO = [
   {symbol:'MC.PA',   yahoo:'MC.PA',   name:'LVMH',           assetType:'stock'}
 ];
 
+// range/interval optionnels (Phase 2 de la refonte Bourse — indicateurs
+// techniques MM20/MM50 dans bourse.js) : mêmes ensembles autorisés que
+// /api/custom-quotes.js, 5j/1j par défaut si absents (comportement
+// inchangé pour tout appelant existant).
+const ALLOWED_RANGES = new Set(['1d', '5d', '1mo', '3mo', '6mo', '1y', '2y', '5y', '10y', 'max']);
+const ALLOWED_INTERVALS = new Set(['1d', '1wk', '1mo']);
+
 module.exports = async (req, res) => {
-  const settled = await Promise.allSettled(STOCKS_YAHOO.map(entry => fetchYahooQuote(entry)));
+  const requestedRange = req.query && req.query.range;
+  const range = ALLOWED_RANGES.has(requestedRange) ? requestedRange : '5d';
+  const requestedInterval = req.query && req.query.interval;
+  const interval = ALLOWED_INTERVALS.has(requestedInterval) ? requestedInterval : '1d';
+  const settled = await Promise.allSettled(STOCKS_YAHOO.map(entry => fetchYahooQuote(entry, {range, interval})));
   const quotes = [];
   const errors = [];
   settled.forEach(r => {

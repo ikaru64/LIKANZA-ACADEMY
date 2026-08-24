@@ -341,9 +341,9 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   // Nom affichable pour n'importe quel support : les 8 indices/matières
   // premières curatés ont un libellé fixe (LAB_SUPPORT_LABELS) ; toute autre
   // action réelle (ajoutée via recherche) utilise son vrai nom via
-  // resolveFollowedStock — jamais "undefined" affiché.
+  // resolveFollowedAsset — jamais "undefined" affiché.
   function labSupportLabel(symbol){
-    return LAB_SUPPORT_LABELS[symbol] || resolveFollowedStock(symbol).nom;
+    return LAB_SUPPORT_LABELS[symbol] || resolveFollowedAsset(symbol).nom;
   }
 
   // Optgroup "Actions suivies" peuplé depuis les vraies valeurs suivies du
@@ -354,7 +354,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
     const previous = supportEl.value;
     followedGroupEl.innerHTML = getFollowedStocks()
       .filter(s => !LAB_SUPPORT_LABELS[s.symbol])
-      .map(s => `<option value="${s.symbol}">${resolveFollowedStock(s.symbol).nom}</option>`)
+      .map(s => `<option value="${s.symbol}">${resolveFollowedAsset(s.symbol).nom}</option>`)
       .join('');
     if(previous && Array.from(supportEl.options).some(o => o.value === previous)) supportEl.value = previous;
   }

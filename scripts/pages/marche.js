@@ -147,8 +147,9 @@ function renderMarcheDetail(){
         <p style="font-size:12px;color:var(--text-dim);">${majLine}</p>
         ${unavailable ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Valeur indisponible tant que les cotations automatiques ne sont pas connectées.</p>` : ''}
         ${loading ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Chargement de la cotation en cours…</p>` : ''}
-        <div style="margin-top:16px;">
+        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap;">
           <button class="fav-btn" data-fav-id="market-${it.symbol}" data-fav-title="${it.nom}" data-fav-url="marche.html#${encodeURIComponent(it.symbol)}" data-fav-type="Marché">${ICONS.star} Favoris</button>
+          <button class="btn btn-sm" id="marcheFollowBtn"></button>
         </div>
       </div>
       <div class="card">
@@ -170,6 +171,29 @@ function renderMarcheDetail(){
   initFavButtons();
   renderMarcheSiblings(sym);
   if(it.assetType === 'etf') renderEtfFundamentals('etfFundamentals-' + it.symbol, it.symbol);
+  renderMarcheFollowBtn(it);
+}
+
+// ---------- Bouton "Suivre" (Phase 2 de la refonte Bourse) : ajoute cet
+// actif de marché à la même liste que les actions suivies (getFollowedStocks),
+// pour qu'il apparaisse dans Fiches actions/Screener/Comparateur sur
+// bourse.html. Distinct du bouton "Favoris" ci-dessus (qui ne fait que
+// mémoriser un lien de navigation rapide, sans lien avec ces outils). ----------
+function renderMarcheFollowBtn(it){
+  const btn = document.getElementById('marcheFollowBtn');
+  if(!btn) return;
+  function update(){
+    const followed = getFollowedStocks().some(s => s.symbol === it.symbol);
+    btn.textContent = followed ? '✓ Suivi (retirer)' : '+ Suivre';
+    btn.classList.toggle('active', followed);
+  }
+  update();
+  btn.onclick = () => {
+    const followed = getFollowedStocks().some(s => s.symbol === it.symbol);
+    if(followed) removeFollowedStock(it.symbol);
+    else addFollowedStock({symbol: it.symbol, name: it.nom, assetType: it.assetType});
+    update();
+  };
 }
 
 safeRun('fiche marché', renderMarcheDetail);
