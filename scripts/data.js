@@ -924,7 +924,9 @@ const BADGES = [
   {id:'positioning_test', name:'Bilan effectué', desc:"Terminer le test de positionnement.", check:(g,ctx)=> !!(ctx && ctx.positioningTestDone)},
   {id:'first_cours', name:'Premier cours', desc:"Réussir le quiz de validation d'un cours.", check:(g,ctx)=> !!(ctx && ctx.coursCompleted)},
   {id:'mistake_slayer', name:'Retour gagnant', desc:"Corriger 5 anciennes erreurs.", check:(g,ctx)=> !!(ctx && ctx.totalResolved >= 5)},
-  {id:'memory_perfect', name:'Mémoire d\'éléphant', desc:"Terminer une partie de Memory Finance sans erreur.", check:(g,ctx)=> !!(ctx && ctx.memoryPerfect)}
+  {id:'memory_perfect', name:'Mémoire d\'éléphant', desc:"Terminer une partie de Memory Finance sans erreur.", check:(g,ctx)=> !!(ctx && ctx.memoryPerfect)},
+  {id:'first_paper_trade', name:'Premier trade simulé', desc:"Passer un premier ordre en Paper Trading.", check:(g,ctx)=> !!(ctx && ctx.paperTradeExecuted)},
+  {id:'paper_gain', name:'Premier gain réalisé', desc:"Réaliser un gain sur une vente en Paper Trading.", check:(g,ctx)=> !!(ctx && ctx.paperRealizedGain > 0)}
 ];
 
 // ---------- Ligues (classement de démonstration, pas de vrais autres joueurs) ----------

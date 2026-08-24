@@ -701,6 +701,38 @@ const CASE_META = {
   base: {label: 'Scénario central', sub: 'cible moyenne des analystes'},
   bull: {label: 'Scénario haut', sub: 'cible haute des analystes'}
 };
+// ---------- Repère technique de court terme, en contexte des scénarios (jamais présenté
+// comme une confirmation des scénarios ci-dessous : le RSI/Bollinger décrivent le momentum
+// des derniers jours, les scénarios (analystes ou hypothèses) portent sur un horizon de
+// mois/années — deux natures de signaux différentes, volontairement affichées côte à côte
+// sans jamais être mélangées en une seule affirmation. Réutilise computeTechnicalIndicators
+// (déjà utilisé par les Fiches actions/Comparateur), aucun nouveau calcul introduit. ----------
+function renderScenTechContext(){
+  const el = document.getElementById('scenTechContext');
+  if(!el) return;
+  const symbol = scenSelect.value || (getFollowedStocks()[0] && getFollowedStocks()[0].symbol);
+  if(!symbol){ el.innerHTML = ''; return; }
+  const stock = resolveFollowedAsset(symbol);
+  if(!Array.isArray(stock.history) || stock.history.length < 20){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:12px;">Repère technique indisponible pour ${stock.nom} (historique insuffisant).</p>`;
+    return;
+  }
+  const tech = computeTechnicalIndicators(stock.history);
+  const rsiText = typeof tech.rsi14 === 'number'
+    ? `RSI(14) = ${tech.rsi14.toFixed(0)} ${tech.rsi14 >= 70 ? '(zone de surachat)' : tech.rsi14 <= 30 ? '(zone de survente)' : '(zone neutre)'}`
+    : 'RSI(14) indisponible';
+  const bollingerLabels = {above: 'au-dessus de la bande haute', below: 'en-dessous de la bande basse', inside: 'à l\'intérieur des bandes'};
+  const bollText = tech.bollinger ? `Bandes de Bollinger : cours ${bollingerLabels[tech.bollinger.position] || 'indisponible'}` : 'Bandes de Bollinger indisponibles';
+
+  el.innerHTML = `
+    <div class="card">
+      <span class="smallcaps">📍 Repère technique actuel — ${stock.nom}</span> ${renderDataBadge('calcul')}
+      <p style="font-size:12.5px;margin-top:8px;">${rsiText} · ${bollText}</p>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">Ceci décrit le momentum de COURT TERME (dernières séances), une lecture indépendante des scénarios ci-dessous (cibles analystes ou hypothèses, horizon de mois/années) — jamais une indication de quel scénario a le plus de chances de se réaliser. Voir "Analyse technique" dans la Bibliothèque pour comprendre ces indicateurs.</p>
+    </div>`;
+}
+scenSelect.addEventListener('change', renderScenTechContext);
+
 function renderAnalystScenarios(){
   const symbol = scenSelect.value || (getFollowedStocks()[0] && getFollowedStocks()[0].symbol);
   if(!symbol) return;
@@ -994,6 +1026,7 @@ function refreshAllStockViews(){
   renderCompareChecks();
   renderCompare();
   renderScenSelect();
+  renderScenTechContext();
   renderAnalystScenarios();
   updateScenario();
   renderMarketOfDay();
@@ -1078,7 +1111,7 @@ function loadCustomQuotesForGrid(list){
       });
       // Une fois les cotations en cache, le Comparateur/Scénarios peuvent
       // afficher un vrai prix pour ces valeurs (pas seulement la grille).
-      if(appliedAny){ renderCompare(); renderAnalystScenarios(); updateScenario(); renderScreener(); }
+      if(appliedAny){ renderCompare(); renderScenTechContext(); renderAnalystScenarios(); updateScenario(); renderScreener(); }
     })
     .catch(err=>{
       console.info('Likanza Academy — cours en direct indisponibles pour les actions suivies :', err.message);
@@ -1477,6 +1510,10 @@ function renderPaperTrading(){
       feedbackEl.style.color = 'var(--bordeaux)';
       return;
     }
+    // Réalisé AVANT l'ordre (méthode du coût moyen pondéré, computePaperTradingPositions)
+    // pour isoler le gain propre à CE trade précis, jamais un total cumulé — nécessaire
+    // pour le badge "Premier gain réalisé" ci-dessous.
+    const realizedBefore = computePaperTradingPositions(getPaperTradingState().transactions, {}).realizedGainTotal;
     const result = executePaperTrade(symbol, asset.nom, asset.assetType, action, qty, asset.prix);
     if(!result.ok){
       feedbackEl.textContent = result.reason;
@@ -1487,6 +1524,11 @@ function renderPaperTrading(){
     feedbackEl.style.color = 'var(--emerald)';
     refreshPaperTradingViews();
     tryAwardQuizPoints(`paper-trading-${new Date().toDateString()}`, 8, {usedSimulator: true});
+    // Badges Paper Trading : jamais soumis au throttle quotidien de
+    // tryAwardQuizPoints ci-dessus (sinon un 2e trade le même jour, potentiellement
+    // le premier avec un vrai gain réalisé, ne déclencherait jamais "Premier gain réalisé").
+    const realizedAfter = computePaperTradingPositions(result.state.transactions, {}).realizedGainTotal;
+    checkBadges(getGamification(), {paperTradeExecuted: true, paperRealizedGain: realizedAfter - realizedBefore});
   });
   document.getElementById('ptReset').addEventListener('click', () => {
     if(!confirm('Réinitialiser la simulation de Paper Trading ? Toutes les positions et l\'historique fictifs seront effacés.')) return;
