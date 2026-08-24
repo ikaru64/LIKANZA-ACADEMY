@@ -5600,7 +5600,7 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-weekly-missions-log', 'fzr-activity-log', 'fzr-positioning-result',
   'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
   'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
-  'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history'
+  'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
