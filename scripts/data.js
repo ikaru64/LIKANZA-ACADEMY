@@ -615,6 +615,47 @@ function renderNextStepRecommendation(elId){
     </details>`;
 }
 
+// ---------- Concepts financiers rencontrés en Bourse (fiches actions,
+// comparateur...) : jamais une mesure de maîtrise — ça, c'est le rôle de
+// recordAnswer/getSkillMastery, qui exigent une vraie évaluation (bonne/
+// mauvaise réponse). Consulter un PER ou un rendement de dividende n'est
+// qu'une EXPOSITION, jamais une réussite : cette trace sert uniquement à
+// relier la Bourse au moteur de recommandation ("prochaine étape" ci-
+// dessous), jamais à gonfler artificiellement un pourcentage de maîtrise.
+// Corrige la déconnexion Bourse ↔ modèle de compétences identifiée par
+// l'audit du 2026-08-20 (section H). ----------
+function getEncounteredConcepts(){
+  return safeGetJSON('fzr-concepts-encountered', {});
+}
+function recordConceptEncounter(categories){
+  if(!Array.isArray(categories) || categories.length === 0) return;
+  const map = getEncounteredConcepts();
+  const now = new Date().toISOString();
+  categories.forEach(cat => {
+    if(!cat) return;
+    if(!map[cat]) map[cat] = {count: 0, firstSeenAt: now, lastSeenAt: now};
+    map[cat].count += 1;
+    map[cat].lastSeenAt = now;
+  });
+  safeSetJSON('fzr-concepts-encountered', map);
+}
+
+// Détecte, à partir des vrais champs fondamentaux ET des vrais indicateurs
+// techniques déjà affichés sur une fiche action, quelles catégories de quiz
+// RÉELLEMENT existantes (jamais une catégorie inventée) correspondent aux
+// notions montrées à l'utilisateur — pour pouvoir les relier honnêtement à
+// la Bibliothèque/aux Défis via getNextStepSuggestion.
+function detectBourseConceptsFromFundamentals(ff, tech){
+  const categories = new Set();
+  if(ff){
+    if(typeof ff.trailingPE === 'number') categories.add('Actions'); // PER
+    if(typeof ff.returnOnEquity === 'number') categories.add('Actions'); // ROE
+    if(typeof ff.dividendYield === 'number') categories.add('Bourse'); // rendement du dividende
+  }
+  if(tech && (typeof tech.rsi14 === 'number' || tech.bollinger)) categories.add('Analyse technique');
+  return [...categories];
+}
+
 // ---------- Moteur "prochaine étape" universel ----------
 // Une seule recommandation concrète et réelle, jamais une CTA générique.
 // Ordre de priorité : (1) notion faible tout juste travaillée dans cette
@@ -5612,7 +5653,8 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-weekly-missions-log', 'fzr-activity-log', 'fzr-positioning-result',
   'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
   'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
-  'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback'
+  'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
+  'fzr-concepts-encountered'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de

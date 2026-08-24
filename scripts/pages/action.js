@@ -269,6 +269,7 @@ async function renderActionDetail(){
     </div>
     <div class="card" id="scoreVerdictCard" style="margin-top:16px;display:none;"></div>
     <div class="card" id="technicalCard" style="margin-top:16px;"></div>
+    <div class="card" id="conceptExposureCard" style="margin-top:16px;display:none;"></div>
     <div class="card" id="thematicNewsCard" style="margin-top:16px;display:none;"></div>
     <div class="card" id="financialHistoryCard" style="margin-top:16px;"><h3>Historique financier</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement…</p></div>
     <div class="card" id="timelineCard" style="margin-top:16px;"><h3>Chronologie</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement…</p></div>
@@ -424,6 +425,30 @@ async function renderActionDetail(){
               <p style="font-size:15px;margin-top:8px;">${consensus.label}</p>
               <p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${consensus.total} analyste${consensus.total>1?'s':''} · ${consensus.breakdown.strongBuy} achat fort · ${consensus.breakdown.buy} achat · ${consensus.breakdown.hold} conserver · ${consensus.breakdown.sell} vente · ${consensus.breakdown.strongSell} vente forte</p>
               <p style="font-size:11px;color:var(--text-dim);margin-top:10px;">Estimations professionnelles réelles, pas une garantie — voir l'onglet Scénarios de la page Bourse pour une projection chiffrée.</p>`;
+          }
+        }
+
+        // ---------- Relie la Bourse au modèle de compétences (jamais fait avant
+        // cet audit) : les notions réellement affichées ci-dessus (PER, ROE,
+        // rendement du dividende, RSI/Bollinger) sont enregistrées comme
+        // EXPOSITION, jamais comme une réussite — recordConceptEncounter ne
+        // touche jamais la maîtrise réelle (fzr-quiz-stats), contrairement à
+        // recordAnswer. Sert uniquement à proposer une prochaine étape
+        // honnête, via le même moteur que Défis/Cours/Laboratoire. ----------
+        const exposureCard = document.getElementById('conceptExposureCard');
+        if(exposureCard && ff){
+          const tech = history ? computeTechnicalIndicators(history) : null;
+          const concepts = detectBourseConceptsFromFundamentals(ff, tech);
+          if(concepts.length > 0){
+            recordConceptEncounter(concepts);
+            exposureCard.style.display = '';
+            exposureCard.innerHTML = `
+              <span class="smallcaps">Notions rencontrées sur cette fiche</span>
+              <p style="font-size:13px;color:var(--text-dim);margin:8px 0 12px;">${concepts.join(' · ')} — consulter n'est pas maîtriser : voici de quoi aller plus loin si tu veux vraiment tester ces notions.</p>
+              <div id="conceptExposureNextStep"></div>`;
+            renderNextStepCard('conceptExposureNextStep', {categories: concepts, domainKey: 'stockMarket'});
+          } else {
+            exposureCard.style.display = 'none';
           }
         }
 
