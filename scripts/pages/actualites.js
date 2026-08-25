@@ -121,7 +121,7 @@ async function initWeeklyNews(){
   try {
     const resp = await fetch('/api/weekly-news');
     if(resp.status === 404){
-      gridEl.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Les actualités de la semaine ne sont pas encore disponibles : elles sont générées automatiquement chaque lundi.</p>`;
+      gridEl.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Les actualités de la semaine ne sont pas encore disponibles : elles sont générées automatiquement chaque lundi (avec un repli le mardi si le premier passage échoue).</p>`;
       return;
     }
     if(!resp.ok) throw new Error('HTTP ' + resp.status);

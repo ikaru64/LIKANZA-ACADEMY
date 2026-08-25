@@ -1,6 +1,16 @@
 /* ============================================================
    LIKANZA ACADEMY — Fonction serverless Vercel : /api/generate-weekly-news
-   Déclenchée une fois par semaine par Vercel Cron (voir vercel.json).
+   Déclenchée DEUX fois par semaine par Vercel Cron (voir vercel.json) :
+   lundi 6h UTC puis mardi 6h UTC en repli. Volontairement redondant, même
+   principe que generate-daily-news.js : l'écriture est idempotente
+   (ON CONFLICT (week_start, categorie) DO UPDATE, mondayOfWeek() normalise
+   toujours sur le lundi de la semaine en cours peu importe quel jour le
+   script tourne réellement), donc le passage du mardi ne fait que rafraîchir
+   la même semaine si le lundi a réussi, et sert de filet de sécurité
+   automatique si le lundi a échoué silencieusement — sans ce filet, un échec
+   du lundi laissait les articles figés pendant une semaine entière avant la
+   prochaine tentative (constaté le 2026-08-25 : la clé Gemini invalide avait
+   déjà cassé ce cron le lundi, sans aucun repli avant le lundi suivant).
    Pour chaque catégorie (WEEKLY_CATEGORY_FEEDS), lit un vrai flux RSS
    dédié, fait rédiger un article de synthèse par Gemini (sans invention
    de faits — voir lib/gemini.js) et enregistre le résultat dans Neon

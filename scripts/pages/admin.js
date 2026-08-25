@@ -132,7 +132,7 @@ async function renderNewsPipelineStatus(){
   const weeklyCard = (() => {
     if(weeklyResult.status === 'rejected') return `<div class="card"><span class="smallcaps">Articles de la semaine</span><p style="color:var(--bordeaux);font-size:13px;margin-top:8px;">État impossible à vérifier (erreur réseau ou API).</p></div>`;
     const weekly = weeklyResult.value;
-    if(!weekly) return `<div class="card"><span class="smallcaps">Articles de la semaine</span><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Aucun article encore généré. Prévu chaque lundi à 6h UTC.</p></div>`;
+    if(!weekly) return `<div class="card"><span class="smallcaps">Articles de la semaine</span><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Aucun article encore généré. Prévu chaque lundi à 6h UTC (repli mardi 6h UTC si le premier passage échoue).</p></div>`;
     const list = (weekly.articles||[]).map(a=>`<li>${a.categorie} — ${a.titre}</li>`).join('');
     return `<div class="card">
       <span class="smallcaps">Articles de la semaine</span>
