@@ -1904,11 +1904,22 @@ const COURS_CATALOG = [
       ]}
     ]},
   {id:'mathematiques-financieres', titre:"Introduction aux mathématiques financières et à la finance quantitative", niveau:'Avancé',
-    libraryTermes:['Corrélation (entre actifs)','Ratio de Sharpe','Beta (β) d\'un actif','Value at Risk (VaR)','Loi normale des rendements et ses limites','Simulation de Monte Carlo','Volatilité','Diversification'],
+    libraryTermes:['Écart-type','Distribution (statistique)','Probabilité','Régression (statistique)','Corrélation (entre actifs)','Ratio de Sharpe','Beta (β) d\'un actif','Value at Risk (VaR)','Loi normale des rendements et ses limites','Simulation de Monte Carlo','Volatilité','Diversification'],
     quizCategories:['Finance quantitative'],
     applyUrl:'laboratoire.html#tab-investissement', applyLabel:"Essayer le simulateur de risque (VaR)",
-    acquis:["Comprendre pourquoi la corrélation rend la diversification efficace, et ses limites en période de crise", "Savoir interpréter un ratio de Sharpe et un beta", "Comprendre ce qu'une Value at Risk (VaR) affirme réellement, et ce qu'elle n'affirme pas", "Comprendre les limites de l'hypothèse de loi normale utilisée dans de nombreux modèles financiers"],
+    acquis:["Comprendre les 4 notions statistiques de base (écart-type, distribution, probabilité, régression) sur lesquelles reposent tous les outils de gestion du risque", "Comprendre pourquoi la corrélation rend la diversification efficace, et ses limites en période de crise", "Savoir interpréter un ratio de Sharpe et un beta", "Comprendre ce qu'une Value at Risk (VaR) affirme réellement, et ce qu'elle n'affirme pas", "Comprendre les limites de l'hypothèse de loi normale utilisée dans de nombreux modèles financiers"],
     chapitres:[
+      {titre:"Les bases statistiques, avant tout calcul de risque", blocs:[
+        {type:'texte', texte:"Les outils qui suivent dans ce cours (ratio de Sharpe, beta, VaR) reposent tous sur un petit socle de vocabulaire statistique. Sans lui, une formule de VaR reste une boîte noire — avec lui, chaque outil suivant devient une application concrète d'une idée déjà comprise."},
+        {type:'definition', texte:"L'écart-type mesure, en moyenne, à quel point les valeurs d'une série s'écartent de leur moyenne : plus il est élevé, plus les valeurs sont dispersées. C'est précisément ce que mesure la volatilité d'un actif — l'écart-type de ses rendements."},
+        {type:'calcul', texte:"Calcul d'un écart-type, pas à pas, sur 3 rendements mensuels fictifs : +3%, -1%, +1%.", schema:
+"Moyenne = (3 + (-1) + 1) ÷ 3 = 1%\n\nÉcarts à la moyenne : +2% / -2% / 0%\nAu carré :             4   /  4   /  0\n\nVariance (moyenne des écarts au carré) = (4+4+0) ÷ 3 ≈ 2,67\nÉcart-type = √2,67 ≈ 1,63%\n\nUne série +1%, +1%, +1% (moyenne strictement identique de +1%)\naurait un écart-type de 0% : la moyenne seule ne dit RIEN de la\ndispersion réelle, même à moyenne parfaitement égale."},
+        {type:'definition', texte:"Une distribution décrit comment les valeurs possibles d'une donnée se répartissent : lesquelles sont fréquentes, lesquelles sont rares. Une probabilité, elle, mesure les chances qu'un événement précis se produise, de 0% (impossible) à 100% (certain) — c'est le langage même utilisé par une VaR (\"95% de chances que la perte ne dépasse pas...\") ou une simulation de Monte Carlo."},
+        {type:'definition', texte:"Une régression mesure la relation entre deux séries de données — par exemple, à quel point les rendements d'une action suivent ceux du marché. C'est exactement la méthode utilisée pour calculer le beta d'une action, présenté plus loin dans ce cours."},
+        {type:'exerciceErreur', affirmation:"Deux placements affichant le même rendement moyen sur une période présentent forcément le même niveau de risque.", pourquoi:"La moyenne, seule, ne dit rien de la dispersion des résultats individuels : c'est précisément ce que l'exemple ci-dessus démontre (+3%/-1%/+1% et +1%/+1%/+1% ont exactement la même moyenne de +1%, mais des écarts-types radicalement différents, 1,63% contre 0%). Deux placements à rendement moyen identique peuvent avoir vécu des trajectoires très différentes : l'un stable, l'autre marqué par de fortes variations — c'est l'écart-type, jamais la moyenne seule, qui révèle cette différence."},
+        {type:'attention', texte:"Aucune de ces notions n'est une prédiction : l'écart-type, la distribution et la régression décrivent toutes des données déjà observées dans le passé — leur usage pour anticiper l'avenir repose sur l'hypothèse, jamais garantie, que les conditions futures resteront suffisamment comparables au passé mesuré."},
+        {type:'retenir', texte:"Retiens ces 4 mots avant de continuer : écart-type (dispersion), distribution (répartition complète des valeurs possibles), probabilité (chances qu'un événement précis se produise) et régression (relation entre deux séries de données). Les chapitres suivants ne font qu'appliquer ces notions à des questions financières concrètes."}
+      ]},
       {titre:"Mesurer le risque : volatilité et corrélation", blocs:[
         {type:'texte', texte:"Avant de pouvoir comparer des placements sur leur rapport rendement/risque, il faut d'abord savoir mesurer ce risque. La finance quantitative s'appuie sur des outils statistiques pour cela, plutôt que sur une impression générale."},
         {type:'definition', texte:"La volatilité mesure l'ampleur des variations de prix d'un actif (statistiquement, l'écart-type de ses rendements). La corrélation, elle, mesure à quel point deux actifs évoluent ensemble, sur une échelle de -1 à +1."},
@@ -2473,6 +2484,58 @@ const LIBRARY = [
     avantages:["Un spread faible reflète en général un marché très liquide"],
     inconvenients:["Coût réel à chaque opération, même sans commission explicite"],
     erreurs:["Ignorer le spread dans le calcul du seuil de rentabilité d'une position"]
+  },
+  {
+    terme:"Écart-type",
+    categorie:"Gestion du risque",
+    niveau:"Intermédiaire",
+    lecture:"3 min",
+    simple:"L'écart-type mesure, en moyenne, à quel point les valeurs d'une série de données s'écartent de leur moyenne — plus il est élevé, plus les valeurs sont dispersées.",
+    detail:"C'est l'outil statistique de base derrière la volatilité en finance : la volatilité d'un actif est, très concrètement, l'écart-type de ses rendements sur une période donnée. Un écart-type faible signifie des valeurs regroupées près de la moyenne ; un écart-type élevé signifie des valeurs plus dispersées, certaines très éloignées de cette moyenne.",
+    avance:"Le calcul complet (variance = moyenne des écarts à la moyenne, au carré, puis écart-type = racine carrée de la variance) met les écarts au carré avant de les moyenner, précisément pour que les écarts positifs et négatifs ne s'annulent jamais entre eux — sans cette étape, une série très dispersée mais équilibrée entre hausses et baisses pourrait afficher, à tort, une dispersion moyenne proche de zéro.",
+    exemple:"Rendements mensuels de 3 mois : +3%, -1%, +1%. Moyenne = +1%. Écarts à la moyenne : +2%, -2%, 0%. Au carré : 4 / 4 / 0 → variance moyenne = 8/3 ≈ 2,67 → écart-type = √2,67 ≈ 1,63%. Une série de +1%, +1%, +1% (moyenne strictement identique de +1%) aurait, elle, un écart-type de 0% : même moyenne exacte, dispersion radicalement différente.",
+    avantages:["Donne une mesure chiffrée et standardisée de la dispersion, plutôt qu'une impression qualitative (\"ça bouge beaucoup\")"],
+    inconvenients:["Traite de la même façon une dispersion due à des hausses et une dispersion due à des baisses, alors qu'un investisseur se soucie généralement bien plus du risque de baisse"],
+    erreurs:["Croire que deux séries de même moyenne se comportent forcément de façon similaire — l'écart-type révèle souvent une réalité très différente derrière une moyenne identique"]
+  },
+  {
+    terme:"Distribution (statistique)",
+    categorie:"Gestion du risque",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Une distribution décrit comment les valeurs possibles d'une donnée (par exemple les rendements journaliers d'une action) se répartissent : lesquelles sont fréquentes, lesquelles sont rares, et à quel point.",
+    detail:"Une distribution se résume généralement par sa tendance centrale (où se regroupent la plupart des valeurs, souvent proche de la moyenne) et sa dispersion (l'écart-type, à quel point les valeurs s'éloignent de ce centre). Sa forme visuelle (tracée en histogramme) peut aussi révéler des informations que la seule moyenne ne montre jamais.",
+    avance:"La loi normale (la fameuse courbe symétrique \"en cloche\") est une forme de distribution particulière, largement utilisée en finance par simplification — mais les rendements financiers réels suivent rarement une loi normale exacte : ils affichent généralement des \"queues plus épaisses\" (des événements extrêmes plus fréquents que cette courbe théorique ne le prédirait), voir le terme Loi normale des rendements et ses limites.",
+    exemple:"La distribution des rendements journaliers d'un indice actions sur 10 ans montre typiquement une grande majorité de jours proches de 0%, une minorité de jours plus marqués, et une poignée de jours extrêmes (krachs) bien plus fréquents que ce qu'une courbe en cloche théorique parfaite suggérerait.",
+    avantages:["Donne une image complète des résultats possibles, plutôt qu'un chiffre unique (comme une moyenne) qui peut masquer des risques réels"],
+    inconvenients:["Nécessite davantage de données et de recul statistique qu'une simple moyenne pour être estimée de façon fiable"],
+    erreurs:["Résumer un phénomène financier par sa seule moyenne, en ignorant la forme de sa distribution — deux distributions à moyenne identique peuvent avoir des risques extrêmes radicalement différents"]
+  },
+  {
+    terme:"Probabilité",
+    categorie:"Gestion du risque",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Une probabilité mesure les chances qu'un événement se produise, sur une échelle de 0% (impossible) à 100% (certain).",
+    detail:"En finance, la probabilité sert de base au langage même des outils de gestion du risque : une VaR à 95% de confiance, un backtest historique, une simulation de Monte Carlo expriment tous un résultat en termes de chances, jamais de certitude absolue.",
+    avance:"Une probabilité calculée à partir de données historiques (probabilité \"empirique\") n'est jamais une garantie sur l'avenir : elle décrit ce qui s'est produit dans le passé observé, sous l'hypothèse — parfois fragile — que les conditions futures resteront suffisamment comparables à celles du passé mesuré.",
+    exemple:"Dire qu'une VaR à 95% sur 10 jours est de 5 000€ revient à dire : selon le modèle utilisé, il y a 95% de chances que la perte ne dépasse pas 5 000€ sur cette période — et donc 5% de chances, non négligeables, qu'elle soit plus élevée.",
+    avantages:["Permet d'exprimer un risque de façon standardisée et comparable, plutôt qu'une impression subjective (\"c'est risqué\" ou \"c'est sûr\")"],
+    inconvenients:["Une probabilité basée sur l'historique peut se révéler fausse si les conditions futures diffèrent significativement des conditions passées observées"],
+    erreurs:["Confondre une probabilité élevée avec une certitude — un événement à 5% de chances de se produire reste un événement réellement possible, pas un événement à ignorer"]
+  },
+  {
+    terme:"Régression (statistique)",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Une régression est une méthode statistique qui mesure la relation entre deux séries de données — par exemple, à quel point les rendements d'une action suivent ceux du marché dans son ensemble.",
+    detail:"En finance, c'est exactement la méthode utilisée pour calculer le beta d'une action : on \"fait passer\" une droite au plus près du nuage de points formé par les rendements historiques de l'action face à ceux du marché ; la pente de cette droite est le beta.",
+    avance:"Une régression décrit une relation observée sur une période et un échantillon de données donnés — elle ne prouve jamais qu'un facteur \"cause\" l'autre, et sa fiabilité dépend fortement de la période choisie : un beta calculé sur 1 an et un beta calculé sur 10 ans pour la même action peuvent différer sensiblement.",
+    exemple:"Calculer le beta d'une action revient à faire une régression de ses rendements mensuels sur les rendements mensuels d'un indice de référence (comme le CAC 40) : la pente obtenue est le beta de l'action.",
+    avantages:["Permet de quantifier précisément une relation entre deux variables, plutôt que de se fier à une impression visuelle ou qualitative"],
+    inconvenients:["Une relation statistique mesurée dans le passé n'est jamais garantie de rester stable dans le futur"],
+    erreurs:["Interpréter une régression comme une preuve de cause à effet, alors qu'elle mesure seulement une relation statistique observée, qui peut aussi provenir d'un facteur commun aux deux variables"]
   },
   {
     terme:"Volatilité",
