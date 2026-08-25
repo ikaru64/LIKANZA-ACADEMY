@@ -2459,13 +2459,13 @@ const LIBRARY = [
     categorie:"Épargne",
     niveau:"Débutant",
     lecture:"2 min",
-    simple:"Les intérêts composés, c'est gagner des intérêts sur les intérêts déjà accumulés.",
-    detail:"Chaque année, les gains produits par un placement s'ajoutent au capital et génèrent eux-mêmes des gains l'année suivante. Plus la durée est longue, plus cet effet cumulatif devient important.",
+    simple:"Les intérêts composés, c'est gagner des intérêts sur les intérêts déjà accumulés — ce mécanisme est aussi appelé « capitalisation des intérêts », un sens de « capitalisation » totalement différent de la capitalisation boursière (voir ce terme).",
+    detail:"Chaque année, les gains produits par un placement s'ajoutent au capital et génèrent eux-mêmes des gains l'année suivante — on dit que les intérêts « se capitalisent ». Plus la durée est longue, plus cet effet cumulatif devient important.",
     avance:"Mathématiquement, la valeur future suit une croissance exponentielle plutôt que linéaire : de petites différences de rendement ou de durée produisent des écarts considérables sur plusieurs décennies.",
     exemple:"100 € placés à 6% par an valent environ 179 € après 10 ans, mais plus de 320 € après 20 ans : le gain ne double pas, il plus que triple.",
     avantages:["Effet puissant sur le très long terme"],
     inconvenients:["Nécessite de la patience, peu visible à court terme"],
-    erreurs:["Sous-estimer l'intérêt de commencer tôt, même avec de petites sommes"]
+    erreurs:["Sous-estimer l'intérêt de commencer tôt, même avec de petites sommes","Confondre « capitalisation des intérêts » (ce terme) et « capitalisation boursière » (la valeur d'une entreprise en bourse) — deux sens sans rapport du même mot"]
   },
   {
     terme:"Diversification",
@@ -2524,13 +2524,13 @@ const LIBRARY = [
     categorie:"Bourse",
     niveau:"Intermédiaire",
     lecture:"1 min",
-    simple:"La capitalisation, c'est la valeur totale d'une entreprise en bourse.",
+    simple:"La capitalisation boursière, c'est la valeur totale d'une entreprise en bourse — à ne pas confondre avec « la capitalisation des intérêts », un sens totalement différent du même mot en épargne (voir le terme Intérêts composés).",
     detail:"Elle se calcule en multipliant le cours de l'action par le nombre total d'actions en circulation. Elle permet de classer les entreprises en grandes, moyennes ou petites capitalisations (large cap, mid cap, small cap).",
     avance:"La capitalisation ne reflète pas la valeur d'entreprise totale (Enterprise Value), qui intègre aussi la dette nette, un indicateur souvent plus pertinent pour comparer des sociétés à structures financières différentes.",
     exemple:"Une entreprise avec 100 millions d'actions à 50 € chacune a une capitalisation de 5 milliards d'euros.",
     avantages:[],
     inconvenients:["Ne reflète pas la dette de l'entreprise"],
-    erreurs:["Confondre capitalisation boursière et valeur d'entreprise"]
+    erreurs:["Confondre capitalisation boursière et valeur d'entreprise","Confondre « capitalisation » au sens boursier (valeur d'une entreprise) et « capitalisation » au sens des intérêts composés (le fait que des intérêts génèrent eux-mêmes des intérêts) — deux notions sans aucun rapport qui partagent simplement le même mot"]
   },
   {
     terme:"Ordre au marché (market order)",
