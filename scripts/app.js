@@ -3311,6 +3311,32 @@ const LIBRARY = [
     erreurs:["Vider toute son épargne de précaution pour maximiser l'apport"]
   },
   {
+    terme:"SCPI (société civile de placement immobilier)",
+    categorie:"Immobilier",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Une SCPI mutualise l'argent de nombreux épargnants pour acheter et gérer un parc immobilier locatif, et leur reverse les loyers au prorata de leurs parts — investir dans l'immobilier locatif sans gérer soi-même un bien.",
+    detail:"La société de gestion s'occupe de tout : sélection des biens, location, entretien, gestion des impayés. L'épargnant achète des parts et perçoit des revenus réguliers, sans les contraintes de la gestion locative directe (recherche de locataire, travaux, relations avec le locataire).",
+    avance:"Le taux de distribution (revenus versés sur l'année ÷ prix de la part en début d'année) est l'indicateur de rendement le plus suivi, mais ne garantit rien sur son maintien futur — il dépend du taux d'occupation réel du parc immobilier et des loyers effectivement perçus, qui peuvent varier d'une année à l'autre.",
+    exemple:"Un épargnant achète des parts pour 10 000€ dans une SCPI qui affiche un taux de distribution de 4,5% : il perçoit environ 450€ de revenus sur l'année, sans jamais avoir à gérer directement un locataire.",
+    avantages:["Aucune gestion locative directe à assurer (locataires, travaux, impayés)", "Mutualisation du risque sur un grand nombre de biens et de locataires"],
+    inconvenients:["Aucune garantie de capital, comme tout placement immobilier ou financier", "Frais de souscription généralement plus élevés que d'autres placements", "Liquidité réduite : la revente des parts peut prendre du temps, faute d'acheteur immédiat"],
+    erreurs:["Croire que le capital investi dans une SCPI est garanti, comme sur un livret réglementé — la valeur des parts peut baisser comme n'importe quel placement immobilier"]
+  },
+  {
+    terme:"REIT (foncière cotée)",
+    categorie:"Immobilier",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un REIT (Real Estate Investment Trust, ou foncière cotée) est une société qui détient et gère un patrimoine immobilier, mais dont les actions s'échangent en bourse comme celles de n'importe quelle entreprise cotée.",
+    detail:"Contrairement à une SCPI (non cotée, revente potentiellement lente), un REIT s'achète et se revend en quelques secondes sur un marché boursier, avec un prix qui évolue en continu — une liquidité très différente pour un objectif économique proche (détenir de l'immobilier locatif sans le gérer soi-même).",
+    avance:"De nombreux pays imposent aux REIT de reverser une part très élevée de leurs bénéfices en dividendes (souvent 90% ou plus selon la réglementation locale) en échange d'un régime fiscal avantageux — ce qui en fait généralement des supports au rendement en dividende élevé, mais aussi au cours plus volatil qu'une SCPI, puisqu'il est coté en continu et réagit aux mouvements généraux du marché actions, pas seulement à la valeur du patrimoine immobilier sous-jacent.",
+    exemple:"Un investisseur qui achète des actions d'une foncière cotée détenant des centres commerciaux ou des immeubles de bureaux peut revendre sa position en quelques secondes en bourse, contrairement à des parts de SCPI équivalentes.",
+    avantages:["Liquidité bien supérieure à une SCPI : achat et revente en bourse, en continu", "Accès à l'immobilier locatif sans gestion directe, comme une SCPI"],
+    inconvenients:["Cours coté en continu, donc plus volatil qu'une SCPI, sensible aux mouvements généraux du marché actions au-delà de la seule valeur du patrimoine immobilier détenu"],
+    erreurs:["Confondre un REIT et une SCPI en supposant qu'ils offrent la même liquidité et la même volatilité — un REIT se rapproche bien plus du comportement d'une action qu'une SCPI, non cotée"]
+  },
+  {
     terme:"Effet de levier",
     categorie:"Immobilier",
     niveau:"Intermédiaire",
