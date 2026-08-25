@@ -461,6 +461,15 @@ const QUIZ_BANK_FULL = [
   {id:"q-risque-002", niveau:"intermediaire", categorie:"Risque et volatilité", type:"qcm", question:"Un actif très volatil est-il automatiquement un mauvais investissement ?", choix:["Oui, toujours","Non, cela dépend de l'horizon de placement et de la tolérance au risque de l'investisseur","Oui, sauf pour les obligations d'État","Non, la volatilité n'a aucune importance"], bonneReponse:1, explication:"La volatilité est un facteur de risque à prendre en compte, mais son acceptabilité dépend de l'horizon de temps et des objectifs de chacun, pas d'une règle universelle."},
   {id:"q-risque-003", niveau:"avance", categorie:"Risque et volatilité", type:"qcm", question:"Qu'appelle-t-on le \"maximum drawdown\" d'un placement ?", choix:["Son rendement moyen annuel","La plus forte baisse observée entre un sommet et un creux sur une période donnée","Son montant minimum de versement","Son taux d'imposition maximal"], bonneReponse:1, explication:"Le maximum drawdown mesure la perte la plus sévère subie historiquement par un placement entre un pic et un creux, un indicateur utile pour juger du risque réellement vécu."},
 
+  // ---- Gestion du risque (par opération / trading) ----
+  {id:"q-gestionrisque-001", niveau:"intermediaire", categorie:"Gestion du risque", type:"qcm", question:"À quoi sert un stop-loss ?", choix:["À garantir un gain minimum sur chaque position","À clôturer automatiquement une position en cas de perte atteignant un seuil fixé à l'avance","À augmenter automatiquement la taille d'une position gagnante","À reporter le paiement des frais de courtage"], bonneReponse:1, explication:"Un stop-loss fixe à l'avance le niveau de perte maximal accepté sur une position, et la clôture automatiquement si ce seuil est atteint — plutôt que de décider dans l'instant, sous le coup de l'émotion."},
+  {id:"q-gestionrisque-002", niveau:"avance", categorie:"Gestion du risque", type:"vraifaux", question:"Un ratio risque/rendement favorable (par exemple 1:3) garantit qu'une stratégie sera rentable sur la durée.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Un bon ratio risque/rendement ne dit rien, à lui seul, sur la probabilité réelle de gagner. Une stratégie avec un excellent ratio mais un taux de réussite trop faible peut rester perdante sur la durée : les deux notions doivent toujours être considérées ensemble."},
+  {id:"q-gestionrisque-003", niveau:"intermediaire", categorie:"Gestion du risque", type:"situation", question:"Un trader a un capital de 10 000 € et une règle stricte de ne jamais risquer plus de 1 % de son capital sur une seule position. Quelle est sa perte maximale acceptée par position ?", choix:["10 €","100 €","1 000 €","10 000 €"], bonneReponse:1, explication:"1 % de 10 000 € = 100 € de perte maximale acceptée par position, quelle que soit la taille de la position elle-même."},
+  {id:"q-gestionrisque-004", niveau:"avance", categorie:"Gestion du risque", type:"qcm", question:"Pourquoi le risque de ruine dépend-il directement de la taille de position utilisée, même avec une stratégie par ailleurs profitable ?", choix:["Ce n'est pas le cas, seul le taux de réussite compte","Une taille de position trop élevée expose à la ruine dès une série de pertes consécutives, statistiquement inévitable sur le long terme","Le risque de ruine ne dépend que du choix du courtier utilisé","Une stratégie profitable élimine automatiquement tout risque de ruine"], bonneReponse:1, explication:"Une série de pertes consécutives, même rare, finit toujours par se produire sur un nombre suffisant d'opérations. Une taille de position trop élevée par rapport au capital peut mener à la ruine même avec une stratégie globalement gagnante en moyenne."},
+  {id:"q-gestionrisque-005", niveau:"avance", categorie:"Gestion du risque", type:"calcul", question:"Une stratégie gagne 40 % du temps avec un gain moyen de 300 € et perd 60 % du temps avec une perte moyenne de 100 €. Quelle est son espérance mathématique par opération ?", choix:["-60 €","0 €","+60 €","+200 €"], bonneReponse:2, explication:"Espérance = (0,4×300) − (0,6×100) = 120 − 60 = +60 € par opération en moyenne — positive, malgré un taux de réussite inférieur à 50 %, ce qui illustre pourquoi le taux de réussite seul ne suffit jamais à juger une stratégie."},
+  {id:"q-gestionrisque-006", niveau:"avance", categorie:"Gestion du risque", type:"qcm", question:"Qu'est-ce que le biais du survivant en backtesting ?", choix:["Le fait qu'un trader survive financièrement à ses pertes","Tester une stratégie uniquement sur des actifs encore existants aujourd'hui, en oubliant ceux qui ont disparu (faillite, retrait de cote)","Une méthode pour éliminer tout risque d'un backtest","Un indicateur technique utilisé en analyse chartiste"], bonneReponse:1, explication:"Ignorer les actifs disparus en cours de route (faillite, retrait de cote) gonfle artificiellement la performance apparente d'un backtest, puisque seuls les \"survivants\" y figurent."},
+  {id:"q-gestionrisque-007", niveau:"avance", categorie:"Gestion du risque", type:"qcm", question:"Quel est un signe classique de surapprentissage (overfitting) d'une stratégie de trading ?", choix:["Une stratégie testée sur plusieurs périodes différentes avec des résultats cohérents","Un nombre élevé de paramètres ajustés précisément pour maximiser le résultat sur une seule période testée","Un stop-loss fixé avant chaque position","Un taux de réussite proche de 50 %"], bonneReponse:1, explication:"Multiplier les réglages jusqu'à obtenir un résultat historique excellent sur une seule période testée fait souvent \"coller\" la stratégie aux hasards spécifiques du passé, plutôt qu'à un mécanisme réellement répétable à l'avenir."},
+
   // ---- Finance quantitative ----
   {id:"q-financequant-001", niveau:"avance", categorie:"Finance quantitative", type:"qcm", question:"Que mesure le ratio de Sharpe ?", choix:["Le rendement brut d'un placement, sans autre ajustement", "Le rendement d'un placement rapporté au risque (volatilité) pris pour l'obtenir", "Le montant des frais de gestion d'un fonds", "La corrélation entre deux actifs"], bonneReponse:1, explication:"Le ratio de Sharpe rapporte le rendement excédentaire d'un placement (par rapport à un taux sans risque) à sa volatilité, permettant de comparer des placements sur leur efficacité, pas seulement leur performance brute."},
   {id:"q-financequant-002", niveau:"avance", categorie:"Finance quantitative", type:"vraifaux", question:"Un ratio de Sharpe plus élevé signifie qu'un placement a obtenu son rendement avec moins de risque qu'un placement au ratio plus faible, à rendement égal.", choix:["Vrai","Faux"], bonneReponse:0, explication:"À rendement égal, un ratio de Sharpe plus élevé signifie une volatilité plus faible pour obtenir ce même rendement — donc une meilleure efficacité risque/rendement."},
@@ -1341,7 +1350,7 @@ const DOMAINS = [
     deepQuizHook:{title:'Comprends-tu vraiment tes finances ?', subtitle:'Découvre tes forces et les notions à approfondir.'}},
   {key:'stockMarket', label:'Bourse', displayLabel:'la bourse', icon:'📈',
     mentalChallengeDomain:'Bourse',
-    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative', 'Analyse technique', 'Options'],
+    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'Gestion du risque', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative', 'Analyse technique', 'Options'],
     libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque', "Psychologie de l'investisseur"],
     deepQuizHook:{title:'Penses-tu vraiment comprendre la Bourse ?', subtitle:'Des situations concrètes pour découvrir tes forces.'}},
   {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
@@ -1617,7 +1626,46 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"En immobilier, la durée de détention (plus-value) et le statut choisi pour la location (LMNP ou location nue) sont les deux leviers fiscaux les plus déterminants — bien plus que le choix du bien lui-même sur le plan strictement fiscal."}
       ]}
     ]},
-  {id:'risque-diversification', titre:'Risque, volatilité et diversification', niveau:'Intermédiaire', libraryTermes:['Diversification','Volatilité'], quizCategories:['Diversification','Risque et volatilité',"Psychologie de l'investisseur"]},
+  {id:'risque-diversification', titre:'Risque, volatilité et gestion du risque', niveau:'Intermédiaire',
+    libraryTermes:['Diversification','Volatilité','Stop-loss et take-profit','Ratio risque/rendement','Taille de position','Risque de ruine','Espérance mathématique (trading)','Taux de réussite (win rate)','Biais du survivant (backtesting)','Surapprentissage (overfitting)'],
+    quizCategories:['Diversification','Risque et volatilité','Gestion du risque',"Psychologie de l'investisseur"],
+    applyUrl:'laboratoire.html', applyLabel:'Essayer le simulateur Market Panic',
+    acquis:[
+      "Comprendre pourquoi diversifier réduit le risque global d'un portefeuille",
+      "Fixer un stop-loss, un take-profit et un ratio risque/rendement avant d'ouvrir une position",
+      "Calculer une taille de position cohérente avec son capital et le risque accepté",
+      "Comprendre pourquoi le taux de réussite seul ne suffit jamais à juger une stratégie",
+      "Repérer les deux pièges classiques du backtesting : biais du survivant et surapprentissage"
+    ],
+    chapitres:[
+      {titre:"Volatilité et diversification : le risque au niveau du portefeuille", blocs:[
+        {type:'texte', texte:"Avant de parler de gestion du risque opération par opération, il faut comprendre le risque à l'échelle du portefeuille dans son ensemble."},
+        {type:'definition', texte:"La volatilité mesure à quel point le prix d'un actif bouge, dans un sens ou dans l'autre — statistiquement, l'écart-type de ses rendements sur une période donnée. Diversifier, c'est répartir son épargne entre plusieurs actifs, secteurs et zones géographiques pour réduire l'impact d'une mauvaise performance isolée sur l'ensemble du portefeuille."},
+        {type:'pourquoi', texte:"L'efficacité de la diversification dépend de la corrélation entre les actifs choisis : combiner des actifs faiblement corrélés réduit davantage la volatilité globale que d'ajouter des actifs qui bougent tous dans le même sens en même temps."},
+        {type:'retenir', texte:"Le risque au niveau du portefeuille (diversification, corrélation) et le risque au niveau d'une opération individuelle (les prochains chapitres) sont deux échelles différentes, complémentaires — maîtriser l'une ne dispense jamais de l'autre."}
+      ]},
+      {titre:"Le risque par trade : stop-loss, taille de position, ratio risque/rendement", blocs:[
+        {type:'texte', texte:"Qu'on investisse à long terme ou qu'on trade activement, chaque opération individuelle mérite une réflexion sur le risque pris — avant même de l'ouvrir, jamais après."},
+        {type:'definition', texte:"Un stop-loss clôture automatiquement une position en cas de perte atteignant un seuil fixé à l'avance ; un take-profit fait de même en cas de gain atteignant un seuil fixé. Le ratio risque/rendement compare la perte potentielle (si le stop-loss est touché) au gain potentiel (si le take-profit est touché)."},
+        {type:'calcul', texte:"Taille de position = (Capital × % du capital risqué) ÷ (distance entre le prix d'entrée et le stop-loss). Exemple : capital de 10 000 €, 1 % de risque accepté par opération = 100 € de perte maximale acceptée, quelle que soit la taille de la position elle-même."},
+        {type:'exerciceErreur', affirmation:"Un ratio risque/rendement favorable (par exemple 1:3) garantit qu'une stratégie sera rentable sur la durée.", pourquoi:"Un bon ratio risque/rendement ne dit rien, à lui seul, sur la probabilité réelle de gagner. Une stratégie avec un excellent ratio risque/rendement mais un taux de réussite trop faible peut rester perdante sur la durée — les deux notions doivent toujours être considérées ensemble."},
+        {type:'attention', texte:"Un stop-loss ne garantit pas toujours une exécution au prix exact fixé : sur un marché qui \"gap\" (saute un niveau de prix sans y transiter), l'exécution peut se faire à un prix moins favorable que prévu."}
+      ]},
+      {titre:"Win rate, espérance mathématique et risque de ruine", blocs:[
+        {type:'texte', texte:"Le chapitre précédent a montré qu'un bon ratio risque/rendement ne suffit pas seul. Voici comment juger une stratégie de façon plus complète, et pourquoi la taille de position détermine la survie à long terme."},
+        {type:'definition', texte:"Le taux de réussite (win rate) est le pourcentage d'opérations gagnantes. L'espérance mathématique combine ce taux avec l'ampleur des gains et des pertes : Espérance = (taux de réussite × gain moyen) − (taux d'échec × perte moyenne)."},
+        {type:'calcul', texte:"Une stratégie gagne 40 % du temps avec un gain moyen de 300 € et perd 60 % du temps avec une perte moyenne de 100 € : espérance = (0,4×300) − (0,6×100) = 120−60 = +60 € par opération en moyenne — positive, malgré un taux de réussite inférieur à 50 %."},
+        {type:'exerciceErreur', affirmation:"Une stratégie avec un taux de réussite de 80 % est forcément plus rentable qu'une stratégie à 40 %.", pourquoi:"Le taux de réussite seul ne dit rien de l'ampleur des gains et des pertes. Une stratégie à 80 % de réussite mais avec de rares grosses pertes peut être moins rentable, voire perdante, qu'une stratégie à 40 % avec des gains largement supérieurs aux pertes — voir le calcul d'espérance mathématique ci-dessus."},
+        {type:'definition', texte:"Le risque de ruine est la probabilité de perdre la totalité (ou une part si importante qu'il devient impossible de continuer) du capital, à force d'enchaîner des pertes. Même une stratégie à l'espérance positive peut mener à la ruine si la taille de position est trop élevée par rapport au capital total."}
+      ]},
+      {titre:"Les pièges du backtesting", blocs:[
+        {type:'texte', texte:"Avant de faire confiance à une stratégie testée sur des données historiques (backtesting), deux pièges classiques méritent d'être connus."},
+        {type:'definition', texte:"Le biais du survivant consiste à ne tester une stratégie que sur des actifs qui ont \"survécu\" jusqu'à aujourd'hui, en oubliant ceux qui ont disparu (faillite, retrait de cote) en cours de route — ce qui gonfle artificiellement la performance apparente du test."},
+        {type:'definition', texte:"Le surapprentissage (overfitting) survient quand une stratégie est ajustée si précisément aux données passées qu'elle en devient incapable de bien fonctionner sur de nouvelles données futures — elle \"colle\" au hasard spécifique du passé testé plutôt qu'à un mécanisme réellement répétable."},
+        {type:'attention', texte:"Un signe classique de surapprentissage : un nombre élevé de paramètres ajustables par rapport à la quantité de données testées, ou une performance qui s'effondre nettement dès qu'on teste la stratégie sur une période différente de celle utilisée pour la calibrer."},
+        {type:'approfondir', texte:"Le simulateur Market Panic du Laboratoire financier utilise volontairement de vrais épisodes historiques (pas des données inventées) pour illustrer, sans ces biais, ce qui s'est réellement passé après un vrai krach — un bon complément pratique à ce chapitre."}
+      ]}
+    ]},
   {id:'crypto-blockchain', titre:'Crypto et blockchain', niveau:'Avancé', libraryTermes:['Blockchain'], quizCategories:['Blockchain', 'Tokenomics', 'DeFi', 'Sécurité crypto', 'Trading crypto', 'Analyse crypto']},
   {id:'immobilier-locatif', titre:'Immobilier locatif', niveau:'Avancé', libraryTermes:['Rendement locatif'], quizCategories:['Immobilier','SCPI']},
   {id:'budget-securite', titre:'Les fondations de tes finances personnelles', niveau:'Débutant',
@@ -2491,6 +2539,110 @@ const LIBRARY = [
     avantages:["Aide à choisir des placements cohérents avec sa propre situation plutôt qu'avec celle de quelqu'un d'autre"],
     inconvenients:[],
     erreurs:["Appliquer le même profil investisseur à tous ses objectifs financiers, alors que l'horizon et le besoin diffèrent selon chaque objectif"]
+  },
+  {
+    terme:"Stop-loss et take-profit",
+    categorie:"Gestion du risque",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un stop-loss est un ordre qui clôture automatiquement une position en cas de perte atteignant un seuil fixé à l'avance. Un take-profit fait de même en cas de gain atteignant un seuil fixé à l'avance.",
+    detail:"Ces deux ordres servent à définir, avant même d'ouvrir une position, à quel niveau on accepterait de sortir — que ce soit pour limiter une perte ou pour sécuriser un gain — plutôt que de décider dans l'instant, sous le coup de l'émotion.",
+    avance:"Un stop-loss ne garantit pas toujours le prix exact fixé : sur un marché qui \"gap\" (saute un niveau de prix sans y transiter, par exemple à l'ouverture après une nouvelle importante), l'exécution peut se faire à un prix moins favorable que le seuil fixé.",
+    exemple:"Un trader ouvre une position à 100 € avec un stop-loss à 95 € (perte maximale acceptée : 5 €) et un take-profit à 110 € (gain visé : 10 €) — les deux niveaux sont fixés avant même que le prix ne bouge.",
+    avantages:["Fixe à l'avance le niveau de sortie, plutôt que de décider dans l'instant sous le coup de l'émotion (voir Psychologie de l'investisseur)"],
+    inconvenients:["Ne garantit pas toujours une exécution au prix exact fixé, notamment lors d'un mouvement de marché brutal"],
+    erreurs:["Ouvrir une position sans avoir fixé de stop-loss au préalable, en se disant qu'on \"décidera plus tard\" si ça tourne mal"]
+  },
+  {
+    terme:"Ratio risque/rendement",
+    categorie:"Gestion du risque",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le ratio risque/rendement compare, avant d'ouvrir une position, la perte potentielle (si le stop-loss est touché) au gain potentiel (si le take-profit est touché).",
+    detail:"Un ratio de 1:3, par exemple, signifie que le gain visé est trois fois supérieur à la perte maximale acceptée. Ce ratio, à lui seul, ne dit rien sur la probabilité réelle de gagner ou de perdre — voir \"Taux de réussite\" et \"Espérance mathématique (trading)\" pour compléter l'analyse.",
+    avance:"Un ratio risque/rendement favorable (gain visé nettement supérieur à la perte acceptée) peut rester perdant sur la durée si le taux de réussite réel est trop faible — les deux notions doivent toujours être considérées ensemble, jamais l'une sans l'autre.",
+    exemple:"Un trader accepte de risquer 5 € pour viser un gain de 15 € : son ratio risque/rendement est de 1:3.",
+    avantages:["Force à réfléchir au couple risque/gain AVANT d'ouvrir une position, plutôt qu'après coup"],
+    inconvenients:["Un bon ratio risque/rendement ne garantit rien à lui seul si le taux de réussite réel est trop faible"],
+    erreurs:["Se focaliser uniquement sur un ratio risque/rendement favorable sans jamais vérifier le taux de réussite réel de la stratégie utilisée"]
+  },
+  {
+    terme:"Taille de position",
+    categorie:"Gestion du risque",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La taille de position est le montant (ou le nombre d'unités) engagé sur une opération donnée — une décision distincte du choix d'acheter ou vendre, tout aussi importante pour la gestion du risque.",
+    detail:"Une règle courante (parmi d'autres, ni universelle ni obligatoire) consiste à ne jamais risquer plus d'un petit pourcentage fixe du capital total sur une seule opération (par exemple 1 % à 2 %), pour qu'une série de pertes consécutives ne mette jamais en péril l'ensemble du capital.",
+    avance:"La taille de position peut se calculer à partir du risque accepté : Taille = (Capital × % risqué) ÷ (distance entre le prix d'entrée et le stop-loss). Cela permet d'adapter automatiquement la taille selon la distance du stop-loss, plutôt que d'engager toujours le même montant quel que soit le risque réel de l'opération.",
+    exemple:"Avec un capital de 10 000 € et une règle de 1 % de risque maximal par opération, un trader accepte de perdre au plus 100 € sur une seule position, quelle que soit la taille de la position elle-même.",
+    avantages:["Une règle de taille de position cohérente protège le capital total contre une série de pertes consécutives, même dans une stratégie par ailleurs solide"],
+    inconvenients:["Une taille de position trop prudente peut rendre les gains négligeables même quand la stratégie fonctionne réellement"],
+    erreurs:["Engager systématiquement le même montant sur chaque position, sans tenir compte de la distance réelle au stop-loss ni du risque réellement pris"]
+  },
+  {
+    terme:"Risque de ruine",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le risque de ruine est la probabilité de perdre la totalité (ou une part si importante qu'il devient impossible de continuer) du capital engagé, à force d'enchaîner des pertes.",
+    detail:"Ce risque dépend directement de la taille de position utilisée à chaque opération : même une stratégie avec un taux de réussite correct peut mener à la ruine si la taille de position est trop élevée par rapport au capital total, à cause d'une série de pertes consécutives statistiquement inévitable sur le long terme.",
+    avance:"Une série de pertes consécutives, même rare, finit toujours par se produire sur un nombre suffisant d'opérations : c'est la raison structurelle pour laquelle la gestion de la taille de position (voir ce terme) est considérée comme au moins aussi importante que le choix des opérations elles-mêmes.",
+    exemple:"Un trader qui risque 50 % de son capital à chaque position peut être ruiné après seulement 2 pertes consécutives, même avec une stratégie par ailleurs profitable sur le long terme.",
+    avantages:["Comprendre ce risque pousse à limiter la taille de chaque position, une discipline qui protège la capacité à continuer à long terme"],
+    inconvenients:["Un risque souvent sous-estimé, car une série de pertes consécutives parait \"improbable\" avant qu'elle ne survienne réellement"],
+    erreurs:["Croire qu'une stratégie avec un bon taux de réussite historique élimine le risque de ruine, indépendamment de la taille de position utilisée"]
+  },
+  {
+    terme:"Espérance mathématique (trading)",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"L'espérance mathématique d'une stratégie de trading combine le taux de réussite et le ratio gain moyen/perte moyenne pour estimer si elle est, en moyenne, gagnante ou perdante sur un grand nombre d'opérations.",
+    detail:"Espérance = (taux de réussite × gain moyen) − (taux d'échec × perte moyenne). Une espérance positive signifie que la stratégie est, en moyenne et sur un grand nombre d'opérations, gagnante — même si elle produit des pertes sur certaines opérations individuelles.",
+    avance:"Une stratégie avec un taux de réussite faible (par exemple 30 %) peut malgré tout avoir une espérance positive si le gain moyen des opérations gagnantes est suffisamment supérieur à la perte moyenne des opérations perdantes — le taux de réussite seul ne dit jamais si une stratégie est rentable.",
+    exemple:"Une stratégie gagne 40 % du temps avec un gain moyen de 300 € et perd 60 % du temps avec une perte moyenne de 100 € : espérance = (0,4×300) − (0,6×100) = 120−60 = +60 € par opération en moyenne.",
+    avantages:["Permet de juger la viabilité réelle d'une stratégie sur la durée, au-delà du seul ressenti sur les dernières opérations"],
+    inconvenients:["Se calcule sur des données passées : rien ne garantit que le taux de réussite et les gains/pertes moyens resteront identiques à l'avenir"],
+    erreurs:["Juger une stratégie uniquement sur son taux de réussite, sans jamais tenir compte de l'ampleur des gains et des pertes"]
+  },
+  {
+    terme:"Taux de réussite (win rate)",
+    categorie:"Gestion du risque",
+    niveau:"Intermédiaire",
+    lecture:"1 min",
+    simple:"Le taux de réussite (win rate) est le pourcentage d'opérations gagnantes sur l'ensemble des opérations réalisées.",
+    detail:"Un taux de réussite élevé n'implique pas automatiquement une stratégie rentable : voir \"Espérance mathématique (trading)\", qui combine le taux de réussite ET l'ampleur des gains/pertes pour juger la viabilité réelle d'une approche.",
+    avance:"Une stratégie peut être structurellement conçue pour un taux de réussite élevé avec de petits gains et de rares mais grosses pertes (ou l'inverse) — les deux profils peuvent, selon les chiffres exacts, être rentables ou perdants : le taux de réussite seul ne permet jamais de trancher.",
+    exemple:"Une stratégie qui gagne 8 opérations sur 10 a un taux de réussite de 80 % — mais si les 2 pertes sont chacune 5 fois plus importantes que chaque gain, elle reste globalement perdante malgré ce taux de réussite élevé.",
+    avantages:["Facile à suivre et à calculer à partir d'un journal de trading tenu régulièrement"],
+    inconvenients:["Pris isolément, ne renseigne en rien sur la rentabilité réelle d'une stratégie"],
+    erreurs:["Choisir une stratégie uniquement parce qu'elle affiche un taux de réussite élevé, sans jamais regarder l'ampleur relative des gains et des pertes"]
+  },
+  {
+    terme:"Biais du survivant (backtesting)",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le biais du survivant, appliqué au backtesting (test d'une stratégie sur des données historiques), consiste à ne tester une stratégie que sur des actifs qui ont \"survécu\" jusqu'à aujourd'hui, en oubliant ceux qui ont disparu (faillite, retrait de cote, fusion) en cours de route.",
+    detail:"Un indice ou une base de données qui ne liste que les entreprises encore cotées aujourd'hui donne une image trop optimiste des performances passées : les entreprises qui ont fait faillite ou ont été retirées de la cote n'y apparaissent plus, alors qu'elles auraient pesé négativement sur un test réalisé avec l'ensemble des titres réellement existants à l'époque.",
+    avance:"Un backtesting rigoureux utilise des données qui incluent les actifs disparus (bases de données \"survivorship-bias-free\"), plutôt que la composition actuelle d'un indice appliquée rétroactivement — une nuance technique mais déterminante pour la fiabilité du résultat.",
+    exemple:"Tester une stratégie uniquement sur les entreprises du CAC 40 actuel, appliquée aux 20 dernières années, ignore les entreprises qui faisaient partie de cet indice à l'époque mais l'ont quitté depuis (rachat, faillite, sous-performance) — ce qui gonfle artificiellement la performance apparente du test.",
+    avantages:["Comprendre ce biais aide à évaluer avec plus de scepticisme une performance historique impressionnante"],
+    inconvenients:["Des données réellement exemptes de ce biais sont plus rares et souvent payantes, ce qui limite l'accès à un backtesting rigoureux pour un particulier"],
+    erreurs:["Conclure qu'une stratégie fonctionne parce qu'elle affiche de bons résultats sur les seuls actifs encore existants aujourd'hui"]
+  },
+  {
+    terme:"Surapprentissage (overfitting)",
+    categorie:"Gestion du risque",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le surapprentissage (overfitting) survient quand une stratégie de trading est ajustée de façon si précise aux données historiques passées qu'elle en devient incapable de bien fonctionner sur de nouvelles données futures.",
+    detail:"En multipliant les réglages (paramètres, seuils, filtres) jusqu'à obtenir un résultat historique excellent, on finit souvent par \"coller\" aux hasards spécifiques du passé testé, plutôt qu'à un mécanisme de marché réellement répétable — ce qui explique pourquoi tant de stratégies brillantes en backtest échouent en conditions réelles.",
+    avance:"Un signe classique de surapprentissage est un nombre élevé de paramètres ajustables par rapport à la quantité de données testées, ou une performance qui s'effondre nettement dès qu'on teste la stratégie sur une période différente de celle utilisée pour la calibrer (\"data snooping\").",
+    exemple:"Une stratégie ajustée avec 15 paramètres différents pour obtenir la meilleure performance possible sur exactement les 5 dernières années a de fortes chances de ne refléter qu'une coïncidence statistique propre à cette période précise, plutôt qu'un mécanisme réellement exploitable à l'avenir.",
+    avantages:["Comprendre ce risque pousse à tester une stratégie sur des données qu'elle n'a jamais \"vues\" lors de sa conception, un vrai test de robustesse"],
+    inconvenients:["Difficile à détecter avec certitude sans données suffisamment nombreuses et sans période de test réellement indépendante"],
+    erreurs:["Multiplier les réglages d'une stratégie jusqu'à ce que le backtest paraisse parfait, sans jamais la valider sur une période totalement différente de celle utilisée pour l'ajuster"]
   },
   {
     terme:"Aversion aux pertes",
