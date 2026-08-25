@@ -1681,7 +1681,56 @@ const COURS_CATALOG = [
         {type:'approfondir', texte:"Le simulateur Market Panic du Laboratoire financier utilise volontairement de vrais épisodes historiques (pas des données inventées) pour illustrer, sans ces biais, ce qui s'est réellement passé après un vrai krach — un bon complément pratique à ce chapitre."}
       ]}
     ]},
-  {id:'crypto-blockchain', titre:'Crypto et blockchain', niveau:'Avancé', libraryTermes:['Blockchain'], quizCategories:['Blockchain', 'Tokenomics', 'DeFi', 'Sécurité crypto', 'Trading crypto', 'Analyse crypto']},
+  {id:'crypto-blockchain', titre:'Crypto et blockchain', niveau:'Avancé',
+    libraryTermes:['Blockchain','Wallet (portefeuille crypto)','Clé privée et clé publique','Phrase de récupération (seed phrase)','Preuve de travail et preuve d\'enjeu (Proof of Work / Proof of Stake)','Smart contract (contrat intelligent)','DeFi (finance décentralisée)','Stablecoin','Staking','Pool de liquidité','Tokenomics','Vesting (déblocage progressif de tokens)','Whitepaper'],
+    quizCategories:['Blockchain', 'Tokenomics', 'DeFi', 'Sécurité crypto', 'Trading crypto', 'Analyse crypto'],
+    applyUrl:'crypto.html', applyLabel:'Voir les cryptoactifs suivis par Likanza',
+    acquis:[
+      "Distinguer un wallet custodial d'un wallet non custodial, et expliquer pourquoi la clé privée ne se partage jamais",
+      "Expliquer ce que fait réellement un smart contract, et ce qu'est un protocole DeFi construit dessus",
+      "Distinguer offre en circulation, offre totale et capitalisation d'un token",
+      "Repérer les signaux d'alerte propres au marché crypto avant d'investir ou d'utiliser un protocole"
+    ],
+    chapitres:[
+      {titre:"1. Blockchain, wallet et clés : les fondations techniques", blocs:[
+        {type:'definition', texte:"Une blockchain est un registre numérique partagé, difficile à falsifier, validé par un réseau d'ordinateurs plutôt que par une autorité centrale unique. Un wallet (portefeuille crypto) est l'outil qui donne accès à ce registre : il ne \"contient\" pas vraiment tes cryptoactifs, il détient les clés qui prouvent qu'ils t'appartiennent."},
+        {type:'visualisation', schema:
+"CLÉ PUBLIQUE (adresse)              CLÉ PRIVÉE\n───────────────────────             ──────────\nPeut être partagée librement        Ne doit JAMAIS être partagée\nSert à RECEVOIR des fonds           Donne le contrôle total pour\n                                     DÉPENSER les fonds\n\nÉquivalent imparfait :\nClé publique  ≈ un RIB (partageable sans risque)\nClé privée    ≈ un mot de passe bancaire — sauf qu'ici,\n                aucune banque ne peut réinitialiser l'accès\n                en cas de perte ou de vol."},
+        {type:'texte', texte:"Un wallet \"custodial\" (ex. rester sur une plateforme d'échange après achat) laisse un tiers garder tes clés privées à ta place. Un wallet \"non custodial\" te fait détenir toi-même tes clés — plus de contrôle, mais aussi plus de responsabilité : perdre sa phrase de récupération (seed phrase, la suite de 12-24 mots qui régénère toutes tes clés) sans sauvegarde, c'est perdre l'accès aux fonds, définitivement et sans recours."},
+        {type:'exerciceErreur', affirmation:"Un wallet crypto fonctionne comme un porte-monnaie numérique qui \"contient\" physiquement mes cryptoactifs.", pourquoi:"Les cryptoactifs n'existent que sous forme d'inscriptions sur la blockchain elle-même — nulle part ailleurs. Un wallet ne fait que détenir les clés qui prouvent et permettent de mouvementer ce qui t'est attribué sur ce registre partagé. Perdre son wallet sans avoir sauvegardé sa phrase de récupération, c'est perdre l'accès à cette preuve, pas \"perdre\" un objet qui contenait réellement les fonds."},
+        {type:'definition', texte:"Comment un réseau blockchain se met-il d'accord sur les transactions valides, sans autorité centrale ? Deux méthodes principales : la preuve de travail (Proof of Work, utilisée par Bitcoin) demande un calcul informatique coûteux ; la preuve d'enjeu (Proof of Stake, utilisée par Ethereum depuis 2022) demande aux validateurs de bloquer des cryptoactifs en garantie (le \"stake\") de leur bonne conduite."},
+        {type:'attention', texte:"Une transaction confirmée sur une blockchain publique est en général irréversible : il n'existe pas d'équivalent à un rappel bancaire ou une opposition sur carte. Une erreur d'adresse ou un piratage de clé privée n'a généralement aucun recours."}
+      ]},
+      {titre:"2. Tokenomics : comprendre l'économie d'un token", blocs:[
+        {type:'definition', texte:"La tokenomics regroupe les règles économiques d'un token : combien d'unités existent ou pourront exister, comment elles sont distribuées, et à quoi le token sert réellement dans son écosystème."},
+        {type:'calcul', texte:"La capitalisation d'un token est un bien meilleur indicateur de sa valorisation que son seul prix unitaire.", schema:
+"Capitalisation = Prix unitaire × Offre en circulation\n\nToken A : 0,001 € × 1 000 milliards d'unités en circulation\n         = 1 000 000 000 € (1 milliard)\n\nToken B : 500 € × 2 millions d'unités en circulation\n         = 1 000 000 000 € (1 milliard)\n\nMême capitalisation, prix unitaire totalement différent :\nle prix seul ne dit RIEN de la taille réelle du projet."},
+        {type:'exerciceErreur', affirmation:"Un token à 0,001 € est forcément \"bon marché\" comparé à un token à 500 €, il a donc plus de potentiel de hausse.", pourquoi:"Le prix unitaire dépend directement du nombre total d'unités en circulation. Un token à prix très bas peut très bien avoir une capitalisation totale (donc une valorisation de marché) supérieure à un token au prix unitaire élevé mais à l'offre restreinte — comparer deux prix unitaires seuls ne renseigne sur rien, seule la capitalisation permet une vraie comparaison."},
+        {type:'definition', texte:"Trois notions d'offre à ne pas confondre : l'offre en circulation (unités déjà disponibles sur le marché aujourd'hui), l'offre totale (celles déjà créées, y compris encore bloquées) et l'offre maximum (le plafond théorique définitif, quand il existe — 21 millions pour le bitcoin)."},
+        {type:'pourquoi', texte:"Pourquoi surveiller le calendrier de vesting (déblocage progressif des tokens réservés à l'équipe/aux investisseurs early-stage) ? Parce qu'un déblocage massif à une date précise augmente d'un coup l'offre disponible à la vente, un facteur de risque calendaire souvent publié dans le whitepaper du projet mais rarement vérifié par les nouveaux investisseurs."}
+      ]},
+      {titre:"3. DeFi et stablecoins : la finance sans intermédiaire", blocs:[
+        {type:'definition', texte:"La DeFi (finance décentralisée) désigne des services financiers — prêt, emprunt, échange d'actifs — qui fonctionnent via des smart contracts (des programmes qui s'exécutent automatiquement sur une blockchain dès que leurs conditions codées sont remplies), plutôt que via une banque ou un courtier traditionnel."},
+        {type:'texte', texte:"Sur un échange décentralisé (DEX), les échanges passent directement par une pool de liquidité : des fonds déposés par des utilisateurs (fournisseurs de liquidité), qui perçoivent en échange une part des frais de transaction générés — sans carnet d'ordres centralisé, ni acheteur/vendeur en face à face."},
+        {type:'attention', texte:"Fournir de la liquidité expose à la \"perte impermanente\" : si le prix relatif des deux actifs déposés évolue significativement, la valeur récupérée en retirant ses fonds de la pool peut être inférieure à celle obtenue en ayant simplement gardé les actifs sans les déposer — un risque spécifique, distinct de la simple volatilité de marché."},
+        {type:'definition', texte:"Un stablecoin est un cryptoactif conçu pour garder une valeur stable, en général indexée sur une monnaie traditionnelle (1 stablecoin ≈ 1 dollar), grâce à une réserve d'actifs détenue par son émetteur. Le staking, lui, consiste à bloquer des cryptoactifs pour participer à la validation d'un réseau en preuve d'enjeu, en échange d'une rémunération."},
+        {type:'exerciceErreur', affirmation:"Un stablecoin est garanti sans risque puisqu'il est censé valoir exactement 1 dollar.", pourquoi:"La stabilité d'un stablecoin dépend entièrement de la solidité et de la transparence de la réserve détenue par son émetteur (composition, audits) — ou, pour les stablecoins algorithmiques, d'un mécanisme automatisé qui s'est révélé historiquement bien plus fragile. Un stablecoin peut perdre son ancrage si sa réserve s'avère insuffisante ou son mécanisme défaillant : \"stable\" décrit un objectif, pas une garantie."},
+        {type:'attention', texte:"Un rendement de staking affiché n'est jamais un taux d'intérêt bancaire garanti : les tokens bloqués restent pleinement exposés à la volatilité du marché pendant toute la période de blocage, et un comportement fautif du validateur peut entraîner une pénalité (\"slashing\") sur les fonds bloqués."}
+      ]},
+      {titre:"4. Sécurité : garder le contrôle de ses cryptoactifs", blocs:[
+        {type:'texte', texte:"\"Not your keys, not your coins\" : si tu ne détiens pas toi-même les clés privées de tes cryptoactifs (fonds laissés sur une plateforme d'échange), tu ne les contrôles pas réellement — tu fais confiance à cette plateforme pour leur garde."},
+        {type:'attention', texte:"Contrairement à un dépôt bancaire couvert par une garantie des dépôts, les cryptoactifs détenus sur une plateforme ne bénéficient généralement d'aucune garantie publique équivalente en cas de faillite de cette plateforme."},
+        {type:'retenir', texte:"Ta phrase de récupération (seed phrase) ne doit jamais être communiquée à personne, y compris un support technique qui la demanderait — aucune plateforme ou service légitime ne la demande jamais. La conserver hors ligne (jamais en photo, email ou cloud) reste la règle de base."},
+        {type:'exerciceErreur', affirmation:"Un rendement crypto garanti \"sans aucun risque\", proposé par une offre trouvée en ligne, mérite d'être considéré sérieusement s'il vient d'un site professionnel.", pourquoi:"Aucun placement légitime, crypto ou non, ne peut garantir un rendement élevé sans risque — c'est l'un des signaux les plus fiables d'une arnaque financière (schéma de Ponzi ou équivalent), quelle que soit la qualité apparente du site qui le propose."}
+      ]},
+      {titre:"5. Trading et analyse crypto : lire un projet avant d'investir", blocs:[
+        {type:'attention', texte:"Le marché crypto fonctionne en continu, 24h/24 et 7j/7, sans jour de clôture ni heures d'ouverture — les prix peuvent bouger fortement à tout moment, y compris la nuit, sans que l'investisseur puisse réagir immédiatement."},
+        {type:'texte', texte:"Le trading avec effet de levier (emprunter pour trader plus gros) amplifie les gains ET les pertes ; sur un marché aussi volatil que la crypto, une position à effet de levier peut être liquidée (fermée de force, perte du capital engagé) très rapidement en cas de mouvement défavorable. Le \"slippage\" (écart entre le prix attendu et le prix réellement exécuté) est aussi plus marqué sur les actifs peu liquides."},
+        {type:'definition', texte:"Un whitepaper est un document publié par l'équipe d'un projet pour décrire sa technologie et ses objectifs — utile pour comprendre l'ambition d'un projet, mais rédigé par ses créateurs eux-mêmes, jamais audité par une autorité indépendante par défaut."},
+        {type:'pourquoi', texte:"Pourquoi la valorisation de nombreux cryptoactifs est-elle jugée difficile à justifier par certains analystes ? Contrairement à une action adossée aux bénéfices d'une entreprise, beaucoup de cryptoactifs n'ont ni revenus ni utilité clairement établie — les données \"on-chain\" (nombre d'adresses actives, volume de transactions) donnent un indice d'usage réel, mais restent un indice parmi d'autres, jamais une garantie de performance future."},
+        {type:'approfondir', texte:"La Bibliothèque Likanza distingue précisément l'offre en circulation (déjà disponible) de l'offre totale (y compris les unités encore bloquées) — une confusion fréquente lors de la comparaison de deux projets, qui peut fausser l'impression de \"rareté\" perçue d'un token."}
+      ]}
+    ]},
   {id:'immobilier-locatif', titre:'Immobilier locatif', niveau:'Avancé', libraryTermes:['Rendement locatif'], quizCategories:['Immobilier','SCPI']},
   {id:'budget-securite', titre:'Les fondations de tes finances personnelles', niveau:'Débutant',
     libraryTermes:['Argent','Revenus','Dépenses','Budget','Épargne','Actifs','Passifs','Patrimoine','Valeur nette','Cash-flow personnel',"Fonds d'urgence",'Inflation'],
@@ -2840,6 +2889,162 @@ const LIBRARY = [
     avantages:["Transparence et absence d'intermédiaire central"],
     inconvenients:["Irréversibilité des erreurs de transaction","Complexité technique pour les débutants"],
     erreurs:["Confondre la blockchain elle-même et les cryptomonnaies qui l'utilisent"]
+  },
+  {
+    terme:"Wallet (portefeuille crypto)",
+    categorie:"Crypto",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Un wallet (portefeuille crypto) est l'outil qui permet de détenir, envoyer et recevoir des cryptoactifs — il ne \"contient\" pas vraiment les fonds, il détient les clés qui prouvent qu'ils t'appartiennent sur la blockchain.",
+    detail:"Un wallet \"custodial\" laisse une plateforme tierce garder tes clés privées à ta place (plus simple, mais tu dépends d'elle). Un wallet \"non custodial\" (logiciel ou matériel) te fait détenir toi-même tes clés privées : plus de responsabilité, mais un contrôle réel et total sur tes fonds.",
+    avance:"Un wallet \"hardware\" (matériel, type clé USB dédiée) garde les clés privées hors ligne en permanence, signant les transactions sans jamais exposer la clé à un appareil connecté à internet — considéré comme l'un des moyens les plus sûrs de stocker des montants importants sur le long terme.",
+    exemple:"Laisser ses cryptoactifs sur une plateforme d'échange après achat, c'est utiliser le wallet custodial de la plateforme ; les transférer vers une application dédiée dont on garde seul la phrase de récupération, c'est passer à un wallet non custodial.",
+    avantages:["Un wallet non custodial donne un contrôle total et direct sur ses fonds, sans dépendre d'un tiers"],
+    inconvenients:["Un wallet non custodial transfère aussi toute la responsabilité de la sécurité (perte de clé = perte définitive des fonds, sans recours)"],
+    erreurs:["Croire qu'un wallet \"contient\" physiquement des cryptoactifs, comme un porte-monnaie contient des billets — il détient en réalité les clés qui prouvent la propriété sur la blockchain"]
+  },
+  {
+    terme:"Clé privée et clé publique",
+    categorie:"Crypto",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"La clé publique (l'adresse) peut être partagée librement pour recevoir des fonds ; la clé privée donne le contrôle total pour les dépenser et ne doit jamais être communiquée à personne.",
+    detail:"C'est la même logique qu'un RIB (clé publique, partageable sans risque pour recevoir un virement) et un mot de passe bancaire (clé privée, jamais partagé). Sauf qu'en crypto, il n'existe aucune banque pour annuler une transaction ou réinitialiser un accès en cas de perte ou de vol de la clé privée.",
+    avance:"Techniquement, la clé publique est mathématiquement dérivée de la clé privée (via une fonction à sens unique), jamais l'inverse : il est possible de calculer l'adresse publique à partir de la clé privée, mais retrouver la clé privée à partir de l'adresse publique seule est considéré comme informatiquement infaisable avec les moyens actuels.",
+    exemple:"Communiquer son adresse de wallet (clé publique) à quelqu'un pour recevoir un paiement en cryptoactifs est sans danger ; communiquer sa clé privée revient à donner un accès total et irréversible à tous les fonds associés.",
+    avantages:["Le système clé publique/clé privée permet de recevoir des fonds en toute sécurité sans jamais exposer l'accès aux dépenser"],
+    inconvenients:["Aucun mécanisme de récupération centralisé en cas de perte de la clé privée, contrairement à un mot de passe bancaire oublié"],
+    erreurs:["Communiquer sa clé privée en pensant qu'elle fonctionne comme un simple identifiant, alors qu'elle donne un contrôle total et immédiat sur les fonds"]
+  },
+  {
+    terme:"Phrase de récupération (seed phrase)",
+    categorie:"Crypto",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"La phrase de récupération (seed phrase) est une suite de 12 ou 24 mots qui permet de régénérer l'intégralité des clés d'un wallet — c'est littéralement l'équivalent de toutes tes clés privées réunies en une phrase mémorisable.",
+    detail:"Elle sert de sauvegarde : si l'appareil (téléphone, ordinateur, clé matérielle) contenant le wallet est perdu ou cassé, la phrase de récupération permet de tout reconstituer sur un nouvel appareil. Elle doit être conservée hors ligne (jamais en photo, email ou cloud) et ne jamais être communiquée à personne, y compris un support technique qui la demanderait.",
+    avance:"Une seed phrase suit généralement un standard technique commun (BIP-39) qui permet de restaurer un wallet sur un autre logiciel ou matériel compatible, même d'une autre marque — une seed phrase n'est donc pas verrouillée à un seul produit.",
+    exemple:"Un utilisateur qui perd son téléphone peut réinstaller son application de wallet sur un nouvel appareil et retrouver l'intégralité de ses fonds en ressaisissant sa phrase de récupération de 12 mots.",
+    avantages:["Permet de récupérer l'accès à ses fonds après la perte ou la casse d'un appareil"],
+    inconvenients:["Quiconque obtient cette phrase (vol physique, arnaque, photo stockée en ligne) obtient un accès total et immédiat aux fonds, sans aucun moyen de blocage"],
+    erreurs:["Stocker sa phrase de récupération en photo sur son téléphone ou dans un email, l'exposant directement à tout piratage de ces comptes"]
+  },
+  {
+    terme:"Preuve de travail et preuve d'enjeu (Proof of Work / Proof of Stake)",
+    categorie:"Crypto",
+    niveau:"Intermédiaire",
+    lecture:"3 min",
+    simple:"Ce sont deux méthodes différentes pour qu'un réseau blockchain se mette d'accord sur les transactions valides, sans autorité centrale : la preuve de travail (Proof of Work) demande un calcul informatique coûteux, la preuve d'enjeu (Proof of Stake) demande de bloquer des cryptoactifs en garantie.",
+    detail:"En preuve de travail (utilisée par Bitcoin), les \"mineurs\" font concourir leur puissance de calcul pour valider un bloc, ce qui consomme beaucoup d'énergie. En preuve d'enjeu (utilisée par Ethereum depuis 2022), les \"validateurs\" bloquent (stakent) des cryptoactifs en garantie de leur bonne conduite : agir malhonnêtement peut leur faire perdre une partie de ces fonds bloqués — un mécanisme bien moins gourmand en énergie.",
+    avance:"Le choix entre les deux implique des compromis différents sur la sécurité, la décentralisation réelle du réseau (concentration de la puissance de calcul vs concentration des cryptoactifs bloqués) et l'empreinte énergétique — un sujet activement débattu dans l'écosystème, sans consensus unanime sur la méthode \"supérieure\" dans l'absolu.",
+    exemple:"Bitcoin reste sécurisé par la preuve de travail depuis sa création ; Ethereum est passé de la preuve de travail à la preuve d'enjeu en 2022 (\"The Merge\"), réduisant sa consommation énergétique d'environ 99% selon les mesures publiées par la Fondation Ethereum.",
+    avantages:["La preuve d'enjeu consomme beaucoup moins d'énergie que la preuve de travail, à sécurité globalement comparable pour les réseaux matures"],
+    inconvenients:["La preuve de travail nécessite un matériel spécialisé coûteux et énergivore ; la preuve d'enjeu peut favoriser les détenteurs disposant déjà de davantage de cryptoactifs à bloquer"],
+    erreurs:["Penser que l'une des deux méthodes serait \"fausse\" ou \"non sécurisée\" — ce sont deux mécanismes différents, chacun utilisé avec succès par de grands réseaux existants"]
+  },
+  {
+    terme:"Smart contract (contrat intelligent)",
+    categorie:"Crypto",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un smart contract est un programme informatique déployé sur une blockchain qui exécute automatiquement des règles prédéfinies, sans intervention humaine au moment de l'exécution.",
+    detail:"Contrairement à un contrat papier classique qui nécessite une action humaine (ou judiciaire) pour être appliqué, un smart contract s'exécute mécaniquement dès que ses conditions codées sont remplies — par exemple \"si telle somme est reçue, alors transférer tel actif\".",
+    avance:"Un smart contract exécute exactement ce qui est écrit dans son code, jamais ce que ses auteurs avaient \"l'intention\" de faire s'il diffère du code réel : un bug ou une faille de sécurité dans le code peut donc être exploité tel quel, avec des conséquences parfois irréversibles une fois déployé sur une blockchain publique.",
+    exemple:"Un protocole de prêt DeFi utilise un smart contract pour bloquer automatiquement la garantie d'un emprunteur et la restituer dès que le prêt est remboursé, sans intervention d'un agent de crédit humain.",
+    avantages:["Exécution automatique et transparente, sans intermédiaire humain à chaque étape"],
+    inconvenients:["Un bug de code peut être exploité et provoquer des pertes irréversibles, sans recours simple comme pour une erreur bancaire classique"],
+    erreurs:["Croire qu'un smart contract est nécessairement \"intelligent\" au sens de l'intelligence artificielle — c'est un programme qui exécute des règles fixes, rien de plus"]
+  },
+  {
+    terme:"DeFi (finance décentralisée)",
+    categorie:"Crypto",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La DeFi (finance décentralisée) désigne des services financiers — prêt, emprunt, échange d'actifs, épargne — qui fonctionnent via des smart contracts plutôt que via une banque ou un courtier traditionnel.",
+    detail:"Sur un protocole DeFi, les règles (taux, garanties, conditions de liquidation...) sont codées dans des smart contracts, exécutées automatiquement, et généralement consultables publiquement par n'importe qui — à la différence d'une banque classique, dont les décisions internes restent privées.",
+    avance:"La DeFi ne supprime pas les risques financiers classiques (taux, contrepartie, liquidité) : elle en ajoute de nouveaux, spécifiquement techniques — bugs de smart contract, gouvernance mal conçue, ou dépendance à un stablecoin qui perdrait son ancrage.",
+    exemple:"Déposer des cryptoactifs en garantie sur un protocole de prêt DeFi pour emprunter un stablecoin, sans jamais interagir avec une banque ni remplir de dossier de crédit.",
+    avantages:["Accès en principe ouvert à tous, sans dossier ni intermédiaire central, avec des règles publiquement consultables"],
+    inconvenients:["Aucune garantie des dépôts publique équivalente à celle d'une banque réglementée ; risque technique de faille dans le smart contract"],
+    erreurs:["Croire qu'un rendement DeFi élevé est \"sans risque\" simplement parce qu'aucune banque n'est impliquée — le risque change de nature, il ne disparaît pas"]
+  },
+  {
+    terme:"Stablecoin",
+    categorie:"Crypto",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Un stablecoin est un cryptoactif conçu pour maintenir une valeur stable, le plus souvent indexée sur une monnaie traditionnelle comme le dollar (1 stablecoin ≈ 1 dollar).",
+    detail:"Cette stabilité est censée reposer sur une réserve d'actifs détenue par l'émetteur (dollars, obligations d'État...), en théorie suffisante pour garantir la conversion. Certains stablecoins sont \"algorithmiques\" (stabilité maintenue par un mécanisme automatisé plutôt qu'une réserve d'actifs réels) — une approche qui s'est historiquement révélée bien plus fragile.",
+    avance:"Un stablecoin n'est \"stable\" que si sa réserve et son mécanisme tiennent réellement leurs promesses : la confiance dans la réserve de l'émetteur (composition, audits, transparence) reste le facteur de risque central, distinct de la volatilité des autres cryptoactifs.",
+    exemple:"Un utilisateur peut convertir un actif volatil en stablecoin pour \"sortir\" temporairement de la volatilité du marché crypto, sans repasser par une monnaie traditionnelle via une banque.",
+    avantages:["Sert de valeur refuge relative à l'intérieur de l'écosystème crypto, sans repasser par un compte bancaire traditionnel à chaque mouvement"],
+    inconvenients:["Reste exposé au risque de l'émetteur (réserve insuffisante, opacité) et, pour les stablecoins algorithmiques, à un risque de perte d'ancrage bien documenté historiquement"],
+    erreurs:["Croire qu'un stablecoin est \"garanti sans risque\" parce que son objectif affiché est la stabilité — un stablecoin peut perdre son ancrage si sa réserve ou son mécanisme échoue"]
+  },
+  {
+    terme:"Staking",
+    categorie:"Crypto",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le staking consiste à bloquer des cryptoactifs pour participer à la validation d'un réseau en preuve d'enjeu (Proof of Stake), en échange d'une rémunération.",
+    detail:"En bloquant ses tokens, un participant (directement ou via une plateforme qui \"délègue\" le stake pour lui) aide à sécuriser le réseau et en retire une rémunération, généralement versée dans le même cryptoactif — un mécanisme différent du minage (preuve de travail), qui repose sur du calcul plutôt que sur des fonds bloqués.",
+    avance:"Un rendement de staking affiché n'est jamais \"garanti sans risque\" : les tokens restent exposés à la volatilité du marché pendant la période de blocage, une période de \"déblocage\" (souvent plusieurs jours) peut retarder la revente en cas de baisse soudaine, et un comportement fautif du validateur peut entraîner une pénalité (\"slashing\") sur les fonds bloqués.",
+    exemple:"Bloquer des ETH pour participer à la validation du réseau Ethereum (directement ou via une plateforme de staking déléguée) et recevoir une rémunération périodique en ETH.",
+    avantages:["Génère une rémunération périodique sur des cryptoactifs qui seraient autrement simplement détenus sans usage"],
+    inconvenients:["Immobilise les fonds pendant la période de blocage, avec un risque de perte partielle (slashing) et une exposition continue à la volatilité du token staké"],
+    erreurs:["Confondre le rendement de staking (une rémunération pour la sécurisation du réseau) avec un taux d'intérêt bancaire garanti — le capital staké reste pleinement exposé au risque de marché"]
+  },
+  {
+    terme:"Pool de liquidité",
+    categorie:"Crypto",
+    niveau:"Avancé",
+    lecture:"3 min",
+    simple:"Une pool de liquidité regroupe les fonds déposés par des utilisateurs pour permettre des échanges d'actifs sur un échange décentralisé (DEX), sans carnet d'ordres centralisé ni contrepartie directe entre acheteur et vendeur.",
+    detail:"Un fournisseur de liquidité dépose généralement deux actifs en proportions équivalentes dans la pool (ex. la moitié en ETH, la moitié en un stablecoin) ; les échanges des autres utilisateurs contre cette pool génèrent des frais de transaction, reversés proportionnellement aux fournisseurs de liquidité.",
+    avance:"Un fournisseur de liquidité s'expose à la \"perte impermanente\" : si le prix relatif des deux actifs déposés évolue significativement après le dépôt, la valeur récupérée en retirant ses fonds peut être inférieure à celle obtenue en ayant simplement conservé les actifs sans les déposer — un risque spécifique à ce mécanisme, distinct du simple risque de marché.",
+    exemple:"Déposer à parts égales de l'ETH et un stablecoin dans une pool de liquidité d'un échange décentralisé pour percevoir une part des frais générés par les échanges d'autres utilisateurs.",
+    avantages:["Permet à n'importe qui de devenir fournisseur de liquidité et de percevoir une part des frais de transaction, un rôle historiquement réservé à des intermédiaires spécialisés"],
+    inconvenients:["Expose à la perte impermanente, un risque spécifique souvent sous-estimé par les nouveaux fournisseurs de liquidité"],
+    erreurs:["Croire que déposer dans une pool de liquidité équivaut simplement à détenir les deux actifs séparément — la perte impermanente peut créer un écart significatif entre les deux situations"]
+  },
+  {
+    terme:"Tokenomics",
+    categorie:"Crypto",
+    niveau:"Intermédiaire",
+    lecture:"3 min",
+    simple:"La tokenomics regroupe les règles économiques d'un token : combien d'unités existent ou pourront exister, comment elles sont distribuées, et à quoi le token sert réellement dans son écosystème.",
+    detail:"Trois notions d'offre sont à distinguer : l'offre en circulation (les unités déjà disponibles sur le marché aujourd'hui), l'offre totale (les unités déjà créées, y compris celles encore bloquées ou réservées) et l'offre maximum (le plafond théorique définitif, jamais dépassé, quand il existe — 21 millions pour le bitcoin par exemple).",
+    avance:"La capitalisation d'un token (prix unitaire × offre en circulation) est un indicateur plus pertinent que le seul prix unitaire pour juger de sa valorisation réelle : un token à prix très bas mais avec une offre en circulation gigantesque peut avoir une capitalisation supérieure à un token au prix unitaire élevé mais à l'offre restreinte.",
+    exemple:"Un token affiché à 0,001€ avec 1 000 milliards d'unités en circulation peut avoir une capitalisation bien plus élevée qu'un token à 500€ avec seulement quelques millions d'unités en circulation.",
+    avantages:["Une tokenomics bien conçue et transparente permet d'évaluer plus sérieusement un projet, au-delà du seul prix affiché"],
+    inconvenients:["Une tokenomics mal conçue (offre illimitée, forte concentration entre quelques détenteurs) peut créer une pression baissière structurelle, indépendamment de l'utilité réelle du projet"],
+    erreurs:["Juger qu'un token est \"bon marché\" uniquement parce que son prix unitaire est bas, sans regarder sa capitalisation réelle (prix × offre en circulation)"]
+  },
+  {
+    terme:"Vesting (déblocage progressif de tokens)",
+    categorie:"Crypto",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le vesting est un calendrier de déblocage progressif des tokens réservés à l'équipe fondatrice ou aux investisseurs early-stage d'un projet, plutôt qu'une disponibilité immédiate et totale dès le lancement.",
+    detail:"Ces tokens sont généralement verrouillés pendant une période initiale (\"cliff\"), puis débloqués progressivement sur plusieurs mois ou années — un mécanisme censé aligner les intérêts de l'équipe et des investisseurs early-stage avec le succès à long terme du projet, plutôt qu'une revente immédiate à la cotation.",
+    avance:"D'importants événements de déblocage (\"unlocks\") peuvent augmenter fortement l'offre disponible à la vente sur le marché à une date précise, souvent connue à l'avance et publiée dans le whitepaper ou la tokenomics du projet — un facteur de risque calendaire à surveiller, distinct de l'évolution de la demande.",
+    exemple:"Un projet dont 20% de l'offre totale, réservée à l'équipe, se débloque en une seule fois deux ans après le lancement peut voir une pression de vente accrue à cette date précise, si une partie de l'équipe choisit de vendre.",
+    avantages:["Un vesting long et progressif est généralement vu comme un signal positif d'alignement d'intérêt entre l'équipe et le projet sur la durée"],
+    inconvenients:["Un déblocage massif et concentré à une date précise peut créer une pression baissière significative, prévisible mais souvent sous-estimée par les nouveaux investisseurs"],
+    erreurs:["Investir dans un projet sans jamais vérifier son calendrier de vesting, alors que cette information est généralement publique et peut signaler une pression de vente à venir"]
+  },
+  {
+    terme:"Whitepaper",
+    categorie:"Crypto",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Un whitepaper est un document publié par l'équipe d'un projet crypto pour décrire sa technologie, son fonctionnement et ses objectifs — à lire avec un regard critique, car il est rédigé par les créateurs du projet eux-mêmes.",
+    detail:"C'est une source d'information utile pour comprendre l'ambition et le fonctionnement technique d'un projet, mais ce n'est ni un document audité par une autorité indépendante, ni une preuve d'exécution : un whitepaper ambitieux ne garantit en rien que le projet sera livré tel que décrit.",
+    avance:"Un whitepaper de qualité détaille généralement la tokenomics, le mécanisme technique précis et les risques identifiés par l'équipe elle-même — l'absence de ces éléments, ou un document flou sur ces points, est un signal d'alerte à prendre au sérieux, jamais une garantie de sérieux à lui seul.",
+    exemple:"Le whitepaper original du Bitcoin (2008), signé Satoshi Nakamoto, décrit le fonctionnement technique du réseau — un exemple souvent cité de document fondateur, mais l'existence d'un whitepaper ne suffit à elle seule à juger la qualité d'aucun projet.",
+    avantages:["Donne accès à la vision et au fonctionnement technique d'un projet directement depuis sa source"],
+    inconvenients:["Auto-publié par l'équipe du projet, jamais vérifié de façon indépendante par défaut — aucune garantie que les promesses seront tenues"],
+    erreurs:["Considérer un whitepaper comme un gage de sérieux ou de légitimité en soi, sans le lire de façon critique ni le croiser avec d'autres sources"]
   },
   {
     terme:"Rendement locatif",
