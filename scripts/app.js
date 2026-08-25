@@ -669,6 +669,9 @@ const QUIZ_BANK_FULL = [
   {id:"q-bilan-002", niveau:"intermediaire", categorie:"Bilan comptable", type:"vraifaux", question:"Dans un bilan comptable, le total de l'actif est toujours égal au total du passif.", choix:["Vrai","Faux"], bonneReponse:0, explication:"Par construction comptable, actif et passif sont toujours égaux : le passif indique comment l'actif est financé."},
   {id:"q-bilan-003", niveau:"intermediaire", categorie:"Bilan comptable", type:"qcm", question:"Quelle est la différence principale entre un bilan et un compte de résultat ?", choix:["Il n'y a aucune différence","Le bilan est une photographie à un instant donné, le compte de résultat mesure une performance sur une période","Le compte de résultat ne concerne que les grandes entreprises","Le bilan ne concerne que les impôts"], bonneReponse:1, explication:"Le bilan est un instantané du patrimoine à une date donnée, tandis que le compte de résultat mesure les revenus et charges sur une période."},
   {id:"q-bilan-004", niveau:"avance", categorie:"Bilan comptable", type:"situation", question:"Un bilan affiche 50 M€ d'actif financés par 20 M€ de capitaux propres et 30 M€ de dettes. Quelle part de l'actif est financée par les actionnaires ?", choix:["20%","40%","60%","80%"], bonneReponse:1, explication:"20 M€ de capitaux propres / 50 M€ d'actif = 40%."},
+  {id:"q-bilan-005", niveau:"intermediaire", categorie:"Bilan comptable", type:"vraifaux", question:"En comptabilité, un \"crédit\" désigne toujours un emprunt ou une dette, comme un crédit bancaire.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Le crédit comptable est l'une des deux colonnes de l'écriture en partie double (débit/crédit) — il peut concerner n'importe quel type de compte, pas seulement une dette. C'est une convention d'enregistrement, pas un jugement de valeur."},
+  {id:"q-bilan-006", niveau:"intermediaire", categorie:"Bilan comptable", type:"qcm", question:"Quelle est la différence entre le journal comptable et le grand livre ?", choix:["Il n'y a aucune différence, ce sont deux noms pour la même chose","Le journal enregistre les opérations par ordre chronologique, le grand livre les réorganise par compte","Le grand livre ne concerne que les très grandes entreprises","Le journal ne sert qu'une fois par an, à la clôture des comptes"], bonneReponse:1, explication:"Le journal suit l'ordre des opérations dans le temps ; le grand livre reclasse ces mêmes écritures par compte (Trésorerie, Stock, Dette...), ce qui permet de connaître le solde de chaque compte."},
+  {id:"q-bilan-007", niveau:"avance", categorie:"Bilan comptable", type:"qcm", question:"Une entreprise vend 2 000 € de stock (valeur d'achat) pour 2 500 € à un client qui paiera dans 30 jours. Quel est l'effet immédiat sur son bilan ?", choix:["Aucun effet tant que le client n'a pas payé","Le stock diminue de 2 000 €, une créance de 2 500 € apparaît, et les capitaux propres augmentent de 500 € (le bénéfice de la vente)","Seule la trésorerie augmente de 2 500 €","Le bilan ne change qu'au moment de l'encaissement effectif"], bonneReponse:1, explication:"Une vente à crédit est enregistrée immédiatement : le stock vendu sort de l'actif, une créance apparaît pour le prix de vente, et le bénéfice réalisé (2 500-2 000=500 €) vient augmenter les capitaux propres — même si l'argent n'est pas encore encaissé."},
 
   // ---- Amortissement ----
   {id:"q-amortissement-001", niveau:"avance", categorie:"Amortissement", type:"qcm", question:"Que signifie amortir un bien en comptabilité ?", choix:["Le revendre immédiatement","Étaler son coût sur sa durée de vie estimée plutôt que de le passer en charge d'un coup","Le supprimer du bilan","Augmenter sa valeur chaque année"], bonneReponse:1, explication:"L'amortissement étale le coût d'un bien durable sur sa durée de vie estimée pour refléter son usure progressive."},
@@ -1525,6 +1528,46 @@ const COURS_CATALOG = [
         {type:'exemple', texte:"Un groupe qui rachète une entreprise valorisée 50 M€ d'actifs nets pour 80 M€ fait apparaître 30 M€ de goodwill à son bilan — puis publie des comptes consolidés qui intègrent les résultats de cette nouvelle filiale avec ceux du reste du groupe."},
         {type:'attention', texte:"Le goodwill n'est pas un bien qu'on peut revendre séparément : s'il s'avère que l'acquisition ne tient pas ses promesses, ce goodwill peut être dévalorisé (déprécié) dans les comptes, ce qui pèse directement sur le résultat net du groupe — parfois plusieurs années après l'acquisition initiale."},
         {type:'approfondir', texte:"Le niveau de détail de la consolidation dépend du contrôle exercé sur chaque filiale : une filiale détenue à 100% est intégrée globalement (100% de son actif, passif et résultat repris) ; une participation minoritaire peut n'être reprise qu'à hauteur de la quote-part détenue (mise en équivalence) — deux méthodes qui donnent une image très différente de la taille réelle du groupe."}
+      ]}
+    ]},
+  {id:'comptabilite-bases', titre:'Les bases de la comptabilité', niveau:'Intermédiaire',
+    libraryTermes:['Débit et crédit (comptabilité)','Journal comptable','Grand livre','Immobilisation','Stock (comptable)','Créance','Bilan comptable','Amortissement','Trésorerie','Capitaux propres'],
+    quizCategories:['Bilan comptable','Amortissement'],
+    applyUrl:'bibliotheque.html', applyLabel:"Voir tous les termes de comptabilité",
+    acquis:[
+      "Comprendre le principe de la partie double (débit/crédit) et pourquoi actif = passif toujours",
+      "Distinguer le journal (chronologique) du grand livre (par compte)",
+      "Distinguer immobilisation, stock et créance",
+      "Construire un bilan simple, transaction par transaction"
+    ],
+    chapitres:[
+      {titre:"Le principe de la partie double", blocs:[
+        {type:'texte', texte:"Toute la comptabilité repose sur une seule règle, simple à énoncer mais qui demande un peu de pratique pour devenir intuitive : chaque opération financière d'une entreprise est enregistrée DEUX FOIS — une fois au débit d'un compte, une fois au crédit d'un autre, pour le même montant."},
+        {type:'definition', texte:"Débit et crédit sont les deux colonnes de cette écriture en \"partie double\". Ce \"crédit\" comptable n'a rien à voir avec un crédit bancaire (un prêt) : c'est une pure convention d'enregistrement, jamais un jugement de valeur (\"débit = mauvais\" est faux)."},
+        {type:'exerciceErreur', affirmation:"Un \"crédit\" en comptabilité désigne toujours un emprunt ou une dette, comme un crédit bancaire.", pourquoi:"Le crédit comptable est simplement l'une des deux colonnes de l'écriture en partie double — il peut concerner n'importe quel type de compte (actif, passif, capitaux propres). Confondre les deux sens du mot \"crédit\" est l'erreur la plus fréquente en découvrant la comptabilité."},
+        {type:'retenir', texte:"Conséquence directe du principe de la partie double : à tout moment, le total de l'actif d'une entreprise est égal au total de son passif. Ce n'est jamais une coïncidence — c'est une garantie mathématique intégrée à la méthode elle-même."}
+      ]},
+      {titre:"Du journal au grand livre", blocs:[
+        {type:'texte', texte:"Une fois le principe de la partie double posé, comment les écritures sont-elles organisées concrètement au fil de l'année ?"},
+        {type:'definition', texte:"Le journal comptable enregistre chaque opération dans l'ordre chronologique, au fur et à mesure qu'elle survient. Le grand livre reprend ces mêmes écritures mais les réorganise par compte (Trésorerie, Stock, Dette...), ce qui permet de connaître le solde de chaque compte à tout moment."},
+        {type:'calcul', texte:"Solde d'un compte au grand livre = somme de tous ses débits − somme de tous ses crédits (ou l'inverse selon le type de compte). Exemple : le compte \"Trésorerie\" reçoit 3 débits (10 000 €, 5 000 €, 2 500 €) et 2 crédits (3 000 €, 4 000 €) → solde = 10 000+5 000+2 500-3 000-4 000 = 10 500 €."},
+        {type:'pourquoi', texte:"C'est à partir des soldes du grand livre — jamais directement du journal — que le bilan comptable est ensuite construit : chaque solde de compte devient une ligne du bilan (actif) ou du passif."}
+      ]},
+      {titre:"Construire un bilan, transaction par transaction", blocs:[
+        {type:'texte', texte:"Voici, pas à pas, comment le bilan d'une entreprise toute neuve se construit au fil de ses premières opérations — l'illustration concrète du principe \"actif = passif, toujours\"."},
+        {type:'calcul', texte:"Étape 1 — Constitution : les associés apportent 10 000 € en capital sur le compte bancaire. Trésorerie (actif) = 10 000 € ; Capitaux propres (passif) = 10 000 €. Total actif = 10 000 € = Total passif = 10 000 € ✓"},
+        {type:'calcul', texte:"Étape 2 — Emprunt : l'entreprise emprunte 5 000 € à la banque. Trésorerie = 10 000+5 000 = 15 000 € ; Dette = 5 000 €, Capitaux propres = 10 000 €. Total actif = 15 000 € = Total passif (5 000+10 000) = 15 000 € ✓"},
+        {type:'calcul', texte:"Étape 3 — Achat de stock : 3 000 € de marchandises payées comptant. Trésorerie = 15 000-3 000 = 12 000 € ; Stock = 3 000 €. Total actif = 12 000+3 000 = 15 000 € (inchangé — un actif remplace un autre) = Total passif = 15 000 € ✓"},
+        {type:'calcul', texte:"Étape 4 — Achat d'une immobilisation : une machine à 4 000 €, payée comptant. Trésorerie = 12 000-4 000 = 8 000 € ; Immobilisation = 4 000 €. Total actif = 8 000+3 000+4 000 = 15 000 € (toujours inchangé) = Total passif = 15 000 € ✓"},
+        {type:'calcul', texte:"Étape 5 — Vente à crédit : l'entreprise vend 2 000 € de stock (valeur d'achat) pour 2 500 € à un client qui paiera plus tard. Stock = 3 000-2 000 = 1 000 € ; Créance = 2 500 € (nouvel actif) ; le bénéfice de 500 € augmente les Capitaux propres = 10 000+500 = 10 500 €. Total actif = 8 000+1 000+4 000+2 500 = 15 500 € = Total passif (5 000+10 500) = 15 500 € ✓"},
+        {type:'calcul', texte:"Étape 6 — Remboursement partiel : l'entreprise rembourse 1 000 € de sa dette bancaire. Trésorerie = 8 000-1 000 = 7 000 € ; Dette = 5 000-1 000 = 4 000 €. Bilan final : Actif = 7 000 (Trésorerie) + 1 000 (Stock) + 4 000 (Immobilisation) + 2 500 (Créance) = 14 500 € = Passif = 4 000 (Dette) + 10 500 (Capitaux propres) = 14 500 € ✓"},
+        {type:'retenir', texte:"À chaque étape, sans exception, le total de l'actif est resté strictement égal au total du passif — c'est la garantie que procure la partie double, transaction après transaction, jamais seulement au moment de \"clôturer les comptes\"."}
+      ]},
+      {titre:"Immobilisations, stocks et créances : les distinguer", blocs:[
+        {type:'texte', texte:"Trois postes de l'actif se ressemblent parfois pour un débutant, mais répondent à des logiques très différentes."},
+        {type:'definition', texte:"Une immobilisation est utilisée durablement (plus d'un an) et amortie dans le temps (voir \"Amortissement\") — une machine, un véhicule. Un stock est destiné à être vendu ou consommé rapidement — des marchandises. Une créance est de l'argent déjà gagné (une vente réalisée) mais pas encore encaissé."},
+        {type:'exerciceErreur', affirmation:"Le stock et une créance représentent la même chose : de l'argent que l'entreprise va bientôt recevoir.", pourquoi:"Le stock est un bien physique qui reste à VENDRE (l'argent n'est pas encore gagné) ; la créance est une vente déjà réalisée, l'argent est gagné mais pas encore encaissé. Confondre les deux fausse la lecture du risque réel : une créance non payée (défaut du client) est un risque différent d'un stock invendu (obsolescence, démodage)."},
+        {type:'attention', texte:"Un résultat comptable positif n'implique pas une trésorerie disponible équivalente : des ventes réalisées mais encore en créances, ou un stock important non vendu, peuvent laisser une entreprise \"bénéficiaire sur le papier\" mais à court de trésorerie réelle."}
       ]}
     ]},
   {id:'epargne-interets', titre:"Épargne et intérêts composés", niveau:'Débutant', libraryTermes:['Intérêts composés','Assurance-vie'], quizCategories:['Épargne','Intérêts composés','Intérêts simples','Livret A','Assurance-vie']},
@@ -3133,6 +3176,84 @@ const LIBRARY = [
     avantages:[],
     inconvenients:[],
     erreurs:["Assimiler résultat net positif et trésorerie abondante — les deux peuvent diverger fortement"]
+  },
+  {
+    terme:"Débit et crédit (comptabilité)",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"En comptabilité, débit et crédit sont les deux colonnes de l'écriture en \"partie double\" : chaque opération est enregistrée deux fois, une fois au débit d'un compte et une fois au crédit d'un autre, pour un même montant.",
+    detail:"Ce \"crédit\" comptable n'a rien à voir avec un crédit bancaire (un prêt) : c'est une convention d'écriture. Le principe fondamental de la partie double garantit qu'à tout moment, le total de l'actif d'une entreprise est égal au total de son passif — les deux évoluent toujours ensemble, jamais l'un sans l'autre.",
+    avance:"Selon le type de compte (actif, passif, capitaux propres, charge, produit), une augmentation se traduit tantôt par une écriture au débit, tantôt au crédit — la logique n'est pas \"débit = mauvais, crédit = bon\", c'est une pure convention d'enregistrement à double sens, pas un jugement de valeur.",
+    exemple:"Quand une entreprise reçoit 10 000 € en capital sur son compte bancaire, elle débite \"Trésorerie\" (l'actif augmente) et crédite \"Capitaux propres\" (le passif augmente) — la même opération, enregistrée sous ses deux faces.",
+    avantages:["Garantit mathématiquement que l'actif est toujours égal au passif, un vrai garde-fou contre les erreurs de saisie"],
+    inconvenients:["Demande d'apprendre une convention qui n'a rien d'intuitif au premier abord"],
+    erreurs:["Confondre le \"crédit\" comptable (une écriture) avec un crédit bancaire (un emprunt) — deux sens totalement différents du même mot"]
+  },
+  {
+    terme:"Journal comptable",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"1 min",
+    simple:"Le journal comptable est le registre où chaque opération de l'entreprise est enregistrée, dans l'ordre chronologique, au fur et à mesure qu'elle a lieu.",
+    detail:"Chaque ligne du journal correspond à une écriture en partie double (un débit, un crédit, pour le même montant) : achat, vente, paiement, encaissement... C'est la première étape du circuit comptable, avant le grand livre.",
+    avance:"En pratique, une entreprise tient souvent plusieurs journaux auxiliaires (achats, ventes, banque) plutôt qu'un seul journal général, pour répartir le volume d'écritures — ils sont ensuite centralisés.",
+    exemple:"Le 3 mars, une entreprise achète 500 € de fournitures payées comptant : le journal enregistre ce jour-là un débit \"Fournitures\" et un crédit \"Trésorerie\" de 500 €.",
+    avantages:["Trace chronologique complète de toute l'activité financière de l'entreprise, en cas de contrôle ou d'audit"],
+    inconvenients:["Le journal seul ne permet pas de voir facilement le solde d'un compte précis : il faut le grand livre pour ça"],
+    erreurs:["Chercher le solde total d'un compte directement dans le journal plutôt que dans le grand livre, qui est organisé pour ça"]
+  },
+  {
+    terme:"Grand livre",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"1 min",
+    simple:"Le grand livre reprend toutes les écritures du journal, mais les réorganise par compte (Trésorerie, Stock, Dette...) plutôt que par date — ce qui permet de connaître le solde de chaque compte à tout moment.",
+    detail:"Alors que le journal montre les opérations dans l'ordre où elles se sont produites, le grand livre les reclasse : toutes les écritures qui concernent \"Trésorerie\" ensemble, toutes celles qui concernent \"Dette\" ensemble, etc. C'est à partir du grand livre que le bilan comptable est ensuite construit.",
+    avance:"Le solde d'un compte au grand livre se calcule en cumulant tous ses débits et tous ses crédits depuis l'ouverture — c'est ce solde, pour chaque compte, qui alimente directement les lignes du bilan.",
+    exemple:"Si le compte \"Trésorerie\" a reçu trois débits (10 000 €, 5 000 €, 2 500 €) et deux crédits (3 000 €, 4 000 €) au fil de l'année, son solde au grand livre est 10 000+5 000+2 500-3 000-4 000 = 10 500 €.",
+    avantages:["Donne une vue claire du solde de chaque compte, indispensable pour construire un bilan fiable"],
+    inconvenients:["Ne montre pas l'ordre chronologique des opérations, contrairement au journal"],
+    erreurs:["Oublier qu'un compte du grand livre doit être alimenté par TOUTES ses écritures du journal, pas seulement les plus récentes"]
+  },
+  {
+    terme:"Immobilisation",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Une immobilisation est un bien acheté par l'entreprise pour être utilisé durablement (plus d'un an) — machine, véhicule, bâtiment, logiciel — par opposition à une dépense consommée immédiatement.",
+    detail:"Une immobilisation est inscrite à l'actif du bilan pour sa valeur d'achat, puis sa valeur comptable diminue progressivement via l'amortissement (voir ce terme), qui répartit son coût sur sa durée d'utilisation plutôt que de le faire peser en une seule fois sur le résultat de l'année d'achat.",
+    avance:"On distingue les immobilisations corporelles (biens physiques : machines, bâtiments), incorporelles (brevets, logiciels, goodwill) et financières (participations dans d'autres entreprises) — chacune a ses propres règles d'amortissement ou de dépréciation.",
+    exemple:"Une entreprise qui achète une machine à 4 000 € l'inscrit comme immobilisation à l'actif, puis l'amortit par exemple sur 4 ans (1 000 €/an), plutôt que de comptabiliser les 4 000 € comme une charge unique l'année de l'achat.",
+    avantages:["Répartir le coût dans le temps reflète mieux l'usage réel du bien sur plusieurs années que le comptabiliser en une fois"],
+    inconvenients:["Immobiliser à tort une dépense qui aurait dû être une charge immédiate peut artificiellement gonfler le résultat de l'année"],
+    erreurs:["Confondre une immobilisation (utilisée durablement, amortie dans le temps) et un stock (destiné à être vendu ou consommé rapidement)"]
+  },
+  {
+    terme:"Stock (comptable)",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"1 min",
+    simple:"Le stock regroupe les biens qu'une entreprise détient pour les vendre ou les transformer : marchandises, matières premières, produits finis non encore vendus.",
+    detail:"Le stock est un actif : il a une valeur économique tant qu'il n'est pas vendu. Sa valeur diminue quand il est vendu (le coût du bien vendu passe alors en charge) ou consommé dans la production.",
+    avance:"Un stock qui se déprécie (obsolescence, invendus) doit être ramené à sa valeur réelle de marché si elle est inférieure à son coût d'achat — sinon le bilan surestimerait la valeur réelle des actifs de l'entreprise.",
+    exemple:"Un commerce qui détient 3 000 € de marchandises non encore vendues inscrit ce montant en stock à l'actif de son bilan ; une fois vendues, ce montant sort du stock et devient un coût dans le compte de résultat.",
+    avantages:["Permet à l'entreprise de répondre immédiatement à la demande sans attendre un réapprovisionnement"],
+    inconvenients:["Immobilise de la trésorerie et expose au risque d'invendus ou d'obsolescence"],
+    erreurs:["Confondre le stock (destiné à être vendu ou consommé) et une immobilisation (utilisée durablement dans l'activité, jamais vendue en tant que telle)"]
+  },
+  {
+    terme:"Créance",
+    categorie:"Entreprise",
+    niveau:"Intermédiaire",
+    lecture:"1 min",
+    simple:"Une créance est une somme qu'un client (ou un tiers) doit à l'entreprise, mais qui n'a pas encore été payée — par exemple une vente déjà réalisée mais pas encore encaissée.",
+    detail:"La créance est un actif : c'est de l'argent que l'entreprise recevra, même s'il n'est pas encore en trésorerie. Elle s'oppose à la dette (voir ce terme), qui est ce que l'entreprise doit elle-même à un tiers.",
+    avance:"Une créance non recouvrée à l'échéance (le client ne paie pas) fait courir un risque réel : une entreprise qui accumule trop de créances irrécouvrables peut manquer de trésorerie même si son résultat comptable est positif — voir le terme \"Provisions\", souvent utilisé pour anticiper ce risque.",
+    exemple:"Une entreprise vend 2 500 € de marchandises à un client qui paiera dans 30 jours : elle inscrit immédiatement 2 500 € en créance à l'actif, avant même d'avoir reçu l'argent.",
+    avantages:["Permet de vendre à crédit à des clients, un usage commercial courant qui facilite les transactions"],
+    inconvenients:["Une créance reste un risque tant qu'elle n'est pas payée : le client peut faire défaut"],
+    erreurs:["Confondre le résultat comptable (qui inclut les ventes à crédit, donc les créances) et la trésorerie réellement disponible (qui n'inclut que l'argent effectivement encaissé)"]
   },
   {
     terme:"Provisions",
