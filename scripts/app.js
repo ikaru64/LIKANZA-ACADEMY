@@ -440,6 +440,10 @@ const QUIZ_BANK_FULL = [
   {id:"q-actions-001", niveau:"debutant", categorie:"Actions", type:"qcm", question:"Que possède-t-on réellement en achetant une action ?", choix:["Une créance garantie par l'État","Une part de propriété d'une entreprise","Un droit de vote au parlement","Une assurance sur ses économies"], bonneReponse:1, explication:"Une action représente une part du capital d'une entreprise, avec un droit sur ses bénéfices, mais aucune garantie de gain."},
   {id:"q-actions-002", niveau:"debutant", categorie:"Actions", type:"qcm", question:"Qu'est-ce qu'un dividende ?", choix:["Un impôt prélevé sur les actions","Une part des bénéfices qu'une entreprise reverse à ses actionnaires","Le prix d'achat d'une action","Une pénalité en cas de revente rapide"], bonneReponse:1, explication:"Le dividende est une distribution de bénéfices aux actionnaires ; toutes les entreprises n'en versent pas."},
   {id:"q-actions-003", niveau:"intermediaire", categorie:"Actions", type:"qcm", question:"Que peut indiquer un PER (Price Earning Ratio) élevé pour une action ?", choix:["Que l'entreprise est en faillite","Que le marché anticipe une forte croissance, ou que la valorisation est tendue","Que l'action ne verse jamais de dividende","Que l'action est interdite au PEA"], bonneReponse:1, explication:"Un PER élevé peut refléter des attentes de croissance fortes, mais aussi signaler une valorisation exigeante par rapport aux bénéfices actuels."},
+  {id:"q-actions-004", niveau:"debutant", categorie:"Actions", type:"qcm", question:"Quelle est la principale différence entre un ordre au marché et un ordre à cours limité ?", choix:["Il n'y a aucune différence, ce sont deux noms pour le même type d'ordre", "L'ordre au marché garantit une exécution rapide mais pas le prix ; l'ordre limite garantit le prix mais pas l'exécution", "L'ordre limite est réservé aux professionnels", "L'ordre au marché n'existe que pour la vente, jamais pour l'achat"], bonneReponse:1, explication:"L'ordre au marché s'exécute presque immédiatement, au meilleur prix alors disponible, sans garantie sur ce prix. L'ordre à cours limité garantit au contraire de ne jamais payer plus cher (ou vendre moins cher) qu'un prix fixé — mais peut ne jamais s'exécuter si ce prix n'est pas atteint."},
+  {id:"q-actions-005", niveau:"intermediaire", categorie:"Actions", type:"qcm", question:"Que se passe-t-il concrètement une fois qu'un ordre stop est déclenché (son seuil de prix atteint) ?", choix:["Il disparaît automatiquement sans s'exécuter", "Il se transforme en ordre au marché, sans garantie sur le prix exact d'exécution", "Il se transforme automatiquement en ordre limite", "Il attend une confirmation manuelle avant de s'exécuter"], bonneReponse:1, explication:"Un ordre stop simple se transforme en ordre au marché une fois son seuil atteint : il garantit le déclenchement, jamais le prix exact d'exécution, qui peut différer du seuil fixé lors d'un mouvement brutal."},
+  {id:"q-actions-006", niveau:"avance", categorie:"Actions", type:"qcm", question:"En quoi un ordre stop-limit diffère-t-il d'un ordre stop simple ?", choix:["Aucune différence, ce sont des synonymes", "Une fois déclenché, l'ordre stop-limit se transforme en ordre LIMITE (avec un prix plancher/plafond garanti), pas en ordre au marché", "L'ordre stop-limit s'exécute toujours plus vite qu'un ordre stop simple", "L'ordre stop-limit ne peut être utilisé qu'à l'achat, jamais à la vente"], bonneReponse:1, explication:"L'ordre stop-limit ajoute un second prix (la limite) : une fois le seuil de déclenchement atteint, l'ordre devient un ordre limite, pas un ordre au marché — au risque, en échange de cette garantie de prix, de ne jamais s'exécuter si le marché dépasse trop vite cette limite."},
+  {id:"q-actions-007", niveau:"avance", categorie:"Actions", type:"vraifaux", question:"Un ordre stop-limit garantit toujours une sortie de position, même lors d'une chute de marché très brutale.", choix:["Vrai","Faux"], bonneReponse:1, explication:"C'est justement la limite de l'ordre stop-limit : si le prix passe directement sous la limite fixée sans jamais y transiter (chute très brutale), l'ordre ne s'exécute pas — contrairement à un ordre stop simple, qui se serait exécuté (à un prix potentiellement défavorable, mais exécuté) dans ce même scénario."},
 
   // ---- ETF ----
   {id:"q-etf-001", niveau:"debutant", categorie:"ETF", type:"qcm", question:"Quel est l'un des principaux avantages d'un ETF diversifié ?", choix:["Il garantit un rendement positif", "Il permet d'investir dans plusieurs entreprises en un seul produit", "Il ne peut jamais perdre de valeur", "Il ne comporte aucuns frais"], bonneReponse:1, explication:"Un ETF peut regrouper plusieurs dizaines ou milliers d'actifs, mais il ne garantit pas un rendement positif : il suit un indice, à la hausse comme à la baisse."},
@@ -1479,7 +1483,7 @@ const COURS_CATALOG = [
   // pour Likanza — structure/pédagogie inspirées de Khan Academy et CFI,
   // aucun texte copié). Voir renderCoursRich/renderCourseBlock (data.js).
   {id:'bourse-actions', titre:'Comprendre la Bourse et les actions', niveau:'Débutant',
-    libraryTermes:['Action','ETF','Capitalisation boursière','Obligation','PER (Price Earning Ratio)',"Rendement à l'échéance (YTM)",'Duration (obligation)','Notation de crédit (investment grade / high yield)'],
+    libraryTermes:['Action','ETF','Capitalisation boursière','Obligation','PER (Price Earning Ratio)',"Rendement à l'échéance (YTM)",'Duration (obligation)','Notation de crédit (investment grade / high yield)','Ordre au marché (market order)','Ordre à cours limité (ordre limite)','Ordre stop (stop de vente / stop d\'achat)','Ordre stop-limit'],
     quizCategories:['Bourse','Actions','ETF','Obligations'],
     applyUrl:'bourse.html', applyLabel:'Voir de vraies fiches actions et leur PER réel',
     acquis:[
@@ -1539,6 +1543,16 @@ const COURS_CATALOG = [
         {type:'attention', texte:"Toutes les obligations ne réagissent pas de la même ampleur à une même variation de taux : la duration (voir la Bibliothèque) donne une estimation chiffrée de cette sensibilité, en années — plus la maturité est longue et le coupon faible, plus la duration (et donc la sensibilité) est élevée."},
         {type:'casReel', texte:"Utilise le calculateur obligataire du Laboratoire financier pour tester toi-même : entre un nominal, un coupon et une maturité, puis fais varier le taux du marché pour voir le prix bouger en temps réel — ou entre un prix observé pour retrouver le rendement à l'échéance (YTM) implicite, calculé par recherche numérique."},
         {type:'approfondir', texte:"Le prix d'une obligation dépend aussi du risque de défaut perçu de l'émetteur, résumé par sa notation de crédit (investment grade vs high yield) : à caractéristiques égales, une obligation jugée plus risquée doit offrir un rendement plus élevé pour trouver preneur — c'est le \"spread de crédit\", la prime de risque au-delà du taux sans risque."}
+      ]},
+      {titre:"7. Passer un ordre en bourse : les 4 types à connaître", blocs:[
+        {type:'texte', texte:"Décider d'acheter ou de vendre une action n'est que la moitié du chemin : encore faut-il savoir COMMENT passer cet ordre. Le type d'ordre choisi détermine ce qui est garanti — le prix, ou l'exécution — jamais les deux à la fois."},
+        {type:'definition', texte:"L'ordre au marché s'exécute presque immédiatement, au meilleur prix alors disponible : il garantit l'exécution, jamais le prix exact. L'ordre à cours limité fixe au contraire un prix maximal à l'achat (ou minimal à la vente) : il garantit le prix, jamais l'exécution — l'ordre peut rester en attente indéfiniment si ce prix n'est jamais atteint."},
+        {type:'visualisation', schema:
+"ORDRE AU MARCHÉ                    ORDRE À COURS LIMITÉ\n────────────────                   ─────────────────────\nGarantit : l'exécution              Garantit : le prix\nNe garantit PAS : le prix           Ne garantit PAS : l'exécution\nExécution quasi immédiate           Peut rester en attente\n                                     indéfiniment"},
+        {type:'definition', texte:"L'ordre stop reste inactif jusqu'à ce qu'un seuil de prix fixé à l'avance soit atteint — une fois ce seuil touché, il se transforme automatiquement en ordre au marché (voir le terme Stop-loss et take-profit pour la logique de gestion du risque qui motive son usage). L'ordre stop-limit va plus loin : une fois le seuil atteint, il se transforme en ordre LIMITE, pas en ordre au marché — un second prix (la limite) protège contre une exécution trop défavorable."},
+        {type:'exerciceErreur', affirmation:"Un ordre stop-limit est toujours préférable à un ordre stop simple, puisqu'il ajoute une garantie de prix supplémentaire.", pourquoi:"Cette garantie de prix a un coût réel : lors d'une chute de marché très brutale, le prix peut passer directement sous la limite fixée sans jamais y transiter — dans ce cas, l'ordre stop-limit ne s'exécute JAMAIS, laissant la position ouverte et exposée, alors qu'un ordre stop simple se serait exécuté (à un prix potentiellement défavorable, mais exécuté). Le choix entre les deux dépend de ce qu'on redoute le plus : une exécution à mauvais prix, ou une absence totale d'exécution."},
+        {type:'pourquoi', texte:"Pourquoi ces distinctions comptent-elles concrètement ? Parce qu'un ordre mal choisi peut soit exécuter une vente à un prix bien pire que prévu (ordre au marché ou stop simple sur une action peu liquide), soit laisser une position dangereuse ouverte alors qu'on pensait s'être protégé (ordre limite ou stop-limit jamais déclenché)."},
+        {type:'retenir', texte:"Aucun de ces 4 types d'ordre n'est \"le meilleur\" dans l'absolu : le choix dépend de ce que tu veux garantir en priorité — le prix, ou la certitude d'être exécuté — jamais les deux à la fois avec un seul et même ordre."}
       ]}
     ]},
   {id:'lire-une-entreprise', titre:'Apprendre à lire une entreprise', niveau:'Intermédiaire',
@@ -2386,6 +2400,58 @@ const LIBRARY = [
     avantages:[],
     inconvenients:["Ne reflète pas la dette de l'entreprise"],
     erreurs:["Confondre capitalisation boursière et valeur d'entreprise"]
+  },
+  {
+    terme:"Ordre au marché (market order)",
+    categorie:"Bourse",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Un ordre au marché achète ou vend immédiatement une action au meilleur prix actuellement disponible, sans fixer de prix précis à l'avance.",
+    detail:"Il garantit l'exécution rapide de l'ordre, mais jamais un prix précis : sur une action peu liquide ou lors d'un mouvement de marché brutal, le prix réellement obtenu peut différer sensiblement du dernier prix affiché au moment de passer l'ordre.",
+    avance:"L'écart entre le prix attendu et le prix réellement obtenu s'appelle le slippage — plus marqué sur les actions peu échangées ou lors d'ordres de grande taille par rapport au volume disponible à chaque niveau de prix.",
+    exemple:"Passer un ordre au marché pour acheter immédiatement 10 actions, sans se soucier du prix exact, plutôt que d'attendre qu'un prix précis soit atteint.",
+    avantages:["Exécution quasi immédiate, sans attendre qu'un prix précis soit atteint"],
+    inconvenients:["Aucune garantie sur le prix réellement obtenu, surtout sur une action peu liquide"],
+    erreurs:["Utiliser un ordre au marché sur une action peu liquide sans se soucier du risque de slippage, notamment pour un ordre de taille importante"]
+  },
+  {
+    terme:"Ordre à cours limité (ordre limite)",
+    categorie:"Bourse",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Un ordre à cours limité fixe un prix maximal à l'achat (ou minimal à la vente) : l'ordre ne s'exécute que si le marché atteint ce prix ou un prix plus favorable, jamais à un prix moins bon.",
+    detail:"Contrairement à l'ordre au marché, il garantit le prix (jamais pire que le prix limite fixé) mais pas l'exécution : si le marché n'atteint jamais ce prix, l'ordre reste simplement en attente, potentiellement indéfiniment, jusqu'à annulation ou expiration selon sa durée de validité.",
+    avance:"Un ordre limite d'achat placé sous le prix actuel du marché (\"en dessous du marché\") reste en attente jusqu'à ce que le prix baisse jusqu'à ce niveau ; un ordre limite de vente placé au-dessus attend une hausse — une façon d'automatiser un objectif de prix sans surveiller le marché en continu.",
+    exemple:"Fixer un ordre d'achat limité à 45 € sur une action qui cote actuellement 48 € : l'ordre ne s'exécutera que si le prix baisse jusqu'à 45 € ou moins, jamais à un prix plus élevé.",
+    avantages:["Garantit le prix maximal payé à l'achat (ou minimal reçu à la vente), jamais moins favorable que le prix fixé"],
+    inconvenients:["Aucune garantie d'exécution : l'ordre peut ne jamais se déclencher si le marché n'atteint pas le prix fixé"],
+    erreurs:["Fixer un prix limite irréaliste par rapport au marché actuel, laissant l'ordre en attente indéfiniment sans jamais s'exécuter"]
+  },
+  {
+    terme:"Ordre stop (stop de vente / stop d'achat)",
+    categorie:"Bourse",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un ordre stop se déclenche automatiquement en ordre au marché dès qu'un prix seuil fixé à l'avance est atteint — le plus souvent utilisé pour limiter une perte (stop-loss) ou entrer sur une cassure de prix.",
+    detail:"Tant que le seuil n'est pas atteint, l'ordre stop reste inactif et invisible pour le marché. Une fois le seuil touché, il se transforme automatiquement en ordre au marché et s'exécute au meilleur prix alors disponible — voir le terme Stop-loss et take-profit pour la logique de gestion du risque qui motive son usage.",
+    avance:"Comme il se transforme en ordre au marché une fois déclenché, un ordre stop n'offre pas plus de garantie de prix qu'un ordre au marché classique : lors d'un mouvement brutal (\"gap\"), l'exécution peut se faire à un prix nettement moins favorable que le seuil fixé.",
+    exemple:"Un ordre stop de vente fixé à 45 € sur une position achetée à 50 € se transforme en ordre de vente au marché dès que le prix touche 45 € — sans garantir que la vente s'exécute exactement à ce prix.",
+    avantages:["Automatise une sortie de position sans avoir à surveiller le marché en continu"],
+    inconvenients:["Une fois déclenché, s'exécute comme un ordre au marché : aucune garantie sur le prix exact obtenu, surtout lors d'un mouvement brutal"],
+    erreurs:["Croire qu'un ordre stop garantit une exécution exactement au prix seuil fixé, alors qu'il ne garantit que le déclenchement, jamais le prix final obtenu"]
+  },
+  {
+    terme:"Ordre stop-limit",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un ordre stop-limit combine un ordre stop et un ordre à cours limité : une fois le seuil de déclenchement atteint, il se transforme en ordre LIMITE (pas au marché), avec un prix plancher ou plafond fixé.",
+    detail:"Il corrige le principal défaut de l'ordre stop simple (aucune garantie de prix une fois déclenché) en ajoutant un second prix, la limite, en dessous (ou au-dessus) duquel l'ordre ne s'exécutera jamais — au prix, en échange, du même risque que tout ordre limite : ne jamais s'exécuter du tout si le marché dépasse trop vite ce second seuil.",
+    avance:"Sur un marché qui chute très brutalement (\"gap\" ou effondrement rapide), un ordre stop-limit de vente peut ne jamais s'exécuter si le prix passe directement sous la limite fixée sans jamais y transiter — contrairement à un ordre stop simple, qui se serait exécuté (à un prix potentiellement défavorable, mais exécuté) dans ce même scénario.",
+    exemple:"Un ordre stop-limit de vente avec un seuil de déclenchement à 45 € et une limite à 44 € : une fois 45 € atteint, un ordre de vente limité à 44 € minimum est placé — s'exécutant seulement si le marché reste au-dessus de 44 €, jamais en dessous.",
+    avantages:["Garantit un prix plancher (ou plafond) minimal, contrairement à l'ordre stop simple qui s'exécute au marché une fois déclenché"],
+    inconvenients:["Peut ne jamais s'exécuter si le marché dépasse la limite fixée trop rapidement, laissant une position ouverte alors qu'un ordre stop simple, lui, l'aurait clôturée"],
+    erreurs:["Utiliser un ordre stop-limit pour se protéger d'une chute brutale en pensant qu'il garantit toujours une sortie, alors qu'il peut précisément ne jamais s'exécuter dans ce scénario"]
   },
   {
     terme:"PER (Price Earning Ratio)",
