@@ -5044,6 +5044,56 @@ function computeParametricVaR(portefeuilleValeur, rendementAnnuelPct, volatilite
   return {z, horizonAnnees, moyenneHorizon, volatiliteHorizon, perteEnPct, perteEnMontant};
 }
 
+// ---------- Obligations : prix et rendement à l'échéance (YTM) — calculateur
+// explicitement demandé par l'audit de couverture pédagogique (25/08/2026,
+// section F "Obligations"), jusqu'ici absent malgré un exercice statique
+// expliquant seulement le SENS de la relation prix/taux, jamais son ampleur
+// chiffrée. Deux fonctions pures et complémentaires :
+// - computeBondPrice : formule fermée classique (somme des coupons actualisés
+//   + valeur nominale actualisée), taux connu → prix.
+// - computeBondYTM : aucune formule fermée n'existe pour le YTM d'une
+//   obligation à coupons — recherche numérique par bissection, cas d'usage
+//   canonique de cette méthode. Le prix est une fonction strictement
+//   décroissante du taux (coupons et remboursement final tous actualisés
+//   plus fortement à taux plus élevé), donc la bissection converge toujours
+//   sur l'intervalle -99%..+100% (largement au-delà de tout cas réel).
+// Convention : coupon versé paymentsPerYear fois par an (1 = annuel, valeur
+// par défaut ; 2 = semestriel, comme la plupart des obligations d'État US).
+// Jamais un résultat approximatif présenté comme exact : computeBondYTM
+// retourne null si les bornes ne encadrent pas le prix visé, plutôt qu'une
+// valeur fausse silencieusement renvoyée. ----------
+function computeBondPrice(faceValue, couponRatePct, yearsToMaturity, marketRatePct, paymentsPerYear){
+  const n = paymentsPerYear || 1;
+  if(!(faceValue > 0) || !(yearsToMaturity > 0) || !(n >= 1) || typeof couponRatePct !== 'number' || typeof marketRatePct !== 'number') return null;
+  const totalPeriods = Math.round(yearsToMaturity * n);
+  if(totalPeriods < 1) return null;
+  const couponPerPeriod = (couponRatePct / 100) * faceValue / n;
+  const ratePerPeriod = (marketRatePct / 100) / n;
+  let price = 0;
+  for(let t = 1; t <= totalPeriods; t++){
+    price += couponPerPeriod / Math.pow(1 + ratePerPeriod, t);
+  }
+  price += faceValue / Math.pow(1 + ratePerPeriod, totalPeriods);
+  return price;
+}
+function computeBondYTM(price, faceValue, couponRatePct, yearsToMaturity, paymentsPerYear){
+  const n = paymentsPerYear || 1;
+  if(!(price > 0) || !(faceValue > 0) || !(yearsToMaturity > 0)) return null;
+  let lo = -99, hi = 100;
+  const priceAtLo = computeBondPrice(faceValue, couponRatePct, yearsToMaturity, lo, n);
+  const priceAtHi = computeBondPrice(faceValue, couponRatePct, yearsToMaturity, hi, n);
+  if(priceAtLo == null || priceAtHi == null || !(priceAtLo > price) || !(priceAtHi < price)) return null;
+  let mid = 0, priceAtMid;
+  for(let i = 0; i < 200; i++){
+    mid = (lo + hi) / 2;
+    priceAtMid = computeBondPrice(faceValue, couponRatePct, yearsToMaturity, mid, n);
+    if(priceAtMid == null) return null;
+    if(Math.abs(priceAtMid - price) < 0.0001) return mid;
+    if(priceAtMid > price) lo = mid; else hi = mid;
+  }
+  return mid;
+}
+
 // ---------- Dettes & crédits : stratégie de remboursement multi-crédits ----------
 // Simulation mois par mois (avalanche = taux le plus élevé d'abord, snowball =
 // plus petit solde d'abord, custom = ordre fourni) — jamais une formule

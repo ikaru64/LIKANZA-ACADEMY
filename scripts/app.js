@@ -450,6 +450,10 @@ const QUIZ_BANK_FULL = [
   {id:"q-obligations-001", niveau:"intermediaire", categorie:"Obligations", type:"qcm", question:"Qu'est-ce qu'une obligation, fondamentalement ?", choix:["Une part de propriété d'une entreprise","Un prêt fait à une entreprise ou un État, remboursé avec des intérêts","Une assurance obligatoire sur ses placements","Un type de compte bancaire"], bonneReponse:1, explication:"L'acheteur d'une obligation prête de l'argent à l'émetteur, qui s'engage à verser un intérêt (coupon) et à rembourser le capital à l'échéance."},
   {id:"q-obligations-002", niveau:"intermediaire", categorie:"Obligations", type:"qcm", question:"Que se passe-t-il généralement pour le prix d'une obligation existante quand les taux d'intérêt du marché montent ?", choix:["Son prix monte","Son prix baisse","Son prix reste rigoureusement identique","Elle devient automatiquement une action"], bonneReponse:1, explication:"Quand les taux montent, les nouvelles obligations offrent un coupon plus attractif, ce qui fait mécaniquement baisser le prix des obligations existantes à coupon plus faible."},
   {id:"q-obligations-003", niveau:"avance", categorie:"Obligations", type:"qcm", question:"Qu'appelle-t-on la sensibilité d'une obligation aux taux d'intérêt ?", choix:["Son rendement garanti","La mesure de l'ampleur de variation de son prix en réaction à une variation des taux","Son éligibilité au PEA","Sa notation de crédit"], bonneReponse:1, explication:"La sensibilité mesure l'impact d'une variation des taux sur le prix de l'obligation ; plus la maturité est longue, plus la sensibilité est généralement élevée."},
+  {id:"q-obligations-004", niveau:"intermediaire", categorie:"Obligations", type:"calcul", question:"Une obligation de valeur nominale 1 000 €, coupon annuel 5%, échéance dans 1 an, se négocie quand le taux du marché est exactement égal à son taux de coupon (5%). Quel est son prix ?", choix:["950 €","1 000 €","1 050 €","1 100 €"], bonneReponse:1, explication:"Quand le taux du marché est exactement égal au taux de coupon, l'obligation se négocie « au pair » : son prix est égal à sa valeur nominale, soit 1 000 €. C'est le cas de référence à partir duquel on comprend prime et décote."},
+  {id:"q-obligations-005", niveau:"intermediaire", categorie:"Obligations", type:"qcm", question:"Une obligation dont le taux de coupon (4%) est inférieur au taux exigé par le marché (6%) se négocie...", choix:["Au pair, exactement à sa valeur nominale","En décote, en dessous de sa valeur nominale","En prime, au-dessus de sa valeur nominale","À un prix totalement indépendant du taux de marché"], bonneReponse:1, explication:"Un coupon moins attractif que ce qu'offrent les nouvelles obligations doit être compensé par un prix d'achat plus bas, pour que l'acheteur obtienne malgré tout un rendement total (YTM) proche du taux de marché : c'est la décote."},
+  {id:"q-obligations-006", niveau:"avance", categorie:"Obligations", type:"qcm", question:"Que mesure la duration d'une obligation, en une phrase ?", choix:["Sa durée de vie restante avant échéance, rien de plus","Une estimation, en années, de la sensibilité de son prix à une variation des taux d'intérêt","Son taux de coupon annuel","Sa notation de crédit auprès des agences"], bonneReponse:1, explication:"La duration donne une estimation chiffrée directe : une duration de 7 signifie qu'une hausse de 1 point de pourcentage des taux fait généralement baisser le prix d'environ 7% — ce n'est pas juste un synonyme de la maturité."},
+  {id:"q-obligations-007", niveau:"avance", categorie:"Obligations", type:"vraifaux", question:"Une notation de crédit \"investment grade\" garantit qu'un émetteur ne fera jamais défaut sur ses obligations.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Une notation de crédit est une opinion d'agence à un instant donné sur un risque de défaut jugé plus faible, jamais une garantie absolue — elle peut être dégradée par la suite, et un défaut reste possible même pour un émetteur bien noté."},
 
   // ---- Diversification ----
   {id:"q-diversification-001", niveau:"debutant", categorie:"Diversification", type:"qcm", question:"Pourquoi diversifie-t-on un portefeuille ?", choix:["Pour être certain de gagner davantage","Pour réduire la dépendance à un seul actif ou secteur","Parce que la loi l'impose","Pour payer moins d'impôts automatiquement"], bonneReponse:1, explication:"Diversifier répartit le risque entre plusieurs actifs, sans supprimer le risque de marché global."},
@@ -1453,7 +1457,7 @@ const COURS_CATALOG = [
   // pour Likanza — structure/pédagogie inspirées de Khan Academy et CFI,
   // aucun texte copié). Voir renderCoursRich/renderCourseBlock (data.js).
   {id:'bourse-actions', titre:'Comprendre la Bourse et les actions', niveau:'Débutant',
-    libraryTermes:['Action','ETF','Capitalisation boursière','Obligation','PER (Price Earning Ratio)'],
+    libraryTermes:['Action','ETF','Capitalisation boursière','Obligation','PER (Price Earning Ratio)',"Rendement à l'échéance (YTM)",'Duration (obligation)','Notation de crédit (investment grade / high yield)'],
     quizCategories:['Bourse','Actions','ETF','Obligations'],
     applyUrl:'bourse.html', applyLabel:'Voir de vraies fiches actions et leur PER réel',
     acquis:[
@@ -1502,6 +1506,17 @@ const COURS_CATALOG = [
         {type:'pourquoi', texte:"Un PER élevé ne signifie jamais automatiquement qu'une action est chère ou mauvaise, et un PER faible ne signifie jamais automatiquement qu'elle est bon marché. L'interprétation dépend notamment de la croissance attendue des bénéfices, du secteur (les secteurs à forte croissance ont structurellement des PER plus élevés que les secteurs matures), de la fiabilité de ces bénéfices dans le temps, et de la situation particulière de l'entreprise à ce moment précis."},
         {type:'exerciceErreur', affirmation:"Cette action est forcément une bonne affaire parce que son PER est faible.", pourquoi:"Un PER faible peut aussi signifier que le marché anticipe une baisse future des bénéfices, des risques spécifiques à l'entreprise ou à son secteur, ou une croissance jugée limitée — pas nécessairement une « bonne affaire ». Le PER est un point de départ pour comparer des entreprises d'un même secteur, jamais une conclusion à lui seul."},
         {type:'texte', texte:"Le PER n'est qu'un premier outil parmi d'autres pour interpréter un prix — la partie Bourse de Likanza permet de voir le PER réel, calculé et daté, de n'importe quelle action suivie, avec les autres indicateurs financiers qui l'entourent."}
+      ]},
+      {titre:"6. Le prix d'une obligation, au-delà de l'intuition", blocs:[
+        {type:'texte', texte:"Le chapitre 4 a posé l'intuition : quand les taux montent, le prix des obligations existantes baisse. Mais de COMBIEN, exactement ? Répondre à cette question demande de comprendre comment le prix d'une obligation se calcule réellement."},
+        {type:'definition', texte:"Le prix d'une obligation est simplement la somme de tous ses flux futurs (coupons + remboursement final) actualisés au taux exigé aujourd'hui par le marché. Actualiser un flux futur, c'est calculer ce qu'il vaut aujourd'hui, sachant qu'un euro reçu demain vaut moins qu'un euro reçu tout de suite."},
+        {type:'calcul', texte:"Prix = somme des coupons actualisés + valeur nominale actualisée, chacun au taux du marché.", schema:
+"Obligation : nominal 1 000 €, coupon annuel 5%, échéance 3 ans\nTaux du marché : 5% (identique au coupon)\n\nPrix = 50/(1,05)¹ + 50/(1,05)² + (50+1000)/(1,05)³\n     = 47,6 + 45,4 + 906,3\n     ≈ 999,3 € ≈ 1 000 €\n\nQuand le taux du marché = le taux de coupon, le prix ≈ la valeur nominale\n(l'obligation se négocie \"au pair\")."},
+        {type:'exerciceErreur', affirmation:"Le taux de coupon affiché sur une obligation est toujours égal à ce que gagne réellement un acheteur qui l'achète aujourd'hui.", pourquoi:"Le taux de coupon est fixé une fois pour toutes à l'émission et ne change jamais. Mais le PRIX de l'obligation, lui, varie en permanence sur le marché selon les taux actuels. Un acheteur qui paie moins que la valeur nominale (décote) obtient un rendement réel — le YTM, rendement à l'échéance — supérieur au taux de coupon affiché ; un acheteur qui paie plus (prime) obtient un rendement réel inférieur. Le YTM et le taux de coupon ne coïncident que dans le cas particulier où le prix payé est exactement la valeur nominale."},
+        {type:'pourquoi', texte:"C'est exactement ce mécanisme qui explique le chapitre 4 : si les taux du marché montent après l'émission d'une obligation à coupon fixe, actualiser ses flux futurs à ce nouveau taux, plus élevé, donne un prix plus faible — mécaniquement, sans aucune décision de l'émetteur."},
+        {type:'attention', texte:"Toutes les obligations ne réagissent pas de la même ampleur à une même variation de taux : la duration (voir la Bibliothèque) donne une estimation chiffrée de cette sensibilité, en années — plus la maturité est longue et le coupon faible, plus la duration (et donc la sensibilité) est élevée."},
+        {type:'casReel', texte:"Utilise le calculateur obligataire du Laboratoire financier pour tester toi-même : entre un nominal, un coupon et une maturité, puis fais varier le taux du marché pour voir le prix bouger en temps réel — ou entre un prix observé pour retrouver le rendement à l'échéance (YTM) implicite, calculé par recherche numérique."},
+        {type:'approfondir', texte:"Le prix d'une obligation dépend aussi du risque de défaut perçu de l'émetteur, résumé par sa notation de crédit (investment grade vs high yield) : à caractéristiques égales, une obligation jugée plus risquée doit offrir un rendement plus élevé pour trouver preneur — c'est le \"spread de crédit\", la prime de risque au-delà du taux sans risque."}
       ]}
     ]},
   {id:'lire-une-entreprise', titre:'Apprendre à lire une entreprise', niveau:'Intermédiaire',
@@ -2318,6 +2333,58 @@ const LIBRARY = [
     avantages:["Revenu généralement plus prévisible que les actions"],
     inconvenients:["Sensible aux variations de taux d'intérêt","Risque de défaut de l'émetteur"],
     erreurs:["Croire qu'une obligation ne peut jamais perdre de valeur avant l'échéance"]
+  },
+  {
+    terme:"Rendement à l'échéance (YTM)",
+    categorie:"Bourse",
+    niveau:"Intermédiaire",
+    lecture:"3 min",
+    simple:"Le YTM (Yield to Maturity), c'est le rendement annuel réellement obtenu si tu achètes une obligation à son prix actuel et la gardes jusqu'à son remboursement.",
+    detail:"Contrairement au taux de coupon (fixé une fois pour toutes à l'émission), le YTM tient compte du prix RÉELLEMENT payé aujourd'hui — qui peut être différent de la valeur nominale. Une obligation achetée moins cher que sa valeur nominale (décote) offre un YTM supérieur à son taux de coupon ; achetée plus cher (prime), un YTM inférieur.",
+    avance:"Le YTM se calcule par recherche numérique (pas de formule fermée) : c'est le taux d'actualisation unique qui égalise la somme des coupons futurs et du remboursement final actualisés avec le prix actuel de l'obligation. Il suppose que tous les coupons reçus sont réinvestis exactement à ce même taux — une hypothèse simplificatrice, rarement vérifiée en pratique.",
+    exemple:"Une obligation de valeur nominale 1 000 €, coupon annuel 4%, échéance dans 10 ans, achetée 900 € (décote) : son YTM est supérieur à 4%, car l'acheteur touche les coupons de 4% ET un gain supplémentaire de 100 € au remboursement.",
+    avantages:["Permet de comparer deux obligations différentes sur un vrai rendement attendu, pas seulement leur taux de coupon affiché"],
+    inconvenients:["Suppose un réinvestissement des coupons au même taux, rarement garanti en pratique","Suppose que l'obligation est gardée jusqu'à l'échéance et que l'émetteur ne fait pas défaut"],
+    erreurs:["Confondre le taux de coupon (fixe, affiché à l'émission) avec le YTM (dépend du prix réellement payé, qui varie constamment sur le marché)"]
+  },
+  {
+    terme:"Duration (obligation)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"3 min",
+    simple:"La duration mesure à quel point le prix d'une obligation réagit fortement si les taux d'intérêt du marché bougent.",
+    detail:"Exprimée en années, la duration donne une estimation directe : une duration de 7 signifie qu'une hausse de 1 point de pourcentage des taux fait généralement baisser le prix de l'obligation d'environ 7%, et inversement pour une baisse des taux.",
+    avance:"Plus la maturité est longue et plus le coupon est faible, plus la duration est élevée (une obligation zéro-coupon a une duration égale à sa maturité, le cas le plus sensible). C'est une approximation linéaire valable pour de petites variations de taux — pour des variations plus importantes, la convexité corrige cette approximation.",
+    exemple:"Deux obligations au même prix : l'une à échéance 2 ans, l'autre à échéance 20 ans. La seconde a une duration bien plus élevée : son prix réagira beaucoup plus fortement à une même variation des taux.",
+    avantages:["Donne une estimation rapide et chiffrée de la sensibilité aux taux, plutôt qu'une intuition qualitative"],
+    inconvenients:["N'est qu'une approximation linéaire : devient moins précise pour de grandes variations de taux (voir Convexité)"],
+    erreurs:["Croire que la duration est la même chose que la maturité — la duration en est généralement inférieure, sauf pour une obligation zéro-coupon"]
+  },
+  {
+    terme:"Convexité (obligation)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"La convexité corrige l'approximation de la duration : la vraie relation entre prix et taux d'une obligation n'est pas exactement une ligne droite, mais une courbe.",
+    detail:"La duration seule surestime légèrement la baisse de prix en cas de hausse des taux, et sous-estime légèrement la hausse de prix en cas de baisse des taux. La convexité mesure cette courbure et permet d'affiner l'estimation, surtout utile pour de fortes variations de taux.",
+    avance:"Une convexité positive (le cas normal pour la plupart des obligations classiques) est en réalité un avantage pour le détenteur : elle amortit les pertes en cas de hausse des taux et amplifie les gains en cas de baisse, par rapport à ce que prédirait la seule duration.",
+    exemple:"Pour une petite variation de taux (0,1 point), la duration seule suffit à estimer le prix. Pour une variation de 3 points, ignorer la convexité peut conduire à une estimation de prix sensiblement fausse.",
+    avantages:["Affine l'estimation de duration, surtout utile pour de fortes variations de taux"],
+    inconvenients:["Notion plus abstraite et rarement nécessaire pour un premier niveau de compréhension du risque obligataire"],
+    erreurs:["Ignorer complètement la convexité pour estimer l'impact d'une forte variation de taux, alors qu'elle devient significative dans ce cas"]
+  },
+  {
+    terme:"Notation de crédit (investment grade / high yield)",
+    categorie:"Bourse",
+    niveau:"Intermédiaire",
+    lecture:"3 min",
+    simple:"La notation de crédit est une évaluation, publiée par des agences spécialisées (S&P, Moody's, Fitch), du risque qu'un émetteur d'obligations ne rembourse pas sa dette.",
+    detail:"Les obligations \"investment grade\" (catégorie investissement, notées BBB-/Baa3 ou mieux) sont jugées à risque de défaut relativement faible — typiquement des États solides ou de grandes entreprises. Les obligations \"high yield\" (à haut rendement, notées en dessous, parfois appelées \"junk bonds\") présentent un risque de défaut plus élevé, compensé par un coupon généralement plus élevé.",
+    avance:"Une notation de crédit est une opinion d'agence à un instant donné, pas une garantie : elle peut être dégradée (downgrade) ou relevée (upgrade) au fil du temps selon la situation financière réelle de l'émetteur, et les agences ont déjà été critiquées historiquement pour avoir mal anticipé certains défauts.",
+    exemple:"Une obligation d'État notée AAA offre généralement un coupon plus faible qu'une obligation d'entreprise notée BB — la différence de coupon rémunère précisément la différence de risque de défaut perçu.",
+    avantages:["Donne un repère standardisé et publiquement disponible pour comparer le risque de défaut de différents émetteurs"],
+    inconvenients:["N'est qu'une opinion d'agence, révisable, jamais une garantie absolue de remboursement"],
+    erreurs:["Croire qu'une notation \"investment grade\" élimine tout risque de défaut — elle indique seulement un risque jugé plus faible, jamais nul"]
   },
   {
     terme:"Taux directeur",

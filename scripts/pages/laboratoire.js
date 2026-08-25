@@ -66,7 +66,8 @@ const LAB_WIDGETS = {
     {id:'widget-invest-dca', title:'DCA historique', desc:'Prix moyen réel avec un versement mensuel régulier.', icon:'banknote'},
     {id:'widget-invest-compound', title:'Intérêts composés', desc:'Un capital qui grossit avec des versements réguliers.', icon:'coins'},
     {id:'widget-invest-pru', title:"Prix moyen d'achat", desc:'Calcule ton prix moyen à partir de tes achats successifs.', icon:'calculator'},
-    {id:'widget-invest-var', title:'Risque quantitatif (VaR)', desc:'Perte potentielle estimée, selon un niveau de confiance choisi.', icon:'shield'}
+    {id:'widget-invest-var', title:'Risque quantitatif (VaR)', desc:'Perte potentielle estimée, selon un niveau de confiance choisi.', icon:'shield'},
+    {id:'widget-invest-bond', title:'Calculateur obligataire (prix / YTM)', desc:'Prix ↔ rendement à l\'échéance, à partir des vrais flux de coupons.', icon:'landmark'}
   ],
   'tab-logement': [
     {id:'labCreditCard', title:'Coût réel de mon crédit', desc:"Tableau d'amortissement complet, taux et durée.", icon:'landmark'},
@@ -169,6 +170,13 @@ const LAB_METHODOLOGY = {
     hypotheses: "Cette VaR paramétrique suppose que les rendements suivent approximativement une loi normale (voir ce terme dans la Bibliothèque), et met à l'échelle une volatilité annuelle sur l'horizon choisi via la règle dite « racine du temps ».",
     limites: "L'hypothèse de loi normale sous-estime la fréquence réelle des mouvements de marché extrêmes (« queues de distribution plus épaisses » en réalité) : cette VaR peut donc sous-estimer le risque des pertes les plus sévères, précisément celles qui comptent le plus en pratique.",
     comprendre: "Une VaR n'est jamais une perte maximale garantie : c'est un seuil associé à une probabilité de dépassement. Une VaR à 95% signifie qu'il reste, par construction, 5% de scénarios où la perte réelle dépasse ce seuil — parfois largement."
+  },
+  'invest-bond': {
+    calcul: "Mode « Taux → Prix » : le prix est la somme de chaque coupon futur et de la valeur nominale, chacun actualisé au taux du marché saisi (formule fermée standard). Mode « Prix → YTM » : aucune formule fermée n'existe pour le rendement à l'échéance d'une obligation à coupons — le taux est retrouvé par recherche numérique (bissection), en cherchant le taux qui redonne exactement le prix observé saisi.",
+    donnees: "Aucune donnée externe : la valeur nominale, le taux de coupon, la maturité, la fréquence et le taux du marché (ou le prix observé) sont saisis par toi.",
+    hypotheses: "Coupons versés à intervalles réguliers (annuels ou semestriels selon la fréquence choisie) jusqu'à l'échéance, puis remboursement intégral de la valeur nominale à l'échéance — aucun défaut de l'émetteur n'est modélisé.",
+    limites: "Ne tient pas compte des frais de courtage, de la fiscalité, ni d'un remboursement anticipé (obligation « callable »). Le YTM suppose que chaque coupon reçu est réinvesti exactement au même taux — une simplification rarement vérifiée en pratique.",
+    comprendre: "Le prix et le taux évoluent toujours en sens inverse : un taux du marché plus élevé que le coupon fait baisser le prix sous la valeur nominale (décote), un taux plus faible le fait monter au-dessus (prime). Voir le chapitre \"Le prix d'une obligation\" du cours Bourse pour l'intuition complète."
   },
   'credit': {
     calcul: "Mensualité = capital emprunté × [taux mensuel × (1+taux mensuel)^n] ÷ [(1+taux mensuel)^n − 1], où n est le nombre de mensualités — la formule standard d'un prêt amortissable à taux fixe.",
@@ -1230,6 +1238,62 @@ function updateVar(){
   document.getElementById(id).addEventListener('input', () => { updateVar(); markVarUsed(); });
 });
 updateVar();
+
+// ---------- Calculateur obligataire (prix / YTM) — computeBondPrice/
+// computeBondYTM (scripts/data.js). Deux modes exclusifs plutôt que les deux
+// résultats affichés en même temps : un utilisateur connaît soit le taux du
+// marché (et veut le prix), soit un prix observé (et veut le rendement
+// implicite) — jamais les deux à la fois, ce qui rendrait le formulaire
+// ambigu sur ce qui est saisi vs calculé. ----------
+let bondMode = 'price';
+function markBondUsed(){ tryAwardQuizPoints(`lab-bond-${new Date().toDateString()}`, 8, {usedBondCalc:true}); }
+function setBondMode(mode){
+  bondMode = mode;
+  document.querySelectorAll('#bondModeToggle .pill').forEach(p => p.classList.toggle('active', p.dataset.mode === mode));
+  document.getElementById('bondRateField').style.display = mode === 'price' ? '' : 'none';
+  document.getElementById('bondPriceField').style.display = mode === 'ytm' ? '' : 'none';
+  updateBond();
+}
+document.querySelectorAll('#bondModeToggle .pill').forEach(p => {
+  p.addEventListener('click', () => { setBondMode(p.dataset.mode); markBondUsed(); });
+});
+function updateBond(){
+  const face = +document.getElementById('bondFace').value || 0;
+  const coupon = +document.getElementById('bondCoupon').value;
+  const years = +document.getElementById('bondYears').value || 0;
+  const freq = +document.getElementById('bondFreq').value || 1;
+  const resultEl = document.getElementById('bondResult');
+  if(bondMode === 'price'){
+    const rate = +document.getElementById('bondRate').value;
+    const price = computeBondPrice(face, coupon, years, rate, freq);
+    if(price == null){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : la valeur nominale et la maturité doivent être positives.</p>`;
+      return;
+    }
+    const ecart = price - face;
+    const statut = ecart > 0.5 ? 'en prime (au-dessus du pair)' : (ecart < -0.5 ? 'en décote (en dessous du pair)' : 'au pair (proche de sa valeur nominale)');
+    const comparaison = coupon > rate ? 'supérieur' : (coupon < rate ? 'inférieur' : 'égal');
+    resultEl.innerHTML = `
+      ${renderDataBadge('calcul')}
+      <div class="result-row" style="margin-top:10px;"><span>Prix théorique de l'obligation</span><span class="mono" style="font-size:18px;color:var(--gold-bright);">${fmtEUR(price)}</span></div>
+      <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">L'obligation se négocie <strong style="color:var(--text);">${statut}</strong>, car son taux de coupon (${coupon}%) est ${comparaison} au taux actuellement exigé par le marché (${rate}%).</p>`;
+  } else {
+    const price = +document.getElementById('bondPriceInput').value;
+    const ytm = computeBondYTM(price, face, coupon, years, freq);
+    if(ytm == null){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Impossible de calculer un rendement pour ce prix : vérifie que le prix saisi est positif et cohérent avec les autres valeurs (un prix extrêmement éloigné de la valeur nominale peut sortir de la plage de recherche -99% à +100%).</p>`;
+      return;
+    }
+    resultEl.innerHTML = `
+      ${renderDataBadge('calcul')}
+      <div class="result-row" style="margin-top:10px;"><span>Rendement à l'échéance (YTM) estimé</span><span class="mono" style="font-size:18px;color:var(--gold-bright);">${ytm.toFixed(2)} %</span></div>
+      <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">Au prix saisi de ${fmtEUR(price)}, un acheteur qui garde l'obligation jusqu'à l'échéance obtient un rendement annualisé d'environ ${ytm.toFixed(2)}% — à comparer au taux de coupon affiché de ${coupon}%.</p>`;
+  }
+}
+['bondFace','bondCoupon','bondYears','bondFreq','bondRate','bondPriceInput'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { updateBond(); markBondUsed(); });
+});
+updateBond();
 
 // ============================================================
 // ---------- Laboratoire économique (tab-economie, section 4 du prompt
