@@ -2018,7 +2018,7 @@ const COURS_CATALOG = [
       ]}
     ]},
   {id:'options-introduction', titre:"Comprendre les options (call, put, payoff)", niveau:'Avancé',
-    libraryTermes:['Option (financière)','Call (option d\'achat)','Put (option de vente)','Prime (option)','Prix d\'exercice (strike)','Effet de levier'],
+    libraryTermes:['Option (financière)','Call (option d\'achat)','Put (option de vente)','Prime (option)','Prix d\'exercice (strike)','Effet de levier','Volatilité implicite','Delta (option)','Gamma (option)','Theta (option)','Vega (option)'],
     quizCategories:['Options'],
     applyUrl:'bourse.html#tab-options', applyLabel:"Essayer le simulateur de payoff",
     acquis:["Comprendre ce qu'est une option et pourquoi son prix (la prime) est le risque maximal pour un acheteur", "Savoir lire un diagramme de payoff à l'échéance pour un call comme pour un put", "Comprendre pourquoi vendre une option n'est pas symétrique à en acheter une, en termes de risque"],
@@ -2044,6 +2044,14 @@ const COURS_CATALOG = [
         {type:'pourquoi', texte:"Un acheteur d'option ne peut jamais perdre plus que sa prime, car il n'a qu'un droit, jamais une obligation : dans le pire des cas, il laisse simplement l'option expirer sans l'exercer. Un vendeur, lui, a une obligation contractuelle : si le marché évolue fortement contre sa position, il doit l'honorer, quelle que soit l'ampleur du mouvement — d'où un risque structurellement asymétrique entre acheteur et vendeur."},
         {type:'attention', texte:"L'effet de levier d'une option (une mise de départ, la prime, bien inférieure au prix de l'actif sous-jacent) amplifie les gains ET les pertes en proportion de cette mise — le même mécanisme qui rend un LBO ou un crédit immobilier à fort effet de levier plus risqué qu'un achat comptant (voir le terme Effet de levier)."},
         {type:'retenir', texte:"Avant toute position sur une option, la première question à se poser n'est pas « combien puis-je gagner ? » mais « quelle est ma perte maximale possible, et est-elle plafonnée ou non ? »."}
+      ]},
+      {titre:"Aller plus loin : les Grecques et la volatilité implicite (niveau avancé)", blocs:[
+        {type:'attention', texte:"Ce chapitre est volontairement conceptuel, pas calculatoire. Le simulateur de payoff Likanza affiche uniquement le résultat CERTAIN d'une option à son échéance — il ne calcule jamais son prix théorique AVANT l'échéance (un calcul type Black-Scholes), car cela exigerait une hypothèse de volatilité future invérifiable, présentée comme un fait alors que ce n'en est pas un. Les Grecques ci-dessous s'entendent donc comme des notions à comprendre, pas comme des chiffres que Likanza calcule pour toi."},
+        {type:'definition', texte:"Les \"Grecques\" sont des mesures de sensibilité du prix théorique d'une option à différents facteurs. Le delta mesure la sensibilité au prix de l'actif sous-jacent ; le gamma mesure à quelle vitesse le delta lui-même change ; le theta mesure la perte de valeur due au seul écoulement du temps (\"érosion temporelle\") ; le vega mesure la sensibilité à un changement de volatilité implicite anticipée."},
+        {type:'pourquoi', texte:"Pourquoi le theta compte-t-il particulièrement pour un acheteur d'option ? Parce qu'une option peut perdre de la valeur même si le prix de l'actif sous-jacent ne bouge pas du tout, simplement parce que le temps passe et que l'échéance approche — un phénomène souvent sous-estimé par les débutants, qui ne raisonnent qu'en termes de mouvement de prix."},
+        {type:'definition', texte:"La volatilité implicite, elle, n'est pas une invention théorique : c'est une donnée réellement déduite des prix d'options observés sur le marché — l'inverse d'un calcul Black-Scholes classique (au lieu de partir d'une volatilité pour en déduire un prix, on part du prix réel pour en déduire quelle volatilité il implique)."},
+        {type:'approfondir', texte:"L'indice VIX, souvent surnommé « indice de la peur », mesure la volatilité implicite moyenne des options du S&P 500 — un indicateur suivi de près par de nombreux investisseurs comme baromètre de l'incertitude perçue par le marché dans son ensemble, au-delà d'une seule action."},
+        {type:'retenir', texte:"Les Grecques et la volatilité implicite sont des outils de compréhension du RISQUE d'une position d'options avant l'échéance — jamais une garantie de prix futur, et jamais un substitut à la règle de base déjà vue au chapitre précédent : connaître sa perte maximale possible avant d'ouvrir une position."}
       ]}
     ]},
   {id:'forex-essentiels', titre:'Forex : lot, marge et gestion du risque sur une position', niveau:'Avancé',
@@ -2192,6 +2200,71 @@ const LIBRARY = [
     avantages:[],
     inconvenients:[],
     erreurs:["Confondre le prix d'exercice (fixé au contrat, ne bouge jamais) et le prix de marché de l'actif sous-jacent (qui varie en continu)"]
+  },
+  {
+    terme:"Volatilité implicite",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"La volatilité implicite est la volatilité future que le marché anticipe pour un actif, déduite du prix actuel de ses options — à distinguer de la volatilité historique, qui mesure ce qui s'est déjà réellement passé.",
+    detail:"Elle se calcule dans l'autre sens qu'un prix théorique d'option : au lieu de partir d'une volatilité pour en déduire un prix, on part du prix réellement observé sur le marché pour en déduire quelle volatilité future ce prix implique. C'est une donnée réelle du marché (le prix des options s'échange réellement à ce niveau), pas une prévision inventée.",
+    avance:"Une volatilité implicite élevée signifie que le marché anticipe des mouvements de prix importants (dans un sens ou dans l'autre, la volatilité implicite ne dit rien sur la direction), ce qui rend les primes d'options plus chères — l'indice VIX, souvent surnommé « indice de la peur », mesure la volatilité implicite moyenne du S&P 500.",
+    exemple:"Avant l'annonce des résultats trimestriels d'une entreprise, la volatilité implicite de ses options augmente généralement, reflétant l'incertitude accrue du marché sur l'ampleur du mouvement de prix à venir — dans un sens comme dans l'autre.",
+    avantages:["Donne une mesure des anticipations du marché sur l'ampleur des mouvements futurs, directement lisible dans le prix réel des options"],
+    inconvenients:["Ne dit rien sur la direction anticipée du mouvement, seulement sur son ampleur possible"],
+    erreurs:["Confondre volatilité implicite (anticipation du marché, déduite des prix réels) et volatilité historique (mesure de ce qui s'est déjà passé) — les deux peuvent diverger sensiblement"]
+  },
+  {
+    terme:"Delta (option)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le delta mesure, en théorie, de combien le prix d'une option varie pour une variation de 1€ du prix de l'actif sous-jacent — un delta de 0,5 signifie qu'une hausse de 1€ de l'actif ferait théoriquement gagner environ 0,50€ à l'option.",
+    detail:"Le delta varie entre 0 et 1 pour un call (toujours positif : l'option gagne de la valeur quand l'actif monte), et entre -1 et 0 pour un put (toujours négatif : l'option gagne de la valeur quand l'actif baisse). Plus une option est « dans la monnaie », plus son delta se rapproche de 1 (ou -1) ; plus elle est « hors de la monnaie », plus il se rapproche de 0.",
+    avance:"Le delta est aussi utilisé comme une estimation approximative de la probabilité qu'une option termine « dans la monnaie » à l'échéance — une lecture pratique très répandue chez les traders professionnels, bien que ce ne soit pas sa définition mathématique exacte.",
+    exemple:"Un call avec un delta de 0,7 signifie que, toutes choses égales par ailleurs, une hausse de 1€ de l'actif sous-jacent ferait théoriquement gagner environ 0,70€ à la valeur de cette option.",
+    avantages:["Donne une estimation directe de la sensibilité d'une option aux mouvements de l'actif sous-jacent"],
+    inconvenients:["N'est qu'une sensibilité instantanée : elle change elle-même en permanence à mesure que le prix de l'actif et le temps restant évoluent (voir Gamma)"],
+    erreurs:["Traiter le delta comme une valeur fixe et garantie, alors qu'il évolue en continu avec le prix de l'actif et le temps restant avant l'échéance"]
+  },
+  {
+    terme:"Gamma (option)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le gamma mesure à quelle vitesse le delta d'une option change lorsque le prix de l'actif sous-jacent bouge — le delta mesure la sensibilité du prix de l'option, le gamma mesure la sensibilité du delta lui-même.",
+    detail:"Un gamma élevé signifie que le delta d'une option peut changer très rapidement pour un petit mouvement de l'actif sous-jacent — typiquement le cas des options proches de leur prix d'exercice (« à la monnaie ») et proches de leur échéance.",
+    avance:"Le gamma est généralement le plus élevé pour les options à la monnaie proches de l'échéance, et diminue à mesure qu'une option s'éloigne de son prix d'exercice (dans un sens ou dans l'autre) ou que l'échéance s'éloigne dans le temps.",
+    exemple:"Une option qui passe rapidement de « hors de la monnaie » à « dans la monnaie » lors d'un mouvement brutal de l'actif voit généralement son delta changer très vite — c'est précisément ce que mesure un gamma élevé.",
+    avantages:["Permet d'anticiper à quel point la sensibilité d'une option (son delta) pourrait elle-même évoluer rapidement"],
+    inconvenients:["Notion de second ordre, plus abstraite que le delta lui-même — utile surtout pour une gestion active et fréquente de positions d'options"],
+    erreurs:["Ignorer le gamma en supposant que le delta d'une option reste stable, alors qu'il peut varier rapidement, en particulier proche de l'échéance"]
+  },
+  {
+    terme:"Theta (option)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le theta mesure la perte de valeur théorique d'une option due au seul écoulement du temps, toutes choses égales par ailleurs (prix de l'actif et volatilité implicite inchangés) — souvent appelé « l'érosion temporelle ».",
+    detail:"Une option a une durée de vie limitée : plus l'échéance approche, moins il reste de temps pour que le mouvement de prix espéré se produise, ce qui réduit mécaniquement sa valeur, même si le prix de l'actif sous-jacent ne bouge pas du tout.",
+    avance:"L'érosion temporelle n'est pas linéaire dans le temps : elle s'accélère généralement à mesure que l'échéance approche, particulièrement pour les options à la monnaie — une option perd typiquement une plus grande part de sa valeur temporelle dans ses derniers jours de vie que dans ses premiers mois.",
+    exemple:"Deux options identiques, l'une à échéance dans 30 jours et l'autre dans 3 jours, perdent de la valeur au fil du temps même si le prix de l'actif ne bouge pas — mais celle à échéance dans 3 jours perd généralement une part de sa valeur bien plus vite, toutes choses égales par ailleurs.",
+    avantages:["Explique un phénomène réel et souvent mal compris : une option peut perdre de la valeur même quand l'actif sous-jacent ne bouge pas"],
+    inconvenients:["Défavorable par nature à l'acheteur d'une option (qui subit l'érosion), favorable au vendeur (qui en bénéficie) — un facteur à intégrer dans toute décision"],
+    erreurs:["Acheter une option en ignorant l'érosion temporelle, en supposant à tort que seule l'évolution du prix de l'actif détermine sa valeur"]
+  },
+  {
+    terme:"Vega (option)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le vega mesure de combien la valeur théorique d'une option varierait si la volatilité implicite anticipée par le marché changeait, toutes choses égales par ailleurs (prix de l'actif et temps restant inchangés).",
+    detail:"Une hausse de la volatilité implicite augmente généralement la valeur d'une option (call comme put) : plus le marché anticipe des mouvements amples, plus la probabilité perçue que l'option devienne fortement profitable augmente, ce qui la rend plus chère.",
+    avance:"Le vega est généralement le plus élevé pour les options à échéance lointaine et à la monnaie — une option qui a beaucoup de temps devant elle est plus sensible à un changement d'anticipation de volatilité qu'une option sur le point d'expirer, dont la valeur dépend surtout de la valeur intrinsèque déjà acquise.",
+    exemple:"Un événement qui augmente soudainement l'incertitude du marché (annonce macroéconomique inattendue, résultat d'entreprise à venir) fait généralement grimper la volatilité implicite, et donc la valeur des options sur les actifs concernés — même si leur prix ne bouge pas encore.",
+    avantages:["Permet de comprendre pourquoi la valeur d'une option peut varier même sans mouvement du prix de l'actif sous-jacent, uniquement par un changement d'anticipation de volatilité"],
+    inconvenients:["Rend une position d'options sensible à un facteur (l'anticipation de volatilité du marché) distinct et parfois plus difficile à anticiper que le seul mouvement de prix"],
+    erreurs:["Se concentrer uniquement sur la direction anticipée du prix de l'actif, en ignorant que la valeur d'une option dépend aussi de l'évolution de la volatilité implicite elle-même"]
   },
   {
     terme:"ETF",
