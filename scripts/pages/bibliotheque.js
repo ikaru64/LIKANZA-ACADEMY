@@ -30,6 +30,7 @@ function renderLeafCards(container, items){
       </button>
       <div class="kt-leaf-body">
         <div id="ktConseil-${i}"></div>
+        ${l.prerequis && l.prerequis.length ? `<p class="kt-leaf-prereq" style="font-size:12px;color:var(--text-dim);margin-bottom:8px;"><strong>Avant de continuer, il peut être utile de connaître :</strong> ${l.prerequis.map(p => `<a href="bibliotheque.html#${encodeURIComponent(p.replace(/\s+/g,'-'))}" class="badge">${p}</a>`).join(' ')}</p>` : ''}
         <p>${l[bodyKey]}</p>
         ${l.exemple ? `<p class="kt-leaf-example"><strong>Exemple : </strong>${l.exemple}</p>` : ''}
         ${l.avantages && l.avantages.length ? `<p class="kt-leaf-pro"><strong>Avantages :</strong> ${l.avantages.join(' · ')}</p>` : ''}
