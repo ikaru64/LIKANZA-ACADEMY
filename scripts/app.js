@@ -449,6 +449,10 @@ const QUIZ_BANK_FULL = [
   {id:"q-etf-001", niveau:"debutant", categorie:"ETF", type:"qcm", question:"Quel est l'un des principaux avantages d'un ETF diversifié ?", choix:["Il garantit un rendement positif", "Il permet d'investir dans plusieurs entreprises en un seul produit", "Il ne peut jamais perdre de valeur", "Il ne comporte aucuns frais"], bonneReponse:1, explication:"Un ETF peut regrouper plusieurs dizaines ou milliers d'actifs, mais il ne garantit pas un rendement positif : il suit un indice, à la hausse comme à la baisse."},
   {id:"q-etf-002", niveau:"debutant", categorie:"ETF", type:"qcm", question:"Un ETF qui suit le CAC 40 fait globalement quoi ?", choix:["Il choisit les meilleures actions à la main chaque semaine","Il réplique la performance des 40 entreprises de l'indice CAC 40","Il garantit un rendement fixe de 4%","Il investit uniquement en obligations d'État"], bonneReponse:1, explication:"Un ETF indiciel réplique passivement la performance de son indice de référence, sans sélection active des titres."},
   {id:"q-etf-003", niveau:"intermediaire", categorie:"ETF", type:"qcm", question:"Pourquoi les frais de gestion d'un ETF sont-ils souvent plus bas que ceux d'un fonds géré activement ?", choix:["Parce que la loi l'impose uniquement aux ETF","Parce qu'un ETF suit un indice de façon automatique, sans équipe de gestion active","Parce que les ETF ne sont pas réglementés","Parce que les ETF sont réservés aux professionnels"], bonneReponse:1, explication:"La gestion passive (suivre un indice) nécessite moins de ressources qu'une gestion active cherchant à sélectionner les meilleurs titres, d'où des frais généralement plus faibles."},
+  {id:"q-etf-004", niveau:"avance", categorie:"ETF", type:"qcm", question:"Un ETF à effet de levier x2 vise à répliquer un multiple de 2 de la performance de son indice sur quelle période exactement ?", choix:["Sur toute la durée de détention, quelle qu'elle soit", "Sur la seule performance QUOTIDIENNE de l'indice, rebalancée chaque jour", "Sur une période fixe d'un an", "Le multiple ne s'applique qu'à l'échéance du produit"], bonneReponse:1, explication:"Le levier d'un ETF à effet de levier se recalcule chaque jour sur la clôture précédente : il ne vise un multiple exact que de la performance quotidienne, jamais de la performance cumulée sur plusieurs jours ou semaines."},
+  {id:"q-etf-005", niveau:"avance", categorie:"ETF", type:"vraifaux", question:"Un ETF à effet de levier x2 détenu sur plusieurs mois affiche toujours exactement le double de la performance cumulée de son indice sur la même période.", choix:["Vrai","Faux"], bonneReponse:1, explication:"À cause du rebalancement quotidien, la performance cumulée d'un ETF à effet de levier peut diverger sensiblement du simple multiple de la performance cumulée de l'indice sur plusieurs jours ou semaines, surtout sur un marché qui oscille sans tendance claire — un phénomène parfois appelé \"volatility drag\"."},
+  {id:"q-etf-006", niveau:"intermediaire", categorie:"ETF", type:"qcm", question:"Que signifie qu'un ETF est \"ESG\" ?", choix:["Qu'il existe une norme universelle et obligatoire définissant précisément ce critère, identique pour tous les fournisseurs", "Qu'il applique des critères environnementaux, sociaux et de gouvernance pour sélectionner ou exclure des entreprises, selon une méthodologie propre à chaque fournisseur", "Qu'il est garanti sans risque de perte", "Qu'il ne peut être détenu que par des investisseurs professionnels"], bonneReponse:1, explication:"Il n'existe pas de norme universelle et obligatoire pour l'étiquette \"ESG\" : chaque fournisseur d'indice applique sa propre méthodologie, ce qui peut donner une composition très différente entre deux ETF ESG concurrents sur le même thème."},
+  {id:"q-etf-007", niveau:"avance", categorie:"ETF", type:"qcm", question:"À quoi sert un ETF \"à couverture de change\" (hedged) ?", choix:["À garantir un rendement fixe quelle que soit la performance des actifs détenus", "À neutraliser l'effet des variations de taux de change entre la devise des actifs et celle de l'investisseur", "À doubler automatiquement l'exposition à une devise étrangère", "À éliminer totalement les frais de gestion"], bonneReponse:1, explication:"Un ETF à couverture de change cherche à neutraliser l'impact des mouvements de taux de change, pour que la performance ressentie par l'investisseur se rapproche de celle des actifs dans leur devise d'origine — au prix d'un coût de couverture réel, qui peut aussi annuler un gain de change qui aurait été favorable."},
 
   // ---- Obligations ----
   {id:"q-obligations-001", niveau:"intermediaire", categorie:"Obligations", type:"qcm", question:"Qu'est-ce qu'une obligation, fondamentalement ?", choix:["Une part de propriété d'une entreprise","Un prêt fait à une entreprise ou un État, remboursé avec des intérêts","Une assurance obligatoire sur ses placements","Un type de compte bancaire"], bonneReponse:1, explication:"L'acheteur d'une obligation prête de l'argent à l'émetteur, qui s'engage à verser un intérêt (coupon) et à rembourser le capital à l'échéance."},
@@ -2280,6 +2284,58 @@ const LIBRARY = [
     avantages:["Diversification immédiate","Frais de gestion réduits"],
     inconvenients:["Pas de sélection individuelle des titres","Suit aussi les baisses du marché"],
     erreurs:["Confondre un ETF sectoriel avec un ETF diversifié"]
+  },
+  {
+    terme:"ETF à effet de levier",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un ETF à effet de levier vise à répliquer un multiple (souvent x2 ou x3) de la performance QUOTIDIENNE de son indice de référence, à la hausse comme à la baisse — jamais un multiple garanti sur une période plus longue.",
+    detail:"Le levier se recalcule chaque jour sur la base de la clôture précédente (\"rebalancement quotidien\") : sur une seule journée, un ETF x2 sur un indice qui fait +3% vise +6% — mais sur plusieurs jours, l'effet composé de ce rebalancement quotidien fait diverger la performance cumulée du simple multiple de la performance cumulée de l'indice, surtout sur un marché qui oscille sans tendance claire.",
+    avance:"Cette divergence (parfois appelée \"beta slippage\" ou \"volatility drag\") peut faire perdre de l'argent à un ETF à effet de levier même si l'indice sous-jacent termine finalement là où il avait commencé, à cause des allers-retours quotidiens du rebalancement — un mécanisme structurel, pas un défaut du produit, mais souvent mal compris par les débutants qui l'utilisent sur plusieurs semaines ou mois.",
+    exemple:"Un indice qui fait +10% un jour puis -10% le lendemain revient à environ -1% sur les deux jours cumulés (1,10 × 0,90 = 0,99) ; un ETF x2 sur ce même indice, lui, cumule généralement une perte plus importante sur ces deux jours, du fait du rebalancement quotidien à chaque clôture.",
+    avantages:["Permet d'amplifier une exposition à très court terme sans emprunter directement ni ouvrir de position à marge"],
+    inconvenients:["Pensé pour une détention à très court terme (souvent une seule séance) : sa performance cumulée sur plusieurs jours ou semaines peut diverger fortement, et parfois défavorablement, du simple multiple de la performance de l'indice sur la même période"],
+    erreurs:["Détenir un ETF à effet de levier sur plusieurs semaines ou mois en s'attendant à un multiple exact de la performance de l'indice sur cette période, alors que le levier ne s'applique rigoureusement qu'à la performance quotidienne"]
+  },
+  {
+    terme:"ETF inverse",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un ETF inverse vise à répliquer l'INVERSE de la performance QUOTIDIENNE de son indice de référence : il gagne de la valeur quand l'indice baisse, et en perd quand l'indice monte.",
+    detail:"Comme les ETF à effet de levier, un ETF inverse se rebalance chaque jour sur la clôture précédente — la même divergence entre performance quotidienne et performance cumulée sur plusieurs jours s'applique, et peut être combinée à un levier (un ETF \"-2x\" vise -2 fois la performance quotidienne de l'indice).",
+    avance:"Un ETF inverse est parfois utilisé pour se couvrir temporairement contre une baisse anticipée d'un portefeuille existant, sans avoir à vendre les positions détenues — mais cette couverture n'est précise que sur une très courte période, pour les mêmes raisons de rebalancement quotidien qu'un ETF à effet de levier.",
+    exemple:"Un ETF inverse (-1x) sur le CAC 40 gagne théoriquement environ 1% sur une séance où le CAC 40 perd 1% — mais détenu sur plusieurs semaines dans un marché qui oscille, sa performance cumulée peut diverger sensiblement de l'inverse exact de la performance cumulée de l'indice.",
+    avantages:["Permet de parier sur une baisse d'un indice, ou de se couvrir temporairement, sans recourir à la vente à découvert directe"],
+    inconvenients:["Pensé pour une détention très courte, pour les mêmes raisons structurelles qu'un ETF à effet de levier (rebalancement quotidien)"],
+    erreurs:["Utiliser un ETF inverse comme couverture de long terme d'un portefeuille, en pensant qu'il compensera exactement une baisse cumulée sur plusieurs mois"]
+  },
+  {
+    terme:"ETF ESG",
+    categorie:"Bourse",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un ETF ESG applique des critères environnementaux, sociaux et de gouvernance (Environmental, Social, Governance) pour sélectionner ou exclure certaines entreprises de son indice de référence, plutôt que de répliquer un indice classique sans filtre.",
+    detail:"Les méthodologies varient fortement d'un ETF ESG à l'autre : certains excluent seulement quelques secteurs (armement, tabac...), d'autres appliquent une notation ESG complète à chaque entreprise et ne retiennent que les mieux notées de leur secteur — deux ETF \"ESG\" peuvent donc avoir une composition très différente.",
+    avance:"Il n'existe pas de norme universelle et obligatoire définissant ce qu'est un ETF \"ESG\" : chaque fournisseur d'indice applique sa propre méthodologie et ses propres critères de notation, ce qui rend la comparaison entre deux ETF ESG concurrents moins immédiate qu'entre deux ETF classiques répliquant le même indice.",
+    exemple:"Deux ETF étiquetés \"ESG\" sur les actions européennes peuvent avoir une composition sensiblement différente si l'un exclut simplement quelques secteurs controversés tandis que l'autre applique une sélection plus stricte basée sur des notations ESG détaillées entreprise par entreprise.",
+    avantages:["Permet d'aligner un investissement passif avec des préférences environnementales, sociales ou de gouvernance explicites"],
+    inconvenients:["Absence de norme universelle : deux ETF \"ESG\" peuvent appliquer des critères très différents, rendant la comparaison directe difficile sans lire la méthodologie de chacun"],
+    erreurs:["Supposer que tous les ETF étiquetés \"ESG\" appliquent les mêmes critères ou obtiennent le même résultat de sélection, sans jamais vérifier la méthodologie réelle de chacun"]
+  },
+  {
+    terme:"ETF à couverture de change (hedged)",
+    categorie:"Bourse",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un ETF à couverture de change (\"hedged\") neutralise l'effet des variations de taux de change entre la devise des actifs détenus et celle de l'investisseur, pour que la performance reflète uniquement celle des actifs eux-mêmes.",
+    detail:"Un investisseur en zone euro qui achète un ETF non couvert sur des actions américaines est exposé à deux facteurs : la performance des actions ET l'évolution du taux de change EUR/USD. Un ETF \"EUR hedged\" cherche à annuler ce second facteur, pour que la performance ressentie se rapproche de celle des actions dans leur devise d'origine.",
+    avance:"La couverture de change a un coût réel (frais de gestion généralement plus élevés que la version non couverte, plus un coût de couverture qui varie selon l'écart de taux d'intérêt entre les deux devises) — et elle peut aussi faire perdre un gain de change qui aurait été favorable, pas seulement protéger d'une perte de change défavorable.",
+    exemple:"Sur une période où les actions américaines montent de 10% en dollars mais où le dollar se déprécie de 5% face à l'euro, un investisseur européen en ETF non couvert ressent une performance nette inférieure aux 10% affichés en dollars ; un ETF couvert, lui, viserait à se rapprocher de ces 10%, au prix de frais de couverture supplémentaires.",
+    avantages:["Réduit l'incertitude liée au taux de change pour un investisseur exposé à des actifs libellés dans une autre devise"],
+    inconvenients:["Coût de couverture réel, qui peut aussi annuler un gain de change qui aurait autrement été favorable, pas seulement protéger d'une perte"],
+    erreurs:["Choisir systématiquement la version couverte d'un ETF sans considérer son coût réel, alors que le risque de change peut aussi jouer favorablement selon les périodes"]
   },
   {
     terme:"PEA",
