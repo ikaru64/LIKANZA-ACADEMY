@@ -67,7 +67,8 @@ const LAB_WIDGETS = {
     {id:'widget-invest-compound', title:'Intérêts composés', desc:'Un capital qui grossit avec des versements réguliers.', icon:'coins'},
     {id:'widget-invest-pru', title:"Prix moyen d'achat", desc:'Calcule ton prix moyen à partir de tes achats successifs.', icon:'calculator'},
     {id:'widget-invest-var', title:'Risque quantitatif (VaR)', desc:'Perte potentielle estimée, selon un niveau de confiance choisi.', icon:'shield'},
-    {id:'widget-invest-bond', title:'Calculateur obligataire (prix / YTM)', desc:'Prix ↔ rendement à l\'échéance, à partir des vrais flux de coupons.', icon:'landmark'}
+    {id:'widget-invest-bond', title:'Calculateur obligataire (prix / YTM)', desc:'Prix ↔ rendement à l\'échéance, à partir des vrais flux de coupons.', icon:'landmark'},
+    {id:'widget-invest-forex', title:'Calculateur de position Forex', desc:'Taille de position en lots, à partir de ton risque accepté et de ton stop-loss.', icon:'scale'}
   ],
   'tab-logement': [
     {id:'labCreditCard', title:'Coût réel de mon crédit', desc:"Tableau d'amortissement complet, taux et durée.", icon:'landmark'},
@@ -177,6 +178,13 @@ const LAB_METHODOLOGY = {
     hypotheses: "Coupons versés à intervalles réguliers (annuels ou semestriels selon la fréquence choisie) jusqu'à l'échéance, puis remboursement intégral de la valeur nominale à l'échéance — aucun défaut de l'émetteur n'est modélisé.",
     limites: "Ne tient pas compte des frais de courtage, de la fiscalité, ni d'un remboursement anticipé (obligation « callable »). Le YTM suppose que chaque coupon reçu est réinvesti exactement au même taux — une simplification rarement vérifiée en pratique.",
     comprendre: "Le prix et le taux évoluent toujours en sens inverse : un taux du marché plus élevé que le coupon fait baisser le prix sous la valeur nominale (décote), un taux plus faible le fait monter au-dessus (prime). Voir le chapitre \"Le prix d'une obligation\" du cours Bourse pour l'intuition complète."
+  },
+  'invest-forex': {
+    calcul: "Valeur du pip = taille du lot (en unités) × taille du pip (0,0001, ou 0,01 pour les paires avec le yen) — un calcul mathématique fixe, jamais estimé. Taille de position (en lots) = (capital × risque accepté en %) ÷ (stop-loss en pips × valeur du pip par lot).",
+    donnees: "Aucune donnée externe : le capital, le risque accepté, le stop-loss, la taille de lot et la convention de pip sont saisis par toi.",
+    hypotheses: "La valeur du pip calculée est exprimée dans la devise de COTATION de la paire (la 2e devise, ex. USD pour EUR/USD) — le calcul suppose que ton capital risqué est exprimé dans cette même devise.",
+    limites: "Si ton compte est libellé dans une autre devise que la devise de cotation de la paire tradée, une conversion de change supplémentaire est nécessaire, non calculée ici — jamais un taux de change inventé pour combler ce trou. Ne tient pas compte du spread ni d'éventuels frais de commission.",
+    comprendre: "Cette formule garantit que si le stop-loss est touché, la perte réelle correspond exactement au montant qu'on avait décidé d'accepter à l'avance — c'est la taille de la position, pas la conviction dans le trade, qui détermine si une erreur reste gérable ou devient une perte sévère."
   },
   'credit': {
     calcul: "Mensualité = capital emprunté × [taux mensuel × (1+taux mensuel)^n] ÷ [(1+taux mensuel)^n − 1], où n est le nombre de mensualités — la formule standard d'un prêt amortissable à taux fixe.",
@@ -1294,6 +1302,37 @@ function updateBond(){
   document.getElementById(id).addEventListener('input', () => { updateBond(); markBondUsed(); });
 });
 updateBond();
+
+// ---------- Calculateur de position Forex — computeForexPositionSize
+// (scripts/data.js) : jamais un taux de change en direct utilisé pour la
+// valeur du pip (calcul mathématique fixe lot × taille du pip), voir la
+// limite documentée dans LAB_METHODOLOGY sur la devise du capital risqué. ----------
+function markForexUsed(){ tryAwardQuizPoints(`lab-forex-${new Date().toDateString()}`, 8, {usedForexCalc:true}); }
+function updateForex(){
+  const capital = +document.getElementById('forexCapital').value || 0;
+  const riskPct = +document.getElementById('forexRiskPct').value || 0;
+  const stopPips = +document.getElementById('forexStopPips').value || 0;
+  const lotSize = +document.getElementById('forexLotSize').value || 0;
+  const pipDecimal = +document.getElementById('forexPipDecimal').value || 4;
+  const resultEl = document.getElementById('forexResult');
+  const riskAmount = capital * (riskPct / 100);
+  const r = computeForexPositionSize(riskAmount, stopPips, lotSize, pipDecimal);
+  if(!r){
+    resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : le capital, le risque accepté et le stop-loss doivent être positifs.</p>`;
+    return;
+  }
+  const lotLabel = lotSize === 100000 ? 'lot standard' : (lotSize === 10000 ? 'mini lot' : 'micro lot');
+  resultEl.innerHTML = `
+    ${renderDataBadge('calcul')}
+    <div class="result-row" style="margin-top:10px;"><span>Taille de position</span><span class="mono" style="font-size:18px;color:var(--gold-bright);">${r.positionSizeInLots.toFixed(2)} ${lotLabel}${Math.abs(r.positionSizeInLots) >= 2 ? 's' : ''}</span></div>
+    <div class="result-row"><span>Soit, en unités</span><span class="mono">${Math.round(r.positionSizeInUnits).toLocaleString('fr-FR')} unités</span></div>
+    <div class="result-row"><span>Montant risqué</span><span class="mono">${fmtEUR(riskAmount)}</span></div>
+    <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">Valeur du pip pour 1 ${lotLabel} : ${r.pipValuePerLot.toFixed(2)} (devise de cotation de la paire). Si le stop-loss de ${stopPips} pips est touché, la perte correspond exactement au montant risqué ci-dessus — jamais plus, jamais moins.</p>`;
+}
+['forexCapital','forexRiskPct','forexStopPips','forexLotSize','forexPipDecimal'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { updateForex(); markForexUsed(); });
+});
+updateForex();
 
 // ============================================================
 // ---------- Laboratoire économique (tab-economie, section 4 du prompt

@@ -735,7 +735,15 @@ const QUIZ_BANK_FULL = [
   {id:"q-rh-002", niveau:"intermediaire", categorie:"RH", type:"qcm", question:"Comment la culture réelle d'une entreprise se distingue-t-elle le plus souvent de ses valeurs officiellement affichées ?", choix:["Elle ne s'en distingue jamais, les deux sont toujours identiques", "Elle se révèle dans ce qui est concrètement récompensé, toléré ou sanctionné au quotidien, qui peut différer du discours officiel", "La culture d'entreprise n'existe que dans les grandes entreprises", "Elle se mesure uniquement par le nombre d'avantages sociaux proposés"], bonneReponse:1, explication:"Une charte de valeurs affichée officiellement ne garantit rien sur la culture réelle : celle-ci se révèle dans les décisions concrètes (qui est promu, quel comportement est toléré ou sanctionné), qui peuvent diverger sensiblement du discours officiel."},
   {id:"q-rh-003", niveau:"debutant", categorie:"RH", type:"qcm", question:"À quoi sert principalement un onboarding structuré pour un nouvel employé ?", choix:["Uniquement à remplir les formalités administratives d'embauche", "À réduire le délai avant qu'il devienne pleinement productif et à réduire le risque qu'il quitte l'entreprise prématurément faute d'accompagnement", "À tester si l'employé va démissionner rapidement", "Il n'a aucun effet mesurable sur la suite de la relation de travail"], bonneReponse:1, explication:"Un onboarding structuré (présentation de l'équipe, des outils, accompagnement progressif) accélère la montée en productivité d'un nouvel employé et réduit le risque de départ précoce lié à un sentiment d'être livré à soi-même dès l'arrivée."},
   {id:"q-rh-004", niveau:"avance", categorie:"RH", type:"qcm", question:"Quel est un piège fréquent dans la conception d'un plan de rémunération variable basé sur un seul indicateur facilement mesurable ?", choix:["Il n'existe aucun piège, un seul indicateur simplifie toujours les choses", "Il peut inciter à des comportements de court terme contraires à l'intérêt réel de l'entreprise sur la durée (ex. vendre sans se soucier de la satisfaction client)", "Il rend automatiquement la rémunération totale plus faible pour l'employé", "Il est interdit par la loi dans la plupart des pays"], bonneReponse:1, explication:"Un indicateur unique et facilement mesurable (comme le seul nombre de ventes conclues) peut inciter un employé à négliger des aspects importants mais moins mesurables (satisfaction client, qualité du conseil), au détriment de l'intérêt de l'entreprise sur le long terme."},
-  {id:"q-rh-005", niveau:"intermediaire", categorie:"RH", type:"vraifaux", question:"Une évaluation de performance basée sur des critères communiqués seulement au moment de l'évaluation, jamais à l'avance, reste tout aussi utile qu'une évaluation basée sur des critères connus dès le début de la période.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Des critères révélés seulement au moment de l'évaluation, sans avoir été communiqués à l'avance, ne peuvent pas orienter les efforts de l'employé pendant la période concernée — l'évaluation risque alors d'être perçue comme arbitraire et perd une grande partie de son utilité."}
+  {id:"q-rh-005", niveau:"intermediaire", categorie:"RH", type:"vraifaux", question:"Une évaluation de performance basée sur des critères communiqués seulement au moment de l'évaluation, jamais à l'avance, reste tout aussi utile qu'une évaluation basée sur des critères connus dès le début de la période.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Des critères révélés seulement au moment de l'évaluation, sans avoir été communiqués à l'avance, ne peuvent pas orienter les efforts de l'employé pendant la période concernée — l'évaluation risque alors d'être perçue comme arbitraire et perd une grande partie de son utilité."},
+
+  // ---- Forex (marché des changes : lot, marge, swap, carry trade) ----
+  {id:"q-forex-001", niveau:"debutant", categorie:"Forex", type:"qcm", question:"Que représente un lot standard sur le marché des changes ?", choix:["1 000 unités de la devise de base","10 000 unités de la devise de base","100 000 unités de la devise de base","1 000 000 unités de la devise de base"], bonneReponse:2, explication:"Un lot standard représente 100 000 unités de la devise de base. Le mini lot (10 000 unités) et le micro lot (1 000 unités) permettent d'ajuster plus finement la taille d'une position."},
+  {id:"q-forex-002", niveau:"intermediaire", categorie:"Forex", type:"qcm", question:"Qu'est-ce que la marge, sur une position Forex à effet de levier ?", choix:["Des frais définitivement perdus dès l'ouverture de la position","Un montant de capital bloqué en garantie pour ouvrir et maintenir la position, restitué à sa clôture","Le montant maximal de perte possible sur la position","Le bénéfice minimum garanti par le broker"], bonneReponse:1, explication:"La marge n'est pas un coût : c'est une garantie temporairement bloquée sur le compte, restituée à la clôture de la position. Le levier détermine le montant de marge exigé pour une taille de position donnée."},
+  {id:"q-forex-003", niveau:"intermediaire", categorie:"Forex", type:"calcul", question:"Un trader dispose de 10 000 € et accepte de risquer 1 % de son capital (100 €) sur une position. Son stop-loss est placé à 50 pips, et il trade en lot standard sur une paire cotée en dollars (valeur du pip = 10 $ par lot standard). Quelle taille de position (en lots standards) respecte cette règle de risque ?", choix:["0,05 lot","0,2 lot","0,5 lot","2 lots"], bonneReponse:1, explication:"Taille de position = montant risqué ÷ (stop-loss en pips × valeur du pip par lot) = 100 ÷ (50 × 10) = 100 ÷ 500 = 0,2 lot standard, soit 20 000 unités."},
+  {id:"q-forex-004", niveau:"intermediaire", categorie:"Forex", type:"qcm", question:"Qu'est-ce que le swap (ou rollover) sur une position Forex ?", choix:["Une commission fixe prélevée par le broker à l'ouverture de la position", "Un ajustement quotidien, positif ou négatif, lié à la différence de taux d'intérêt entre les deux devises de la paire, appliqué à une position gardée ouverte la nuit", "Un synonyme du spread", "Un mécanisme réservé exclusivement aux comptes professionnels"], bonneReponse:1, explication:"Le swap reflète le différentiel de taux d'intérêt entre les deux devises échangées : il peut être positif (crédité) ou négatif (débité) chaque nuit où la position reste ouverte, et devient significatif sur une position gardée plusieurs semaines ou mois."},
+  {id:"q-forex-005", niveau:"avance", categorie:"Forex", type:"qcm", question:"Sur quel principe repose un carry trade ?", choix:["Acheter et revendre une devise le plus vite possible pour profiter du spread", "Emprunter dans une devise à taux d'intérêt bas pour acheter une devise à taux d'intérêt plus élevé, afin d'encaisser le différentiel de taux dans le temps", "Toujours trader la paire de devises la plus liquide du marché", "Ouvrir systématiquement des positions à effet de levier maximal"], bonneReponse:1, explication:"Un carry trade vise à encaisser le différentiel de taux d'intérêt entre deux devises — une stratégie qui fonctionne tant que le taux de change entre les deux reste stable ou favorable, mais qu'une variation défavorable peut effacer rapidement."},
+  {id:"q-forex-006", niveau:"avance", categorie:"Forex", type:"vraifaux", question:"Si les pertes latentes d'une position font passer le capital disponible sous le niveau de marge minimum exigé, le broker peut clôturer automatiquement la position (stop-out) sans attendre l'accord du trader.", choix:["Vrai","Faux"], bonneReponse:0, explication:"C'est le mécanisme du \"niveau d'appel de marge\" / stop-out : pour éviter que le compte ne passe en solde négatif, le broker peut clôturer automatiquement tout ou partie des positions ouvertes si le capital disponible tombe sous le seuil minimum exigé — souvent au moment le plus défavorable pour le trader."}
 ];
 // ===EXPORT:QUIZ_BANK:END===
 
@@ -1368,8 +1376,8 @@ const DOMAINS = [
     deepQuizHook:{title:'Comprends-tu vraiment tes finances ?', subtitle:'Découvre tes forces et les notions à approfondir.'}},
   {key:'stockMarket', label:'Bourse', displayLabel:'la bourse', icon:'📈',
     mentalChallengeDomain:'Bourse',
-    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'Gestion du risque', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative', 'Analyse technique', 'Options'],
-    libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque', "Psychologie de l'investisseur"],
+    quizCategories:['Bourse', 'Actions', 'ETF', 'Obligations', 'Diversification', 'Risque et volatilité', 'Gestion du risque', 'PEA', "Psychologie de l'investisseur", 'Finance quantitative', 'Analyse technique', 'Options', 'Forex'],
+    libraryCategories:['Bourse', 'Investissement', 'Analyse fondamentale', 'Gestion du risque', "Psychologie de l'investisseur", 'Forex'],
     deepQuizHook:{title:'Penses-tu vraiment comprendre la Bourse ?', subtitle:'Des situations concrètes pour découvrir tes forces.'}},
   {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
     mentalChallengeDomain:'Business',
@@ -2023,6 +2031,37 @@ const COURS_CATALOG = [
         {type:'attention', texte:"L'effet de levier d'une option (une mise de départ, la prime, bien inférieure au prix de l'actif sous-jacent) amplifie les gains ET les pertes en proportion de cette mise — le même mécanisme qui rend un LBO ou un crédit immobilier à fort effet de levier plus risqué qu'un achat comptant (voir le terme Effet de levier)."},
         {type:'retenir', texte:"Avant toute position sur une option, la première question à se poser n'est pas « combien puis-je gagner ? » mais « quelle est ma perte maximale possible, et est-elle plafonnée ou non ? »."}
       ]}
+    ]},
+  {id:'forex-essentiels', titre:'Forex : lot, marge et gestion du risque sur une position', niveau:'Avancé',
+    libraryTermes:['Pip','Spread (Forex)','Lot (Forex)','Marge (Forex)','Swap (rollover)','Carry trade'],
+    quizCategories:['Forex'],
+    applyUrl:'laboratoire.html#tab-investissement', applyLabel:"Essayer le calculateur de position Forex",
+    acquis:[
+      "Distinguer lot standard, mini lot et micro lot, et calculer la valeur d'un pip pour chacun",
+      "Comprendre ce qu'est la marge et pourquoi elle n'est pas un coût, contrairement au spread",
+      "Calculer une taille de position Forex à partir d'un montant risqué et d'un stop-loss en pips",
+      "Comprendre le swap et le principe du carry trade, et leurs risques respectifs"
+    ],
+    chapitres:[
+      {titre:"Lot, marge et effet de levier : les bases du Forex", blocs:[
+        {type:'texte', texte:"Le marché des changes (Forex) a son propre vocabulaire, distinct de celui des actions — indispensable avant de lire une seule cotation avec compréhension, pas seulement pour trader."},
+        {type:'definition', texte:"Un lot est l'unité standard de taille d'une position : un lot standard représente 100 000 unités de la devise de base, un mini lot 10 000 unités, un micro lot 1 000 unités. Le pip est la plus petite variation de prix habituellement mesurée (0,0001 pour la plupart des paires)."},
+        {type:'calcul', texte:"La valeur d'un pip pour un lot donné se calcule directement, sans avoir besoin d'un taux de change en direct.", schema:
+"Valeur du pip = Taille du lot (en unités) × Taille du pip\n\nLot standard : 100 000 × 0,0001 = 10 (dans la devise de cotation)\nMini lot      :  10 000 × 0,0001 =  1 (dans la devise de cotation)\nMicro lot     :   1 000 × 0,0001 = 0,10 (dans la devise de cotation)\n\nCette valeur est un calcul mathématique fixe, jamais une estimation —\nelle s'exprime dans la devise de COTATION de la paire (la 2e devise)."},
+        {type:'exerciceErreur', affirmation:"Trader 1 lot revient toujours à trader la même quantité de devise, quelle que soit la taille de lot choisie (standard, mini, micro).", pourquoi:"Un facteur 100 sépare un lot standard (100 000 unités) d'un mini lot (10 000 unités), et un facteur 100 supplémentaire sépare un mini lot d'un micro lot (1 000 unités). Confondre ces tailles peut faire ouvrir une position 10 ou 100 fois plus grande que prévu — une erreur de dimensionnement fréquente chez les débutants, aux conséquences potentiellement sévères avec l'effet de levier."},
+        {type:'definition', texte:"La marge est le capital bloqué en garantie pour ouvrir une position à effet de levier — restitué à la clôture, ce n'est jamais un coût définitif, contrairement au spread (l'écart achat/vente, lui réellement payé à chaque opération)."},
+        {type:'attention', texte:"Si les pertes latentes d'une position font tomber le capital disponible sous le niveau de marge minimum exigé, le broker peut clôturer automatiquement la position (le \"stop-out\"), souvent au moment le plus défavorable — un risque propre à toute position à effet de levier, pas seulement théorique."}
+      ]},
+      {titre:"Dimensionner une position selon son risque, swap et carry trade", blocs:[
+        {type:'texte', texte:"Connaître le vocabulaire ne suffit pas : la question centrale avant d'ouvrir toute position reste \"quelle taille de position correspond au risque que j'accepte réellement de prendre ?\" — exactement la même logique de gestion du risque par trade déjà vue pour les actions, appliquée ici au Forex."},
+        {type:'calcul', texte:"Taille de position = montant risqué ÷ (stop-loss en pips × valeur du pip par lot).", schema:
+"Exemple :\nCapital du compte     : 10 000 €\nRisque accepté (1%)   :    100 €\nStop-loss             :     50 pips\nValeur du pip (lot std): 10 (devise de cotation)\n\nTaille de position = 100 ÷ (50 × 10) = 100 ÷ 500 = 0,2 lot standard\n(soit 20 000 unités — un cinquième d'un lot standard)"},
+        {type:'pourquoi', texte:"Cette formule garantit que, si le stop-loss est touché, la perte réelle correspond exactement au montant qu'on avait décidé d'accepter à l'avance — plutôt que de choisir une taille de position \"au feeling\" puis de découvrir après coup l'ampleur réelle du risque pris."},
+        {type:'casReel', texte:"Le calculateur de position Forex du Laboratoire financier applique exactement cette formule : renseigne ton capital, ton risque accepté, ton stop-loss en pips et la taille de lot choisie pour obtenir directement la taille de position correspondante."},
+        {type:'definition', texte:"Le swap (rollover) est un ajustement quotidien, positif ou négatif, lié au différentiel de taux d'intérêt entre les deux devises d'une paire, appliqué à toute position gardée ouverte la nuit. Le carry trade est une stratégie qui vise précisément à encaisser ce différentiel de taux dans la durée, en empruntant dans une devise à taux bas pour acheter une devise à taux plus élevé."},
+        {type:'attention', texte:"Un carry trade n'est jamais un revenu \"garanti\" : une variation défavorable du taux de change peut effacer en quelques jours ce que des mois de différentiel de taux accumulé auraient rapporté — et un dénouement massif et simultané de nombreux carry trades similaires peut amplifier brutalement ce risque lors d'un choc de marché."},
+        {type:'retenir', texte:"Sur le Forex comme ailleurs, la taille de la position — jamais la conviction dans le trade — reste ce qui détermine si une erreur de jugement reste gérable ou devient une perte sévère."}
+      ]}
     ]}
 ];
 
@@ -2568,6 +2607,58 @@ const LIBRARY = [
     avantages:["Un spread faible reflète en général un marché très liquide"],
     inconvenients:["Coût réel à chaque opération, même sans commission explicite"],
     erreurs:["Ignorer le spread dans le calcul du seuil de rentabilité d'une position"]
+  },
+  {
+    terme:"Lot (Forex)",
+    categorie:"Forex",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Un lot est l'unité standard de taille d'une position sur le marché des changes : un lot standard représente 100 000 unités de la devise de base.",
+    detail:"Trois tailles usuelles : le lot standard (100 000 unités), le mini lot (10 000 unités, un dixième) et le micro lot (1 000 unités, un centième). Plus le lot est petit, plus la valeur de chaque pip de mouvement est faible, ce qui permet d'ajuster précisément la taille d'une position au risque réellement souhaité.",
+    avance:"La valeur d'un pip pour un lot donné se calcule directement : lot en unités × taille du pip (0,0001 pour la plupart des paires). Pour un lot standard sur une paire cotée en dollars, cela donne 100 000 × 0,0001 = 10$ par pip — une valeur mathématique fixe, pas une estimation.",
+    exemple:"Trader 0,2 lot standard sur l'EUR/USD revient à trader 20 000 unités (0,2 × 100 000) — un mini lot et demi, ou vingt micro lots, selon la façon de le décomposer.",
+    avantages:["La possibilité de trader en mini ou micro lots permet d'ajuster précisément la taille d'une position à un niveau de risque choisi, plutôt que d'être limité à un lot standard"],
+    inconvenients:["Une confusion entre lot standard et mini/micro lot peut faire trader une position 10 ou 100 fois plus grande que prévu"],
+    erreurs:["Confondre le nombre de lots avec le nombre d'unités de devise réellement échangées, un facteur 100 000 les sépare pour un lot standard"]
+  },
+  {
+    terme:"Marge (Forex)",
+    categorie:"Forex",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La marge est le montant de capital qu'un broker exige de bloquer sur le compte pour ouvrir et maintenir une position à effet de levier sur le marché des changes.",
+    detail:"Ce n'est pas un coût ni des frais : c'est une garantie bloquée temporairement, restituée à la clôture de la position. Le levier détermine la marge exigée : un levier de 1:100 signifie qu'il suffit de bloquer 1% de la valeur totale de la position en marge pour l'ouvrir.",
+    avance:"Si les pertes latentes d'une position réduisent le capital disponible sous le niveau de marge minimum exigé (le \"niveau d'appel de marge\"), le broker peut clôturer automatiquement tout ou partie des positions ouvertes (le \"stop-out\") pour éviter que le compte ne passe en solde négatif — souvent au pire moment, quand le marché est justement défavorable.",
+    exemple:"Ouvrir une position de 100 000$ (1 lot standard) avec un levier de 1:100 exige de bloquer 1 000$ de marge sur le compte, alors que la position contrôlée représente 100 fois ce montant.",
+    avantages:["Permet de contrôler une position bien plus grande que le capital immédiatement engagé"],
+    inconvenients:["Amplifie les pertes dans les mêmes proportions que les gains, avec un risque réel de clôture forcée (stop-out) en cas de mouvement défavorable"],
+    erreurs:["Confondre la marge bloquée (une garantie restituée à la clôture) avec un coût ou des frais définitivement perdus"]
+  },
+  {
+    terme:"Swap (rollover)",
+    categorie:"Forex",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le swap (ou rollover) est un ajustement, positif ou négatif, appliqué chaque nuit à une position Forex maintenue ouverte, lié à la différence de taux d'intérêt entre les deux devises de la paire.",
+    detail:"Une position Forex implique en réalité d'emprunter une devise pour en acheter une autre : si le taux d'intérêt de la devise achetée est plus élevé que celui de la devise empruntée, le swap est généralement positif (crédité) ; dans le cas inverse, il est négatif (débité).",
+    avance:"Le swap peut faire une réelle différence sur une position gardée plusieurs semaines ou mois, alors qu'il reste négligeable sur une position intraday clôturée le jour même — un facteur souvent ignoré par les traders court terme mais central pour quiconque garde une position sur la durée.",
+    exemple:"Une position acheteuse sur une paire où la devise achetée offre un taux d'intérêt plus élevé que la devise vendue peut recevoir un swap positif chaque nuit où la position reste ouverte — un revenu qui s'accumule avec le temps, indépendamment du mouvement de prix lui-même.",
+    avantages:["Un swap positif peut constituer un revenu d'appoint réel pour une position gardée longtemps dans le bon sens"],
+    inconvenients:["Un swap négatif s'accumule chaque nuit et peut représenter un coût significatif sur une position gardée plusieurs mois"],
+    erreurs:["Ignorer le swap dans le calcul du coût réel d'une position gardée sur plusieurs semaines ou mois, en ne regardant que le mouvement de prix"]
+  },
+  {
+    terme:"Carry trade",
+    categorie:"Forex",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un carry trade consiste à emprunter dans une devise à taux d'intérêt bas pour acheter une devise à taux d'intérêt plus élevé, dans le but d'encaisser la différence de taux (le swap positif) au fil du temps.",
+    detail:"Cette stratégie fonctionne tant que le taux de change entre les deux devises reste stable ou évolue favorablement — le gain vient alors à la fois du différentiel de taux accumulé et, éventuellement, d'une appréciation de la devise achetée.",
+    avance:"Le risque principal d'un carry trade est qu'une variation défavorable du taux de change peut effacer en quelques jours ce que des mois de différentiel de taux accumulé auraient rapporté — un carry trade largement répandu peut aussi se dénouer brutalement (\"unwind\") si de nombreux traders ferment leurs positions en même temps lors d'un choc de marché, amplifiant fortement le mouvement de change dans le sens inverse.",
+    exemple:"Emprunter dans une devise dont le taux directeur est proche de 0% pour acheter une devise dont le taux directeur est nettement plus élevé illustre le principe du carry trade — un pari qui suppose que le taux de change entre les deux ne se retourne pas brutalement contre la position pendant que le différentiel de taux s'accumule.",
+    avantages:["Peut générer un revenu régulier (le différentiel de taux accumulé) tant que le taux de change reste favorable ou stable"],
+    inconvenients:["Une variation défavorable du taux de change peut effacer rapidement des mois de gains accumulés, et un dénouement massif et simultané de nombreux carry trades peut amplifier brutalement ce risque"],
+    erreurs:["Considérer un carry trade comme un revenu \"garanti\" simplement parce que le différentiel de taux est connu à l'avance, en oubliant le risque de change qui reste, lui, jamais garanti"]
   },
   {
     terme:"Écart-type",

@@ -5094,6 +5094,31 @@ function computeBondYTM(price, faceValue, couponRatePct, yearsToMaturity, paymen
   return mid;
 }
 
+// ---------- Forex : calculateur de taille de position — explicitement
+// demandé par l'audit de couverture pédagogique (25/08/2026, section H
+// "Forex"), jusqu'ici totalement absent (0 outil). Formule standard de
+// gestion du risque par trade : taille de position = montant risqué ÷
+// (distance du stop-loss en pips × valeur du pip pour 1 lot).
+// La valeur du pip pour 1 lot est calculée mathématiquement (lot × taille
+// du pip), jamais approximée depuis un taux de change en direct — elle
+// s'exprime dans la devise de COTATION de la paire (la 2e devise, ex. USD
+// pour EUR/USD), jamais dans une devise arbitraire : convertir le montant
+// risqué dans cette même devise reste à la charge de l'utilisateur si son
+// compte est libellé dans une autre devise (limite documentée côté UI,
+// jamais un taux de change inventé pour combler ce trou). ----------
+function computeForexPipValue(unitsPerLot, pipDecimalPlaces){
+  if(!(unitsPerLot > 0)) return null;
+  const pipSize = pipDecimalPlaces === 2 ? 0.01 : 0.0001;
+  return unitsPerLot * pipSize;
+}
+function computeForexPositionSize(accountRiskAmount, stopLossPips, unitsPerLot, pipDecimalPlaces){
+  if(!(accountRiskAmount > 0) || !(stopLossPips > 0) || !(unitsPerLot > 0)) return null;
+  const pipValuePerLot = computeForexPipValue(unitsPerLot, pipDecimalPlaces);
+  if(pipValuePerLot == null) return null;
+  const positionSizeInLots = accountRiskAmount / (stopLossPips * pipValuePerLot);
+  return {pipValuePerLot, positionSizeInLots, positionSizeInUnits: positionSizeInLots * unitsPerLot};
+}
+
 // ---------- Dettes & crédits : stratégie de remboursement multi-crédits ----------
 // Simulation mois par mois (avalanche = taux le plus élevé d'abord, snowball =
 // plus petit solde d'abord, custom = ordre fourni) — jamais une formule

@@ -251,6 +251,36 @@
       <div id="method-invest-bond"></div>
     </div>
 
+    <div class="card" id="widget-invest-forex" style="display:none;grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Calculateur de position Forex</h3>
+        <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;max-width:70ch;">Calcule la taille de position (en lots) qui correspond exactement au montant que tu acceptes de risquer, à partir de ton stop-loss en pips — jamais une taille de position choisie "au feeling".</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:150px;"><label for="forexCapital">Capital du compte (€)</label><input type="number" id="forexCapital" value="10000" min="1"></div>
+        <div class="field" style="flex:1;min-width:150px;"><label for="forexRiskPct">Risque accepté (% du capital)</label><input type="number" id="forexRiskPct" value="1" min="0.1" max="100" step="0.1"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="forexStopPips">Stop-loss (pips)</label><input type="number" id="forexStopPips" value="50" min="1" step="1"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:170px;"><label for="forexLotSize">Taille de lot</label>
+          <select id="forexLotSize">
+            <option value="100000">Lot standard (100 000 unités)</option>
+            <option value="10000">Mini lot (10 000 unités)</option>
+            <option value="1000">Micro lot (1 000 unités)</option>
+          </select>
+        </div>
+        <div class="field" style="flex:1;min-width:170px;"><label for="forexPipDecimal">Convention de pip</label>
+          <select id="forexPipDecimal">
+            <option value="4">4 décimales (la plupart des paires, ex. EUR/USD)</option>
+            <option value="2">2 décimales (paires avec le yen, ex. USD/JPY)</option>
+          </select>
+        </div>
+      </div>
+      <div id="forexResult" style="margin-top:16px;"></div>
+      <div id="method-invest-forex"></div>
+    </div>
+
   </div>
   </div>
 
