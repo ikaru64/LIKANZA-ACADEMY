@@ -634,6 +634,15 @@ const QUIZ_BANK_FULL = [
   {id:"q-offredemande-003", niveau:"debutant", categorie:"Offre et demande", type:"qcm", question:"Quel exemple illustre une hausse de prix due à une offre réduite face à une demande stable ?", choix:["Une pénurie de puces électroniques pendant une demande forte","Une baisse générale des salaires","Une hausse des impôts sur les sociétés","Une augmentation du nombre de vendeurs sur un marché"], bonneReponse:0, explication:"Une pénurie de puces électroniques face à une demande qui reste forte est un exemple typique de hausse des prix par réduction de l'offre."},
   {id:"q-offredemande-004", niveau:"debutant", categorie:"Offre et demande", type:"qcm", question:"Que se passe-t-il généralement sur un marché quand l'offre dépasse largement la demande ?", choix:["Les prix ont tendance à monter","Les prix ont tendance à baisser","Le produit disparaît du marché","Rien, les prix ne bougent jamais"], bonneReponse:1, explication:"Quand l'offre dépasse la demande, les vendeurs ont tendance à baisser leurs prix pour écouler leurs stocks."},
 
+  // ---- Microéconomie ----
+  {id:"q-micro-001", niveau:"intermediaire", categorie:"Microéconomie", type:"qcm", question:"Qu'est-ce qu'une demande \"inélastique\" au prix ?", choix:["Une demande qui augmente toujours avec le prix","Une demande dont la quantité varie peu même en cas de forte variation du prix","Une demande qui n'existe que pour les biens de luxe","Une demande qui ne concerne que les entreprises, jamais les particuliers"], bonneReponse:1, explication:"Une demande inélastique réagit peu à une variation de prix, typiquement pour des biens de première nécessité sans substitut proche."},
+  {id:"q-micro-002", niveau:"debutant", categorie:"Microéconomie", type:"qcm", question:"Quelle est la principale différence entre un monopole et un oligopole ?", choix:["Il n'y a aucune différence","Un monopole compte un seul vendeur, un oligopole en compte un petit nombre qui s'influencent mutuellement","Un oligopole concerne uniquement les services publics","Un monopole n'existe que dans les pays en développement"], bonneReponse:1, explication:"Un monopole désigne un seul acteur sans concurrent direct ; un oligopole désigne un petit nombre d'acteurs dominants dont les décisions s'influencent mutuellement."},
+  {id:"q-micro-003", niveau:"intermediaire", categorie:"Microéconomie", type:"qcm", question:"Qu'est-ce qu'une externalité négative ?", choix:["Une baisse du chiffre d'affaires d'une entreprise","Un coût qu'une activité impose à un tiers, sans que celui-ci soit compensé","Une taxe payée par une entreprise à l'État","Une perte financière subie par un investisseur"], bonneReponse:1, explication:"Une externalité négative impose un coût à un tiers qui n'a pas participé à la transaction (ex. la pollution affecte les riverains), sans compensation."},
+  {id:"q-micro-004", niveau:"avance", categorie:"Microéconomie", type:"vraifaux", question:"Tous les biens fournis par l'État sont des biens publics au sens économique strict (non-rivalité et non-exclusion).", choix:["Vrai","Faux"], bonneReponse:1, explication:"Un bien public répond à deux critères précis (non-rivalité, non-exclusion). L'éducation, par exemple, reste en partie rivale et excluable (une place en classe est limitée) même si elle est financée par l'État."},
+  {id:"q-micro-005", niveau:"intermediaire", categorie:"Microéconomie", type:"qcm", question:"Quelle est la différence entre un coût fixe et un coût variable ?", choix:["Il n'y a aucune différence, ce sont des synonymes","Le coût fixe ne varie pas avec le niveau de production, le coût variable évolue directement avec lui","Le coût variable est toujours plus élevé que le coût fixe","Le coût fixe ne concerne que les grandes entreprises"], bonneReponse:1, explication:"Un coût fixe (loyer, assurance) reste stable quel que soit le niveau de production ; un coût variable (matière première) évolue directement avec le volume produit."},
+  {id:"q-micro-006", niveau:"avance", categorie:"Microéconomie", type:"qcm", question:"Qu'est-ce que le coût marginal ?", choix:["Le coût total divisé par le nombre d'unités produites","Le coût supplémentaire engendré par la production d'une seule unité de plus","Un coût qui n'existe qu'en début d'activité","Le coût des matières premières uniquement"], bonneReponse:1, explication:"Le coût marginal se concentre sur la dernière unité produite, contrairement au coût moyen qui divise le coût total par le nombre d'unités — les deux peuvent être très différents."},
+  {id:"q-micro-007", niveau:"debutant", categorie:"Microéconomie", type:"situation", question:"Un gouvernement subventionne l'achat de vélos électriques pour encourager ce mode de transport. De quel type de mécanisme économique s'agit-il ?", choix:["Une externalité négative","Un monopole d'État","Une incitation économique","Un bien public"], bonneReponse:2, explication:"Une subvention est une incitation économique : elle réduit le coût perçu d'un comportement pour l'encourager, sans l'imposer directement."},
+
   // ---- Commerce international ----
   {id:"q-commint-001", niveau:"debutant", categorie:"Commerce international", type:"qcm", question:"Qu'est-ce qu'un droit de douane ?", choix:["Une taxe sur les produits exportés vers un autre pays","Une taxe appliquée sur des biens importés depuis un autre pays","Une subvention versée aux entreprises exportatrices","Un accord supprimant toute taxe entre deux pays"], bonneReponse:1, explication:"Un droit de douane est une taxe appliquée par un pays sur les biens qu'il importe depuis l'étranger, ce qui augmente leur prix pour les acheteurs locaux."},
   {id:"q-commint-002", niveau:"intermediaire", categorie:"Commerce international", type:"vraifaux", question:"Le coût d'un droit de douane est intégralement payé par le pays exportateur visé, jamais par les consommateurs du pays qui l'impose.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Le coût d'un droit de douane est généralement partagé entre l'exportateur (qui peut baisser son prix) et l'importateur/consommateur local, qui absorbe souvent une partie du surcoût via un prix final plus élevé."},
@@ -1342,7 +1351,7 @@ const DOMAINS = [
     deepQuizHook:{title:'Quel type d\'entrepreneur es-tu ?', subtitle:'Découvre tes forces et les notions que tu pourrais approfondir.'}},
   {key:'economics', label:'Économie', displayLabel:"l'économie", icon:'🌍',
     mentalChallengeDomain:'Économie',
-    quizCategories:['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Commerce international', 'Histoire économique'],
+    quizCategories:['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Microéconomie', 'Commerce international', 'Histoire économique'],
     libraryCategories:['Économie'],
     deepQuizHook:{title:'Comprends-tu vraiment l\'économie ?', subtitle:'Des situations concrètes pour tester ta compréhension.'}},
   {key:'realEstate', label:'Immobilier', displayLabel:"l'immobilier", icon:'🏠',
@@ -1649,7 +1658,54 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"Suivre sa valeur nette ET son cash-flow personnel, dans la durée, donne une vision bien plus complète de sa santé financière que le seul montant du salaire mensuel."}
       ]}
     ]},
-  {id:'economie-generale', titre:"Comprendre l'économie", niveau:'Intermédiaire', libraryTermes:['PIB (Produit intérieur brut)',"Taux d'intérêt directeur",'Banque centrale','Récession','Offre et demande'], quizCategories:['PIB','Taux directeur','Banque centrale','Récession','Offre et demande']},
+  {id:'economie-generale', titre:"Comprendre l'économie", niveau:'Intermédiaire',
+    libraryTermes:['PIB (Produit intérieur brut)',"Taux d'intérêt directeur",'Banque centrale','Récession','Offre et demande','Élasticité-prix de la demande','Concurrence pure et parfaite','Monopole','Oligopole','Externalités','Biens publics','Coût marginal','Coût fixe (économie)','Coût variable (économie)','Incitations économiques'],
+    quizCategories:['PIB','Taux directeur','Banque centrale','Récession','Offre et demande','Microéconomie'],
+    applyUrl:'economie.html', applyLabel:'Voir les vrais indicateurs économiques actuels',
+    acquis:[
+      "Comprendre le mécanisme de l'offre et de la demande et ce qui le limite en pratique",
+      "Distinguer les structures de marché : concurrence pure, oligopole, monopole",
+      "Comprendre pourquoi certains biens ne sont pas bien fournis par le seul marché (externalités, biens publics)",
+      "Distinguer coût fixe, coût variable et coût marginal",
+      "Relier PIB, taux directeur, banque centrale et récession dans une vue d'ensemble macroéconomique"
+    ],
+    chapitres:[
+      {titre:"Offre, demande et élasticité", blocs:[
+        {type:'texte', texte:"Toute l'économie de marché repose sur un mécanisme simple à énoncer : la rencontre entre ce que les vendeurs proposent (l'offre) et ce que les acheteurs veulent acquérir (la demande) détermine le prix."},
+        {type:'definition', texte:"Quand la demande dépasse l'offre, les prix montent ; quand l'offre dépasse la demande, ils baissent. Ce modèle simplifié suppose une concurrence pure et parfaite (voir le chapitre suivant) — dans la réalité, monopoles, subventions ou information imparfaite peuvent déformer durablement cet équilibre théorique."},
+        {type:'definition', texte:"L'élasticité-prix de la demande mesure à quel point la quantité demandée réagit à une variation de prix. Une demande inélastique (biens de première nécessité, sans substitut proche) réagit peu ; une demande élastique (biens avec de nombreux substituts) réagit beaucoup."},
+        {type:'exerciceErreur', affirmation:"Une hausse de prix fait toujours baisser la quantité vendue dans les mêmes proportions, quel que soit le bien concerné.", pourquoi:"L'ampleur de la baisse dépend de l'élasticité-prix du bien concerné : un médicament vital sans substitut (demande inélastique) verra sa quantité vendue baisser très peu même après une forte hausse de prix, contrairement à un bien avec de nombreux équivalents (demande élastique)."},
+        {type:'exemple', texte:"Une pénurie de puces électroniques (offre réduite) alors que la demande reste forte a fait monter leur prix pendant la crise de 2021 — un exemple concret et réel du mécanisme offre/demande."}
+      ]},
+      {titre:"Structures de marché : de la concurrence pure au monopole", blocs:[
+        {type:'texte', texte:"Le modèle offre/demande du chapitre précédent suppose un cas particulier : la concurrence pure et parfaite. Mais la plupart des marchés réels s'en écartent, parfois beaucoup."},
+        {type:'definition', texte:"La concurrence pure et parfaite est un modèle théorique où de nombreux acteurs échangent un produit identique, sans qu'aucun ne puisse influencer le prix seul — un cas de référence, rarement observé tel quel dans la réalité."},
+        {type:'definition', texte:"À l'autre extrême, un monopole désigne un seul vendeur sans concurrent direct, avec un pouvoir de fixation des prix bien supérieur. Entre les deux, un oligopole désigne un petit nombre d'acteurs dominants dont les décisions s'influencent mutuellement."},
+        {type:'attention', texte:"Un oligopole peut donner lieu à une entente entre les quelques acteurs dominants (accord pour limiter la concurrence par les prix) — une pratique généralement interdite par le droit de la concurrence, car elle prive les consommateurs des bénéfices normaux de la concurrence."},
+        {type:'exemple', texte:"Un marché agricole non transformé se rapproche de la concurrence pure et parfaite ; les télécoms ou l'aviation commerciale, dominés par quelques grands acteurs dans de nombreux pays, illustrent plutôt l'oligopole."}
+      ]},
+      {titre:"Externalités et biens publics : quand le marché ne suffit pas", blocs:[
+        {type:'texte', texte:"Le modèle offre/demande suppose que le prix reflète le coût et le bénéfice réels d'un échange pour les deux parties concernées. Deux situations viennent nuancer cette hypothèse."},
+        {type:'definition', texte:"Une externalité est un effet, positif ou négatif, qu'une activité produit sur un tiers qui n'a pas participé à la transaction. Une externalité négative impose un coût (pollution) sans compensation ; une externalité positive apporte un bénéfice (façade rénovée qui embellit la rue) sans que le bénéficiaire ait payé."},
+        {type:'pourquoi', texte:"Sans intervention (taxe, réglementation), le prix de marché d'un bien qui génère une externalité négative ne reflète pas son coût réel pour la société — ce qui peut mener à en produire plus que ce qui serait souhaitable collectivement. Une taxe carbone est une réponse économique classique à ce problème."},
+        {type:'definition', texte:"Un bien public répond à deux critères : non-rivalité (l'utiliser ne réduit pas ce qui reste pour les autres) et non-exclusion (impossible d'empêcher quelqu'un d'en bénéficier). L'éclairage public en est l'exemple classique — ce qui crée un \"problème du passager clandestin\" : chacun a intérêt à en profiter sans contribuer à son financement."},
+        {type:'attention', texte:"Tous les biens fournis par l'État ne sont pas des biens publics au sens économique strict : l'éducation, par exemple, reste en partie rivale et excluable (une place en classe est limitée), même si elle est financée collectivement."}
+      ]},
+      {titre:"Les coûts de production : fixe, variable, marginal", blocs:[
+        {type:'texte', texte:"Comprendre comment une entreprise décide de produire (ou non) une unité de plus repose sur une distinction fondamentale entre trois types de coûts."},
+        {type:'definition', texte:"Un coût fixe ne varie pas avec le niveau de production à court terme (loyer, assurance). Un coût variable évolue directement avec le volume produit (matière première). Le coût marginal, lui, ne regarde que le coût de la toute DERNIÈRE unité produite — il peut être très différent du coût moyen."},
+        {type:'pourquoi', texte:"Une entreprise rationnelle a intérêt à produire une unité de plus tant que son coût marginal reste inférieur au prix qu'elle peut en tirer — un principe central de la décision de production, distinct du seul raisonnement en coût moyen."},
+        {type:'exemple', texte:"Pour un service numérique déjà développé, le coût marginal de servir un utilisateur de plus est souvent proche de zéro (pas de matière première), même si le coût de développement initial était très élevé — ce qui explique pourquoi certains services numériques peuvent être vendus à très bas prix au-delà d'un certain volume."},
+        {type:'retenir', texte:"Coût fixe, coût variable et coût marginal : trois angles différents sur le même ensemble de dépenses, chacun utile pour une décision différente (rentabilité globale, prix de vente, décision de produire une unité de plus)."}
+      ]},
+      {titre:"Vue d'ensemble : PIB, taux directeur et récession", blocs:[
+        {type:'texte', texte:"Après la microéconomie (marchés, entreprises, coûts), zoomons sur l'échelle macroéconomique : comment mesure-t-on la santé économique d'un pays, et comment les banques centrales interviennent-elles ?"},
+        {type:'definition', texte:"Le PIB (Produit intérieur brut) mesure la valeur totale de tout ce qui est produit dans un pays sur une période donnée, généralement un an — l'indicateur le plus suivi pour juger de l'activité économique globale."},
+        {type:'definition', texte:"Une banque centrale pilote la politique monétaire d'un pays ou d'une zone, notamment en fixant le taux directeur — le taux auquel elle prête aux banques commerciales, qui influence ensuite tous les autres taux d'intérêt de l'économie."},
+        {type:'definition', texte:"Une récession désigne une période où l'activité économique recule, généralement mesurée par deux trimestres consécutifs de baisse du PIB."},
+        {type:'approfondir', texte:"Voir le simulateur \"Gouverneur de banque centrale\" du Laboratoire financier pour explorer concrètement comment une décision de taux directeur se propage, avec délai, sur l'inflation, le chômage et la croissance — le même arbitrage qu'affrontent réellement les banques centrales."}
+      ]}
+    ]},
   {id:'histoire-economique', titre:"Comprendre l'histoire économique moderne", niveau:'Avancé',
     libraryTermes:['Étalon-or','Stagflation','Crise des subprimes','Protectionnisme','Taux de change','Taux directeur','Banque centrale','Récession'],
     quizCategories:['Histoire économique'],
@@ -2890,6 +2946,136 @@ const LIBRARY = [
     avantages:[],
     inconvenients:[],
     erreurs:["Croire que les prix reflètent toujours un marché parfaitement équilibré"]
+  },
+  {
+    terme:"Élasticité-prix de la demande",
+    categorie:"Économie",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"L'élasticité-prix de la demande mesure de combien la quantité demandée d'un bien varie quand son prix change. Une demande \"élastique\" réagit beaucoup ; une demande \"inélastique\" réagit peu.",
+    detail:"Un bien de première nécessité sans substitut proche (médicament vital, par exemple) a généralement une demande inélastique : même si son prix augmente fortement, la quantité achetée baisse peu. Un bien avec de nombreux substituts proches (une marque de céréales parmi d'autres) a généralement une demande élastique.",
+    avance:"L'élasticité-prix se calcule ainsi : (variation % de la quantité demandée) ÷ (variation % du prix). Une valeur absolue supérieure à 1 signifie une demande élastique (la quantité réagit plus que proportionnellement au prix) ; inférieure à 1, une demande inélastique.",
+    exemple:"Si le prix de l'essence augmente de 10 % et que la quantité achetée ne baisse que de 2 % à court terme (les trajets contraints restent nécessaires), la demande est inélastique à court terme — mais elle peut devenir plus élastique à long terme si les consommateurs changent de véhicule ou de mode de transport.",
+    avantages:["Aide les entreprises et les pouvoirs publics à anticiper l'effet réel d'une hausse de prix ou d'une taxe sur la consommation"],
+    inconvenients:["L'élasticité peut varier fortement selon l'horizon (court terme vs long terme) et le contexte, ce qui rend son estimation incertaine"],
+    erreurs:["Supposer qu'une hausse de prix fait toujours baisser la quantité vendue dans les mêmes proportions, quel que soit le bien concerné"]
+  },
+  {
+    terme:"Concurrence pure et parfaite",
+    categorie:"Économie",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La concurrence pure et parfaite est un modèle théorique de marché où de nombreux vendeurs et acheteurs échangent un produit identique, sans qu'aucun d'eux ne puisse influencer le prix à lui seul.",
+    detail:"Ce modèle suppose plusieurs conditions rarement toutes réunies dans la réalité : produits parfaitement identiques (pas de marque, pas de différenciation), information parfaite pour tous, libre entrée et sortie du marché, et aucun acteur assez gros pour fixer le prix. C'est un cas de référence théorique, pas une description fidèle de la plupart des marchés réels.",
+    avance:"Entre la concurrence pure et parfaite et le monopole (voir ce terme), il existe tout un spectre de structures de marché réelles : la concurrence monopolistique (produits différenciés, ex. restaurants) et l'oligopole (voir ce terme) sont bien plus fréquents en pratique.",
+    exemple:"Un marché agricole non transformé (blé, par exemple), avec de nombreux producteurs vendant un produit très proche à un prix fixé par le marché mondial, se rapproche du modèle de concurrence pure et parfaite — sans jamais le réaliser totalement.",
+    avantages:["Sert de référence théorique pour juger à quel point un marché réel s'en écarte, et pourquoi"],
+    inconvenients:["Modèle rarement observé tel quel dans la réalité : la plupart des marchés ont des produits différenciés ou un nombre limité d'acteurs"],
+    erreurs:["Analyser un marché réel (souvent différencié ou concentré) comme s'il était en concurrence pure et parfaite, ce qui fausse les conclusions sur le pouvoir de fixation des prix"]
+  },
+  {
+    terme:"Monopole",
+    categorie:"Économie",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un monopole est une situation où un seul vendeur propose un bien ou un service sur un marché, sans concurrent direct capable de le remplacer.",
+    detail:"En l'absence de concurrence, un monopole a un pouvoir de fixation des prix bien supérieur à celui d'une entreprise en concurrence pure et parfaite : il peut, dans une certaine mesure, choisir un prix plus élevé sans craindre de perdre immédiatement tous ses clients au profit d'un concurrent.",
+    avance:"Un monopole peut être \"naturel\" (un seul réseau d'infrastructure est plus efficace que plusieurs réseaux concurrents, ex. distribution d'eau) ou résulter d'une barrière à l'entrée (brevet, réglementation, contrôle d'une ressource rare). Les monopoles sont généralement encadrés ou régulés par les pouvoirs publics pour limiter les abus de position dominante.",
+    exemple:"Une entreprise détenant un brevet exclusif sur un médicament peut, pendant la durée du brevet, en fixer le prix sans concurrent direct proposant la même molécule.",
+    avantages:["Peut permettre des investissements de long terme dans certains secteurs à forts coûts fixes (infrastructures) sans dupliquer inutilement les réseaux"],
+    inconvenients:["Peut mener à des prix plus élevés et une innovation plus faible qu'en situation de concurrence, faute de pression concurrentielle"],
+    erreurs:["Penser qu'un monopole peut fixer n'importe quel prix sans aucune limite : une demande trop élevée reste dissuasive, même sans concurrent direct"]
+  },
+  {
+    terme:"Oligopole",
+    categorie:"Économie",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un oligopole est une situation où un petit nombre d'entreprises domine un marché, chacune ayant un pouvoir suffisant pour influencer le prix ou la stratégie des autres.",
+    detail:"Contrairement au monopole (un seul acteur) ou à la concurrence pure et parfaite (de nombreux petits acteurs), un oligopole implique quelques grands acteurs dont les décisions (prix, production) s'influencent mutuellement — chaque entreprise doit anticiper la réaction de ses concurrents avant d'agir.",
+    avance:"Les oligopoles peuvent, dans certains cas, donner lieu à une entente (accord, explicite ou tacite, pour limiter la concurrence par les prix) — une pratique généralement interdite par le droit de la concurrence, car elle prive les consommateurs des bénéfices de la concurrence.",
+    exemple:"Les marchés des télécoms ou de l'aviation commerciale, dans de nombreux pays, sont dominés par un nombre restreint d'acteurs majeurs — une structure typique d'oligopole.",
+    avantages:["Un petit nombre d'acteurs de grande taille peut permettre des économies d'échelle inaccessibles à de nombreuses petites entreprises"],
+    inconvenients:["Le risque d'entente entre les quelques acteurs dominants peut réduire la concurrence réelle par les prix, au détriment des consommateurs"],
+    erreurs:["Confondre un oligopole (quelques grands acteurs, marché concentré) et un monopole (un seul acteur, aucun concurrent)"]
+  },
+  {
+    terme:"Externalités",
+    categorie:"Économie",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Une externalité est un effet, positif ou négatif, qu'une activité économique produit sur un tiers qui n'a pas participé à la transaction — sans que ce tiers soit indemnisé (externalité négative) ou paie pour en bénéficier (externalité positive).",
+    detail:"Une externalité négative impose un coût à un tiers (la pollution d'une usine affecte la qualité de l'air des riverains, sans qu'ils soient compensés). Une externalité positive apporte un bénéfice à un tiers (un particulier qui rénove sa façade embellit aussi la rue pour ses voisins, sans qu'ils aient payé pour cela).",
+    avance:"Les externalités négatives sont un cas classique de \"défaillance de marché\" : sans intervention (taxe, réglementation, quota), le prix de marché d'un bien ne reflète pas son coût réel pour la société dans son ensemble, ce qui peut mener à une production excessive du bien qui génère l'externalité négative.",
+    exemple:"Une taxe carbone est une réponse économique classique à une externalité négative (les émissions de CO2) : elle vise à faire payer aux émetteurs un coût qui, sans elle, serait supporté par la collectivité sans compensation.",
+    avantages:["Comprendre les externalités permet de justifier économiquement certaines interventions publiques (taxes, subventions, réglementation)"],
+    inconvenients:["Chiffrer précisément une externalité (le coût réel de la pollution, par exemple) reste souvent difficile et fait l'objet de débats méthodologiques"],
+    erreurs:["Penser que le prix de marché d'un bien reflète toujours son coût ou son bénéfice réel pour l'ensemble de la société"]
+  },
+  {
+    terme:"Biens publics",
+    categorie:"Économie",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Un bien public est un bien qui répond à deux critères : la non-rivalité (l'utiliser ne réduit pas ce qui reste disponible pour les autres) et la non-exclusion (impossible ou très coûteux d'empêcher quelqu'un d'en bénéficier, même s'il ne paie pas).",
+    detail:"L'éclairage public ou la défense nationale sont des exemples classiques : qu'une personne de plus en bénéficie ne réduit pas ce qui reste pour les autres (non-rivalité), et il est très difficile d'exclure un habitant qui ne paierait pas ses impôts de l'éclairage de sa rue (non-exclusion).",
+    avance:"Ces deux caractéristiques créent un \"problème du passager clandestin\" (free-rider) : chacun a intérêt à profiter du bien sans contribuer à son financement, ce qui explique pourquoi les biens publics sont rarement fournis efficacement par le seul marché privé et sont souvent financés collectivement (impôts).",
+    exemple:"Un phare qui guide tous les navires d'une côte, qu'ils aient ou non contribué à son financement, est l'exemple historique classique de bien public utilisé en économie.",
+    avantages:["Justifie économiquement le financement collectif de certains biens que le marché privé fournirait mal ou pas du tout"],
+    inconvenients:["Le \"problème du passager clandestin\" rend leur financement volontaire généralement insuffisant, sans intervention publique"],
+    erreurs:["Confondre \"bien public\" (non-rivalité + non-exclusion, une définition économique précise) et \"bien fourni par l'État\" (tous les biens fournis par l'État ne sont pas des biens publics au sens économique, ex. l'éducation reste en partie rivale/excluable)"]
+  },
+  {
+    terme:"Coût marginal",
+    categorie:"Économie",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le coût marginal est le coût supplémentaire engendré par la production d'une unité de plus d'un bien ou service.",
+    detail:"Contrairement au coût moyen (coût total ÷ nombre d'unités), le coût marginal se concentre uniquement sur la DERNIÈRE unité produite. Il peut être très différent du coût moyen, notamment quand des coûts fixes importants sont déjà amortis sur un grand nombre d'unités.",
+    avance:"Une entreprise rationnelle a intérêt à produire une unité supplémentaire tant que le coût marginal de cette unité reste inférieur au prix (ou au revenu marginal) qu'elle en tire — c'est un principe central de la théorie microéconomique de la décision de production.",
+    exemple:"Pour un service numérique déjà développé (application, logiciel), le coût marginal de servir un utilisateur de plus est souvent proche de zéro (pas de matière première à produire), même si le coût de développement initial était très élevé.",
+    avantages:["Aide à comprendre pourquoi certains biens à coûts fixes élevés et coûts marginaux très faibles peuvent être vendus à des prix très bas au-delà d'un certain volume"],
+    inconvenients:["Se concentrer uniquement sur le coût marginal sans jamais couvrir les coûts fixes peut mener une entreprise à ne jamais être rentable globalement"],
+    erreurs:["Confondre le coût marginal (coût de la dernière unité) et le coût moyen (coût total divisé par le nombre d'unités) : les deux peuvent être très différents"]
+  },
+  {
+    terme:"Coût fixe (économie)",
+    categorie:"Économie",
+    niveau:"Débutant",
+    lecture:"1 min",
+    simple:"Un coût fixe est une charge qui ne varie pas (ou peu) avec le niveau de production ou d'activité, au moins à court terme : loyer d'un local, salaire d'un poste administratif, assurance.",
+    detail:"Une entreprise doit payer ses coûts fixes même si elle ne produit ou ne vend rien sur une période donnée — c'est ce qui les distingue des coûts variables (voir ce terme), qui suivent directement le niveau d'activité. Voir aussi \"Point mort\", qui utilise directement cette distinction pour calculer un seuil de rentabilité.",
+    avance:"À long terme, la plupart des coûts deviennent en réalité ajustables (un bail peut être résilié, un poste supprimé) : la distinction fixe/variable dépend donc aussi de l'horizon de temps considéré, pas seulement de la nature de la dépense.",
+    exemple:"Le loyer mensuel d'un local commercial reste le même que l'entreprise vende beaucoup ou peu ce mois-là — c'est un coût fixe.",
+    avantages:["Des coûts fixes élevés mais bien amortis sur un grand volume peuvent permettre un coût unitaire final très compétitif"],
+    inconvenients:["Des coûts fixes élevés augmentent le risque en cas de baisse d'activité, puisqu'ils restent dus même sans revenu correspondant"],
+    erreurs:["Croire qu'un coût fixe le reste indéfiniment quel que soit l'horizon : à long terme, la plupart des coûts fixes peuvent être renégociés ou supprimés"]
+  },
+  {
+    terme:"Coût variable (économie)",
+    categorie:"Économie",
+    niveau:"Débutant",
+    lecture:"1 min",
+    simple:"Un coût variable évolue directement avec le niveau de production ou de vente : matière première, emballage, commission sur vente.",
+    detail:"Plus une entreprise produit ou vend, plus ses coûts variables totaux augmentent proportionnellement (ou presque) — contrairement aux coûts fixes (voir ce terme), qui restent stables quel que soit le niveau d'activité.",
+    avance:"La marge sur coût variable (prix de vente moins coût variable unitaire) est la contribution de chaque unité vendue à la couverture des coûts fixes, puis au bénéfice une fois ces coûts fixes couverts — c'est le principe utilisé dans le calcul du \"Point mort\" (seuil de rentabilité).",
+    exemple:"Le coût des matières premières utilisées pour fabriquer un produit augmente directement avec le nombre d'unités produites — c'est un coût variable.",
+    avantages:["Des coûts majoritairement variables réduisent le risque en cas de baisse d'activité : les charges baissent avec les ventes"],
+    inconvenients:["Ne pas maîtriser ses coûts variables unitaires peut faire vendre à perte sans que cela apparaisse immédiatement dans les charges fixes"],
+    erreurs:["Oublier de comptabiliser un coût réellement variable (commission, emballage) dans le calcul d'une marge, ce qui la surestime"]
+  },
+  {
+    terme:"Incitations économiques",
+    categorie:"Économie",
+    niveau:"Débutant",
+    lecture:"1 min",
+    simple:"Une incitation économique est un élément (prix, taxe, subvention, règle) qui pousse les individus ou les entreprises à agir dans un sens plutôt qu'un autre, en modifiant le coût ou le bénéfice perçu d'un comportement.",
+    detail:"Les acteurs économiques réagissent généralement aux incitations : une taxe augmente le coût d'un comportement (et tend à le réduire), une subvention réduit son coût (et tend à l'encourager). C'est un principe central pour comprendre pourquoi des politiques publiques (fiscales, réglementaires) cherchent à influencer des comportements sans les interdire directement.",
+    avance:"Les incitations peuvent avoir des effets non voulus (effets pervers) si elles ne sont pas bien calibrées : une règle censée encourager un comportement peut, dans certains contextes, produire l'effet inverse de celui recherché — un point de vigilance classique en économie appliquée.",
+    exemple:"Une subvention à l'achat de véhicules électriques est une incitation économique : elle réduit le coût perçu de ce choix pour orienter la décision des acheteurs, sans l'imposer.",
+    avantages:["Permet d'orienter des comportements sans les interdire ni les rendre obligatoires"],
+    inconvenients:["Une incitation mal calibrée peut produire des effets pervers, opposés à l'objectif initial recherché"],
+    erreurs:["Supposer qu'une incitation économique aura toujours l'effet exactement voulu, sans jamais d'effet secondaire ou de contournement"]
   },
   {
     terme:"Chômage",
