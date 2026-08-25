@@ -35,14 +35,36 @@ function initTheme(){
 function safeGet(key){
   try{ return localStorage.getItem(key); }catch(e){ return null; }
 }
+// Avant ce correctif (audit du 2026-08-20, section K), un échec d'écriture
+// localStorage (quota dépassé, navigation privée restrictive...) était
+// totalement silencieux : la progression cessait de s'enregistrer sans que
+// l'utilisateur en soit jamais informé. Avertit une seule fois par session
+// (pas à chaque écriture manquée, jamais spammé) via le même style de toast
+// que showBadgeToast, plus loin dans ce fichier — aucune nouvelle classe CSS.
+let storageWarningShown = false;
+function warnStorageFailureOnce(key, err){
+  console.error(`Likanza Academy — échec d'enregistrement local (clé "${key}") :`, err && err.message);
+  if(storageWarningShown) return;
+  storageWarningShown = true;
+  try{
+    if(typeof document === 'undefined' || !document.body || typeof document.createElement !== 'function') return;
+    const toast = document.createElement('div');
+    toast.className = 'badge-toast';
+    toast.style.borderColor = 'var(--bordeaux)';
+    toast.innerHTML = `<strong>⚠️ Sauvegarde impossible</strong><br><span>Ta progression ne s'enregistre plus sur cet appareil (stockage local plein ou bloqué). Libère de l'espace ou essaie un autre navigateur.</span>`;
+    document.body.appendChild(toast);
+    if(typeof requestAnimationFrame === 'function') requestAnimationFrame(()=>toast.classList.add('show'));
+    setTimeout(()=>{ toast.classList.remove('show'); setTimeout(()=>toast.remove(), 400); }, 6000);
+  }catch(e){ /* jamais laisser l'avertissement lui-même faire planter la page */ }
+}
 function safeSet(key, val){
-  try{ localStorage.setItem(key, val); return true; }catch(e){ return false; }
+  try{ localStorage.setItem(key, val); return true; }catch(e){ warnStorageFailureOnce(key, e); return false; }
 }
 function safeGetJSON(key, fallback){
   try{ const v = localStorage.getItem(key); return v ? JSON.parse(v) : fallback; }catch(e){ return fallback; }
 }
 function safeSetJSON(key, val){
-  try{ localStorage.setItem(key, JSON.stringify(val)); return true; }catch(e){ return false; }
+  try{ localStorage.setItem(key, JSON.stringify(val)); return true; }catch(e){ warnStorageFailureOnce(key, e); return false; }
 }
 
 // ---------- Échappement HTML (texte libre saisi par l'utilisateur, ex. "Construis ton projet") ----------
