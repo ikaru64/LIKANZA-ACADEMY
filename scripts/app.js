@@ -2252,6 +2252,45 @@ const LIBRARY = [
     erreurs:["Croire que posséder 3 ETF différents mais très corrélés suffit à diversifier"]
   },
   {
+    terme:"CAGR (taux de croissance annuel composé)",
+    categorie:"Investissement",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le CAGR (Compound Annual Growth Rate) est le taux de croissance annuel constant qui, appliqué chaque année, aurait mené du montant de départ au montant final observé — un moyen de résumer une performance sur plusieurs années en un seul chiffre annualisé.",
+    detail:"Ce n'est jamais la moyenne simple des rendements annuels réels (qui ont pu être très irréguliers, certaines années négatives, d'autres très positives) : c'est un taux constant fictif, choisi uniquement pour reproduire le même résultat final sur la même durée — un outil de comparaison, pas une description année par année de ce qui s'est réellement passé.",
+    avance:"Formule : CAGR = (valeur finale ÷ valeur de départ)^(1 ÷ nombre d'années) − 1. C'est exactement ce calcul qu'utilisent, par exemple, le simulateur d'intérêts composés du Laboratoire (mode « Historique ») ou la fiche dividende d'une action pour résumer une croissance sur 5 ou 10 ans.",
+    exemple:"Un capital de 1 000€ devenu 1 610€ en 10 ans : CAGR = (1610/1000)^(1/10) − 1 ≈ 4,9% par an — même si la progression année par année a probablement été très irrégulière (certaines années à +15%, d'autres à -8%), jamais un vrai +4,9% chaque année.",
+    avantages:["Permet de comparer deux performances sur des durées différentes avec un seul chiffre annualisé, plutôt qu'un pourcentage total peu comparable d'une durée à l'autre"],
+    inconvenients:["Masque complètement la volatilité réelle du trajet : deux placements au même CAGR peuvent avoir traversé des baisses intermédiaires très différentes"],
+    erreurs:["Croire que le CAGR affiché correspond au rendement réellement obtenu chaque année individuellement, alors que ce n'est qu'un taux moyen lissé sur toute la période"]
+  },
+  {
+    terme:"Benchmark (indice de référence)",
+    categorie:"Investissement",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Un benchmark est un indice de référence auquel on compare la performance d'un placement, pour juger s'il a fait mieux ou moins bien que ce point de comparaison.",
+    detail:"Sans benchmark, un rendement de +8% sur un an semble bon dans l'absolu — mais si l'indice de référence a fait +15% sur la même période, ce même +8% devient en réalité une sous-performance relative. Le choix du benchmark doit rester cohérent avec ce qui est réellement comparé (un portefeuille d'actions françaises se compare au CAC 40, pas à un indice obligataire).",
+    avance:"Battre son benchmark sur une seule année ne prouve pas grand-chose statistiquement : la comparaison n'a de sens que sur plusieurs cycles de marché, et de nombreuses études montrent qu'une majorité de gestionnaires actifs professionnels ne parviennent pas à battre durablement leur benchmark une fois les frais de gestion déduits.",
+    exemple:"Le Portfolio Game du Laboratoire Likanza compare directement le résultat d'un portefeuille construit par l'utilisateur au CAC 40 sur la même période — affichant explicitement \"mieux\" ou \"moins bien que la référence\", jamais un simple pourcentage isolé sans point de comparaison.",
+    avantages:["Donne un point de comparaison objectif pour juger si une performance est réellement bonne, ou seulement portée par une hausse générale du marché"],
+    inconvenients:["Un benchmark mal choisi (trop différent de la composition réelle du placement comparé) rend la comparaison trompeuse"],
+    erreurs:["Juger un rendement uniquement dans l'absolu (\"+8%, c'est bien\") sans jamais le comparer à ce qu'un indice de référence comparable a fait sur la même période"]
+  },
+  {
+    terme:"Alpha",
+    categorie:"Investissement",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"L'alpha est l'écart de performance d'un placement par rapport à son benchmark : un alpha positif signifie une performance supérieure à la référence, un alpha négatif signifie une performance inférieure.",
+    detail:"Dans sa version la plus simple, alpha = rendement du placement − rendement du benchmark sur la même période. C'est exactement ce que compare le Portfolio Game du Laboratoire Likanza quand il affiche le résultat d'un portefeuille face au CAC 40 — la différence entre les deux, c'est l'alpha généré (positif ou négatif) sur cette période précise.",
+    avance:"Une version plus rigoureuse de l'alpha (utilisée en finance académique, dite \"alpha de Jensen\") ajuste d'abord le rendement attendu du placement selon son beta (sa sensibilité au marché, voir ce terme) avant de comparer — un alpha simple (rendement brut moins benchmark) peut en effet confondre une vraie surperformance avec le simple fait d'avoir pris plus de risque que le benchmark.",
+    exemple:"Un portefeuille qui gagne +12% sur un an quand son benchmark gagne +9% génère un alpha simple de +3 points sur cette période — sans dire, à lui seul, si ce résultat vient d'un choix de titres réellement pertinent ou simplement d'un risque plus élevé pris sur la période.",
+    avantages:["Résume en un seul chiffre si un placement a réellement ajouté de la valeur par rapport à une référence passive, ou seulement suivi le marché"],
+    inconvenients:["Un alpha positif sur une courte période peut être dû au hasard ou à un risque accru, pas nécessairement à une compétence réelle et répétable"],
+    erreurs:["Présenter un alpha positif calculé sur une seule et courte période comme la preuve définitive d'une compétence de gestion, alors qu'il faudrait l'observer sur plusieurs cycles de marché pour distinguer compétence et hasard"]
+  },
+  {
     terme:"Capitalisation boursière",
     categorie:"Bourse",
     niveau:"Intermédiaire",
