@@ -231,3 +231,84 @@ function renderLboLab(elId){
   update();
   tryAwardQuizPoints(`lbo-lab-${new Date().toDateString()}`, 8, {usedSimulator: true});
 }
+
+// ============================================================
+// ---------- Simulateur DCF (valorisation par flux de trésorerie actualisés,
+// section AMÉLIORATION de l'audit de couverture pédagogique du 25/08/2026 :
+// "DCF comme outil interactif, au lieu d'un exercice à chiffres fixes" — le
+// seul DCF existant jusqu'ici était une mission scénarisée à un flux unique
+// figé). Réutilise computeInvestmentProjectCashFlows (mêmes hypothèses de
+// CA/croissance/marge que "Faut-il investir ?") pour générer les flux
+// explicites, puis computeDCFValuation (scripts/data.js) pour la valeur
+// terminale — jamais une prédiction, toujours le résultat mécanique de ce
+// que l'utilisateur saisit. ----------
+function renderDcfLab(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <p style="color:var(--text-dim);font-size:13.5px;line-height:1.6;margin:0 0 16px;max-width:70ch;">Une valorisation par DCF actualise les flux de trésorerie qu'une entreprise devrait générer sur une période explicite, plus une "valeur terminale" représentant tout ce qui vient après — ajuste les hypothèses ci-dessous pour voir comment chaque paramètre pèse sur le résultat final, jamais une prédiction, seulement le résultat mécanique de ce que tu saisis.</p>
+    <div class="card-grid" style="grid-template-columns:1fr 1fr;">
+      <div class="card">
+        <div class="field"><label for="dcfCA1">Flux de trésorerie généré la 1ère année (€)</label><input type="number" id="dcfCA1" min="0" step="10000" value="1000000"></div>
+        <div class="slider-row field"><label for="dcfGrowth">Croissance annuelle de ce flux <span class="v mono" id="valDcfGrowth">5 %</span></label><input type="range" id="dcfGrowth" min="-10" max="30" step="1" value="5"></div>
+        <div class="slider-row field"><label for="dcfMargin">Part convertie en flux de trésorerie disponible <span class="v mono" id="valDcfMargin">100 %</span></label><input type="range" id="dcfMargin" min="10" max="100" step="5" value="100"></div>
+        <div class="slider-row field"><label for="dcfYears">Durée de la période explicite <span class="v mono" id="valDcfYears">5 ans</span></label><input type="range" id="dcfYears" min="1" max="15" step="1" value="5"></div>
+        <div class="slider-row field"><label for="dcfWacc">Taux d'actualisation (WACC) <span class="v mono" id="valDcfWacc">8 %</span></label><input type="range" id="dcfWacc" min="1" max="20" step="0.5" value="8"></div>
+        <div class="slider-row field" style="margin-bottom:0;"><label for="dcfTerminalGrowth">Croissance perpétuelle après la période explicite <span class="v mono" id="valDcfTerminalGrowth">2 %</span></label><input type="range" id="dcfTerminalGrowth" min="0" max="5" step="0.25" value="2"></div>
+      </div>
+      <div class="card">
+        <h3>Résultat</h3>
+        <div id="dcfLabResult" style="margin-top:12px;"></div>
+      </div>
+    </div>`;
+
+  const ids = ['dcfCA1','dcfGrowth','dcfMargin','dcfYears','dcfWacc','dcfTerminalGrowth'];
+  const get = id => +document.getElementById(id).value || 0;
+
+  function update(){
+    document.getElementById('valDcfGrowth').textContent = get('dcfGrowth') + ' %';
+    document.getElementById('valDcfMargin').textContent = get('dcfMargin') + ' %';
+    document.getElementById('valDcfYears').textContent = get('dcfYears') + ' ans';
+    document.getElementById('valDcfWacc').textContent = get('dcfWacc') + ' %';
+    document.getElementById('valDcfTerminalGrowth').textContent = get('dcfTerminalGrowth') + ' %';
+
+    const ca1 = get('dcfCA1');
+    const croissance = get('dcfGrowth');
+    const margeConversion = get('dcfMargin');
+    const duree = get('dcfYears');
+    const wacc = get('dcfWacc');
+    const terminalGrowth = get('dcfTerminalGrowth');
+
+    const cashFlows = computeInvestmentProjectCashFlows(ca1, croissance, margeConversion, duree);
+    const resultEl = document.getElementById('dcfLabResult');
+    const r = computeDCFValuation(cashFlows, wacc, terminalGrowth);
+    if(!r){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : le taux d'actualisation (WACC) doit rester strictement supérieur à la croissance perpétuelle retenue, sans quoi la valeur terminale diverge mathématiquement — une entreprise ne peut pas croître indéfiniment plus vite que son coût du capital.</p>`;
+      return;
+    }
+
+    resultEl.innerHTML = `
+      ${renderDataBadge('calcul')}
+      <div class="result-row" style="margin-top:10px;">
+        <span>Valeur actuelle des flux explicites</span><span class="mono">${fmtEUR(r.pvOfExplicitFlows)}</span>
+      </div>
+      <div class="result-row">
+        <span>Valeur terminale actualisée</span><span class="mono">${fmtEUR(r.discountedTerminalValue)}</span>
+      </div>
+      <div class="result-row">
+        <span>Valeur d'entreprise totale</span><span class="mono" style="color:var(--gold-bright);font-size:18px;">${fmtEUR(r.enterpriseValue)}</span>
+      </div>
+      <p style="font-size:13px;margin-top:14px;color:var(--text-dim);">La valeur terminale représente <strong style="color:${r.terminalValueSharePct > 60 ? 'var(--bordeaux)' : 'var(--text)'};">${r.terminalValueSharePct.toFixed(0)} %</strong> de la valeur totale — c'est normal et fréquent dans un DCF réel (souvent 60 à 80 %), mais cela signifie aussi que la majeure partie du résultat dépend d'une hypothèse de croissance perpétuelle lointaine et incertaine, pas des flux explicitement projetés.</p>
+      ${renderMethodologyPanel({
+        calcul: "Valeur d'entreprise = valeur actuelle des flux explicites (chaque flux actualisé au WACC) + valeur terminale actualisée. Valeur terminale = flux de la dernière année × (1 + croissance perpétuelle) ÷ (WACC − croissance perpétuelle), elle-même actualisée sur la durée de la période explicite — le modèle de croissance perpétuelle de Gordon, l'approche la plus courante.",
+        donnees: `Flux de trésorerie calculés à partir de : flux 1ère année de ${fmtEUR(ca1)}, croissance de ${croissance}%/an, part convertie en flux disponible de ${margeConversion}% — jamais une donnée de marché, uniquement tes hypothèses saisies ci-contre.`,
+        hypotheses: "Croissance et taux de conversion en flux disponible constants sur toute la période explicite ; le WACC reste constant sur toute la période ; la croissance perpétuelle après la période explicite reste elle aussi constante indéfiniment.",
+        limites: "Un DCF réel implique souvent des flux de trésorerie qui ne croissent pas de façon régulière, un WACC qui peut évoluer avec le risque perçu de l'entreprise, et une valeur terminale qui reste, par construction, la partie la plus incertaine du calcul (elle porte sur un horizon lointain, jamais observable). Ce simulateur isole le mécanisme du DCF, pas une valorisation d'entreprise réelle.",
+        comprendre: "Le DCF est très sensible à deux hypothèses en particulier : le WACC et la croissance perpétuelle. Un petit écart entre les deux (WACC proche de la croissance perpétuelle) fait exploser la valeur terminale — teste-le en rapprochant les deux curseurs pour voir cette sensibilité en direct, une limite structurelle de la méthode, pas un bug du calculateur."
+      })}`;
+  }
+
+  ids.forEach(id => document.getElementById(id).addEventListener('input', update));
+  update();
+  tryAwardQuizPoints(`dcf-lab-${new Date().toDateString()}`, 8, {usedSimulator: true});
+}

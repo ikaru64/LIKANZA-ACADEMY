@@ -5004,6 +5004,30 @@ function computeInvestmentProjectCashFlows(caAnnee1, croissancePct, margePct, du
   return cashFlows;
 }
 
+// ---------- DCF (valorisation par flux de trésorerie actualisés) — outil
+// interactif demandé par l'audit de couverture pédagogique (25/08/2026,
+// section AMÉLIORATION : "DCF comme outil interactif, au lieu d'un exercice
+// à chiffres fixes"). Réutilise computeVAN (déjà utilisé par le simulateur
+// "Faut-il investir ?") pour la valeur actuelle des flux explicites, et y
+// ajoute une valeur terminale (modèle de croissance perpétuelle de Gordon :
+// TV = FCF final × (1+g) ÷ (WACC−g)), elle-même actualisée. Retourne null si
+// WACC ≤ g : la formule de croissance perpétuelle diverge mathématiquement
+// dans ce cas (une entreprise ne peut pas croître indéfiniment plus vite que
+// son coût du capital), jamais une valeur fabriquée dans ce cas invalide. ----------
+function computeDCFValuation(cashFlows, waccPct, terminalGrowthPct){
+  if(!Array.isArray(cashFlows) || cashFlows.length === 0) return null;
+  if(!(waccPct > terminalGrowthPct)) return null;
+  const n = cashFlows.length;
+  const finalFCF = cashFlows[n - 1];
+  const wacc = waccPct / 100, g = terminalGrowthPct / 100;
+  const pvOfExplicitFlows = computeVAN(0, cashFlows, waccPct);
+  const terminalValue = (finalFCF * (1 + g)) / (wacc - g);
+  const discountedTerminalValue = terminalValue / Math.pow(1 + wacc, n);
+  const enterpriseValue = pvOfExplicitFlows + discountedTerminalValue;
+  const terminalValueSharePct = enterpriseValue !== 0 ? (discountedTerminalValue / enterpriseValue) * 100 : 0;
+  return {pvOfExplicitFlows, terminalValue, discountedTerminalValue, enterpriseValue, terminalValueSharePct};
+}
+
 // ---------- LBO (rachat par effet de levier, section 13 du prompt "Extension
 // des domaines" : M&A/PE/VC) : illustre mécaniquement pourquoi la dette
 // amplifie le rendement sur le capital investi (effet de levier), jamais une
