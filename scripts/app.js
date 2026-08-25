@@ -1397,7 +1397,7 @@ const DOMAINS = [
   {key:'economics', label:'Économie', displayLabel:"l'économie", icon:'🌍',
     mentalChallengeDomain:'Économie',
     quizCategories:['PIB', 'Taux directeur', 'Banque centrale', 'Récession', 'Offre et demande', 'Microéconomie', 'Commerce international', 'Histoire économique'],
-    libraryCategories:['Économie'],
+    libraryCategories:['Économie', 'Taux'],
     deepQuizHook:{title:'Comprends-tu vraiment l\'économie ?', subtitle:'Des situations concrètes pour tester ta compréhension.'}},
   {key:'realEstate', label:'Immobilier', displayLabel:"l'immobilier", icon:'🏠',
     mentalChallengeDomain:'Immobilier',
