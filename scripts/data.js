@@ -3287,6 +3287,36 @@ const COURSE_BLOCK_META = {
   casReel: {emoji: '🏢', label: 'Cas réel'},
   pourquoi: {emoji: '🧠', label: 'Pourquoi ?'}
 };
+
+// ---------- Sélecteur de format par cours (section AMÉLIORATION/OPTIONNEL de
+// l'audit de couverture pédagogique du 25/08/2026) : filtre client-side sur
+// les blocs déjà écrits dans chaque cours — jamais un nouveau contenu à
+// rédiger par cours. "Complet" = comportement historique inchangé (tous les
+// blocs). "Test" est spécial : ignore les blocs, saute directement au quiz.
+// Un chapitre qui n'a plus aucun bloc correspondant au format choisi est
+// retiré de la pagination pour ce format (jamais une page vide affichée) ;
+// si AUCUN chapitre du cours n'a de contenu pour un format, repli silencieux
+// sur "Complet" plutôt qu'un écran cassé. ----------
+const COURSE_FORMATS = [
+  {key:'complet', emoji:'📖', label:'Complet'},
+  {key:'rapide', emoji:'⚡', label:'Rapide'},
+  {key:'pratique', emoji:'🧮', label:'Pratique'},
+  {key:'avance', emoji:'🔥', label:'Avancé'},
+  {key:'test', emoji:'🧠', label:'Test'}
+];
+const COURSE_FORMAT_BLOCK_TYPES = {
+  rapide: ['definition', 'retenir'],
+  pratique: ['calcul', 'exemple', 'exerciceErreur', 'casReel', 'visualisation'],
+  avance: ['attention', 'pourquoi', 'approfondir']
+};
+function getFormatFilteredChapitres(chapitres, formatKey){
+  const allowedTypes = COURSE_FORMAT_BLOCK_TYPES[formatKey];
+  if(!allowedTypes) return chapitres; // 'complet' (ou format inconnu) : aucun filtre
+  const filtered = chapitres
+    .map(ch => ({...ch, blocs: (ch.blocs || []).filter(b => allowedTypes.includes(b.type))}))
+    .filter(ch => ch.blocs.length > 0);
+  return filtered.length > 0 ? filtered : chapitres; // jamais un cours vide : repli sur "Complet"
+}
 function renderCourseBlock(bloc){
   if(!bloc || !bloc.type) return '';
   if(bloc.type === 'texte'){
@@ -3376,13 +3406,36 @@ function renderClarityFeedback(elId, contentId){
 function renderCoursRich(elId, cours, onComplete){
   const el = document.getElementById(elId);
   if(!el) return;
-  const chapitres = cours.chapitres;
+  let activeFormat = 'complet';
+  let chapitres = cours.chapitres;
   let chapIndex = 0;
+
+  function formatSelectorHtml(){
+    return `<div class="mode-toggle" id="${elId}-format" style="margin-bottom:14px;">
+      ${COURSE_FORMATS.map(f => `<button class="pill${f.key === activeFormat ? ' active' : ''}" data-format="${f.key}" type="button" title="${f.label}">${f.emoji} ${f.label}</button>`).join('')}
+    </div>`;
+  }
+  function wireFormatSelector(){
+    const wrap = document.getElementById(`${elId}-format`);
+    if(!wrap) return;
+    wrap.querySelectorAll('.pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const key = btn.dataset.format;
+        if(key === activeFormat) return;
+        activeFormat = key;
+        if(key === 'test'){ renderQuizStep(); return; }
+        chapitres = getFormatFilteredChapitres(cours.chapitres, key);
+        chapIndex = 0;
+        renderChapterStep();
+      });
+    });
+  }
 
   function renderChapterStep(){
     const isLast = chapIndex === chapitres.length - 1;
     const pct = Math.round(((chapIndex + 1) / chapitres.length) * 100);
     el.innerHTML = `
+      ${formatSelectorHtml()}
       <div class="mono" style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Chapitre ${chapIndex+1} / ${chapitres.length}</div>
       <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
       ${renderCourseChapter(chapitres[chapIndex])}
@@ -3392,6 +3445,7 @@ function renderCoursRich(elId, cours, onComplete){
         ${chapIndex > 0 ? `<button class="btn btn-sm" id="${elId}-prev">← Précédent</button>` : ''}
         <button class="btn btn-sm btn-gold" id="${elId}-next">${isLast ? 'Passer au quiz →' : 'Chapitre suivant →'}</button>
       </div>`;
+    wireFormatSelector();
     document.getElementById(`${elId}-next`).addEventListener('click', () => {
       if(isLast){ renderQuizStep(); }
       else { chapIndex++; renderChapterStep(); }
@@ -3405,17 +3459,24 @@ function renderCoursRich(elId, cours, onComplete){
     const progress = getCoursProgress();
     const done = !!progress[cours.id];
     el.innerHTML = `
+      ${formatSelectorHtml()}
       <div class="mission-question">
         <p class="mission-q-prompt">${done ? "Cours validé — retente le quiz quand tu veux, en révision." : "Lecture terminée : valide le quiz pour gagner des points."}</p>
         <div id="${elId}-quiz"></div>
         <button class="btn btn-sm btn-gold" id="${elId}-start">${done ? 'Revoir le quiz' : 'Commencer le quiz'}</button>
       </div>
       <button class="btn btn-sm" id="${elId}-back" style="margin-top:12px;">← Revoir les chapitres</button>`;
+    wireFormatSelector();
     document.getElementById(`${elId}-start`).addEventListener('click', function(){
       this.style.display = 'none';
       renderCoursQuiz(`${elId}-quiz`, cours, onComplete);
     });
-    document.getElementById(`${elId}-back`).addEventListener('click', () => { chapIndex = 0; renderChapterStep(); });
+    document.getElementById(`${elId}-back`).addEventListener('click', () => {
+      activeFormat = 'complet';
+      chapitres = cours.chapitres;
+      chapIndex = 0;
+      renderChapterStep();
+    });
   }
 
   renderChapterStep();
