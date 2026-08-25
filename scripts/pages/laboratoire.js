@@ -68,7 +68,8 @@ const LAB_WIDGETS = {
     {id:'widget-invest-pru', title:"Prix moyen d'achat", desc:'Calcule ton prix moyen à partir de tes achats successifs.', icon:'calculator'},
     {id:'widget-invest-var', title:'Risque quantitatif (VaR)', desc:'Perte potentielle estimée, selon un niveau de confiance choisi.', icon:'shield'},
     {id:'widget-invest-bond', title:'Calculateur obligataire (prix / YTM)', desc:'Prix ↔ rendement à l\'échéance, à partir des vrais flux de coupons.', icon:'landmark'},
-    {id:'widget-invest-forex', title:'Calculateur de position Forex', desc:'Taille de position en lots, à partir de ton risque accepté et de ton stop-loss.', icon:'scale'}
+    {id:'widget-invest-forex', title:'Calculateur de position Forex', desc:'Taille de position en lots, à partir de ton risque accepté et de ton stop-loss.', icon:'scale'},
+    {id:'widget-invest-position', title:'Calculateur de taille de position', desc:'Pour une action ou tout actif tradé à l\'unité, à partir de ton risque accepté.', icon:'target'}
   ],
   'tab-logement': [
     {id:'labCreditCard', title:'Coût réel de mon crédit', desc:"Tableau d'amortissement complet, taux et durée.", icon:'landmark'},
@@ -178,6 +179,13 @@ const LAB_METHODOLOGY = {
     hypotheses: "Coupons versés à intervalles réguliers (annuels ou semestriels selon la fréquence choisie) jusqu'à l'échéance, puis remboursement intégral de la valeur nominale à l'échéance — aucun défaut de l'émetteur n'est modélisé.",
     limites: "Ne tient pas compte des frais de courtage, de la fiscalité, ni d'un remboursement anticipé (obligation « callable »). Le YTM suppose que chaque coupon reçu est réinvesti exactement au même taux — une simplification rarement vérifiée en pratique.",
     comprendre: "Le prix et le taux évoluent toujours en sens inverse : un taux du marché plus élevé que le coupon fait baisser le prix sous la valeur nominale (décote), un taux plus faible le fait monter au-dessus (prime). Voir le chapitre \"Le prix d'une obligation\" du cours Bourse pour l'intuition complète."
+  },
+  'invest-position': {
+    calcul: "Montant risqué = capital × risque accepté (%). Taille de position (en unités) = montant risqué ÷ (prix d'entrée − prix du stop-loss, en valeur absolue). Valeur de la position = taille de position × prix d'entrée.",
+    donnees: "Aucune donnée externe : le capital, le risque accepté, le prix d'entrée et le prix du stop-loss sont saisis par toi.",
+    hypotheses: "Le stop-loss s'exécute exactement au prix indiqué — en pratique, un ordre stop simple peut s'exécuter à un prix légèrement différent lors d'un mouvement de marché brutal (voir le terme Ordre stop dans la Bibliothèque).",
+    limites: "Ne tient pas compte des frais de courtage, de la fiscalité, ni d'un éventuel effet de levier (marge) qui changerait le capital réellement engagé pour la même taille de position.",
+    comprendre: "Cette formule garantit que, si le stop-loss est touché, la perte réelle correspond exactement au montant qu'on avait décidé d'accepter à l'avance — voir le terme Taille de position dans la Bibliothèque pour la même logique appliquée à la gestion du risque en général."
   },
   'invest-forex': {
     calcul: "Valeur du pip = taille du lot (en unités) × taille du pip (0,0001, ou 0,01 pour les paires avec le yen) — un calcul mathématique fixe, jamais estimé. Taille de position (en lots) = (capital × risque accepté en %) ÷ (stop-loss en pips × valeur du pip par lot).",
@@ -1333,6 +1341,35 @@ function updateForex(){
   document.getElementById(id).addEventListener('input', () => { updateForex(); markForexUsed(); });
 });
 updateForex();
+
+// ---------- Calculateur de taille de position générique (actions, crypto,
+// tout actif tradé à l'unité) — computeTradePositionSize (scripts/data.js),
+// même formule que celle déjà documentée dans le terme Bibliothèque "Taille
+// de position" (construit lors du pilier Trading), désormais un outil
+// interactif plutôt qu'une formule statique. ----------
+function markPositionUsed(){ tryAwardQuizPoints(`lab-position-${new Date().toDateString()}`, 8, {usedPositionCalc:true}); }
+function updatePosition(){
+  const capital = +document.getElementById('posCapital').value || 0;
+  const riskPct = +document.getElementById('posRiskPct').value || 0;
+  const entry = +document.getElementById('posEntry').value || 0;
+  const stop = +document.getElementById('posStop').value || 0;
+  const resultEl = document.getElementById('positionResult');
+  const r = computeTradePositionSize(capital, riskPct, entry, stop);
+  if(!r){
+    resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : le capital, le risque accepté et les deux prix doivent être positifs, et le stop-loss doit être différent du prix d'entrée.</p>`;
+    return;
+  }
+  resultEl.innerHTML = `
+    ${renderDataBadge('calcul')}
+    <div class="result-row" style="margin-top:10px;"><span>Taille de position</span><span class="mono" style="font-size:18px;color:var(--gold-bright);">${r.positionSizeUnits.toFixed(2)} unités</span></div>
+    <div class="result-row"><span>Valeur de la position</span><span class="mono">${fmtEUR(r.positionValueAtEntry)}</span></div>
+    <div class="result-row"><span>Montant risqué</span><span class="mono">${fmtEUR(r.riskAmount)}</span></div>
+    <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">Risque de ${fmtEUR(r.riskPerUnit)} par unité (écart entre le prix d'entrée et le stop-loss). Si le stop-loss est touché, la perte correspond exactement au montant risqué ci-dessus — jamais plus, jamais moins.</p>`;
+}
+['posCapital','posRiskPct','posEntry','posStop'].forEach(id => {
+  document.getElementById(id).addEventListener('input', () => { updatePosition(); markPositionUsed(); });
+});
+updatePosition();
 
 // ============================================================
 // ---------- Laboratoire économique (tab-economie, section 4 du prompt

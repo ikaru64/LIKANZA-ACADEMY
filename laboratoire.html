@@ -281,6 +281,24 @@
       <div id="method-invest-forex"></div>
     </div>
 
+    <div class="card" id="widget-invest-position" style="display:none;grid-column:1/-1;">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+        <h3>Calculateur de taille de position</h3>
+        <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span>
+      </div>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;max-width:70ch;">Pour une action, un cryptoactif ou tout autre actif tradé à l'unité : calcule combien d'unités acheter pour que, si ton stop-loss est touché, la perte corresponde exactement au montant que tu acceptes de risquer — jamais une taille de position choisie "au feeling".</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:150px;"><label for="posCapital">Capital du compte (€)</label><input type="number" id="posCapital" value="10000" min="1"></div>
+        <div class="field" style="flex:1;min-width:150px;"><label for="posRiskPct">Risque accepté (% du capital)</label><input type="number" id="posRiskPct" value="1" min="0.1" max="100" step="0.1"></div>
+      </div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:150px;"><label for="posEntry">Prix d'entrée (€)</label><input type="number" id="posEntry" value="50" min="0.01" step="0.01"></div>
+        <div class="field" style="flex:1;min-width:150px;"><label for="posStop">Prix du stop-loss (€)</label><input type="number" id="posStop" value="45" min="0.01" step="0.01"></div>
+      </div>
+      <div id="positionResult" style="margin-top:16px;"></div>
+      <div id="method-invest-position"></div>
+    </div>
+
   </div>
   </div>
 

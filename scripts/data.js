@@ -5143,6 +5143,24 @@ function computeForexPositionSize(accountRiskAmount, stopLossPips, unitsPerLot, 
   return {pipValuePerLot, positionSizeInLots, positionSizeInUnits: positionSizeInLots * unitsPerLot};
 }
 
+// ---------- Calculateur de taille de position générique (actions, crypto,
+// tout actif tradé à l'unité) — dernier point AMÉLIORATION de l'audit de
+// couverture pédagogique (25/08/2026). Applique exactement la formule déjà
+// documentée dans le terme Bibliothèque "Taille de position" (categorie
+// Gestion du risque, construite lors du pilier Trading) : taille = montant
+// risqué ÷ distance entre le prix d'entrée et le stop-loss — jamais un
+// résultat retourné si le stop-loss est égal au prix d'entrée (risque par
+// unité nul, division impossible), plutôt qu'une taille infinie fabriquée. ----------
+function computeTradePositionSize(accountCapital, riskPct, entryPrice, stopLossPrice){
+  if(!(accountCapital > 0) || !(riskPct > 0) || !(entryPrice > 0) || !(stopLossPrice > 0)) return null;
+  const riskPerUnit = Math.abs(entryPrice - stopLossPrice);
+  if(!(riskPerUnit > 0)) return null;
+  const riskAmount = accountCapital * (riskPct / 100);
+  const positionSizeUnits = riskAmount / riskPerUnit;
+  const positionValueAtEntry = positionSizeUnits * entryPrice;
+  return {riskAmount, riskPerUnit, positionSizeUnits, positionValueAtEntry};
+}
+
 // ---------- Dettes & crédits : stratégie de remboursement multi-crédits ----------
 // Simulation mois par mois (avalanche = taux le plus élevé d'abord, snowball =
 // plus petit solde d'abord, custom = ordre fourni) — jamais une formule
