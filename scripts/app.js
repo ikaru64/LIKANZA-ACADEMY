@@ -721,7 +721,21 @@ const QUIZ_BANK_FULL = [
   {id:"q-mape-005", niveau:"avance", categorie:"M&A et Private Equity", type:"qcm", question:"Dans un LBO (rachat par effet de levier), qu'est-ce qui amplifie le rendement sur le capital des investisseurs si l'entreprise rachetée performe bien ?", choix:["Le fait que la dette utilisée pour l'achat soit fixe alors que la valeur de l'entreprise, elle, peut croître", "Le fait qu'aucune dette ne soit jamais utilisée dans ce type de montage", "Une garantie de l'État sur le rendement", "Le fait que l'entreprise change automatiquement de secteur d'activité"], bonneReponse:0, explication:"Comme le remboursement de la dette est fixe et ne dépend pas de la performance de l'entreprise au-delà du minimum contractuel, toute croissance de valeur de l'entreprise profite proportionnellement plus au capital des investisseurs — c'est le principe de l'effet de levier."},
   {id:"q-mape-006", niveau:"avance", categorie:"M&A et Private Equity", type:"vraifaux", question:"Dans un LBO, l'effet de levier amplifie les gains si l'entreprise performe bien, mais amplifie tout autant les pertes si elle sous-performe.", choix:["Vrai","Faux"], bonneReponse:0, explication:"L'effet de levier est symétrique : il amplifie le rendement sur le capital investi dans les deux sens, à la hausse comme à la baisse, selon que l'entreprise performe mieux ou moins bien que prévu."},
   {id:"q-mape-007", niveau:"intermediaire", categorie:"M&A et Private Equity", type:"qcm", question:"Que mesure le multiple EV/EBITDA ?", choix:["Le bénéfice net divisé par le nombre d'actions", "Combien de fois l'EBITDA annuel d'une entreprise représente sa valeur d'entreprise totale", "Le montant total de la dette d'une entreprise", "Le taux de croissance du chiffre d'affaires"], bonneReponse:1, explication:"Le multiple EV/EBITDA (Enterprise Value / EBITDA) exprime combien de fois l'EBITDA annuel d'une entreprise représente sa valeur d'entreprise totale — un indicateur très utilisé en M&A et en private equity pour comparer rapidement des valorisations."},
-  {id:"q-mape-008", niveau:"intermediaire", categorie:"M&A et Private Equity", type:"qcm", question:"Quelles sont les voies de sortie (« exit ») les plus courantes pour un fonds d'investissement ?", choix:["Uniquement la faillite de l'entreprise", "L'introduction en bourse, la cession industrielle à une autre entreprise, ou la cession secondaire à un autre fonds", "Le remboursement automatique par l'État", "La transformation en association à but non lucratif"], bonneReponse:1, explication:"Les trois voies de sortie les plus courantes sont l'introduction en bourse (IPO), la cession industrielle (rachat par une autre entreprise du secteur) et la cession secondaire (revente à un autre fonds d'investissement)."}
+  {id:"q-mape-008", niveau:"intermediaire", categorie:"M&A et Private Equity", type:"qcm", question:"Quelles sont les voies de sortie (« exit ») les plus courantes pour un fonds d'investissement ?", choix:["Uniquement la faillite de l'entreprise", "L'introduction en bourse, la cession industrielle à une autre entreprise, ou la cession secondaire à un autre fonds", "Le remboursement automatique par l'État", "La transformation en association à but non lucratif"], bonneReponse:1, explication:"Les trois voies de sortie les plus courantes sont l'introduction en bourse (IPO), la cession industrielle (rachat par une autre entreprise du secteur) et la cession secondaire (revente à un autre fonds d'investissement)."},
+
+  // ---- Opérations (gestion de la production, des stocks et de la chaîne d'approvisionnement) ----
+  {id:"q-operations-001", niveau:"avance", categorie:"Opérations", type:"qcm", question:"Dans une chaîne de production, améliorer la vitesse d'une étape qui n'est PAS le goulot d'étranglement a quel effet sur la capacité de production globale ?", choix:["Elle augmente proportionnellement", "Aucun effet significatif : le résultat global reste plafonné par l'étape la plus lente (le vrai goulot d'étranglement)", "Elle double systématiquement", "Elle réduit automatiquement le goulot d'étranglement ailleurs"], bonneReponse:1, explication:"La capacité globale d'un processus est plafonnée par son étape la plus lente. Accélérer une étape qui n'est pas ce goulot d'étranglement n'améliore en rien le résultat final : il faut d'abord identifier précisément où se situe le vrai goulot avant d'investir pour l'améliorer."},
+  {id:"q-operations-002", niveau:"intermediaire", categorie:"Opérations", type:"calcul", question:"Une entreprise a un stock moyen de 40 000 € et un coût des marchandises vendues de 240 000 € sur l'année. Quel est son taux de rotation des stocks ?", choix:["2 fois par an","4 fois par an","6 fois par an","10 fois par an"], bonneReponse:2, explication:"Taux de rotation = coût des marchandises vendues ÷ stock moyen = 240 000 ÷ 40 000 = 6 fois par an — le stock est entièrement renouvelé 6 fois sur l'année."},
+  {id:"q-operations-003", niveau:"intermediaire", categorie:"Opérations", type:"qcm", question:"Pourquoi détecter un défaut de qualité tôt dans la chaîne de production coûte-t-il généralement moins cher que de le détecter après livraison au client ?", choix:["Ce n'est pas vrai, le coût est toujours identique", "Un défaut détecté après livraison entraîne des coûts supplémentaires (retour, réparation, perte de confiance) qui s'ajoutent au coût de correction lui-même", "Les clients ne remarquent jamais les défauts de toute façon", "Le contrôle qualité en fin de chaîne est toujours interdit par la loi"], bonneReponse:1, explication:"Un défaut détecté après livraison au client s'accompagne de coûts additionnels (logistique de retour, réparation ou remplacement, image de marque dégradée) qui n'existent pas si le défaut est corrigé avant expédition — d'où l'intérêt de contrôler tôt dans la chaîne."},
+  {id:"q-operations-004", niveau:"avance", categorie:"Opérations", type:"vraifaux", question:"Une chaîne d'approvisionnement optimisée au maximum pour réduire les coûts (fournisseur unique, stocks minimaux) est généralement aussi la plus résiliente face à un imprévu.", choix:["Vrai","Faux"], bonneReponse:1, explication:"C'est l'inverse : une chaîne optimisée uniquement pour le coût (fournisseur unique, stocks au minimum) est généralement plus fragile face à une perturbation imprévue qu'une chaîne diversifiée mais plus coûteuse — c'est un arbitrage permanent entre efficacité et résilience, pas une optimisation qui améliore les deux à la fois."},
+  {id:"q-operations-005", niveau:"intermediaire", categorie:"Opérations", type:"qcm", question:"Quel est le principal risque du juste-à-temps (just-in-time), qui vise à ne recevoir les matières qu'au moment précis où elles sont nécessaires ?", choix:["Il augmente toujours le capital immobilisé en stock", "Il rend la production totalement dépendante de la ponctualité des fournisseurs, sans stock tampon en cas de retard", "Il n'a aucun risque, c'est une méthode strictement supérieure au stockage classique", "Il ne peut s'appliquer qu'aux entreprises de services, jamais à l'industrie"], bonneReponse:1, explication:"En réduisant les stocks au minimum, le juste-à-temps élimine le tampon qui absorberait normalement un retard de livraison : le moindre incident chez un fournisseur peut arrêter immédiatement la production, faute de stock de sécurité."},
+
+  // ---- RH (recrutement, culture d'entreprise, rémunération, évaluation) ----
+  {id:"q-rh-001", niveau:"intermediaire", categorie:"RH", type:"calcul", question:"Une entreprise de 80 salariés voit 12 personnes la quitter sur une année. Quel est son taux de rotation du personnel (turnover) ?", choix:["8 %","12 %","15 %","20 %"], bonneReponse:2, explication:"Taux de rotation = nombre de départs ÷ effectif total = 12 ÷ 80 = 15 % — à interpréter ensuite en le comparant à la moyenne du secteur, jamais dans l'absolu."},
+  {id:"q-rh-002", niveau:"intermediaire", categorie:"RH", type:"qcm", question:"Comment la culture réelle d'une entreprise se distingue-t-elle le plus souvent de ses valeurs officiellement affichées ?", choix:["Elle ne s'en distingue jamais, les deux sont toujours identiques", "Elle se révèle dans ce qui est concrètement récompensé, toléré ou sanctionné au quotidien, qui peut différer du discours officiel", "La culture d'entreprise n'existe que dans les grandes entreprises", "Elle se mesure uniquement par le nombre d'avantages sociaux proposés"], bonneReponse:1, explication:"Une charte de valeurs affichée officiellement ne garantit rien sur la culture réelle : celle-ci se révèle dans les décisions concrètes (qui est promu, quel comportement est toléré ou sanctionné), qui peuvent diverger sensiblement du discours officiel."},
+  {id:"q-rh-003", niveau:"debutant", categorie:"RH", type:"qcm", question:"À quoi sert principalement un onboarding structuré pour un nouvel employé ?", choix:["Uniquement à remplir les formalités administratives d'embauche", "À réduire le délai avant qu'il devienne pleinement productif et à réduire le risque qu'il quitte l'entreprise prématurément faute d'accompagnement", "À tester si l'employé va démissionner rapidement", "Il n'a aucun effet mesurable sur la suite de la relation de travail"], bonneReponse:1, explication:"Un onboarding structuré (présentation de l'équipe, des outils, accompagnement progressif) accélère la montée en productivité d'un nouvel employé et réduit le risque de départ précoce lié à un sentiment d'être livré à soi-même dès l'arrivée."},
+  {id:"q-rh-004", niveau:"avance", categorie:"RH", type:"qcm", question:"Quel est un piège fréquent dans la conception d'un plan de rémunération variable basé sur un seul indicateur facilement mesurable ?", choix:["Il n'existe aucun piège, un seul indicateur simplifie toujours les choses", "Il peut inciter à des comportements de court terme contraires à l'intérêt réel de l'entreprise sur la durée (ex. vendre sans se soucier de la satisfaction client)", "Il rend automatiquement la rémunération totale plus faible pour l'employé", "Il est interdit par la loi dans la plupart des pays"], bonneReponse:1, explication:"Un indicateur unique et facilement mesurable (comme le seul nombre de ventes conclues) peut inciter un employé à négliger des aspects importants mais moins mesurables (satisfaction client, qualité du conseil), au détriment de l'intérêt de l'entreprise sur le long terme."},
+  {id:"q-rh-005", niveau:"intermediaire", categorie:"RH", type:"vraifaux", question:"Une évaluation de performance basée sur des critères communiqués seulement au moment de l'évaluation, jamais à l'avance, reste tout aussi utile qu'une évaluation basée sur des critères connus dès le début de la période.", choix:["Vrai","Faux"], bonneReponse:1, explication:"Des critères révélés seulement au moment de l'évaluation, sans avoir été communiqués à l'avance, ne peuvent pas orienter les efforts de l'employé pendant la période concernée — l'évaluation risque alors d'être perçue comme arbitraire et perd une grande partie de son utilité."}
 ];
 // ===EXPORT:QUIZ_BANK:END===
 
@@ -1359,7 +1373,7 @@ const DOMAINS = [
     deepQuizHook:{title:'Penses-tu vraiment comprendre la Bourse ?', subtitle:'Des situations concrètes pour découvrir tes forces.'}},
   {key:'business', label:'Business', displayLabel:'le Business', icon:'💼',
     mentalChallengeDomain:'Business',
-    quizCategories:["Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds', 'M&A et Private Equity'],
+    quizCategories:["Chiffre d'affaires", 'Marge nette', 'Bilan comptable', 'Amortissement', 'Startup', 'Levée de fonds', 'M&A et Private Equity', 'Opérations', 'RH'],
     libraryCategories:['Business', 'Entreprise'],
     deepQuizHook:{title:'Quel type d\'entrepreneur es-tu ?', subtitle:'Découvre tes forces et les notions que tu pourrais approfondir.'}},
   {key:'economics', label:'Économie', displayLabel:"l'économie", icon:'🌍',
@@ -1601,6 +1615,37 @@ const COURS_CATALOG = [
         {type:'definition', texte:"Une immobilisation est utilisée durablement (plus d'un an) et amortie dans le temps (voir \"Amortissement\") — une machine, un véhicule. Un stock est destiné à être vendu ou consommé rapidement — des marchandises. Une créance est de l'argent déjà gagné (une vente réalisée) mais pas encore encaissé."},
         {type:'exerciceErreur', affirmation:"Le stock et une créance représentent la même chose : de l'argent que l'entreprise va bientôt recevoir.", pourquoi:"Le stock est un bien physique qui reste à VENDRE (l'argent n'est pas encore gagné) ; la créance est une vente déjà réalisée, l'argent est gagné mais pas encore encaissé. Confondre les deux fausse la lecture du risque réel : une créance non payée (défaut du client) est un risque différent d'un stock invendu (obsolescence, démodage)."},
         {type:'attention', texte:"Un résultat comptable positif n'implique pas une trésorerie disponible équivalente : des ventes réalisées mais encore en créances, ou un stock important non vendu, peuvent laisser une entreprise \"bénéficiaire sur le papier\" mais à court de trésorerie réelle."}
+      ]}
+    ]},
+  {id:'operations-rh-essentiels', titre:'Opérations et RH : faire tourner une entreprise au quotidien', niveau:'Intermédiaire',
+    libraryTermes:["Chaîne d'approvisionnement (supply chain)",'Gestion des stocks','Juste-à-temps (just-in-time)','Contrôle qualité','Goulot d\'étranglement (bottleneck)','Délai de livraison (lead time)','Externalisation (outsourcing)','Recrutement','Taux de rotation du personnel (turnover)','Culture d\'entreprise','Onboarding (intégration des nouveaux employés)','Évaluation de performance','Rémunération variable'],
+    quizCategories:['Opérations', 'RH'],
+    applyUrl:'business.html', applyLabel:"Explorer le Business Center Likanza",
+    acquis:[
+      "Identifier le goulot d'étranglement d'un processus plutôt que d'optimiser au hasard une étape qui n'a pas d'impact réel",
+      "Calculer un taux de rotation des stocks et un taux de rotation du personnel, et savoir les interpréter",
+      "Comprendre l'arbitrage entre efficacité et résilience dans une chaîne d'approvisionnement",
+      "Distinguer la culture d'entreprise réelle des valeurs simplement affichées, et comprendre les pièges d'une rémunération variable mal conçue"
+    ],
+    chapitres:[
+      {titre:"Opérations : produire et livrer efficacement", blocs:[
+        {type:'texte', texte:"Derrière chaque produit vendu ou service rendu, une chaîne d'opérations invisible au client — fournisseurs, stocks, production, contrôle, livraison — doit fonctionner sans accroc. Une bonne stratégie ou un bon marketing ne suffisent pas si l'entreprise ne parvient pas à produire et livrer ce qu'elle vend."},
+        {type:'definition', texte:"La chaîne d'approvisionnement regroupe toutes les étapes qui mènent une matière première jusqu'au produit livré au client. La gestion des stocks arbitre en permanence entre le risque de rupture (stock trop faible) et le coût du capital immobilisé (stock trop élevé)."},
+        {type:'calcul', texte:"Le taux de rotation des stocks mesure combien de fois le stock est entièrement renouvelé sur une période.", schema:
+"Taux de rotation = Coût des marchandises vendues ÷ Stock moyen\n\nExemple :\nCoût des marchandises vendues (année) : 240 000 €\nStock moyen                         :  40 000 €\n\nTaux de rotation = 240 000 ÷ 40 000 = 6 fois par an\n\nPlus ce chiffre est élevé, moins de capital reste immobilisé\nlongtemps en stock, à activité égale."},
+        {type:'definition', texte:"Un goulot d'étranglement est l'étape la plus lente d'un processus, celle qui limite la vitesse de l'ensemble de la chaîne — quelle que soit la rapidité des autres étapes."},
+        {type:'exerciceErreur', affirmation:"Accélérer n'importe quelle étape d'un processus de production améliore toujours sa capacité globale.", pourquoi:"Seule l'accélération du goulot d'étranglement (l'étape la plus lente) améliore la capacité globale du processus. Améliorer une étape qui traite déjà plus vite que le goulot n'a aucun effet sur le résultat final : celui-ci reste plafonné par l'étape la plus lente, qui continue à faire attendre toutes les autres. Il faut d'abord identifier précisément où se situe ce goulot avant d'investir pour l'améliorer — et une fois résolu, un autre maillon devient mécaniquement le nouveau goulot."},
+        {type:'attention', texte:"Le juste-à-temps (ne recevoir les matières qu'au moment précis où elles sont nécessaires) réduit fortement le capital immobilisé en stock, mais rend la production entièrement dépendante de la ponctualité des fournisseurs — un arbitrage permanent entre efficacité et résilience, pas une optimisation qui améliore les deux à la fois. Une chaîne d'approvisionnement optimisée au maximum pour le coût (fournisseur unique, stocks minimaux) est généralement plus fragile face à un imprévu qu'une chaîne diversifiée mais plus coûteuse."},
+        {type:'pourquoi', texte:"Pourquoi le contrôle qualité intervient-il à plusieurs étapes plutôt qu'une seule à la fin ? Parce qu'un défaut détecté tôt (à la réception des matières, en cours de production) coûte généralement bien moins cher à corriger qu'un défaut détecté après livraison au client — qui s'accompagne de coûts additionnels (retour, réparation, perte de confiance) qui n'existent pas si le défaut est corrigé avant expédition."}
+      ]},
+      {titre:"RH : recruter, intégrer et retenir", blocs:[
+        {type:'texte', texte:"Une entreprise qui maîtrise ses opérations mais perd continuellement ses employés les plus compétents finit par ne plus pouvoir exécuter sa propre stratégie. La gestion des ressources humaines n'est pas une fonction annexe : c'est ce qui permet à toutes les autres fonctions de l'entreprise de fonctionner dans la durée."},
+        {type:'definition', texte:"Le recrutement regroupe tout le processus qui mène de la définition d'un besoin en personnel jusqu'à l'embauche effective. Une erreur de recrutement coûte réellement cher — pas seulement le salaire versé, mais aussi le temps de formation perdu et la désorganisation de l'équipe qu'elle entraîne."},
+        {type:'calcul', texte:"Le taux de rotation du personnel (turnover) mesure la proportion de salariés qui quittent l'entreprise sur une période.", schema:
+"Taux de rotation = Nombre de départs ÷ Effectif total\n\nExemple :\nEffectif total       : 80 salariés\nDéparts sur l'année  : 12\n\nTaux de rotation = 12 ÷ 80 = 15 %\n\nÀ interpréter en le comparant à la moyenne du secteur,\njamais dans l'absolu : un turnover élevé n'est pas automatiquement\nun problème (croissance rapide, secteur à forte mobilité)."},
+        {type:'definition', texte:"La culture d'entreprise regroupe les valeurs et comportements réellement partagés au quotidien — à distinguer des valeurs officiellement affichées dans une charte, qui peuvent diverger sensiblement de ce qui est concrètement récompensé, toléré ou sanctionné dans les faits."},
+        {type:'exerciceErreur', affirmation:"Un plan de rémunération variable basé sur un seul indicateur facilement mesurable (comme le nombre de ventes conclues) est toujours une bonne façon de motiver une équipe.", pourquoi:"Un indicateur unique et facilement mesurable peut inciter à négliger des aspects importants mais moins mesurables — par exemple, un vendeur rémunéré uniquement sur le nombre de contrats signés a un intérêt de court terme à conclure des ventes même peu adaptées au besoin réel du client, au risque d'un taux d'annulation ou d'insatisfaction plus élevé ensuite. Un bon plan de rémunération variable doit être conçu en anticipant les comportements qu'il incite réellement à adopter, pas seulement l'objectif qu'il affiche vouloir récompenser."},
+        {type:'retenir', texte:"Un onboarding structuré dès les premiers jours réduit le délai avant qu'un nouvel employé devienne pleinement productif, et réduit le risque qu'il reparte prématurément faute d'accompagnement. Une évaluation de performance n'est utile que si ses critères sont communiqués à l'avance : révélés seulement au moment de l'évaluation, ils sont perçus comme arbitraires et ne peuvent orienter aucun effort en amont."}
       ]}
     ]},
   {id:'epargne-interets', titre:"Épargne et intérêts composés", niveau:'Débutant', libraryTermes:['Intérêts composés','Assurance-vie'], quizCategories:['Épargne','Intérêts composés','Intérêts simples','Livret A','Assurance-vie']},
@@ -5058,6 +5103,175 @@ const LIBRARY = [
     avantages:[],
     inconvenients:[],
     erreurs:["Ignorer les objections répétées des clients plutôt que d'ajuster l'offre ou le message en conséquence"]
+  },
+  {
+    terme:"Chaîne d'approvisionnement (supply chain)",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La chaîne d'approvisionnement regroupe toutes les étapes qui mènent une matière première ou un composant jusqu'au produit fini livré au client : fournisseurs, production, stockage, transport, distribution.",
+    detail:"Chaque maillon de cette chaîne dépend des précédents : un retard chez un fournisseur se répercute mécaniquement sur la production, puis sur les délais de livraison au client final. Plus la chaîne compte d'intermédiaires et de zones géographiques différentes, plus elle devient complexe à piloter et vulnérable à une perturbation isolée.",
+    avance:"Une chaîne d'approvisionnement optimisée pour le coût (fournisseur unique, stocks minimaux, production concentrée géographiquement) est souvent plus fragile face à une perturbation imprévue (grève, catastrophe naturelle, tension géopolitique) qu'une chaîne diversifiée mais plus coûteuse — un arbitrage permanent entre efficacité et résilience.",
+    exemple:"Une entreprise qui dépend d'un seul fournisseur pour un composant essentiel peut voir toute sa production à l'arrêt si ce fournisseur unique connaît un incident, alors qu'une entreprise avec deux fournisseurs pour ce même composant peut basculer sur l'un pendant que l'autre est indisponible.",
+    avantages:["Une chaîne bien pilotée réduit les coûts et les délais à chaque étape"],
+    inconvenients:["Une chaîne trop optimisée pour le coût seul devient vulnérable à la moindre perturbation d'un maillon"],
+    erreurs:["Ne juger une chaîne d'approvisionnement que sur son coût, sans jamais évaluer sa résilience face à un imprévu"]
+  },
+  {
+    terme:"Gestion des stocks",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La gestion des stocks consiste à déterminer combien de produits ou de matières garder en réserve, pour équilibrer le risque de rupture (perdre des ventes faute de stock) et le coût d'un stock trop élevé (argent immobilisé, stockage, risque d'obsolescence).",
+    detail:"Un stock trop faible expose au risque de rupture (client qui ne peut pas être servi, perte de vente voire de confiance) ; un stock trop élevé immobilise de la trésorerie qui pourrait être utilisée ailleurs, et expose au risque que des produits deviennent invendables (péremption, obsolescence, changement de mode).",
+    avance:"Le taux de rotation des stocks (combien de fois le stock est entièrement renouvelé sur une période) permet de comparer objectivement l'efficacité de la gestion des stocks entre deux entreprises ou deux périodes, au-delà de la seule intuition.",
+    exemple:"Un stock de 50 000€ pour un coût des marchandises vendues de 300 000€ sur l'année tourne 6 fois par an (300 000 ÷ 50 000) — plus ce chiffre est élevé, moins de capital reste immobilisé longtemps en stock, à activité égale.",
+    avantages:["Un stock bien dimensionné réduit à la fois le risque de rupture et le capital immobilisé inutilement"],
+    inconvenients:["Nécessite un suivi régulier et fiable de la demande réelle, plus difficile pour une activité aux ventes irrégulières ou imprévisibles"],
+    erreurs:["Constituer un stock de sécurité uniquement par prudence instinctive, sans jamais chiffrer le coût réel de cette immobilisation de capital"]
+  },
+  {
+    terme:"Juste-à-temps (just-in-time)",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Le juste-à-temps est une méthode de production qui vise à ne recevoir les matières et à ne produire qu'au moment précis où elles sont réellement nécessaires, plutôt que de constituer des stocks à l'avance.",
+    detail:"Popularisée par Toyota dans l'industrie automobile, cette méthode réduit fortement le capital immobilisé en stock et le gaspillage lié à une surproduction — mais elle suppose une chaîne d'approvisionnement extrêmement fiable et prévisible, sans quoi le moindre retard d'un fournisseur arrête immédiatement la production, faute de stock tampon.",
+    avance:"Le juste-à-temps illustre un arbitrage central de la gestion des opérations : minimiser les stocks maximise l'efficacité en conditions normales, mais maximise aussi la vulnérabilité en cas de perturbation — un compromis particulièrement visible lors de tensions majeures sur les chaînes d'approvisionnement mondiales, qui ont conduit plusieurs grandes entreprises industrielles à reconstituer des stocks de sécurité qu'elles avaient auparavant réduits au minimum.",
+    exemple:"Une usine qui reçoit ses pièces détachées seulement quelques heures avant leur assemblage, sans entrepôt de stockage intermédiaire, illustre le principe du juste-à-temps — au prix d'une dépendance totale à la ponctualité de ses fournisseurs.",
+    avantages:["Réduit fortement le capital immobilisé en stock et le gaspillage de surproduction"],
+    inconvenients:["Rend la production entièrement dépendante de la fiabilité des fournisseurs, sans marge de sécurité en cas de retard"],
+    erreurs:["Adopter le juste-à-temps sans avoir sécurisé au préalable une chaîne d'approvisionnement suffisamment fiable pour le supporter"]
+  },
+  {
+    terme:"Contrôle qualité",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le contrôle qualité regroupe les vérifications effectuées pour s'assurer qu'un produit ou un service respecte bien les standards définis avant d'arriver chez le client.",
+    detail:"Il peut intervenir à plusieurs étapes : contrôle des matières premières à réception, contrôle en cours de production, contrôle du produit fini avant expédition. Plus un défaut est détecté tôt dans la chaîne, moins il coûte cher à corriger — un défaut détecté seulement après livraison au client coûte généralement bien plus cher (retour, réparation, image de marque) qu'un défaut détecté avant expédition.",
+    avance:"Un contrôle qualité insuffisant ne se voit souvent pas immédiatement dans les chiffres : les coûts réels (retours, réclamations, perte de confiance des clients, rappels de produits) peuvent apparaître bien après la décision d'avoir réduit les contrôles pour gagner en rapidité ou en coût de production.",
+    exemple:"Un fabricant qui teste un échantillon de chaque lot de production avant expédition, plutôt que de tester chaque unité individuellement, arbitre entre le coût du contrôle exhaustif et le risque de laisser passer un défaut sur les unités non testées.",
+    avantages:["Détecter un défaut tôt dans la chaîne coûte généralement bien moins cher que de le corriger après livraison au client"],
+    inconvenients:["Un contrôle qualité exhaustif à chaque étape peut ralentir significativement la production et en augmenter le coût"],
+    erreurs:["Réduire les contrôles qualité pour gagner en rapidité sans mesurer le coût réel, souvent différé, des défauts qui échappent alors au contrôle"]
+  },
+  {
+    terme:"Goulot d'étranglement (bottleneck)",
+    categorie:"Business",
+    niveau:"Avancé",
+    lecture:"2 min",
+    simple:"Un goulot d'étranglement est l'étape la plus lente d'un processus, celle qui limite la vitesse de l'ensemble de la chaîne, quelle que soit la rapidité des autres étapes.",
+    detail:"Améliorer une étape qui n'est PAS le goulot d'étranglement n'accélère pas le processus global : le résultat final reste plafonné par l'étape la plus lente, qui continue à faire attendre toutes les autres. Il faut d'abord identifier précisément où se situe ce goulot avant d'investir pour l'améliorer.",
+    avance:"Une fois un goulot d'étranglement résolu, un autre maillon de la chaîne devient mécaniquement le nouveau goulot le plus lent — l'amélioration d'un processus est donc rarement un projet ponctuel unique, mais un cycle continu d'identification du nouveau point le plus contraignant.",
+    exemple:"Une chaîne de production où 4 étapes traitent chacune 100 unités par heure, mais où une 5e étape (par exemple un contrôle qualité manuel) ne peut en traiter que 60 : la chaîne entière ne peut jamais produire plus de 60 unités par heure, quelle que soit la rapidité des 4 autres étapes.",
+    avantages:["Identifier précisément le goulot d'étranglement concentre les efforts d'amélioration là où ils ont réellement un impact sur le résultat global"],
+    inconvenients:["Investir pour accélérer une étape qui n'est pas le vrai goulot d'étranglement n'améliore en rien la capacité globale du processus"],
+    erreurs:["Améliorer l'étape la plus visible ou la plus facile à optimiser, sans avoir vérifié qu'il s'agit bien du véritable goulot d'étranglement du processus"]
+  },
+  {
+    terme:"Délai de livraison (lead time)",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le délai de livraison (lead time) est le temps total écoulé entre le déclenchement d'une commande (auprès d'un fournisseur, ou par un client) et la réception effective du produit.",
+    detail:"Un délai de livraison plus court permet de réagir plus vite à la demande réelle et de garder moins de stock de sécurité pour un même niveau de service ; un délai plus long oblige à anticiper davantage à l'avance, avec un risque accru d'erreur de prévision sur ce qui sera réellement demandé.",
+    avance:"Le délai de livraison n'est pas toujours fixe ni garanti : il peut varier selon la charge du fournisseur, la période de l'année (forte demande saisonnière) ou des événements imprévus — une entreprise qui planifie ses stocks sur un délai moyen sans marge de sécurité s'expose à une rupture dès qu'un délai réel dépasse cette moyenne.",
+    exemple:"Un fournisseur qui annonce un délai de livraison de 3 semaines mais qui, en période de forte demande, livre parfois en 5 semaines, oblige ses clients à anticiper leurs commandes avec une marge de sécurité pour éviter une rupture de stock.",
+    avantages:["Un délai de livraison court et fiable réduit le besoin de stock de sécurité et permet de mieux réagir à la demande réelle"],
+    inconvenients:["Un délai de livraison long ou variable oblige à immobiliser davantage de stock par précaution, avec le coût que cela représente"],
+    erreurs:["Planifier ses stocks sur un délai de livraison moyen annoncé par le fournisseur, sans marge de sécurité pour les fois où ce délai est dépassé"]
+  },
+  {
+    terme:"Externalisation (outsourcing)",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"L'externalisation consiste à confier une activité de l'entreprise (production, support client, comptabilité, logistique...) à un prestataire extérieur plutôt que de la réaliser en interne.",
+    detail:"Elle permet souvent de réduire les coûts fixes et de bénéficier de l'expertise ou de l'échelle d'un prestataire spécialisé, mais elle transfère aussi une part de contrôle direct sur la qualité et les délais de cette activité — et crée une dépendance envers ce prestataire, similaire au risque déjà présent dans toute chaîne d'approvisionnement.",
+    avance:"Une entreprise externalise généralement les activités qui ne constituent pas son avantage concurrentiel principal, pour concentrer ses ressources internes sur ce qui la différencie réellement — mais externaliser une activité jugée à tort secondaire, qui s'avère en réalité stratégique, peut affaiblir durablement cet avantage concurrentiel.",
+    exemple:"Une entreprise qui externalise son support client à un centre d'appels spécialisé peut réduire ses coûts fixes, mais doit alors s'assurer contractuellement que la qualité de ce support reste conforme à l'image qu'elle veut donner à ses clients.",
+    avantages:["Réduit les coûts fixes et donne accès à une expertise ou une échelle qu'il serait coûteux de développer en interne"],
+    inconvenients:["Réduit le contrôle direct sur la qualité et les délais, et crée une dépendance envers le prestataire choisi"],
+    erreurs:["Externaliser une activité sans avoir évalué si elle fait partie, en réalité, de l'avantage concurrentiel de l'entreprise"]
+  },
+  {
+    terme:"Recrutement",
+    categorie:"Business",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"Le recrutement regroupe l'ensemble du processus qui mène de la définition d'un besoin en personnel jusqu'à l'embauche effective d'une personne pour l'occuper.",
+    detail:"Un recrutement mal mené (poste mal défini, processus trop long, mauvaise évaluation de l'adéquation candidat/poste) coûte cher, pas seulement en temps : une erreur de recrutement représente un coût réel pour l'entreprise (temps de formation perdu, désorganisation de l'équipe, nouveau recrutement à relancer) qui dépasse largement le seul salaire versé pendant la période concernée.",
+    avance:"Recruter uniquement sur les compétences techniques affichées sur un CV, sans évaluer l'adéquation avec la culture d'entreprise et l'équipe existante, est une cause fréquente d'échec de recrutement — une personne très compétente techniquement mais mal intégrée à son équipe reste souvent moins performante qu'une personne légèrement moins qualifiée mais bien intégrée.",
+    exemple:"Une petite entreprise qui recrute dans l'urgence, sans définir précisément le poste ni prendre le temps d'évaluer plusieurs candidats, prend un risque accru d'erreur de recrutement comparé à une entreprise qui structure son processus, même sur un délai plus long.",
+    avantages:["Un recrutement bien mené réduit le risque coûteux d'une erreur d'embauche à corriger ensuite"],
+    inconvenients:["Un processus de recrutement trop long ou trop exigeant peut faire perdre de bons candidats à des concurrents plus réactifs"],
+    erreurs:["Juger un candidat uniquement sur ses compétences techniques affichées, sans jamais évaluer son adéquation avec l'équipe et la culture d'entreprise réelles"]
+  },
+  {
+    terme:"Taux de rotation du personnel (turnover)",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"Le taux de rotation du personnel (turnover) mesure la proportion de salariés qui quittent l'entreprise sur une période donnée, généralement une année.",
+    detail:"Un turnover élevé n'est pas automatiquement un problème (il peut refléter une croissance rapide avec beaucoup de nouveaux postes, ou un secteur où la mobilité est structurellement plus forte), mais un turnover anormalement élevé par rapport à son secteur signale souvent un problème sous-jacent : rémunération non compétitive, management défaillant, ou culture d'entreprise qui ne retient pas les employés.",
+    avance:"Le coût réel d'un turnover élevé dépasse largement le seul coût de recrutement du remplaçant : il inclut la perte de savoir-faire et de relations internes de la personne partie, le temps de formation du remplaçant avant d'atteindre la même productivité, et la désorganisation temporaire de l'équipe restante — des coûts souvent invisibles dans une comptabilité classique.",
+    exemple:"Une entreprise de 50 salariés qui voit 10 personnes la quitter sur une année a un taux de rotation de 20% (10/50) — un chiffre à interpréter en le comparant à la moyenne de son secteur, jamais dans l'absolu.",
+    avantages:["Un taux de rotation mesuré et suivi dans le temps permet de détecter un problème naissant avant qu'il ne s'aggrave"],
+    inconvenients:["Le taux seul ne dit rien de sa cause réelle : il doit être croisé avec les raisons de départ pour devenir réellement actionnable"],
+    erreurs:["Interpréter un taux de rotation dans l'absolu, sans jamais le comparer à la moyenne du secteur ni à son évolution dans le temps"]
+  },
+  {
+    terme:"Culture d'entreprise",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La culture d'entreprise regroupe les valeurs, comportements et habitudes partagées, souvent non écrites, qui déterminent réellement comment les décisions se prennent et comment les gens travaillent ensemble au quotidien.",
+    detail:"Elle se distingue des valeurs affichées officiellement (souvent formulées dans une charte ou un site web) : la culture réelle d'une entreprise se révèle plutôt dans ce qui est concrètement récompensé, toléré ou sanctionné au quotidien, qui peut différer sensiblement du discours officiel.",
+    avance:"Une culture d'entreprise n'est jamais figée : elle se façonne en continu par les décisions prises (qui est promu, qui est licencié, quel comportement est publiquement valorisé), bien plus que par une charte de valeurs rédigée une fois et jamais révisée.",
+    exemple:"Une entreprise qui affiche officiellement \"l'équilibre vie pro/vie perso\" comme valeur, mais qui promeut systématiquement les personnes qui répondent aux emails le week-end, a en réalité une culture d'entreprise différente de ses valeurs affichées.",
+    avantages:["Une culture d'entreprise forte et cohérente avec le discours officiel facilite l'alignement et la rétention des équipes"],
+    inconvenients:["Une culture d'entreprise incohérente avec les valeurs affichées officiellement crée de la méfiance et un désengagement progressif"],
+    erreurs:["Confondre les valeurs affichées officiellement par une entreprise avec sa culture réelle, qui se révèle dans ce qui est effectivement récompensé ou toléré au quotidien"]
+  },
+  {
+    terme:"Onboarding (intégration des nouveaux employés)",
+    categorie:"Business",
+    niveau:"Débutant",
+    lecture:"2 min",
+    simple:"L'onboarding est le processus d'accueil et d'intégration d'un nouvel employé, des premiers jours jusqu'à ce qu'il devienne pleinement autonome et productif dans son poste.",
+    detail:"Un onboarding structuré (présentation de l'équipe, des outils, des processus, accompagnement progressif) réduit le temps nécessaire avant qu'un nouvel employé devienne réellement productif, et réduit aussi le risque qu'il quitte l'entreprise dans les premiers mois faute d'accompagnement suffisant.",
+    avance:"Le coût d'un mauvais onboarding est rarement visible immédiatement dans les chiffres, mais se traduit souvent, quelques mois plus tard, par un taux de rotation du personnel plus élevé chez les employés récemment recrutés — un signal souvent mal relié à sa cause réelle.",
+    exemple:"Une entreprise qui laisse un nouvel employé sans accompagnement structuré dès son premier jour (pas de présentation de l'équipe, pas d'accès aux outils prêts, aucun point de suivi programmé) augmente le risque qu'il se sente livré à lui-même et quitte l'entreprise prématurément.",
+    avantages:["Un onboarding structuré réduit le délai avant qu'un nouvel employé devienne pleinement productif"],
+    inconvenients:["Nécessite un investissement de temps réel de la part de l'équipe en place, souvent perçu à tort comme secondaire face aux priorités immédiates"],
+    erreurs:["Considérer l'onboarding comme terminé une fois les formalités administratives réglées, sans accompagnement réel dans les premières semaines"]
+  },
+  {
+    terme:"Évaluation de performance",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"L'évaluation de performance est le processus, généralement périodique, par lequel une entreprise mesure et discute avec un employé de sa contribution réelle par rapport aux objectifs attendus de son poste.",
+    detail:"Une évaluation utile repose sur des critères clairs et connus à l'avance de l'employé, pas seulement sur une impression subjective formée au moment de l'évaluation elle-même — sans quoi elle risque d'être perçue comme arbitraire et de perdre toute utilité pour orienter les efforts futurs.",
+    avance:"Une évaluation de performance uniquement annuelle laisse peu de place à un ajustement en cours d'année : un employé qui découvre un problème de performance lors de son unique évaluation annuelle n'a alors plus l'occasion de le corriger avant que la conséquence (absence de promotion, d'augmentation) ne soit déjà actée — d'où la tendance de nombreuses entreprises à privilégier des points de suivi plus fréquents en complément.",
+    exemple:"Une évaluation basée sur des objectifs chiffrés définis en début de période (par exemple un nombre de ventes conclues) laisse moins de place à l'ambiguïté qu'une évaluation basée uniquement sur une impression générale formée en fin de période.",
+    avantages:["Une évaluation basée sur des critères clairs et connus à l'avance oriente réellement les efforts de l'employé vers ce qui compte"],
+    inconvenients:["Une évaluation trop rare (uniquement annuelle) laisse peu de marge pour corriger un problème avant qu'il n'ait des conséquences concrètes"],
+    erreurs:["Baser une évaluation de performance sur des critères jamais communiqués à l'avance à l'employé concerné, révélés seulement au moment de l'évaluation"]
+  },
+  {
+    terme:"Rémunération variable",
+    categorie:"Business",
+    niveau:"Intermédiaire",
+    lecture:"2 min",
+    simple:"La rémunération variable est la part du salaire qui dépend de la performance individuelle, d'équipe ou de l'entreprise (prime, commission, bonus), en complément d'une part fixe garantie.",
+    detail:"Elle vise à aligner les intérêts de l'employé sur les objectifs de l'entreprise : un vendeur rémunéré en partie à la commission a un intérêt direct à conclure davantage de ventes. Mais une rémunération variable mal conçue peut aussi pousser à des comportements contraires à l'intérêt à long terme de l'entreprise si elle récompense uniquement un résultat de court terme facilement mesurable.",
+    avance:"Une rémunération variable basée sur un seul indicateur facilement mesurable (par exemple le nombre de ventes conclues) peut inciter à négliger des aspects importants mais moins facilement mesurables (la satisfaction du client sur le long terme, la qualité du conseil apporté) — un piège fréquent dans la conception de plans de rémunération variable.",
+    exemple:"Un vendeur rémunéré uniquement sur le nombre de contrats signés, sans aucun indicateur de satisfaction ou de rétention client, a un intérêt de court terme à conclure des ventes même peu adaptées au besoin réel du client — au risque d'un taux d'annulation ou d'insatisfaction plus élevé ensuite.",
+    avantages:["Aligne l'intérêt individuel de l'employé sur des objectifs mesurables de l'entreprise"],
+    inconvenients:["Un indicateur mal choisi peut inciter à des comportements contraires à l'intérêt réel de l'entreprise sur le long terme"],
+    erreurs:["Construire un plan de rémunération variable sur un seul indicateur de court terme, sans jamais vérifier s'il incite à des comportements réellement bénéfiques sur la durée"]
   }
 ];
 
