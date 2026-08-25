@@ -6000,6 +6000,66 @@ function computeBollingerBands(closes, period, numStdDev){
     position: last > mean + numStdDev * stdDev ? 'above' : last < mean - numStdDev * stdDev ? 'below' : 'inside'
   };
 }
+// ---------- MACD (Moving Average Convergence Divergence, 12/26/9 — les
+// paramètres standards) et indicateur de volume — pilier OPTIONNEL de
+// l'audit de couverture pédagogique (25/08/2026), "MACD, volume comme
+// indicateurs techniques supplémentaires". Réutilise le même historique
+// déjà chargé pour RSI/Bollinger (aucun nouvel appel réseau) ; le volume
+// vient de result.indicators.quote[0].volume (lib/yahoo.js), disponible
+// dans la même réponse Yahoo Finance déjà consommée mais jusqu'ici jamais
+// extraite. computeEMASeries amorce la moyenne exponentielle par une
+// moyenne simple sur les `period` premières valeurs (convention standard),
+// jamais par la première valeur seule (biais de démarrage plus fort). ----------
+function computeEMASeries(values, period){
+  if(!Array.isArray(values) || values.length < period) return null;
+  const k = 2 / (period + 1);
+  const series = [];
+  let ema = values.slice(0, period).reduce((a, b) => a + b, 0) / period;
+  series[period - 1] = ema;
+  for(let i = period; i < values.length; i++){
+    ema = values[i] * k + ema * (1 - k);
+    series[i] = ema;
+  }
+  return series;
+}
+function computeMACD(closes, fastPeriod, slowPeriod, signalPeriod){
+  fastPeriod = fastPeriod || 12; slowPeriod = slowPeriod || 26; signalPeriod = signalPeriod || 9;
+  if(!Array.isArray(closes) || closes.length < slowPeriod + signalPeriod) return null;
+  const emaFast = computeEMASeries(closes, fastPeriod);
+  const emaSlow = computeEMASeries(closes, slowPeriod);
+  if(!emaFast || !emaSlow) return null;
+  const macdSeries = [];
+  for(let i = slowPeriod - 1; i < closes.length; i++){
+    macdSeries.push(emaFast[i] - emaSlow[i]);
+  }
+  const signalSeries = computeEMASeries(macdSeries, signalPeriod);
+  if(!signalSeries) return null;
+  const macdLine = macdSeries[macdSeries.length - 1];
+  const signalLine = signalSeries[signalSeries.length - 1];
+  const histogram = macdLine - signalLine;
+  const prevMacdLine = macdSeries.length >= 2 ? macdSeries[macdSeries.length - 2] : null;
+  const prevSignalLine = signalSeries.length >= 2 ? signalSeries[signalSeries.length - 2] : null;
+  let crossover = null;
+  if(typeof prevMacdLine === 'number' && typeof prevSignalLine === 'number'){
+    if(prevMacdLine <= prevSignalLine && macdLine > signalLine) crossover = 'bullish';
+    else if(prevMacdLine >= prevSignalLine && macdLine < signalLine) crossover = 'bearish';
+  }
+  return {macdLine, signalLine, histogram, crossover};
+}
+// Volume moyen sur `period` séances comparé au volume de la dernière séance
+// disponible — jamais une comparaison si le volume est absent des données
+// (séance sans volume renvoyé par Yahoo Finance), plutôt qu'un 0 fabriqué.
+function computeVolumeTrend(history, period){
+  period = period || 20;
+  if(!Array.isArray(history)) return null;
+  const withVolume = history.filter(h => typeof h.volume === 'number');
+  if(withVolume.length < period) return null;
+  const lastVolume = withVolume[withVolume.length - 1].volume;
+  const window = withVolume.slice(withVolume.length - period);
+  const avgVolume = window.reduce((a, h) => a + h.volume, 0) / window.length;
+  if(!(avgVolume > 0)) return null;
+  return {lastVolume, avgVolume, ratioToAvg: lastVolume / avgVolume, aboveAverage: lastVolume > avgVolume};
+}
 function computeTechnicalIndicators(history){
   if(!Array.isArray(history) || history.length < 5) return null;
   const closes = history.map(h => h.close).filter(c => typeof c === 'number');
@@ -6021,7 +6081,9 @@ function computeTechnicalIndicators(history){
     ma20: movingAverageVsLast(20),
     ma50: movingAverageVsLast(50),
     rsi14: computeRSI(closes, 14),
-    bollinger: computeBollingerBands(closes, 20, 2)
+    bollinger: computeBollingerBands(closes, 20, 2),
+    macd: computeMACD(closes, 12, 26, 9),
+    volumeTrend: computeVolumeTrend(history, 20)
   };
 }
 // Rendu textuel partagé d'un résultat computeTechnicalIndicators — factorisé
@@ -6050,6 +6112,16 @@ function renderTechnicalIndicatorsLines(tech, unite){
       : tech.bollinger.position === 'below' ? 'en dessous de la bande basse'
       : 'à l\'intérieur du canal';
     lines.push(`Bandes de Bollinger (20 jours, ±2 écarts-types) : le cours est ${posLabel} (${tech.bollinger.lower.toFixed(2)} ${u} — ${tech.bollinger.upper.toFixed(2)} ${u})`);
+  }
+  if(tech.macd){
+    const crossLabel = tech.macd.crossover === 'bullish' ? ' — croisement haussier récent (ligne MACD passée au-dessus de sa ligne de signal)'
+      : tech.macd.crossover === 'bearish' ? ' — croisement baissier récent (ligne MACD passée en dessous de sa ligne de signal)'
+      : '';
+    lines.push(`MACD (12/26/9) : ${tech.macd.macdLine.toFixed(2)}, ligne de signal ${tech.macd.signalLine.toFixed(2)}${crossLabel}`);
+  }
+  if(tech.volumeTrend){
+    const label = tech.volumeTrend.aboveAverage ? 'au-dessus' : 'en dessous';
+    lines.push(`Volume de la dernière séance : ${label} de sa moyenne 20 jours (${(tech.volumeTrend.ratioToAvg * 100).toFixed(0)}% de la moyenne)`);
   }
   return lines;
 }
