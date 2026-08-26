@@ -90,9 +90,14 @@ const LAB_WIDGETS = {
     {id:'widget-budget-calc', title:'Calculateur de budget', desc:"Ta capacité d'épargne mensuelle réelle.", icon:'wallet'},
     {id:'widget-budget-goal', title:"Objectif d'épargne", desc:'Combien de temps pour atteindre un montant visé.', icon:'target'},
     {id:'widget-budget-sub', title:"Coût futur d'un abonnement", desc:'Ce que représente un abonnement sur plusieurs années.', icon:'coins'},
-    {id:'widget-goals-manager', title:'Mes objectifs', desc:'Plusieurs objectifs en parallèle, statut 🟢🟠🔴.', icon:'target'},
+    {id:'widget-goals-manager', title:'Mes objectifs', desc:'Objectifs et dépenses irrégulières à venir, statut 🟢🟠🔴.', icon:'target'},
     {id:'widget-charges-manager', title:'Mes abonnements & factures', desc:'Liste multi-entrées, coût cumulé réel.', icon:'coins'},
     {id:'widget-net-worth', title:'Mon patrimoine net', desc:'Actifs et dettes réels, dans le temps.', icon:'gem'}
+  ],
+  'tab-planification': [
+    {id:'widget-urgence-choc', title:"Fonds d'urgence & choc financier", desc:'Combien de temps tiendrais-tu sans revenu ?', icon:'shield'},
+    {id:'widget-cashflow-projection', title:'Projection de trésorerie', desc:'Ton solde projeté au rythme actuel.', icon:'trending-up'},
+    {id:'widget-life-change', title:'Changement de situation', desc:'Augmentation, side-hustle, déménagement, vie à deux.', icon:'compass'}
   ]
 };
 function renderLabWidgetGrid(categoryId){
@@ -265,6 +270,25 @@ const LAB_METHODOLOGY = {
     donnees: "Aucune donnée externe : coût, durée et rendement hypothétique sont saisis par toi.",
     hypotheses: "Le coût mensuel, la durée et le rendement annuel hypothétique si investi à la place.",
     limites: "Le rendement utilisé est une hypothèse, jamais garanti — voir le mode « Historique » du simulateur Intérêts composés pour des taux réellement mesurés dans le passé."
+  },
+  'urgence-choc': {
+    calcul: "Mois couverts = épargne cash disponible ÷ dépenses mensuelles essentielles. Montant cible = dépenses mensuelles × nombre de mois visé. Manquant = montant cible − épargne cash disponible (jamais négatif).",
+    donnees: "L'épargne cash vient de \"Mon patrimoine net\" (catégorie Épargne / cash) — jamais une autre catégorie d'actif, illiquide ou incertaine à mobiliser rapidement.",
+    hypotheses: "Suppose une perte TOTALE de revenu et des dépenses qui restent constantes au niveau saisi — une perte partielle (chômage partiel, un des deux revenus d'un couple) donnerait un résultat moins sévère.",
+    limites: "Ne tient pas compte d'éventuelles allocations chômage ou autres revenus de remplacement, qui prolongeraient réellement la durée de couverture.",
+    comprendre: "3 mois de dépenses est un repère usuel, pas une règle universelle : un revenu variable ou un statut d'indépendant justifie souvent un objectif plus large qu'un CDI stable."
+  },
+  'cashflow-projection': {
+    calcul: "Trésorerie projetée au mois n = trésorerie actuelle + (n × solde mensuel actuel), où le solde mensuel vient du Tableau de bord (revenus − dépenses du mois en cours).",
+    donnees: "Le solde mensuel et la trésorerie cash de départ viennent directement du Tableau de bord et de \"Mon patrimoine net\" — aucune donnée externe.",
+    hypotheses: "Suppose que le solde du mois observé se répète à l'identique sur tout l'horizon choisi — jamais une moyenne sur plusieurs mois, faute d'historique suffisant pour l'instant.",
+    limites: "Une projection linéaire à partir d'un seul mois ignore la saisonnalité (certains mois ont structurellement plus de dépenses) et tout événement ponctuel futur (une dépense exceptionnelle, un objectif atteint qui libère un versement)."
+  },
+  'life-change': {
+    calcul: "Nouveau solde = solde actuel du mois (Tableau de bord) + l'effet net du changement simulé (revenu ajouté, écart de loyer, ou revenu et charges d'un·e partenaire).",
+    donnees: "Aucune donnée externe : uniquement le solde déjà calculé dans le Tableau de bord et les hypothèses saisies ici.",
+    hypotheses: "Suppose que le reste du budget (toutes les autres dépenses) reste inchangé — une augmentation ou un déménagement réel s'accompagne souvent d'ajustements de dépenses non modélisés ici.",
+    limites: "Ne modélise jamais l'impact fiscal ou social (une augmentation de salaire ou un revenu complémentaire peut changer la tranche d'imposition ou les droits sociaux) — un chiffre brut d'impact budgétaire, pas un conseil fiscal."
   },
   'dashboard': {
     calcul: "Taux d'épargne = solde du mois ÷ revenus du mois. Taux d'endettement = mensualités de crédit ÷ revenus du mois (seuil de 33 % généralement retenu par les banques françaises). Fonds d'urgence = épargne cash disponible ÷ dépenses du mois, exprimé en mois couverts (repère usuel : 3 mois).",
@@ -1741,6 +1765,154 @@ function updatePosition(){
 });
 updatePosition();
 renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
+
+// ---------- Fonds d'urgence & choc financier (Financial Lab, Phase 3) : une
+// seule mécanique (mois de dépenses couverts par l'épargne cash), deux
+// lectures — "combien de temps je tiendrais sans revenu" et "combien me
+// manque-t-il pour atteindre MON objectif" — jamais un jugement, toujours le
+// chiffre réel comparé à l'hypothèse choisie. ----------
+(function initUrgenceChoc(){
+  const depensesEl = document.getElementById('urgenceDepenses');
+  const moisCibleEl = document.getElementById('urgenceMoisCible');
+  const resultEl = document.getElementById('urgenceResult');
+  if(!depensesEl || !resultEl) return;
+
+  const currentSummary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+  if(currentSummary.depenses > 0) depensesEl.value = Math.round(currentSummary.depenses);
+
+  function update(){
+    document.getElementById('valUrgenceMoisCible').textContent = moisCibleEl.value + ' mois';
+    const depenses = +depensesEl.value || 0;
+    const moisCible = +moisCibleEl.value;
+    const cashActuel = getNetWorthAssets().filter(a => a.categorie === 'cash').reduce((s, a) => s + a.valeur, 0);
+    if(depenses <= 0){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Renseigne tes dépenses mensuelles essentielles pour lancer le calcul.</p>`;
+      return;
+    }
+    const moisCouverts = cashActuel / depenses;
+    const montantCible = depenses * moisCible;
+    const manque = Math.max(0, montantCible - cashActuel);
+    resultEl.innerHTML = `
+      ${renderDataBadge('calcul')}
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));margin-top:10px;">
+        <div class="card"><span class="smallcaps">Épargne cash actuelle</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(cashActuel)}</div></div>
+        <div class="card"><span class="smallcaps">Tu tiendrais</span><div class="result-big" style="font-size:19px;margin-top:6px;">${moisCouverts.toFixed(1)} mois</div></div>
+        <div class="card"><span class="smallcaps">Objectif (${moisCible} mois)</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(montantCible)}</div></div>
+        <div class="card"><span class="smallcaps">${manque > 0 ? 'Il te manque' : 'Objectif atteint'}</span><div class="result-big" style="font-size:19px;margin-top:6px;color:${manque>0?'var(--bordeaux)':'var(--emerald)'};">${manque > 0 ? fmtEUR(manque) : '✓'}</div></div>
+      </div>
+      <p style="font-size:13px;margin-top:12px;color:var(--text-dim);">Avec ${fmtEUR(depenses)}/mois de dépenses essentielles et ${fmtEUR(cashActuel)} d'épargne disponible immédiatement, une perte totale de revenu te laisserait environ <strong style="color:var(--text);">${moisCouverts.toFixed(1)} mois</strong> avant d'épuiser cette réserve.</p>`;
+  }
+  [depensesEl, moisCibleEl].forEach(el => el.addEventListener('input', update));
+  update();
+  renderNextStepCard('nextstep-urgence-choc', {domainKey: 'personalFinance'});
+})();
+
+// ---------- Projection de trésorerie (Financial Lab, Phase 3) : projette le
+// cash disponible en supposant que le solde du mois courant (Tableau de
+// bord) se maintient à l'identique — jamais une fusion avec les dettes /
+// charges / objectifs déjà comptés dans ces dépenses, pour ne jamais compter
+// une même sortie d'argent deux fois. ----------
+(function initCashflowProjection(){
+  const moisEl = document.getElementById('cashflowMois');
+  const resultEl = document.getElementById('cashflowResult');
+  if(!moisEl || !resultEl) return;
+
+  function update(){
+    document.getElementById('valCashflowMois').textContent = moisEl.value + ' mois';
+    const horizon = +moisEl.value;
+    const summary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+    const cashActuel = getNetWorthAssets().filter(a => a.categorie === 'cash').reduce((s, a) => s + a.valeur, 0);
+    if(summary.revenus === 0){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Ajoute au moins un revenu ce mois-ci dans le Tableau de bord pour activer la projection.</p>`;
+      return;
+    }
+    const series = [];
+    let cash = cashActuel;
+    for(let m = 0; m <= horizon; m++){ series.push(cash); cash += summary.solde; }
+    const chart = renderMultiLineChart([{data: series, color: summary.solde >= 0 ? 'var(--emerald)' : 'var(--bordeaux)', width: 2.5}]);
+    const finalCash = series[series.length - 1];
+    resultEl.innerHTML = `
+      <div class="pattern-chart">${chart}</div>
+      <p style="font-size:13px;margin-top:12px;">Au rythme actuel (${summary.solde >= 0 ? '+' : ''}${fmtEUR(summary.solde)}/mois), ta trésorerie passerait de <strong>${fmtEUR(cashActuel)}</strong> à <strong style="color:${finalCash>=0?'var(--emerald)':'var(--bordeaux)'};">${fmtEUR(finalCash)}</strong> dans ${horizon} mois.</p>
+      <p class="disclaimer-box" style="margin-top:10px;">Hypothèse forte : ce solde mensuel (revenus − dépenses du mois vu dans le Tableau de bord) se maintient à l'identique tout du long — jamais une prévision garantie, une extrapolation d'un seul mois observé.</p>`;
+  }
+  moisEl.addEventListener('input', update);
+  update();
+  renderNextStepCard('nextstep-cashflow-projection', {domainKey: 'personalFinance'});
+})();
+
+// ---------- Simulateur de changement de situation (Financial Lab, Phase 3) :
+// 4 questions de vie fréquentes, toutes ramenées au même calcul — l'impact
+// sur le solde du mois courant (Tableau de bord) — jamais un chiffre séparé
+// et incohérent avec le reste du Laboratoire. ----------
+(function initLifeChange(){
+  const fieldsEl = document.getElementById('lifeChangeFields');
+  const resultEl = document.getElementById('lifeChangeResult');
+  if(!fieldsEl || !resultEl) return;
+  let mode = 'salaire';
+
+  const MODE_FIELDS = {
+    salaire: `<div class="field" style="max-width:260px;"><label for="lcAugmentation">Augmentation nette mensuelle (€)</label><input type="number" id="lcAugmentation" min="0" value="150"></div>`,
+    'side-hustle': `<div class="field" style="max-width:260px;"><label for="lcSideHustle">Revenu complémentaire net mensuel (€)</label><input type="number" id="lcSideHustle" min="0" value="200"></div>`,
+    demenagement: `<div class="field" style="max-width:260px;"><label for="lcLoyer">Nouveau loyer / mensualité logement (€)</label><input type="number" id="lcLoyer" min="0" value="900"></div>`,
+    couple: `<div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:180px;"><label for="lcPartenaireRevenu">Revenu net du/de la partenaire (€)</label><input type="number" id="lcPartenaireRevenu" min="0" value="1800"></div>
+      <div class="field" style="flex:1;min-width:180px;"><label for="lcPartenaireCharges">Charges apportées par le/la partenaire (€)</label><input type="number" id="lcPartenaireCharges" min="0" value="600"></div>
+    </div>`
+  };
+
+  function renderFields(){
+    fieldsEl.innerHTML = MODE_FIELDS[mode];
+    fieldsEl.querySelectorAll('input').forEach(el => el.addEventListener('input', update));
+  }
+
+  function update(){
+    const summary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+    if(summary.revenus === 0){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Ajoute au moins un revenu ce mois-ci dans le Tableau de bord pour activer la simulation.</p>`;
+      return;
+    }
+    let nouveauSolde = summary.solde;
+    let explication = '';
+    if(mode === 'salaire'){
+      const aug = +document.getElementById('lcAugmentation').value || 0;
+      nouveauSolde += aug;
+      explication = `+ ${fmtEUR(aug)}/mois d'augmentation nette.`;
+    } else if(mode === 'side-hustle'){
+      const rev = +document.getElementById('lcSideHustle').value || 0;
+      nouveauSolde += rev;
+      explication = `+ ${fmtEUR(rev)}/mois de revenu complémentaire net.`;
+    } else if(mode === 'demenagement'){
+      const nouveauLoyer = +document.getElementById('lcLoyer').value || 0;
+      const ancienLoyer = (summary.repartition.find(r => r.categorie === 'Logement') || {montant: 0}).montant;
+      nouveauSolde -= (nouveauLoyer - ancienLoyer);
+      explication = `Logement : ${fmtEUR(ancienLoyer)} → ${fmtEUR(nouveauLoyer)}/mois.`;
+    } else if(mode === 'couple'){
+      const revenu = +document.getElementById('lcPartenaireRevenu').value || 0;
+      const charges = +document.getElementById('lcPartenaireCharges').value || 0;
+      nouveauSolde += (revenu - charges);
+      explication = `+ ${fmtEUR(revenu)}/mois de revenu, + ${fmtEUR(charges)}/mois de charges apportées (modèle simplifié, sans répartition des dépenses variables communes).`;
+    }
+    resultEl.innerHTML = `
+      <div class="result-row" style="justify-content:space-between;"><span>Solde actuel</span><span class="mono">${summary.solde>=0?'+':''}${fmtEUR(summary.solde)}</span></div>
+      <div class="result-row" style="justify-content:space-between;margin-top:6px;"><span>Nouveau solde estimé</span><span class="mono" style="color:${nouveauSolde>=0?'var(--emerald)':'var(--bordeaux)'};font-size:16px;">${nouveauSolde>=0?'+':''}${fmtEUR(nouveauSolde)}</span></div>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:10px;">${explication}</p>
+      <p class="disclaimer-box" style="margin-top:10px;">Simplification : suppose que le reste de ton budget (dépenses actuelles) ne change pas — jamais une prévision fiscale ou sociale (une augmentation ou un revenu complémentaire peut aussi changer ton imposition).</p>`;
+  }
+
+  document.querySelectorAll('#lifeChangeModeToggle .pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      mode = btn.dataset.mode;
+      document.querySelectorAll('#lifeChangeModeToggle .pill').forEach(b => b.classList.toggle('active', b === btn));
+      renderFields();
+      update();
+    });
+  });
+
+  renderFields();
+  update();
+  renderNextStepCard('nextstep-life-change', {domainKey: 'personalFinance'});
+})();
 
 // ============================================================
 // ---------- Laboratoire économique (tab-economie, section 4 du prompt

@@ -648,7 +648,7 @@
 
     <div class="card" id="widget-goals-manager" style="display:none;grid-column:1/-1;">
       <h3>Mes objectifs</h3>
-      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Plusieurs objectifs en parallèle, chacun avec son propre statut — jamais un jugement, un chiffre comparé à ta date cible si tu en donnes une.</p>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Plusieurs objectifs en parallèle, chacun avec son propre statut — jamais un jugement, un chiffre comparé à ta date cible si tu en donnes une. Sert aussi pour tes dépenses irrégulières connues à l'avance (assurance annuelle, cadeaux de fin d'année...) : donne-leur une date cible pour connaître la réserve mensuelle nécessaire.</p>
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <div class="field" style="flex:2;min-width:140px;"><label for="goalMgrNom">Nom de l'objectif</label><input type="text" id="goalMgrNom" placeholder="Apport immobilier"></div>
         <div class="field" style="flex:1;min-width:110px;"><label for="goalMgrCible">Montant visé (€)</label><input type="number" id="goalMgrCible" min="0" value="5000"></div>
@@ -691,8 +691,8 @@
   </div>
 
   <div class="home-tab-panel" id="tab-planification">
-  <div class="section-head"><h2>🧭 Planification</h2><span class="meta-line">comparer des décisions</span></div>
-  <div class="card-grid">
+  <div class="section-head"><h2>🧭 Planification</h2><span class="meta-line">comparer des décisions, anticiper l'imprévu</span></div>
+  <div class="card-grid" style="margin-bottom:20px;">
 
     <a href="comparateur-decisions.html" class="card play-tile">
       <span class="icon" data-icon="scale" style="color:var(--gold-bright);"></span>
@@ -709,6 +709,49 @@
         <a href="bourse.html" class="btn btn-sm" style="justify-content:space-between;">Comparateur d'actions →</a>
         <a href="bourse.html" class="btn btn-sm" style="justify-content:space-between;">Scénarios d'action →</a>
       </div>
+    </div>
+
+  </div>
+
+  <div class="quick-access-grid" id="tab-planification-widgets"></div>
+  <button type="button" class="btn btn-sm" id="tab-planification-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>
+  <div class="card-grid">
+
+    <div class="card" id="widget-urgence-choc" style="display:none;grid-column:1/-1;">
+      <h3>Fonds d'urgence &amp; choc financier <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span></h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Deux questions, un seul calcul : combien de temps tiendrais-tu sans revenu, et combien te manque-t-il pour atteindre l'objectif que tu te fixes ?</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:1;min-width:160px;"><label for="urgenceDepenses">Dépenses mensuelles essentielles (€)</label><input type="number" id="urgenceDepenses" min="0" value="1500"></div>
+        <div class="slider-row field" style="flex:1;min-width:200px;"><label for="urgenceMoisCible">Objectif <span class="v mono" id="valUrgenceMoisCible">3 mois</span></label><input type="range" id="urgenceMoisCible" min="1" max="12" step="1" value="3"></div>
+      </div>
+      <div id="urgenceResult" style="margin-top:14px;"></div>
+      <p class="disclaimer-box" style="margin-top:10px;">L'épargne cash prise en compte vient de "Mon patrimoine net" (catégorie Épargne / cash) — ajoute tes actifs là-bas pour un calcul à jour.</p>
+      <div id="method-urgence-choc"></div>
+      <div id="nextstep-urgence-choc" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" id="widget-cashflow-projection" style="display:none;grid-column:1/-1;">
+      <h3>Projection de trésorerie <span class="data-badge data-badge-scenario" style="margin-left:6px;">🔮 Scénario</span></h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Projette ton solde de trésorerie en supposant que ton rythme actuel (revenus − dépenses du mois, vu dans le Tableau de bord) se maintient — jamais une prévision garantie.</p>
+      <div class="slider-row field" style="max-width:280px;"><label for="cashflowMois">Horizon <span class="v mono" id="valCashflowMois">12 mois</span></label><input type="range" id="cashflowMois" min="3" max="24" step="1" value="12"></div>
+      <div id="cashflowResult" style="margin-top:14px;"></div>
+      <div id="method-cashflow-projection"></div>
+      <div id="nextstep-cashflow-projection" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" id="widget-life-change" style="display:none;grid-column:1/-1;">
+      <h3>Simulateur de changement de situation <span class="data-badge data-badge-scenario" style="margin-left:6px;">🔮 Scénario</span></h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Augmentation, revenu complémentaire, déménagement ou vie à deux : l'impact sur le solde de ton mois en cours (Tableau de bord), à partir de tes propres hypothèses.</p>
+      <div class="mode-toggle" id="lifeChangeModeToggle" style="margin-bottom:14px;">
+        <button type="button" class="pill active" data-mode="salaire">Augmentation</button>
+        <button type="button" class="pill" data-mode="side-hustle">Revenu complémentaire</button>
+        <button type="button" class="pill" data-mode="demenagement">Déménagement</button>
+        <button type="button" class="pill" data-mode="couple">Vie à deux</button>
+      </div>
+      <div id="lifeChangeFields"></div>
+      <div id="lifeChangeResult" style="margin-top:14px;"></div>
+      <div id="method-life-change"></div>
+      <div id="nextstep-life-change" style="margin-top:10px;"></div>
     </div>
 
   </div>
