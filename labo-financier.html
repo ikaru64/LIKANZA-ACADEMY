@@ -3,13 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Espace éditorial · Likanza Academy</title>
-<meta name="description" content="Maquette d'espace d'administration éditoriale pour Likanza Academy.">
-<meta property="og:title" content="Espace éditorial · Likanza Academy">
-<meta property="og:description" content="Maquette d'espace d'administration éditoriale pour Likanza Academy.">
+<title>Laboratoire financier · Likanza Academy</title>
+<meta name="description" content="Deux univers séparés : simule et optimise tes finances personnelles, ou modélise ton entreprise et teste tes décisions avant d'agir.">
+<meta property="og:title" content="Laboratoire financier · Likanza Academy">
+<meta property="og:description" content="Deux univers séparés : simule et optimise tes finances personnelles, ou modélise ton entreprise et teste tes décisions avant d'agir.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://likanza-academy.vercel.app/admin.html">
-<meta name="robots" content="noindex">
+<meta property="og:url" content="https://likanza-academy.vercel.app/labo-financier.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -24,7 +23,7 @@
   <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Formations</span></a>
   <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon parcours</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
-  <a href="labo-financier.html"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
+  <a href="labo-financier.html" class="active"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
   <a href="play.html"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
   <span class="sidebar-group-label">Marchés</span>
   <a href="bourse.html"><span class="icon" data-icon="trending-up"></span><span>Bourse</span></a>
@@ -79,78 +78,50 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Espace éditorial</div>
-<h1 class="visually-hidden">Espace éditorial</h1>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / Laboratoire financier</div>
+<h1 class="visually-hidden">Laboratoire financier</h1>
 
-<section class="section" id="adminLoginScreen" style="max-width:440px;">
-  <div class="section-head"><h2>Connexion</h2></div>
-  <div class="disclaimer-box" style="margin-bottom:20px;">
-    Cette connexion est une protection locale de démonstration, pas une vraie sécurité : le mot de passe est lisible dans le code de cette page par quiconque sait l'inspecter. Une vraie protection nécessiterait un backend, un mot de passe haché côté serveur et une session sécurisée (voir <code>ARCHITECTURE.md</code>).
-  </div>
-  <div class="card">
-    <div class="field"><label for="adminUser">Identifiant</label><input type="text" id="adminUser" value="admin"></div>
-    <div class="field"><label for="adminPass">Mot de passe</label><input type="password" id="adminPass" placeholder="Mot de passe de démonstration"></div>
-    <button class="btn btn-gold" id="adminLoginBtn">Se connecter</button>
-    <p id="adminLoginMsg" style="font-size:12px;color:var(--bordeaux);margin-top:10px;"></p>
-    <p style="font-size:11.5px;color:var(--text-dim);margin-top:14px;">Mot de passe de démonstration : <code>likanza2026</code> (à changer dans le code avant de partager ce lien, voir README.md).</p>
-  </div>
+<section class="section" style="padding-bottom:0;">
+  <div class="section-head"><h2>🧪 Laboratoire financier</h2><span class="meta-line">deux univers séparés, jamais mélangés</span></div>
+  <p style="font-size:13px;color:var(--text-dim);max-width:70ch;">Le Laboratoire ne prédit rien : il calcule, simule et compare à partir de ce que tu saisis. Choisis d'abord de quel côté tu veux travailler — les finances personnelles et celles d'une entreprise reposent sur des questions différentes, jamais mélangées dans la même expérience.</p>
 </section>
 
-<div id="adminContent" style="display:none;">
 <section class="section">
-  <span class="demo-flag">Édition locale : exporte le fichier pour publier tes changements pour de vrai</span>
-  <div class="section-head"><h2>Espace éditorial</h2><span class="meta-line">missions & actualités</span></div>
-  <div class="disclaimer-box" style="margin-bottom:24px;">
-    Ce que tu modifies ici est sauvegardé sur cet appareil, pour préparer tes changements tranquillement. Ça ne change rien pour tes visiteurs tant que tu n'as pas téléchargé le fichier <code>data.js</code> ci-dessous et republié le site (envoie-le-moi, ou remplace-le toi-même sur ton hébergement). Ce lien ne doit pas être exposé publiquement dans une version en ligne réelle.
+  <div class="lab-picker-grid">
+    <a href="laboratoire.html" class="lab-picker-card">
+      <span class="lab-picker-icon">👤</span>
+      <h3>Personnel</h3>
+      <p>Comprends, simule et optimise ta situation financière.</p>
+      <span class="btn btn-gold lab-picker-cta">Entrer</span>
+    </a>
+    <a href="business-lab.html" class="lab-picker-card">
+      <span class="lab-picker-icon">🏢</span>
+      <h3>Professionnel</h3>
+      <p>Modélise ton entreprise, teste tes décisions et analyse leur impact.</p>
+      <span class="btn btn-gold lab-picker-cta">Entrer</span>
+    </a>
   </div>
-
-  <div class="card" style="max-width:640px;margin-bottom:28px;">
-    <h3>Exporter mes changements</h3>
-    <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:14px;">Télécharge un fichier <code>data.js</code> à jour, avec toutes les modifications faites ci-dessous.</p>
-    <button class="btn btn-gold" id="exportBtn">Télécharger data.js</button>
-    <button class="btn btn-sm" id="resetBtn" style="margin-left:10px;">Réinitialiser mes modifications</button>
-    <button class="btn btn-sm" id="adminLogoutBtn" style="margin-left:10px;">Se déconnecter</button>
-    <p id="exportMsg" style="font-size:12px;color:var(--text-dim);margin-top:10px;"></p>
-  </div>
-
-  <div class="section-head"><h2>Missions</h2><span class="meta-line">par niveau</span></div>
-  <div class="tabs" id="coursesLevelTabs"></div>
-  <div class="course-list" id="coursesEditList"></div>
-  <div class="card" style="max-width:640px;margin-top:20px;margin-bottom:40px;">
-    <h3>Ajouter une mission</h3>
-    <div class="field"><label for="newMissionLevel">Niveau</label><select id="newMissionLevel"></select></div>
-    <div class="field"><label for="newMissionTitle">Titre</label><input type="text" id="newMissionTitle"></div>
-    <div class="field"><label for="newMissionBody">Contenu</label><textarea id="newMissionBody"></textarea></div>
-    <button class="btn btn-sm btn-gold" id="addMissionBtn">Ajouter la mission</button>
-  </div>
-
-  <div class="section-head"><h2>Actualités</h2><span class="meta-line">état du pipeline automatique · lecture seule</span></div>
-  <div class="disclaimer-box" style="margin-bottom:16px;">
-    Les actualités ne se modifient pas depuis cet espace : elles sont générées automatiquement, chaque jour (9h UTC, avec un second passage de repli à 15h UTC en cas d'échec silencieux du premier) et chaque semaine (lundi 6h UTC), par un pipeline qui lit de vraies actus financières (flux RSS) et les fait résumer par une IA, sans relecture humaine avant mise en ligne. Ce panneau affiche l'état réel de ce pipeline — jamais une date ou un statut inventés.
-  </div>
-  <div class="card-grid" id="newsPipelineStatus"></div>
 </section>
-
-</div>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
+    <div><h4>Explorer</h4><ul><li><a href="laboratoire.html">Laboratoire personnel</a></li><li><a href="business-lab.html">Laboratoire professionnel</a></li></ul></div>
+    <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
-  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Espace éditorial de démonstration.</span></div>
+  <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
 </footer>
 
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
-<script src="scripts/pages/admin.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
   <a href="formations.html"><span class="icon" data-icon="graduation-cap"></span>Formations</a>
   <a href="defis.html"><span class="icon" data-icon="swords"></span>Défis</a>
-  <a href="labo-financier.html"><span class="icon" data-icon="calculator"></span>Labo</a>
+  <a href="labo-financier.html" class="active"><span class="icon" data-icon="calculator"></span>Labo</a>
   <a href="compte.html"><span class="icon" data-icon="user"></span>Profil</a>
 </nav>
 </body>

@@ -5864,7 +5864,8 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
   'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
   'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
-  'fzr-concepts-encountered'
+  'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
+  'fzr-net-worth-assets', 'fzr-business-profile'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
@@ -6500,6 +6501,253 @@ function renderRealPortfolioHTML(positions, totals){
       <tbody>${rows}</tbody>
     </table></div>
     <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">Portefeuille déclaratif : ces positions viennent des transactions que tu as toi-même saisies, jamais d'un compte-titres réel connecté. Le gain/perte est latent (non réalisé) et calculé sur le cours actuel réel.</p>`;
+}
+
+// ============================================================
+// ---------- PROFIL FINANCIER PERSONNEL PERSISTANT (Financial Lab, Phase 0
+// des fondations transverses — voir audit du 26/08/2026 : "aucune donnée
+// financière personnelle persistante n'existe" était le vrai trou
+// architectural bloquant dashboard/diagnostic/target engine/patrimoine).
+// Même patron exact que fzr-real-portfolio ci-dessus (liste d'entrées avec
+// id, validation stricte avant écriture, fonctions get/save/remove dédiées,
+// jamais un objet mutable partagé) — 4 registres indépendants, aucune
+// duplication entre eux (source de vérité unique, section 71 du prompt
+// Financial Lab) :
+//   - dettes personnelles : mêmes noms de champs que computeDebtPayoffPlan/
+//     computeDebtConsolidation attendent déjà (label/balance/rate/
+//     minPayment) — zéro couche de conversion, la vraie dette sauvegardée
+//     est directement utilisable par ces fonctions existantes.
+//   - objectifs financiers multiples (remplace widget-budget-goal, qui ne
+//     gérait qu'un seul objectif jamais sauvegardé).
+//   - charges récurrentes (abonnements ET factures — même structure, un
+//     champ categorie les distingue, remplace widget-budget-sub qui ne
+//     gérait qu'un seul abonnement à la fois).
+//   - actifs (patrimoine) : le passif du patrimoine net n'est JAMAIS une
+//     liste séparée — il est recalculé à partir des dettes personnelles
+//     ci-dessus (computeNetWorth prend actifs + dettes en paramètres),
+//     pour qu'une dette ne soit jamais saisie deux fois à deux endroits
+//     différents.
+// ============================================================
+
+// ---- Dettes personnelles ----
+const PERSONAL_DEBTS_KEY = 'fzr-personal-debts';
+function getPersonalDebts(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(PERSONAL_DEBTS_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function savePersonalDebt(debt){
+  if(!debt || typeof debt.label !== 'string' || !debt.label.trim() || !(debt.balance > 0) || typeof debt.rate !== 'number' || debt.rate < 0 || !(debt.minPayment > 0)) return null;
+  const list = getPersonalDebts();
+  const entry = {
+    id: 'debt-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    label: debt.label.trim().slice(0, 60), balance: debt.balance, rate: debt.rate, minPayment: debt.minPayment,
+    dateAjout: new Date().toISOString()
+  };
+  list.push(entry);
+  localStorage.setItem(PERSONAL_DEBTS_KEY, JSON.stringify(list));
+  return entry;
+}
+function removePersonalDebt(id){
+  const list = getPersonalDebts().filter(d => d.id !== id);
+  localStorage.setItem(PERSONAL_DEBTS_KEY, JSON.stringify(list));
+}
+
+// ---- Objectifs financiers (remplace le calcul à objectif unique de
+// widget-budget-goal) ----
+const FINANCIAL_GOALS_KEY = 'fzr-financial-goals';
+function getFinancialGoals(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(FINANCIAL_GOALS_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function saveFinancialGoal(goal){
+  if(!goal || typeof goal.nom !== 'string' || !goal.nom.trim() || !(goal.montantCible > 0) || !(goal.montantActuel >= 0) || !(goal.versementMensuel >= 0)) return null;
+  if(goal.dateCible !== null && goal.dateCible !== undefined && (typeof goal.dateCible !== 'string' || isNaN(Date.parse(goal.dateCible)))) return null;
+  const list = getFinancialGoals();
+  const entry = {
+    id: 'goal-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    nom: goal.nom.trim().slice(0, 60), montantCible: goal.montantCible, montantActuel: goal.montantActuel,
+    versementMensuel: goal.versementMensuel, dateCible: (typeof goal.dateCible === 'string' && goal.dateCible) ? goal.dateCible : null,
+    dateAjout: new Date().toISOString()
+  };
+  list.push(entry);
+  localStorage.setItem(FINANCIAL_GOALS_KEY, JSON.stringify(list));
+  return entry;
+}
+function removeFinancialGoal(id){
+  const list = getFinancialGoals().filter(g => g.id !== id);
+  localStorage.setItem(FINANCIAL_GOALS_KEY, JSON.stringify(list));
+}
+// Statut d'un objectif — jamais un jugement, un fait calculé à partir des
+// hypothèses saisies (rythme de versement actuel, date cible si fournie).
+// Sans date cible : aucun statut coloré (rien à comparer), seulement la
+// durée nécessaire au rythme actuel — jamais un 🔴 fabriqué faute de
+// référence temporelle. Le seuil 1,5x (statut "à risque" plutôt que
+// "impossible") est une convention de lecture assumée, documentée ici et
+// dans le panneau méthodologie de l'outil, jamais présentée comme une
+// règle universelle.
+function computeGoalProjection(goal){
+  if(!goal || !(goal.montantCible > 0)) return null;
+  const manquant = Math.max(0, goal.montantCible - goal.montantActuel);
+  const progressionPct = Math.min(100, (goal.montantActuel / goal.montantCible) * 100);
+  if(manquant === 0){
+    return {manquant: 0, progressionPct: 100, moisNecessaires: 0, statut: 'atteint'};
+  }
+  if(!(goal.versementMensuel > 0)){
+    return {manquant, progressionPct, moisNecessaires: null, statut: 'impossible'};
+  }
+  const moisNecessaires = Math.ceil(manquant / goal.versementMensuel);
+  let statut = null;
+  let moisRestants = null;
+  if(goal.dateCible){
+    const now = new Date();
+    const cible = new Date(goal.dateCible);
+    moisRestants = Math.max(0, Math.round((cible - now) / (1000 * 60 * 60 * 24 * 30.44)));
+    if(moisNecessaires <= moisRestants) statut = 'ontrack';
+    else if(moisNecessaires <= moisRestants * 1.5) statut = 'atrisk';
+    else statut = 'impossible';
+  }
+  return {manquant, progressionPct, moisNecessaires, moisRestants, statut};
+}
+
+// ---- Charges récurrentes : abonnements ET factures (même structure, un
+// champ categorie les distingue) — remplace le calcul à une seule charge de
+// widget-budget-sub. ----
+const RECURRING_CHARGES_KEY = 'fzr-recurring-charges';
+const RECURRING_CHARGE_FREQUENCIES = ['mensuel', 'trimestriel', 'annuel'];
+function getRecurringCharges(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(RECURRING_CHARGES_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function saveRecurringCharge(charge){
+  if(!charge || typeof charge.nom !== 'string' || !charge.nom.trim() || !(charge.montant > 0) || !RECURRING_CHARGE_FREQUENCIES.includes(charge.frequence)) return null;
+  const categorie = charge.categorie === 'facture' ? 'facture' : 'abonnement';
+  const list = getRecurringCharges();
+  const entry = {
+    id: 'charge-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    nom: charge.nom.trim().slice(0, 60), montant: charge.montant, frequence: charge.frequence, categorie,
+    dateAjout: new Date().toISOString()
+  };
+  list.push(entry);
+  localStorage.setItem(RECURRING_CHARGES_KEY, JSON.stringify(list));
+  return entry;
+}
+function removeRecurringCharge(id){
+  const list = getRecurringCharges().filter(c => c.id !== id);
+  localStorage.setItem(RECURRING_CHARGES_KEY, JSON.stringify(list));
+}
+// Équivalent mensuel/annuel — jamais une approximation : trimestriel ×4,
+// annuel ×1, pour le total annuel ; ÷12 pour l'équivalent mensuel.
+function computeRecurringChargeCost(charge){
+  if(!charge || !(charge.montant > 0)) return null;
+  const perYear = charge.frequence === 'mensuel' ? 12 : (charge.frequence === 'trimestriel' ? 4 : 1);
+  const annuel = charge.montant * perYear;
+  return {annuel, mensuel: annuel / 12, sur3ans: annuel * 3, sur5ans: annuel * 5, sur10ans: annuel * 10};
+}
+function computeRecurringChargesTotal(charges){
+  return (charges || []).reduce((acc, c) => {
+    const cost = computeRecurringChargeCost(c);
+    if(!cost) return acc;
+    acc.mensuel += cost.mensuel; acc.annuel += cost.annuel;
+    if(c.categorie === 'facture') acc.mensuelFactures += cost.mensuel; else acc.mensuelAbonnements += cost.mensuel;
+    return acc;
+  }, {mensuel: 0, annuel: 0, mensuelAbonnements: 0, mensuelFactures: 0});
+}
+
+// ---- Actifs (patrimoine) — le passif vient TOUJOURS des dettes
+// personnelles ci-dessus, jamais d'une liste de passifs séparée. ----
+const NET_WORTH_ASSETS_KEY = 'fzr-net-worth-assets';
+const NET_WORTH_ASSET_CATEGORIES = ['cash', 'actions', 'immobilier', 'vehicule', 'autre'];
+function getNetWorthAssets(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(NET_WORTH_ASSETS_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function saveNetWorthAsset(asset){
+  if(!asset || typeof asset.nom !== 'string' || !asset.nom.trim() || !(asset.valeur >= 0) || !NET_WORTH_ASSET_CATEGORIES.includes(asset.categorie)) return null;
+  const list = getNetWorthAssets();
+  const entry = {
+    id: 'asset-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    nom: asset.nom.trim().slice(0, 60), categorie: asset.categorie, valeur: asset.valeur,
+    dateAjout: new Date().toISOString()
+  };
+  list.push(entry);
+  localStorage.setItem(NET_WORTH_ASSETS_KEY, JSON.stringify(list));
+  return entry;
+}
+function removeNetWorthAsset(id){
+  const list = getNetWorthAssets().filter(a => a.id !== id);
+  localStorage.setItem(NET_WORTH_ASSETS_KEY, JSON.stringify(list));
+}
+// Patrimoine net = actifs saisis − dettes personnelles (fzr-personal-debts).
+// Jamais un troisième registre de "passifs" : une dette n'existe qu'à un
+// seul endroit (section 71 du prompt Financial Lab, "source de vérité").
+function computeNetWorth(assets, debts){
+  const totalActifs = (assets || []).reduce((s, a) => s + (typeof a.valeur === 'number' ? a.valeur : 0), 0);
+  const totalPassifs = (debts || []).reduce((s, d) => s + (typeof d.balance === 'number' ? d.balance : 0), 0);
+  const parCategorie = {};
+  NET_WORTH_ASSET_CATEGORIES.forEach(c => { parCategorie[c] = 0; });
+  (assets || []).forEach(a => { if(parCategorie[a.categorie] !== undefined) parCategorie[a.categorie] += a.valeur; });
+  return {totalActifs, totalPassifs, patrimoineNet: totalActifs - totalPassifs, parCategorie};
+}
+
+// ============================================================
+// ---------- PROFIL ENTREPRISE PERSISTANT (Financial Lab, Phase 0 côté
+// Professionnel — l'audit du 26/08/2026 a confirmé qu'aucun profil
+// d'entreprise central n'existe : Unit Economics et "Construire mon projet"
+// ont chacun leur propre stockage isolé, jamais réutilisé ailleurs, et
+// VAN/TRI/LBO/DCF repartent de zéro à chaque visite. Un seul profil (pas une
+// liste, comme fzr-profile côté personnel — une entreprise à la fois) :
+// même pattern defaults + merge que getProfile/saveProfile, pour que
+// l'ajout d'un futur champ ne casse jamais un profil déjà sauvegardé. ----------
+// ============================================================
+const BUSINESS_PROFILE_DEFAULTS = {
+  nom: '', ca: 0, clients: 0, prixMoyen: 0,
+  coutsFixesMensuels: 0, coutsVariablesPct: 0,
+  effectif: 0, masseSalarialeMensuelle: 0, budgetMarketingMensuel: 0,
+  detteTotale: 0, tresorerieActuelle: 0
+};
+function getBusinessProfile(){
+  const stored = safeGetJSON('fzr-business-profile', null);
+  if(!stored) return {...BUSINESS_PROFILE_DEFAULTS};
+  return {...BUSINESS_PROFILE_DEFAULTS, ...stored};
+}
+function saveBusinessProfile(profile){
+  const current = getBusinessProfile();
+  const merged = {...current, ...(profile || {})};
+  // Validation champ par champ : un champ invalide reprend sa valeur
+  // actuelle plutôt que de faire échouer toute la sauvegarde ou d'accepter
+  // une valeur négative/NaN silencieusement.
+  const numericFields = ['ca', 'clients', 'prixMoyen', 'coutsFixesMensuels', 'coutsVariablesPct', 'effectif', 'masseSalarialeMensuelle', 'budgetMarketingMensuel', 'detteTotale', 'tresorerieActuelle'];
+  numericFields.forEach(f => { if(!(typeof merged[f] === 'number' && isFinite(merged[f]) && merged[f] >= 0)) merged[f] = current[f]; });
+  merged.nom = typeof merged.nom === 'string' ? merged.nom.trim().slice(0, 80) : current.nom;
+  safeSetJSON('fzr-business-profile', merged);
+  return merged;
+}
+// Indicateurs dérivés de base — jamais un P&L complet (Phase 4/5), juste ce
+// qui peut être déduit directement et honnêtement des champs du profil.
+// margeSurCoutsVariables : CA restant après coûts variables, avant coûts
+// fixes/masse salariale/marketing — la première brique d'un compte de
+// résultat, pas une EBITDA (qui exigerait de trancher quels postes sont
+// "opérationnels", non modélisé ici).
+function computeBusinessProfileSnapshot(profile){
+  const p = profile || getBusinessProfile();
+  const caMensuel = p.ca / 12;
+  const coutsVariablesMensuels = caMensuel * (p.coutsVariablesPct / 100);
+  const margeSurCoutsVariables = caMensuel - coutsVariablesMensuels;
+  const chargesMensuellesTotales = p.coutsFixesMensuels + p.masseSalarialeMensuelle + p.budgetMarketingMensuel;
+  const resultatMensuelApproximatif = margeSurCoutsVariables - chargesMensuellesTotales;
+  return {
+    caMensuel, coutsVariablesMensuels, margeSurCoutsVariables,
+    chargesMensuellesTotales, resultatMensuelApproximatif,
+    caParClient: p.clients > 0 ? p.ca / p.clients : null
+  };
 }
 
 // ---------- Paper Trading : argent fictif, exécuté à de vrais cours en direct
