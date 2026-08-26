@@ -472,6 +472,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       <p class="disclaimer-box" style="margin-top:12px;">Simulation strictement rétrospective sur des cours réels passés. Les performances passées ne préjugent jamais des performances futures. Le Livret A affiché capitalise mensuellement le taux réel en vigueur (simplification par rapport à la règle bancaire des quinzaines).</p>
     `;
     renderResultExplainer('labInvestExplainer', {invested: result.totalInvested, final: result.finalValue, mainFactorLabel: mainFactor});
+    renderNextStepCard('nextstep-invest-whatif', {domainKey: 'stockMarket'});
   }
 
   async function loadHistory(){
@@ -546,6 +547,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
         <div class="card"><span class="smallcaps">Achats pendant une baisse</span><div class="result-big" style="font-size:19px;margin-top:6px;">${result.buysDuringDip}</div></div>
       </div>
       <p class="disclaimer-box" style="margin-top:12px;">Le DCA (achat régulier) ne garantit pas un meilleur résultat qu'un versement unique — il lisse le prix d'entrée. Voir le comparateur DCA vs investissement immédiat (phase à venir).</p>`;
+    renderNextStepCard('nextstep-invest-dca', {domainKey: 'stockMarket'});
   }
 
   async function loadHistory(){
@@ -612,6 +614,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
         <p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">Le taux s'applique chaque année sur tout le capital restant dû, pas seulement au départ : sur 20-25 ans, un écart d'1 point se cumule fortement.</p>
       </div>
       <p class="disclaimer-box" style="margin-top:14px;">Simulation pédagogique, pas une offre de prêt. Le taux réellement proposé dépend du profil emprunteur, de l'apport et de la banque.</p>`;
+    renderNextStepCard('nextstep-credit', {domainKey: 'realEstate'});
   }
 
   async function loadLiveRate(){
@@ -669,6 +672,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       <div class="result-row" style="margin-top:10px;"><span>Inflation cumulée : ${totalInflationPct >= 0 ? '+' : ''}${totalInflationPct.toFixed(1)} %</span><span>Inflation annualisée : ${annualizedPct >= 0 ? '+' : ''}${annualizedPct.toFixed(1)} % / an</span></div>
       ${renderSourceNote('inflationFR', {period: `${startEl.value} → ${endEl.value}`})}
       <p class="disclaimer-box" style="margin-top:10px;">Calculé à partir de l'indice réel des prix à la consommation (IPCH France, BCE) — jamais une inflation constante supposée.</p>`;
+    renderNextStepCard('nextstep-budget-inflation', {domainKey: 'personalFinance'});
   }
 
   async function load(){
@@ -751,6 +755,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   strategyRows.addRow('Carte de crédit', 2000, 19, 80);
   strategyRows.addRow('Prêt personnel', 6000, 5, 150);
   updateDebtStrategy();
+  renderNextStepCard('nextstep-debt-strategy', {domainKey: 'personalFinance'});
 
   const consoRows = createDebtRowList('debtConsoRows', () => updateDebtConsolidation());
   function updateDebtConsolidation(){
@@ -767,6 +772,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   consoRows.addRow('Carte de crédit', 2000, 19, 80);
   consoRows.addRow('Prêt personnel', 6000, 5, 150);
   updateDebtConsolidation();
+  renderNextStepCard('nextstep-debt-consolidation', {domainKey: 'personalFinance'});
 })();
 
 // ---------- Transport : coût total de possession + comparaison de
@@ -803,6 +809,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
     if(el) el.addEventListener('input', updateTCO);
   });
   updateTCO();
+  renderNextStepCard('nextstep-transport-tco', {domainKey: 'personalFinance'});
 
   const finOutputEl = document.getElementById('finOutput');
   function updateFinancing(){
@@ -826,6 +833,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
     if(el) el.addEventListener('input', updateFinancing);
   });
   updateFinancing();
+  renderNextStepCard('nextstep-transport-financing', {domainKey: 'personalFinance'});
 })();
 
 // ---------- P0-5 : Acheter ou louer, version sérieuse ----------
@@ -896,6 +904,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       </div>
       <p style="margin-top:12px;font-size:13.5px;">${result.breakevenYear ? `Dans ces hypothèses, le patrimoine net du propriétaire dépasse celui du locataire à partir d'environ <strong>${result.breakevenYear} ans</strong>.` : `Dans ces hypothèses, le patrimoine net du locataire reste supérieur sur toute la période testée.`}</p>
       <p class="disclaimer-box" style="margin-top:8px;">Ceci n'est pas une recommandation d'achat ou de location. Le résultat dépend entièrement des hypothèses saisies ci-dessus (taux, appréciation, rendement d'opportunité) : en modifier une peut changer la conclusion.</p>`;
+    renderNextStepCard('nextstep-buyrent', {domainKey: 'realEstate'});
   }
 
   async function loadAppreciation(){
@@ -957,6 +966,7 @@ function updateBudget(){
   el.style.color = solde >= 0 ? 'var(--emerald)' : 'var(--bordeaux)';
 }
 updateBudget();
+renderNextStepCard('nextstep-budget-calc', {domainKey: 'personalFinance'});
 
 // Objectif épargne
 ['goalAmount','goalMonthly'].forEach(id=>document.getElementById(id).addEventListener('input', updateGoal));
@@ -970,6 +980,7 @@ function updateGoal(){
   el.textContent = years > 0 ? `${years} an(s) et ${rem} mois` : `${months} mois`;
 }
 updateGoal();
+renderNextStepCard('nextstep-budget-goal', {domainKey: 'personalFinance'});
 
 // Coût futur d'un abonnement
 const subCost = document.getElementById('subCost'), subYears = document.getElementById('subYears'), subRate = document.getElementById('subRate');
@@ -994,6 +1005,7 @@ function updateSub(){
 }
 [subCost, subYears, subRate].forEach(el=>el.addEventListener('input', updateSub));
 updateSub();
+renderNextStepCard('nextstep-budget-sub', {domainKey: 'personalFinance'});
 
 // Scénarios futurs d'inflation (hypothèses, panneau secondaire de la carte inflation réelle)
 const inflAmount = document.getElementById('inflAmount'), inflReturn = document.getElementById('inflReturn'), inflRate = document.getElementById('inflRate'), inflYears = document.getElementById('inflYears');
@@ -1164,6 +1176,7 @@ simShowRealEl.addEventListener('change', updateSim);
 rateEl.disabled = true;
 updateModeDesc();
 updateSim();
+renderNextStepCard('nextstep-invest-compound', {domainKey: 'stockMarket'});
 
 // Remplace les 3 ronds chiffres de repli (Prudente/Centrale/Optimiste) par
 // un vrai CAGR sourcé dès qu'il est disponible, sans action de l'utilisateur
@@ -1218,6 +1231,7 @@ function updateDca(){
 }
 addDcaRow(10, 95); addDcaRow(5, 110);
 updateDca();
+renderNextStepCard('nextstep-invest-pru', {domainKey: 'stockMarket'});
 
 // ---------- Risque quantitatif (VaR, section 15 du prompt "Extension des
 // domaines" : mathématiques financières avancées / finance quantitative) :
@@ -1254,6 +1268,7 @@ function updateVar(){
   document.getElementById(id).addEventListener('input', () => { updateVar(); markVarUsed(); });
 });
 updateVar();
+renderNextStepCard('nextstep-invest-var', {categories: ['Finance quantitative']});
 
 // ---------- Calculateur obligataire (prix / YTM) — computeBondPrice/
 // computeBondYTM (scripts/data.js). Deux modes exclusifs plutôt que les deux
@@ -1310,6 +1325,7 @@ function updateBond(){
   document.getElementById(id).addEventListener('input', () => { updateBond(); markBondUsed(); });
 });
 updateBond();
+renderNextStepCard('nextstep-invest-bond', {domainKey: 'stockMarket'});
 
 // ---------- Calculateur de position Forex — computeForexPositionSize
 // (scripts/data.js) : jamais un taux de change en direct utilisé pour la
@@ -1341,6 +1357,7 @@ function updateForex(){
   document.getElementById(id).addEventListener('input', () => { updateForex(); markForexUsed(); });
 });
 updateForex();
+renderNextStepCard('nextstep-invest-forex', {domainKey: 'stockMarket'});
 
 // ---------- Calculateur de taille de position générique (actions, crypto,
 // tout actif tradé à l'unité) — computeTradePositionSize (scripts/data.js),
@@ -1370,6 +1387,7 @@ function updatePosition(){
   document.getElementById(id).addEventListener('input', () => { updatePosition(); markPositionUsed(); });
 });
 updatePosition();
+renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
 
 // ============================================================
 // ---------- Laboratoire économique (tab-economie, section 4 du prompt

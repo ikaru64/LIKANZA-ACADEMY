@@ -134,6 +134,7 @@
       <p id="labInvestPartialNote" class="source-note"></p>
       <div id="labInvestOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
       <div id="method-invest-whatif"></div>
+      <div id="nextstep-invest-whatif" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-invest-dca" style="display:none;grid-column:1/-1;">
@@ -160,6 +161,7 @@
       </div>
       <div id="labDcaOutput"><p style="color:var(--text-dim);font-size:13px;">Chargement des données réelles…</p></div>
       <div id="method-invest-dca"></div>
+      <div id="nextstep-invest-dca" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-invest-compound" style="display:none;">
@@ -191,6 +193,7 @@
       <div id="simWhatIf"></div>
       <p class="disclaimer-box"><strong>Ce scénario n'est pas une prévision.</strong> Les performances passées ne préjugent pas des performances futures. Les marchés actions ont déjà connu des baisses de plus de 30% sur une seule année dans le passé (crises de 2000, 2008, 2020) : un scénario réaliste doit intégrer cette possibilité, pas seulement une moyenne lissée.</p>
       <div id="method-invest-compound"></div>
+      <div id="nextstep-invest-compound" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-invest-pru" style="display:none;">
@@ -200,6 +203,7 @@
       <button class="btn btn-sm" id="dcaAdd" style="margin-top:10px;">+ Ajouter un achat</button>
       <div class="result-row" id="dcaResult" style="margin-top:16px;"></div>
       <div id="method-invest-pru"></div>
+      <div id="nextstep-invest-pru" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-invest-var" style="display:none;grid-column:1/-1;">
@@ -222,6 +226,7 @@
       </div>
       <div id="varResult" style="margin-top:16px;"></div>
       <div id="method-invest-var"></div>
+      <div id="nextstep-invest-var" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-invest-bond" style="display:none;grid-column:1/-1;">
@@ -249,6 +254,7 @@
       <div class="field" id="bondPriceField" style="max-width:220px;display:none;"><label for="bondPriceInput">Prix observé (€)</label><input type="number" id="bondPriceInput" value="850" min="1"></div>
       <div id="bondResult" style="margin-top:16px;"></div>
       <div id="method-invest-bond"></div>
+      <div id="nextstep-invest-bond" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-invest-forex" style="display:none;grid-column:1/-1;">
@@ -279,6 +285,7 @@
       </div>
       <div id="forexResult" style="margin-top:16px;"></div>
       <div id="method-invest-forex"></div>
+      <div id="nextstep-invest-forex" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-invest-position" style="display:none;grid-column:1/-1;">
@@ -297,6 +304,7 @@
       </div>
       <div id="positionResult" style="margin-top:16px;"></div>
       <div id="method-invest-position"></div>
+      <div id="nextstep-invest-position" style="margin-top:10px;"></div>
     </div>
 
   </div>
@@ -327,6 +335,7 @@
       </div>
       <div id="labCreditOutput"></div>
       <div id="method-credit"></div>
+      <div id="nextstep-credit" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="labBuyRentCard" style="display:none;grid-column:1/-1;">
@@ -370,6 +379,7 @@
       </div>
       <div id="labBuyRentOutput"></div>
       <div id="method-buyrent"></div>
+      <div id="nextstep-buyrent" style="margin-top:10px;"></div>
     </div>
 
     <a href="immobilier.html" class="card play-tile">
@@ -400,6 +410,7 @@
       <div id="debtStrategyOutput" style="margin-top:16px;"></div>
       <p class="disclaimer-box" style="margin-top:14px;">Simulation mois par mois à partir des vraies valeurs saisies — jamais une garantie que ta banque appliquera exactement ce calendrier (pénalités de remboursement anticipé éventuelles à vérifier auprès de chaque prêteur).</p>
       <div id="method-debt-strategy"></div>
+      <div id="nextstep-debt-strategy" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-debt-consolidation" style="display:none;grid-column:1/-1;">
@@ -420,6 +431,7 @@
       </div>
       <div id="debtConsolidationOutput" style="margin-top:16px;"></div>
       <div id="method-debt-consolidation"></div>
+      <div id="nextstep-debt-consolidation" style="margin-top:10px;"></div>
     </div>
 
   </div>
@@ -462,6 +474,7 @@
       </div>
       <div id="tcoOutput" style="margin-top:16px;"></div>
       <div id="method-transport-tco"></div>
+      <div id="nextstep-transport-tco" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-transport-financing" style="display:none;grid-column:1/-1;">
@@ -483,6 +496,7 @@
       </div>
       <div id="finOutput" style="margin-top:16px;"></div>
       <div id="method-transport-financing"></div>
+      <div id="nextstep-transport-financing" style="margin-top:10px;"></div>
     </div>
 
   </div>
@@ -518,6 +532,7 @@
         <div class="bar-labels" id="inflChartLabels"></div>
       </div>
       <div id="method-budget-inflation"></div>
+      <div id="nextstep-budget-inflation" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-budget-calc" style="display:none;">
@@ -530,6 +545,7 @@
       <div class="result-big" id="budgetResult">— €</div>
       <p class="disclaimer-box">Une capacité d'épargne négative signale un budget à revoir avant tout projet d'investissement.</p>
       <div id="method-budget-calc"></div>
+      <div id="nextstep-budget-calc" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-budget-goal" style="display:none;">
@@ -539,6 +555,7 @@
       <div class="result-label">Temps nécessaire pour atteindre l'objectif</div>
       <div class="result-big" id="goalResult">—</div>
       <div id="method-budget-goal"></div>
+      <div id="nextstep-budget-goal" style="margin-top:10px;"></div>
     </div>
 
     <div class="card" id="widget-budget-sub" style="display:none;">
@@ -549,6 +566,7 @@
       <div class="result-row" id="subResult" style="margin-top:10px;"></div>
       <div id="subRateAlert"></div>
       <div id="method-budget-sub"></div>
+      <div id="nextstep-budget-sub" style="margin-top:10px;"></div>
     </div>
 
   </div>
