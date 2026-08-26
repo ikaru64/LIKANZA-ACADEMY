@@ -4063,6 +4063,24 @@ function renderBusinessLab(elId){
       <h3 style="margin:10px 0 6px;">Sales funnel interactif</h3>
       <p>Visiteurs → leads → prospects → clients, et le CAC implicite.</p>
       <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-scenarios" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.shield}</span>
+      <h3 style="margin:10px 0 6px;">Scénarios & stress-test</h3>
+      <p>Optimiste, pessimiste, choc — l'impact sur ton résultat, sauvegardable et comparable.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-runway" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.flame}</span>
+      <h3 style="margin:10px 0 6px;">Runway</h3>
+      <p>Combien de mois de trésorerie te reste-t-il au rythme actuel ?</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-valorisation" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.gem}</span>
+      <h3 style="margin:10px 0 6px;">Valorisation par multiples</h3>
+      <p>EV/EBITDA et PER : de vrais calculateurs, pas juste des définitions.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
     </button>`;
   document.getElementById(`${elId}-decisions`).addEventListener('click', () => {
     if(!sessionEl) return;
@@ -4102,6 +4120,24 @@ function renderBusinessLab(elId){
     if(!sessionEl) return;
     sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-funnel"></div></div>`;
     renderSalesFunnel(`${elId}-session-funnel`);
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  document.getElementById(`${elId}-scenarios`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-scenarios"></div></div>`;
+    renderBusinessScenarios(`${elId}-session-scenarios`);
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  document.getElementById(`${elId}-runway`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-runway"></div></div>`;
+    renderRunwaySimulator(`${elId}-session-runway`);
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  document.getElementById(`${elId}-valorisation`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-valorisation"></div></div>`;
+    renderValorisationSimulator(`${elId}-session-valorisation`);
     sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
   });
 }
@@ -4188,6 +4224,24 @@ const BUSINESS_METHODOLOGY = {
     donnees: "Aucune donnée externe : uniquement les taux de conversion que tu saisis toi-même à chaque étage.",
     hypotheses: "Suppose des taux de conversion constants à chaque étage, indépendamment du volume de visiteurs.",
     limites: "En réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser les taux de conversion réels à chaque étage — ce calcul ne modélise pas cet effet."
+  },
+  'scenarios': {
+    calcul: "CA ajusté = CA du profil × (1 + variation CA %) − (clients perdus × CA moyen par client). Charges ajustées = charges du profil × (1 + variation charges %). Résultat ajusté = marge sur CA ajusté − charges ajustées.",
+    donnees: "Le profil entreprise (CA, charges, coûts variables) et les scénarios sauvegardés que tu ajoutes.",
+    hypotheses: "Les 3 préréglages (optimiste +15%/−5%, pessimiste −15%/+10%, choc sévère −30%/+20%) sont des illustrations documentées, jamais une prévision réelle calibrée sur ton marché.",
+    limites: "Un scénario sauvegardé est toujours recalculé contre ton profil ACTUEL, jamais figé au moment de la sauvegarde — si tu modifies ton profil entreprise plus tard, les scénarios déjà sauvegardés refléteront honnêtement l'impact sur ta nouvelle situation."
+  },
+  'runway': {
+    calcul: "Burn mensuel = résultat mensuel du profil entreprise, si négatif (0 si l'entreprise est profitable). Runway = trésorerie actuelle ÷ burn mensuel.",
+    donnees: "Trésorerie actuelle et résultat mensuel viennent directement de \"Mon profil entreprise\".",
+    hypotheses: "Suppose que le burn mensuel actuel se maintient à l'identique — jamais une projection tenant compte d'une évolution prévue (nouvelle levée de fonds, réduction de coûts planifiée).",
+    limites: "Le résultat approximatif du profil n'est pas un vrai suivi de trésorerie (encaissements/décaissements réels, délais de paiement clients/fournisseurs non modélisés) — un runway réel peut différer de ce calcul."
+  },
+  'valorisation': {
+    calcul: "Valorisation par EV/EBITDA = EBITDA annuel × multiple choisi. Valorisation par PER = résultat net annuel × PER choisi.",
+    donnees: "Aucune donnée externe : EBITDA, multiple, résultat net et PER sont tous des saisies manuelles.",
+    hypotheses: "Le multiple ou le PER utilisé est une hypothèse que tu choisis toi-même — aucun multiple de marché réel n'est recherché ou suggéré automatiquement.",
+    limites: "Le multiple approprié varie énormément selon le secteur, la taille et la croissance de l'entreprise. Les 2 méthodes donnent souvent des résultats différents pour la même entreprise, et une vraie valorisation de transaction dépend de bien plus que ce calcul (négociation, due diligence, actifs et passifs hors bilan)."
   },
   'business-game': {
     calcul: "Chaque décision prise pendant la partie modifie plusieurs variables (trésorerie, clients, MRR, satisfaction...) selon des règles définies à l'avance pour le secteur choisi (voir scripts/games/business-game-data.js) ; le résultat final est l'état cumulé de ces variables après toutes les décisions.",
@@ -4600,6 +4654,234 @@ function renderSalesFunnel(elId){
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['sales-funnel']);
   }
   ['visiteurs','tauxLead','tauxProspect','tauxClient','budgetMarketing'].forEach(key => {
+    document.getElementById(`${elId}-${key}`).addEventListener('input', update);
+  });
+  update();
+}
+
+// ---------- Scénarios & stress-test (Financial Lab, Phase 6) : applique un
+// choc au profil entreprise (jamais au profil lui-même — un calcul à côté,
+// jamais une écriture dans fzr-business-profile) et compare plusieurs
+// scénarios sauvegardés. Seuls les DELTAS sont persistés (fzr-business-scenarios),
+// jamais un résultat figé : la comparaison recalcule toujours contre le
+// profil ACTUEL (§71, source de vérité unique) — un scénario sauvegardé la
+// semaine dernière reflète honnêtement l'impact sur la situation d'aujourd'hui,
+// pas une photo obsolète. ----------
+const BUSINESS_SCENARIOS_KEY = 'fzr-business-scenarios';
+const BUSINESS_SCENARIO_PRESETS = {
+  optimiste: {label: 'Optimiste', caDeltaPct: 15, coutsDeltaPct: -5, perteClients: 0},
+  pessimiste: {label: 'Pessimiste', caDeltaPct: -15, coutsDeltaPct: 10, perteClients: 0},
+  stress: {label: 'Choc sévère', caDeltaPct: -30, coutsDeltaPct: 20, perteClients: 1}
+};
+function computeBusinessScenario(profile, caDeltaPct, coutsDeltaPct, perteClients){
+  const p = profile || getBusinessProfile();
+  const base = computeBusinessProfileSnapshot(p);
+  const caParClient = base.caParClient || 0;
+  const caAjuste = Math.max(0, base.ca * (1 + (Number(caDeltaPct) || 0) / 100) - (Number(perteClients) || 0) * caParClient);
+  const caMensuelAjuste = caAjuste / 12;
+  const coutsVariablesMensuelsAjustes = caMensuelAjuste * (p.coutsVariablesPct / 100);
+  const margeSurCoutsVariablesAjustee = caMensuelAjuste - coutsVariablesMensuelsAjustes;
+  const chargesMensuellesTotalesAjustees = base.chargesMensuellesTotales * (1 + (Number(coutsDeltaPct) || 0) / 100);
+  const resultatMensuelAjuste = margeSurCoutsVariablesAjustee - chargesMensuellesTotalesAjustees;
+  return {
+    caAjuste, caMensuelAjuste, coutsVariablesMensuelsAjustes, margeSurCoutsVariablesAjustee,
+    chargesMensuellesTotalesAjustees, resultatMensuelAjuste, resultatAnnuelAjuste: resultatMensuelAjuste * 12
+  };
+}
+function getBusinessScenarios(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(BUSINESS_SCENARIOS_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function saveBusinessScenarioEntry(scenario){
+  if(!scenario || typeof scenario.nom !== 'string' || !scenario.nom.trim()) return null;
+  if(typeof scenario.caDeltaPct !== 'number' || typeof scenario.coutsDeltaPct !== 'number' || !(scenario.perteClients >= 0)) return null;
+  const list = getBusinessScenarios();
+  const entry = {
+    id: 'scenario-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    nom: scenario.nom.trim().slice(0, 60), caDeltaPct: scenario.caDeltaPct, coutsDeltaPct: scenario.coutsDeltaPct, perteClients: scenario.perteClients,
+    dateAjout: new Date().toISOString()
+  };
+  list.push(entry);
+  localStorage.setItem(BUSINESS_SCENARIOS_KEY, JSON.stringify(list));
+  return entry;
+}
+function removeBusinessScenarioEntry(id){
+  const list = getBusinessScenarios().filter(s => s.id !== id);
+  localStorage.setItem(BUSINESS_SCENARIOS_KEY, JSON.stringify(list));
+}
+function renderBusinessScenarios(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('scenario')} Un choc appliqué à "Mon profil entreprise", jamais écrit dedans — pour explorer sans risque de casser tes vraies hypothèses.</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;">
+      <button type="button" class="btn btn-sm" data-preset="optimiste">🟢 Optimiste</button>
+      <button type="button" class="btn btn-sm" data-preset="pessimiste">🟠 Pessimiste</button>
+      <button type="button" class="btn btn-sm" data-preset="stress">🔴 Choc sévère</button>
+    </div>
+    <div class="slider-row field" style="max-width:320px;"><label for="${elId}-caDelta">Variation du CA <span class="v mono" id="${elId}-caDeltaVal">0 %</span></label><input type="range" id="${elId}-caDelta" min="-50" max="50" step="1" value="0"></div>
+    <div class="slider-row field" style="max-width:320px;"><label for="${elId}-coutsDelta">Variation des charges <span class="v mono" id="${elId}-coutsDeltaVal">0 %</span></label><input type="range" id="${elId}-coutsDelta" min="-30" max="50" step="1" value="0"></div>
+    <div class="field" style="max-width:220px;"><label for="${elId}-perteClients">Clients perdus (nombre)</label><input type="number" id="${elId}-perteClients" min="0" value="0"></div>
+    <div id="${elId}-results" style="margin-top:14px;"></div>
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-top:14px;">
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-scenarioNom">Nom du scénario</label><input type="text" id="${elId}-scenarioNom" placeholder="Ex. Grosse commande annulée"></div>
+      <button type="button" class="btn btn-sm btn-gold" id="${elId}-scenarioSave">💾 Sauvegarder ce scénario</button>
+    </div>
+    <div id="${elId}-comparatif" style="margin-top:18px;"></div>
+    <div id="${elId}-method"></div>`;
+
+  function currentDeltas(){
+    return {
+      caDeltaPct: +document.getElementById(`${elId}-caDelta`).value,
+      coutsDeltaPct: +document.getElementById(`${elId}-coutsDelta`).value,
+      perteClients: +document.getElementById(`${elId}-perteClients`).value
+    };
+  }
+  function renderComparatif(){
+    const scenarios = getBusinessScenarios();
+    const profile = getBusinessProfile();
+    if(scenarios.length === 0){
+      document.getElementById(`${elId}-comparatif`).innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucun scénario sauvegardé pour l'instant.</p>`;
+      return;
+    }
+    document.getElementById(`${elId}-comparatif`).innerHTML = `
+      <span class="smallcaps" style="display:block;margin-bottom:8px;">Scénarios sauvegardés (recalculés contre ton profil actuel)</span>
+      <div style="overflow-x:auto;"><table style="width:100%;font-size:12.5px;border-collapse:collapse;min-width:420px;">
+        <thead><tr style="color:var(--text-dim);text-align:left;"><th style="padding:6px 0;">Scénario</th><th>CA</th><th>Charges</th><th>Clients perdus</th><th>Résultat mensuel</th><th></th></tr></thead>
+        <tbody>${scenarios.map(s => {
+          const r = computeBusinessScenario(profile, s.caDeltaPct, s.coutsDeltaPct, s.perteClients);
+          return `<tr style="border-top:1px solid var(--hairline);">
+            <td style="padding:6px 0;">${s.nom}</td>
+            <td class="mono">${s.caDeltaPct>=0?'+':''}${s.caDeltaPct}%</td>
+            <td class="mono">${s.coutsDeltaPct>=0?'+':''}${s.coutsDeltaPct}%</td>
+            <td class="mono">${s.perteClients}</td>
+            <td class="mono" style="color:${r.resultatMensuelAjuste>=0?'var(--emerald)':'var(--bordeaux)'};">${r.resultatMensuelAjuste>=0?'+':''}${fmtEUR(r.resultatMensuelAjuste)}</td>
+            <td><button type="button" class="btn btn-sm scenario-remove" data-id="${s.id}" aria-label="Supprimer">✕</button></td>
+          </tr>`;
+        }).join('')}</tbody>
+      </table></div>`;
+    document.querySelectorAll(`#${elId}-comparatif .scenario-remove`).forEach(btn => {
+      btn.addEventListener('click', () => { removeBusinessScenarioEntry(btn.dataset.id); renderComparatif(); });
+    });
+  }
+  function update(){
+    document.getElementById(`${elId}-caDeltaVal`).textContent = (+document.getElementById(`${elId}-caDelta`).value >= 0 ? '+' : '') + document.getElementById(`${elId}-caDelta`).value + ' %';
+    document.getElementById(`${elId}-coutsDeltaVal`).textContent = (+document.getElementById(`${elId}-coutsDelta`).value >= 0 ? '+' : '') + document.getElementById(`${elId}-coutsDelta`).value + ' %';
+    const deltas = currentDeltas();
+    const profile = getBusinessProfile();
+    const base = computeBusinessProfileSnapshot(profile);
+    const scenario = computeBusinessScenario(profile, deltas.caDeltaPct, deltas.coutsDeltaPct, deltas.perteClients);
+    document.getElementById(`${elId}-results`).innerHTML = `
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+        <div class="card"><span class="smallcaps">Résultat mensuel actuel</span><div class="result-big" style="font-size:18px;margin-top:6px;color:${base.resultatMensuelApproximatif>=0?'var(--emerald)':'var(--bordeaux)'};">${base.resultatMensuelApproximatif>=0?'+':''}${fmtEUR(base.resultatMensuelApproximatif)}</div></div>
+        <div class="card"><span class="smallcaps">Résultat mensuel dans ce scénario</span><div class="result-big" style="font-size:18px;margin-top:6px;color:${scenario.resultatMensuelAjuste>=0?'var(--emerald)':'var(--bordeaux)'};">${scenario.resultatMensuelAjuste>=0?'+':''}${fmtEUR(scenario.resultatMensuelAjuste)}</div></div>
+        <div class="card"><span class="smallcaps">Écart</span><div class="result-big" style="font-size:18px;margin-top:6px;">${fmtEUR(scenario.resultatMensuelAjuste - base.resultatMensuelApproximatif)}</div></div>
+      </div>
+      <p class="disclaimer-box" style="margin-top:10px;">Scénario appliqué à côté du profil, jamais écrit dedans. Les 3 préréglages (+15/−5, −15/+10, −30/+20) sont des illustrations documentées, jamais une prévision réelle de ton marché.</p>`;
+    document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['scenarios']);
+  }
+  el.querySelectorAll('[data-preset]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const preset = BUSINESS_SCENARIO_PRESETS[btn.dataset.preset];
+      document.getElementById(`${elId}-caDelta`).value = preset.caDeltaPct;
+      document.getElementById(`${elId}-coutsDelta`).value = preset.coutsDeltaPct;
+      document.getElementById(`${elId}-perteClients`).value = preset.perteClients;
+      document.getElementById(`${elId}-scenarioNom`).value = preset.label;
+      update();
+    });
+  });
+  ['caDelta','coutsDelta','perteClients'].forEach(key => {
+    document.getElementById(`${elId}-${key}`).addEventListener('input', update);
+  });
+  document.getElementById(`${elId}-scenarioSave`).addEventListener('click', () => {
+    const deltas = currentDeltas();
+    const entry = saveBusinessScenarioEntry({nom: document.getElementById(`${elId}-scenarioNom`).value, ...deltas});
+    if(entry) renderComparatif();
+  });
+
+  update();
+  renderComparatif();
+}
+
+// ---------- Runway (Financial Lab, Phase 6) : trésorerie ÷ burn mensuel —
+// jamais un chiffre fabriqué quand l'entreprise est déjà profitable (pas de
+// burn, runway non applicable plutôt qu'une valeur infinie affichée). ----------
+function computeRunway(profile){
+  const p = profile || getBusinessProfile();
+  const snapshot = computeBusinessProfileSnapshot(p);
+  const burnMensuel = snapshot.resultatMensuelApproximatif < 0 ? -snapshot.resultatMensuelApproximatif : 0;
+  const runwayMois = burnMensuel > 0 ? p.tresorerieActuelle / burnMensuel : null;
+  return {burnMensuel, runwayMois, tresorerieActuelle: p.tresorerieActuelle, resultatMensuel: snapshot.resultatMensuelApproximatif};
+}
+function renderRunwaySimulator(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const r = computeRunway();
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Calculé à partir de "Mon profil entreprise" (trésorerie actuelle et résultat mensuel) — modifie ton profil pour changer ce calcul.</p>
+    <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+      <div class="card"><span class="smallcaps">Trésorerie actuelle</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(r.tresorerieActuelle)}</div></div>
+      <div class="card"><span class="smallcaps">Burn mensuel</span><div class="result-big" style="font-size:19px;margin-top:6px;color:${r.burnMensuel>0?'var(--bordeaux)':'var(--emerald)'};">${r.burnMensuel>0?fmtEUR(r.burnMensuel):'Aucun'}</div></div>
+      <div class="card"><span class="smallcaps">Runway</span><div class="result-big" style="font-size:19px;margin-top:6px;">${r.runwayMois===null?'Profitable, non applicable':r.runwayMois.toFixed(1)+' mois'}</div></div>
+    </div>
+    <p class="disclaimer-box" style="margin-top:12px;">Le burn mensuel est déduit du résultat approximatif du profil entreprise — jamais un vrai suivi de trésorerie mois par mois (encaissements/décaissements réels, délais de paiement clients/fournisseurs non modélisés).</p>
+    <div id="${elId}-method"></div>`;
+  document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['runway']);
+}
+
+// ---------- Valorisation par multiples (Financial Lab, Phase 6) : de vrais
+// calculateurs (EV = EBITDA × multiple ; valorisation = résultat net × PER),
+// jamais juste des définitions — l'EBITDA et le résultat net restent des
+// saisies manuelles, le profil entreprise ne calculant jamais de vraie
+// EBITDA (amortissements/impôts non modélisés, voir sa méthodologie). ----------
+function computeValorisationMultiples(a){
+  const ebitda = Number(a.ebitda) || 0;
+  const multipleEV = Number(a.multipleEV) || 0;
+  const resultatNet = Number(a.resultatNet) || 0;
+  const per = Number(a.per) || 0;
+  return {ebitda, multipleEV, ev: ebitda * multipleEV, resultatNet, per, valorisationPER: resultatNet * per};
+}
+function renderValorisationSimulator(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const stored = safeGetJSON('fzr-valorisation-sim', {ebitda:50000, multipleEV:6, resultatNet:35000, per:12});
+
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} L'EBITDA et le résultat net sont à saisir toi-même — le profil entreprise ne calcule jamais une vraie EBITDA (amortissements et impôts non modélisés).</p>
+    <span class="smallcaps" style="display:block;margin-bottom:8px;">EV / EBITDA</span>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-ebitda">EBITDA annuel (€)</label><input type="number" id="${elId}-ebitda" min="0" value="${stored.ebitda}"></div>
+      <div class="field" style="flex:1;min-width:140px;"><label for="${elId}-multipleEV">Multiple EV/EBITDA (×)</label><input type="number" id="${elId}-multipleEV" min="0" step="0.5" value="${stored.multipleEV}"></div>
+    </div>
+    <span class="smallcaps" style="display:block;margin-bottom:8px;">Valorisation par PER</span>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-resultatNet">Résultat net annuel (€)</label><input type="number" id="${elId}-resultatNet" min="0" value="${stored.resultatNet}"></div>
+      <div class="field" style="flex:1;min-width:140px;"><label for="${elId}-per">PER (×)</label><input type="number" id="${elId}-per" min="0" step="0.5" value="${stored.per}"></div>
+    </div>
+    <div id="${elId}-results" style="margin-top:16px;"></div>
+    <div id="${elId}-method"></div>`;
+
+  function update(){
+    const a = {
+      ebitda: document.getElementById(`${elId}-ebitda`).value,
+      multipleEV: document.getElementById(`${elId}-multipleEV`).value,
+      resultatNet: document.getElementById(`${elId}-resultatNet`).value,
+      per: document.getElementById(`${elId}-per`).value
+    };
+    safeSetJSON('fzr-valorisation-sim', a);
+    const r = computeValorisationMultiples(a);
+    document.getElementById(`${elId}-results`).innerHTML = `
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+        <div class="card"><span class="smallcaps">Valorisation par EV/EBITDA</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(r.ev)}</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">${fmtEUR(r.ebitda)} × ${r.multipleEV}</p></div>
+        <div class="card"><span class="smallcaps">Valorisation par PER</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(r.valorisationPER)}</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">${fmtEUR(r.resultatNet)} × ${r.per}</p></div>
+      </div>
+      <p class="disclaimer-box" style="margin-top:12px;">Le multiple approprié varie énormément selon le secteur, la taille et la croissance de l'entreprise — jamais un multiple universel. Ces 2 méthodes donnent souvent des résultats différents pour la même entreprise : la valorisation réelle d'une transaction dépend de bien plus que ce calcul (négociation, due diligence, actifs et passifs hors bilan...).</p>`;
+    document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['valorisation']);
+  }
+  ['ebitda','multipleEV','resultatNet','per'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
   });
   update();
@@ -6336,7 +6618,7 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
   'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
   'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries', 'fzr-net-worth-history',
-  'fzr-business-expenses'
+  'fzr-business-expenses', 'fzr-business-scenarios'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
