@@ -4887,6 +4887,74 @@ function renderValorisationSimulator(elId){
   update();
 }
 
+// ---------- "Analyser ma situation" — check-up automatique côté
+// Professionnel (Financial Lab, Phase 7, équivalent business du diagnostic
+// automatique du Tableau de bord personnel — computeFinancialDiagnostics).
+// Chaque règle ne s'active que si la donnée existe réellement (profil
+// entreprise renseigné, éventuellement Unit Economics), et chaque message
+// cite le chiffre réel — jamais un jugement seul. ----------
+function computeBusinessDiagnostics(ctx){
+  const diagnostics = [];
+  const snapshot = ctx && ctx.snapshot;
+  const runway = ctx && ctx.runway;
+  const unitEconomics = ctx && ctx.unitEconomics;
+
+  if(snapshot && snapshot.ca > 0){
+    if(snapshot.resultatMensuelApproximatif < 0){
+      diagnostics.push({id:'resultat-negatif', niveau:'alerte', message:`Ton activité est déficitaire de ${fmtEUR(-snapshot.resultatMensuelApproximatif)}/mois au rythme actuel.`});
+    } else {
+      const margeNettePct = (snapshot.resultatMensuelApproximatif / snapshot.caMensuel) * 100;
+      if(margeNettePct < 10){
+        diagnostics.push({id:'marge-nette-faible', niveau:'attention', message:`Ta marge nette est de ${margeNettePct.toFixed(0)} % du chiffre d'affaires — un coussin de sécurité réduit face à un imprévu.`});
+      } else {
+        diagnostics.push({id:'marge-nette-ok', niveau:'ok', message:`Ta marge nette est de ${margeNettePct.toFixed(0)} % du chiffre d'affaires.`});
+      }
+    }
+  }
+
+  if(runway && runway.burnMensuel > 0){
+    if(runway.runwayMois < 6){
+      diagnostics.push({id:'runway-court', niveau:'alerte', message:`Ta trésorerie ne couvre que ${runway.runwayMois.toFixed(1)} mois de burn au rythme actuel — sous le repère usuel de 6 mois.`});
+    } else if(runway.runwayMois < 12){
+      diagnostics.push({id:'runway-moyen', niveau:'attention', message:`Ta trésorerie couvre ${runway.runwayMois.toFixed(1)} mois de burn au rythme actuel.`});
+    } else {
+      diagnostics.push({id:'runway-ok', niveau:'ok', message:`Ta trésorerie couvre ${runway.runwayMois.toFixed(1)} mois de burn au rythme actuel.`});
+    }
+  }
+
+  if(unitEconomics && unitEconomics.ratioLtvCac !== null){
+    if(unitEconomics.ratioLtvCac < 1){
+      diagnostics.push({id:'ltv-cac-faible', niveau:'alerte', message:`Ton ratio LTV/CAC (Unit Economics) est de ${unitEconomics.ratioLtvCac.toFixed(1)}× — chaque client acquis coûte plus cher qu'il ne rapporte.`});
+    } else if(unitEconomics.ratioLtvCac < 3){
+      diagnostics.push({id:'ltv-cac-moyen', niveau:'attention', message:`Ton ratio LTV/CAC (Unit Economics) est de ${unitEconomics.ratioLtvCac.toFixed(1)}× — sous le repère usuel de 3× souvent cité.`});
+    } else {
+      diagnostics.push({id:'ltv-cac-ok', niveau:'ok', message:`Ton ratio LTV/CAC (Unit Economics) est de ${unitEconomics.ratioLtvCac.toFixed(1)}×.`});
+    }
+  }
+
+  return diagnostics;
+}
+function renderBusinessDiagnostics(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const profile = getBusinessProfile();
+  const snapshot = computeBusinessProfileSnapshot(profile);
+  const runway = computeRunway(profile);
+  const unitEconomics = safeGetJSON('fzr-unit-economics', null) ? computeUnitEconomics(safeGetJSON('fzr-unit-economics', {})) : null;
+
+  if(snapshot.ca === 0){
+    el.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Renseigne d'abord "Mon profil entreprise" ci-dessus pour activer le check-up automatique.</p>`;
+    return;
+  }
+
+  const diagnostics = computeBusinessDiagnostics({snapshot, runway, unitEconomics});
+  const emoji = {ok:'🟢', attention:'🟠', alerte:'🔴'};
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px;">${renderDataBadge('calcul')} Jamais un jugement : chaque ligne cite le chiffre réel qui la justifie, calculé à partir de "Mon profil entreprise"${runway.burnMensuel>0?', du Runway':''}${unitEconomics?' et de Unit Economics':''}.</p>
+    ${diagnostics.map(d => `<p style="font-size:13px;margin-top:8px;">${emoji[d.niveau]} ${d.message}</p>`).join('')}
+    ${!unitEconomics ? `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Remplis aussi Unit Economics pour enrichir ce check-up avec ton ratio LTV/CAC.</p>` : ''}`;
+}
+
 // 30 secondes / 2 minutes / Approfondir — réutilise les champs déjà existants
 // de LIBRARY (simple/detail), zéro contenu dupliqué. "Approfondir" pointe
 // vers la fiche complète de la Bibliothèque (exemple, avantages, erreurs...).
@@ -7814,6 +7882,10 @@ function renderCompanyProfile(elId){
       <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Chiffre d'affaires : ${snap.caDetail} (${fmtEUR(snap.ca)}/an).${snap.caParClient !== null ? ` CA par client : ${fmtEUR(snap.caParClient)}/an.` : ''}</p>
       <p class="disclaimer-box" style="margin-top:10px;">Marge sur coûts variables, pas une EBITDA : ne tranche pas quels postes sont "opérationnels". Un compte de résultat simplifié, pas une vraie comptabilité (amortissements, impôts, charges sociales non détaillées ici).</p>`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['profil-entreprise']);
+    // Tient le check-up "Analyser ma situation" à jour en direct — si sa
+    // section n'existe pas sur la page (getElementById renvoie null),
+    // renderBusinessDiagnostics ressort silencieusement sans rien faire.
+    if(typeof renderBusinessDiagnostics === 'function') renderBusinessDiagnostics('businessDiagnostics');
   }
 
   document.getElementById(`${elId}-revenueMode`).addEventListener('change', () => { updateModeVisibility(document.getElementById(`${elId}-revenueMode`).value); update(); });
