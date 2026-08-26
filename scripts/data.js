@@ -4039,6 +4039,12 @@ function renderBusinessLab(elId){
       <h3 style="margin:10px 0 6px;">Unit Economics</h3>
       <p>Prix, marge, CAC, LTV, point mort : ton business est-il économiquement cohérent ?</p>
       <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-headcount" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.user}</span>
+      <h3 style="margin:10px 0 6px;">Simulateur RH / Recrutement</h3>
+      <p>Coût réel d'une embauche et durée pour la rentabiliser.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
     </button>`;
   document.getElementById(`${elId}-decisions`).addEventListener('click', () => {
     if(!sessionEl) return;
@@ -4054,6 +4060,12 @@ function renderBusinessLab(elId){
     if(!sessionEl) return;
     sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-unit-economics"></div></div>`;
     renderUnitEconomics(`${elId}-session-unit-economics`);
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  document.getElementById(`${elId}-headcount`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-headcount"></div></div>`;
+    renderHeadcountSimulator(`${elId}-session-headcount`);
     sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
   });
 }
@@ -4079,7 +4091,19 @@ function computeUnitEconomics(a){
   const seuilVentes = (margeBrute > 0 && chargesFixes > 0) ? Math.ceil(chargesFixes / margeBrute) : null;
   const revenuTotalMoyen = prix * achatsMoyens;
 
-  return {prix, coutDirect, cac, achatsMoyens, chargesFixes, margeBrute, margeBrutePct, ltv, ratioLtvCac, seuilVentes, revenuTotalMoyen};
+  // Customer Economics enrichi (Financial Lab, Phase 5) : churn et ARPU sont
+  // optionnels (un business non-abonnement les laisse à 0) — jamais un
+  // calcul fabriqué en leur absence, toujours null plutôt que 0 trompeur.
+  const churnMensuelPct = Number(a.churnMensuelPct) || 0;
+  const arpuMensuel = Number(a.arpuMensuel) || 0;
+  const customerLifetimeMonths = churnMensuelPct > 0 ? 100 / churnMensuelPct : null;
+  const ltvAbonnement = (arpuMensuel > 0 && customerLifetimeMonths !== null) ? arpuMensuel * customerLifetimeMonths : null;
+  const paybackMonths = (cac > 0 && arpuMensuel > 0 && margeBrutePct !== null && margeBrutePct > 0) ? cac / (arpuMensuel * (margeBrutePct / 100)) : null;
+
+  return {
+    prix, coutDirect, cac, achatsMoyens, chargesFixes, margeBrute, margeBrutePct, ltv, ratioLtvCac, seuilVentes, revenuTotalMoyen,
+    churnMensuelPct, arpuMensuel, customerLifetimeMonths, ltvAbonnement, paybackMonths
+  };
 }
 
 // ---------- Panneaux de méthodologie côté Professionnel — même principe et
@@ -4098,11 +4122,18 @@ const BUSINESS_METHODOLOGY = {
     comprendre: "La marge sur coûts variables n'est jamais présentée comme une EBITDA — établir une vraie EBITDA exigerait de trancher quels postes sont réellement \"opérationnels\", une décision non modélisée ici."
   },
   'unit-economics': {
-    calcul: "Marge brute = prix de vente − coût direct. LTV = marge brute × nombre d'achats moyen par client. Ratio LTV/CAC = LTV ÷ coût d'acquisition. Seuil de rentabilité (ventes mensuelles) = charges fixes ÷ marge brute.",
-    donnees: "Aucune donnée externe : uniquement les 5 chiffres que tu saisis toi-même (prix, coût direct, CAC, achats moyens, charges fixes).",
-    hypotheses: "Suppose un coût direct et un prix constants sur toutes les ventes, et un nombre d'achats moyen par client représentatif — en réalité, ces chiffres varient d'un client à l'autre.",
-    limites: "Ne modélise ni la saisonnalité, ni le taux de désabonnement dans le temps, ni les coûts indirects (support client, retours) au-delà du coût direct saisi.",
-    comprendre: "Un ratio LTV/CAC élevé ne suffit pas à lui seul : si le seuil de rentabilité en ventes mensuelles n'est jamais atteint, l'activité peut rester déficitaire malgré un bon ratio par client."
+    calcul: "Marge brute = prix de vente − coût direct. LTV = marge brute × nombre d'achats moyen par client. Ratio LTV/CAC = LTV ÷ coût d'acquisition. Seuil de rentabilité (ventes mensuelles) = charges fixes ÷ marge brute. Pour un abonnement (optionnel) : durée de vie client = 100 ÷ churn mensuel (%). LTV abonnement = ARPU mensuel × durée de vie. Payback period = CAC ÷ (ARPU mensuel × marge brute %).",
+    donnees: "Aucune donnée externe : uniquement les chiffres que tu saisis toi-même (prix, coût direct, CAC, achats moyens, charges fixes, et pour un abonnement : churn et ARPU).",
+    hypotheses: "Suppose un coût direct et un prix constants sur toutes les ventes, et un nombre d'achats moyen par client représentatif — en réalité, ces chiffres varient d'un client à l'autre. Le churn est supposé constant dans le temps, alors qu'il varie souvent selon l'ancienneté du client.",
+    limites: "Ne modélise ni la saisonnalité, ni les coûts indirects (support client, retours) au-delà du coût direct saisi. La durée de vie client (100/churn) suppose un taux de résiliation constant — un churn qui décroît avec l'ancienneté donnerait une durée de vie réelle plus longue.",
+    comprendre: "Un ratio LTV/CAC élevé ne suffit pas à lui seul : si le seuil de rentabilité en ventes mensuelles n'est jamais atteint, l'activité peut rester déficitaire malgré un bon ratio par client. Un payback period long (>12-18 mois, repère usuel) signifie que l'entreprise doit financer longtemps l'acquisition avant de la rentabiliser."
+  },
+  'headcount': {
+    calcul: "Coût total mensuel = salaire brut × (1 + charges patronales %). Marge nette mensuelle = marge générée par le poste − coût total mensuel. Mois pour rentabiliser = coût de recrutement ÷ marge nette mensuelle (si positive).",
+    donnees: "Aucune donnée externe : uniquement les hypothèses que tu saisis toi-même.",
+    hypotheses: "Suppose que la marge générée par le poste est constante dès le premier mois — en réalité, une nouvelle recrue met généralement du temps à devenir pleinement opérationnelle (montée en compétence).",
+    limites: "Ne modélise ni la formation, ni la période d'essai, ni le risque de turnover — un vrai coût de recrutement inclut souvent bien plus que les frais d'annonce ou d'agence (temps de l'équipe consacré au recrutement, par exemple).",
+    comprendre: "Si la marge nette mensuelle est négative, l'embauche ne se rentabilise jamais au rythme actuel — augmenter la marge générée (prix, volume) ou réduire le coût (négociation salariale, aide à l'embauche) sont les deux seuls leviers."
   },
   'business-game': {
     calcul: "Chaque décision prise pendant la partie modifie plusieurs variables (trésorerie, clients, MRR, satisfaction...) selon des règles définies à l'avance pour le secteur choisi (voir scripts/games/business-game-data.js) ; le résultat final est l'état cumulé de ces variables après toutes les décisions.",
@@ -4121,7 +4152,7 @@ const BUSINESS_METHODOLOGY = {
 function renderUnitEconomics(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const stored = safeGetJSON('fzr-unit-economics', {prix:50, coutDirect:15, cac:40, achatsMoyens:3, chargesFixes:1500});
+  const stored = safeGetJSON('fzr-unit-economics', {prix:50, coutDirect:15, cac:40, achatsMoyens:3, chargesFixes:1500, churnMensuelPct:0, arpuMensuel:0});
 
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Renseigne tes propres hypothèses : les calculs s'enchaînent à partir de ces chiffres, sans jugement automatique sur ton projet.</p>
@@ -4132,6 +4163,11 @@ function renderUnitEconomics(elId){
       <div class="field"><label for="${elId}-achatsMoyens">Nombre d'achats moyen par client</label><input type="number" id="${elId}-achatsMoyens" value="${stored.achatsMoyens}" step="0.1"></div>
       <div class="field"><label for="${elId}-chargesFixes">Charges fixes mensuelles (€)</label><input type="number" id="${elId}-chargesFixes" value="${stored.chargesFixes}"></div>
     </div>
+    <span class="smallcaps" style="display:block;margin-bottom:8px;">Business par abonnement ? (optionnel — Customer Economics enrichi)</span>
+    <div class="card-grid" style="margin-bottom:16px;">
+      <div class="field"><label for="${elId}-churnMensuelPct">Taux de résiliation mensuel — churn (%)</label><input type="number" id="${elId}-churnMensuelPct" value="${stored.churnMensuelPct || 0}" min="0" max="100" step="0.1"></div>
+      <div class="field"><label for="${elId}-arpuMensuel">Revenu moyen par client et par mois — ARPU (€)</label><input type="number" id="${elId}-arpuMensuel" value="${stored.arpuMensuel || 0}" min="0"></div>
+    </div>
     <div id="${elId}-results"></div>
     <div id="${elId}-method"></div>`;
 
@@ -4141,7 +4177,9 @@ function renderUnitEconomics(elId){
       coutDirect: document.getElementById(`${elId}-coutDirect`).value,
       cac: document.getElementById(`${elId}-cac`).value,
       achatsMoyens: document.getElementById(`${elId}-achatsMoyens`).value,
-      chargesFixes: document.getElementById(`${elId}-chargesFixes`).value
+      chargesFixes: document.getElementById(`${elId}-chargesFixes`).value,
+      churnMensuelPct: document.getElementById(`${elId}-churnMensuelPct`).value,
+      arpuMensuel: document.getElementById(`${elId}-arpuMensuel`).value
     };
   }
   function update(){
@@ -4158,6 +4196,13 @@ function renderUnitEconomics(elId){
         <div class="result-row" style="justify-content:space-between;"><span>Revenu total moyen par client</span><span class="mono">${fmtEUR(r.revenuTotalMoyen)}</span></div>
         <div class="result-row" style="justify-content:space-between;"><span>Ventes mensuelles au point mort</span><span class="mono">${r.seuilVentes===null?'—':r.seuilVentes}</span></div>
       </div>
+      ${r.customerLifetimeMonths !== null || r.paybackMonths !== null ? `
+      <div class="card" style="margin-bottom:14px;">
+        <span class="smallcaps">Customer Economics — abonnement</span>
+        <div class="result-row" style="justify-content:space-between;margin-top:10px;"><span>Durée de vie client estimée</span><span class="mono">${r.customerLifetimeMonths===null?'—':r.customerLifetimeMonths.toFixed(1)+' mois'}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>LTV basée sur le revenu récurrent</span><span class="mono">${r.ltvAbonnement===null?'—':fmtEUR(r.ltvAbonnement)}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>Payback period (CAC récupéré en)</span><span class="mono">${r.paybackMonths===null?'—':r.paybackMonths.toFixed(1)+' mois'}</span></div>
+      </div>` : ''}
       <p style="font-size:12px;color:var(--text-dim);margin-bottom:16px;">${renderDataBadge('avis')} Un ratio LTV/CAC autour de 3 est souvent cité comme un repère sain (voir la fiche « CAC » de la Bibliothèque) — un repère indicatif, jamais une règle universelle ni une garantie de rentabilité.</p>
       <span class="smallcaps" style="display:block;margin-bottom:8px;">Sensibilité — que se passe-t-il si...</span>
       <div class="card-grid">
@@ -4166,11 +4211,77 @@ function renderUnitEconomics(elId){
       </div>`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['unit-economics']);
   }
-  ['prix','coutDirect','cac','achatsMoyens','chargesFixes'].forEach(key => {
+  ['prix','coutDirect','cac','achatsMoyens','chargesFixes','churnMensuelPct','arpuMensuel'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
   });
   update();
   tryAwardQuizPoints(`unit-economics-${new Date().toDateString()}`, 5, {usedUnitEconomics:true});
+}
+
+// ---------- Simulateur RH / Recrutement (Financial Lab, Phase 5) : coût
+// réel d'une embauche (salaire + charges patronales, jamais juste le salaire
+// brut affiché à l'offre) et durée pour la rentabiliser à partir de la marge
+// qu'elle est censée générer. ----------
+function computeHeadcountBreakeven(a){
+  const salaireBrutMensuel = Number(a.salaireBrutMensuel) || 0;
+  const chargesPatronalesPct = Number(a.chargesPatronalesPct) || 0;
+  const coutRecrutement = Number(a.coutRecrutement) || 0;
+  const margeGenereeParEmploye = Number(a.margeGenereeParEmploye) || 0;
+
+  const coutTotalMensuel = salaireBrutMensuel * (1 + chargesPatronalesPct / 100);
+  const coutTotalAnnuel = coutTotalMensuel * 12;
+  const margeNetteMensuelle = margeGenereeParEmploye - coutTotalMensuel;
+  // Jamais un mois négatif ou fabriqué : sans marge nette positive, l'embauche
+  // ne se rentabilise jamais au rythme actuel, quel que soit le coût de
+  // recrutement — statut "jamais", pas un chiffre de mois inventé.
+  const moisBreakEven = margeNetteMensuelle > 0 ? (coutRecrutement > 0 ? coutRecrutement / margeNetteMensuelle : 0) : null;
+
+  return {salaireBrutMensuel, chargesPatronalesPct, coutRecrutement, margeGenereeParEmploye, coutTotalMensuel, coutTotalAnnuel, margeNetteMensuelle, moisBreakEven};
+}
+function renderHeadcountSimulator(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const stored = safeGetJSON('fzr-headcount-sim', {salaireBrutMensuel:2800, chargesPatronalesPct:42, coutRecrutement:2000, margeGenereeParEmploye:3500});
+
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Le coût réel d'une embauche inclut toujours les charges patronales, jamais seulement le salaire brut affiché sur l'offre.</p>
+    <div class="card-grid" style="margin-bottom:16px;">
+      <div class="field"><label for="${elId}-salaireBrutMensuel">Salaire brut mensuel (€)</label><input type="number" id="${elId}-salaireBrutMensuel" min="0" value="${stored.salaireBrutMensuel}"></div>
+      <div class="field"><label for="${elId}-chargesPatronalesPct">Charges patronales (% du brut)</label><input type="number" id="${elId}-chargesPatronalesPct" min="0" max="100" value="${stored.chargesPatronalesPct}"></div>
+      <div class="field"><label for="${elId}-coutRecrutement">Coût de recrutement ponctuel (€)</label><input type="number" id="${elId}-coutRecrutement" min="0" value="${stored.coutRecrutement}"></div>
+      <div class="field"><label for="${elId}-margeGenereeParEmploye">Marge générée par ce poste (€/mois)</label><input type="number" id="${elId}-margeGenereeParEmploye" min="0" value="${stored.margeGenereeParEmploye}"></div>
+    </div>
+    <div id="${elId}-results"></div>
+    <div id="${elId}-method"></div>`;
+
+  function readInputs(){
+    return {
+      salaireBrutMensuel: document.getElementById(`${elId}-salaireBrutMensuel`).value,
+      chargesPatronalesPct: document.getElementById(`${elId}-chargesPatronalesPct`).value,
+      coutRecrutement: document.getElementById(`${elId}-coutRecrutement`).value,
+      margeGenereeParEmploye: document.getElementById(`${elId}-margeGenereeParEmploye`).value
+    };
+  }
+  function update(){
+    const a = readInputs();
+    safeSetJSON('fzr-headcount-sim', a);
+    const r = computeHeadcountBreakeven(a);
+    document.getElementById(`${elId}-results`).innerHTML = `
+      <div class="card" style="margin-bottom:14px;">
+        <span class="smallcaps">Coût réel de ce poste</span>
+        <div class="result-row" style="justify-content:space-between;margin-top:10px;"><span>Coût total mensuel (salaire + charges)</span><span class="mono">${fmtEUR(r.coutTotalMensuel)}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>Coût total annuel</span><span class="mono">${fmtEUR(r.coutTotalAnnuel)}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>Marge nette mensuelle (marge générée − coût)</span><span class="mono" style="color:${r.margeNetteMensuelle>=0?'var(--emerald)':'var(--bordeaux)'};">${r.margeNetteMensuelle>=0?'+':''}${fmtEUR(r.margeNetteMensuelle)}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>Rentabilisée (coût de recrutement récupéré) en</span><span class="mono">${r.moisBreakEven===null?'Jamais, au rythme actuel':r.moisBreakEven.toFixed(1)+' mois'}</span></div>
+      </div>
+      <p class="disclaimer-box">La "marge générée par ce poste" est une hypothèse que tu fixes toi-même (ex. chiffre d'affaires additionnel × marge, ou temps libéré valorisé) — jamais un chiffre garanti ni mesuré automatiquement.</p>`;
+    document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['headcount']);
+  }
+  ['salaireBrutMensuel','chargesPatronalesPct','coutRecrutement','margeGenereeParEmploye'].forEach(key => {
+    document.getElementById(`${elId}-${key}`).addEventListener('input', update);
+  });
+  update();
+  tryAwardQuizPoints(`headcount-sim-${new Date().toDateString()}`, 5, {usedHeadcountSim:true});
 }
 
 // 30 secondes / 2 minutes / Approfondir — réutilise les champs déjà existants
