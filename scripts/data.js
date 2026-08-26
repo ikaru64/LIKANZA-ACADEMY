@@ -4090,6 +4090,13 @@ function computeUnitEconomics(a){
 // dynamiquement (clic, fin de partie, étape finale de l'assistant), jamais
 // présents dans le HTML statique au chargement de la page. ----------
 const BUSINESS_METHODOLOGY = {
+  'profil-entreprise': {
+    calcul: "Chiffre d'affaires = selon le mode choisi (prix × volume, clients × panier moyen, abonnés × prix × 12, ou somme des lignes produits). Résultat mensuel = CA mensuel − coûts variables (% du CA) − charges fixes − masse salariale − marketing.",
+    donnees: "Aucune donnée externe : uniquement les hypothèses que tu saisis toi-même.",
+    hypotheses: "Les coûts variables sont un pourcentage constant du CA, quel que soit le volume — une hypothèse simplificatrice qui ignore les économies d'échelle possibles à plus grand volume.",
+    limites: "Ce n'est pas un vrai compte de résultat comptable : ni amortissements, ni impôts, ni distinction entre charges sociales et salaire net.",
+    comprendre: "La marge sur coûts variables n'est jamais présentée comme une EBITDA — établir une vraie EBITDA exigerait de trancher quels postes sont réellement \"opérationnels\", une décision non modélisée ici."
+  },
   'unit-economics': {
     calcul: "Marge brute = prix de vente − coût direct. LTV = marge brute × nombre d'achats moyen par client. Ratio LTV/CAC = LTV ÷ coût d'acquisition. Seuil de rentabilité (ventes mensuelles) = charges fixes ÷ marge brute.",
     donnees: "Aucune donnée externe : uniquement les 5 chiffres que tu saisis toi-même (prix, coût direct, CAC, achats moyens, charges fixes).",
@@ -6897,7 +6904,9 @@ function computeFinancialDashboard(mois){
 // l'ajout d'un futur champ ne casse jamais un profil déjà sauvegardé. ----------
 // ============================================================
 const BUSINESS_PROFILE_DEFAULTS = {
-  nom: '', ca: 0, clients: 0, prixMoyen: 0,
+  nom: '', revenueMode: 'manuel', ca: 0, clients: 0,
+  prixUnitaire: 0, volumeAnnuel: 0, panierMoyenAnnuel: 0,
+  nombreAbonnes: 0, prixAbonnementMensuel: 0, produits: [],
   coutsFixesMensuels: 0, coutsVariablesPct: 0,
   effectif: 0, masseSalarialeMensuelle: 0, budgetMarketingMensuel: 0,
   detteTotale: 0, tresorerieActuelle: 0
@@ -6907,36 +6916,200 @@ function getBusinessProfile(){
   if(!stored) return {...BUSINESS_PROFILE_DEFAULTS};
   return {...BUSINESS_PROFILE_DEFAULTS, ...stored};
 }
+// Modèle de revenus généralisé (Financial Lab, Phase 4) : le CA n'est plus
+// forcément un chiffre saisi à la main — 4 formules alternatives, chacune
+// adaptée à un type de business réel. "ca" reste le champ unique lu partout
+// ailleurs (§71, source de vérité unique) : saveBusinessProfile le recalcule
+// toujours automatiquement à partir du mode choisi, sauf en mode "manuel" où
+// c'est la seule vraie source.
+const REVENUE_MODES = ['manuel', 'prix-volume', 'clients-panier', 'abonnement', 'multi-produits'];
+function computeRevenueModel(profile){
+  const p = profile || getBusinessProfile();
+  switch(p.revenueMode){
+    case 'prix-volume':
+      return {ca: (p.prixUnitaire || 0) * (p.volumeAnnuel || 0), detail: `${p.volumeAnnuel || 0} ventes/an × ${fmtEUR(p.prixUnitaire || 0)}`};
+    case 'clients-panier':
+      return {ca: (p.clients || 0) * (p.panierMoyenAnnuel || 0), detail: `${p.clients || 0} clients × ${fmtEUR(p.panierMoyenAnnuel || 0)}/an`};
+    case 'abonnement':
+      return {ca: (p.nombreAbonnes || 0) * (p.prixAbonnementMensuel || 0) * 12, detail: `${p.nombreAbonnes || 0} abonnés × ${fmtEUR(p.prixAbonnementMensuel || 0)}/mois × 12`};
+    case 'multi-produits': {
+      const produits = Array.isArray(p.produits) ? p.produits : [];
+      return {ca: produits.reduce((s, prod) => s + (prod.prix || 0) * (prod.volume || 0), 0), detail: `${produits.length} produit(s)`};
+    }
+    default:
+      return {ca: p.ca || 0, detail: 'Saisi manuellement'};
+  }
+}
 function saveBusinessProfile(profile){
   const current = getBusinessProfile();
   const merged = {...current, ...(profile || {})};
   // Validation champ par champ : un champ invalide reprend sa valeur
   // actuelle plutôt que de faire échouer toute la sauvegarde ou d'accepter
   // une valeur négative/NaN silencieusement.
-  const numericFields = ['ca', 'clients', 'prixMoyen', 'coutsFixesMensuels', 'coutsVariablesPct', 'effectif', 'masseSalarialeMensuelle', 'budgetMarketingMensuel', 'detteTotale', 'tresorerieActuelle'];
+  const numericFields = ['ca', 'clients', 'prixUnitaire', 'volumeAnnuel', 'panierMoyenAnnuel', 'nombreAbonnes', 'prixAbonnementMensuel', 'coutsFixesMensuels', 'coutsVariablesPct', 'effectif', 'masseSalarialeMensuelle', 'budgetMarketingMensuel', 'detteTotale', 'tresorerieActuelle'];
   numericFields.forEach(f => { if(!(typeof merged[f] === 'number' && isFinite(merged[f]) && merged[f] >= 0)) merged[f] = current[f]; });
   merged.nom = typeof merged.nom === 'string' ? merged.nom.trim().slice(0, 80) : current.nom;
+  merged.revenueMode = REVENUE_MODES.includes(merged.revenueMode) ? merged.revenueMode : current.revenueMode;
+  merged.produits = Array.isArray(merged.produits)
+    ? merged.produits
+        .filter(prod => prod && typeof prod.nom === 'string' && prod.nom.trim() && typeof prod.prix === 'number' && prod.prix >= 0 && typeof prod.volume === 'number' && prod.volume >= 0)
+        .map(prod => ({nom: prod.nom.trim().slice(0, 60), prix: prod.prix, volume: prod.volume}))
+    : current.produits;
+  merged.ca = computeRevenueModel(merged).ca;
   safeSetJSON('fzr-business-profile', merged);
   return merged;
 }
-// Indicateurs dérivés de base — jamais un P&L complet (Phase 4/5), juste ce
-// qui peut être déduit directement et honnêtement des champs du profil.
-// margeSurCoutsVariables : CA restant après coûts variables, avant coûts
-// fixes/masse salariale/marketing — la première brique d'un compte de
-// résultat, pas une EBITDA (qui exigerait de trancher quels postes sont
-// "opérationnels", non modélisé ici).
+// Compte de résultat simplifié (Financial Lab, Phase 4) — Chiffre d'affaires
+// → marge sur coûts variables → résultat, à partir du profil entreprise
+// persistant. margeSurCoutsVariables n'est jamais présentée comme une EBITDA
+// (qui exigerait de trancher quels postes sont "opérationnels", non modélisé
+// ici) — juste la première brique honnête d'un compte de résultat.
 function computeBusinessProfileSnapshot(profile){
   const p = profile || getBusinessProfile();
-  const caMensuel = p.ca / 12;
+  const revenue = computeRevenueModel(p);
+  const ca = revenue.ca;
+  const caMensuel = ca / 12;
   const coutsVariablesMensuels = caMensuel * (p.coutsVariablesPct / 100);
   const margeSurCoutsVariables = caMensuel - coutsVariablesMensuels;
   const chargesMensuellesTotales = p.coutsFixesMensuels + p.masseSalarialeMensuelle + p.budgetMarketingMensuel;
   const resultatMensuelApproximatif = margeSurCoutsVariables - chargesMensuellesTotales;
   return {
-    caMensuel, coutsVariablesMensuels, margeSurCoutsVariables,
-    chargesMensuellesTotales, resultatMensuelApproximatif,
-    caParClient: p.clients > 0 ? p.ca / p.clients : null
+    ca, caDetail: revenue.detail, caMensuel, coutsVariablesMensuels, margeSurCoutsVariables,
+    chargesMensuellesTotales, resultatMensuelApproximatif, resultatAnnuelApproximatif: resultatMensuelApproximatif * 12,
+    caParClient: p.clients > 0 ? ca / p.clients : null
   };
+}
+
+// ---------- UI du profil entreprise (Financial Lab, Phase 4) : tous les
+// champs des 5 modes de revenus restent présents dans le DOM en permanence
+// (jamais recréés via innerHTML), seule leur visibilité bascule selon le
+// mode choisi — jamais un re-rendu complet à chaque changement qui ferait
+// perdre le focus clavier. La liste de produits (mode multi-produits) suit
+// le même patron que createDebtRowList (scripts/pages/laboratoire.js) :
+// lignes ajoutées via document.createElement, jamais via innerHTML. ----------
+const REVENUE_MODE_LABELS = {
+  manuel: 'Montant annuel connu',
+  'prix-volume': 'Prix unitaire × volume de ventes',
+  'clients-panier': 'Nombre de clients × panier moyen',
+  abonnement: 'Abonnement (MRR)',
+  'multi-produits': 'Plusieurs produits/services'
+};
+function renderCompanyProfile(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const stored = getBusinessProfile();
+
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Une seule fiche pour ton entreprise, réutilisée par les autres outils du Business Lab — jamais une donnée à ressaisir à deux endroits.</p>
+    <div class="field"><label for="${elId}-nom">Nom de l'entreprise</label><input type="text" id="${elId}-nom" value="${stored.nom || ''}" placeholder="Ma Startup"></div>
+    <div class="field" style="max-width:340px;"><label for="${elId}-revenueMode">Comment calculer ton chiffre d'affaires ?</label>
+      <select id="${elId}-revenueMode">
+        ${REVENUE_MODES.map(m => `<option value="${m}" ${stored.revenueMode===m?'selected':''}>${REVENUE_MODE_LABELS[m]}</option>`).join('')}
+      </select>
+    </div>
+    <div id="${elId}-mode-manuel" class="revenue-mode-group">
+      <div class="field" style="max-width:220px;"><label for="${elId}-ca">Chiffre d'affaires annuel (€)</label><input type="number" id="${elId}-ca" min="0" value="${stored.ca}"></div>
+    </div>
+    <div id="${elId}-mode-prix-volume" class="revenue-mode-group" style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-prixUnitaire">Prix unitaire (€)</label><input type="number" id="${elId}-prixUnitaire" min="0" value="${stored.prixUnitaire}"></div>
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-volumeAnnuel">Volume de ventes / an</label><input type="number" id="${elId}-volumeAnnuel" min="0" value="${stored.volumeAnnuel}"></div>
+    </div>
+    <div id="${elId}-mode-clients-panier" class="revenue-mode-group" style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-clients">Nombre de clients</label><input type="number" id="${elId}-clients" min="0" value="${stored.clients}"></div>
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-panierMoyenAnnuel">Panier moyen / an (€)</label><input type="number" id="${elId}-panierMoyenAnnuel" min="0" value="${stored.panierMoyenAnnuel}"></div>
+    </div>
+    <div id="${elId}-mode-abonnement" class="revenue-mode-group" style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-nombreAbonnes">Nombre d'abonnés</label><input type="number" id="${elId}-nombreAbonnes" min="0" value="${stored.nombreAbonnes}"></div>
+      <div class="field" style="flex:1;min-width:160px;"><label for="${elId}-prixAbonnementMensuel">Prix de l'abonnement (€/mois)</label><input type="number" id="${elId}-prixAbonnementMensuel" min="0" value="${stored.prixAbonnementMensuel}"></div>
+    </div>
+    <div id="${elId}-mode-multi-produits" class="revenue-mode-group">
+      <div id="${elId}-produitsRows"></div>
+      <button type="button" class="btn btn-sm" id="${elId}-produitAdd" style="margin-top:8px;">+ Ajouter un produit</button>
+    </div>
+    <div class="card-grid" style="margin-top:16px;">
+      <div class="field"><label for="${elId}-coutsFixesMensuels">Coûts fixes mensuels (€)</label><input type="number" id="${elId}-coutsFixesMensuels" min="0" value="${stored.coutsFixesMensuels}"></div>
+      <div class="field"><label for="${elId}-coutsVariablesPct">Coûts variables (% du CA)</label><input type="number" id="${elId}-coutsVariablesPct" min="0" max="100" value="${stored.coutsVariablesPct}"></div>
+      <div class="field"><label for="${elId}-effectif">Effectif</label><input type="number" id="${elId}-effectif" min="0" value="${stored.effectif}"></div>
+      <div class="field"><label for="${elId}-masseSalarialeMensuelle">Masse salariale mensuelle (€)</label><input type="number" id="${elId}-masseSalarialeMensuelle" min="0" value="${stored.masseSalarialeMensuelle}"></div>
+      <div class="field"><label for="${elId}-budgetMarketingMensuel">Budget marketing mensuel (€)</label><input type="number" id="${elId}-budgetMarketingMensuel" min="0" value="${stored.budgetMarketingMensuel}"></div>
+      <div class="field"><label for="${elId}-detteTotale">Dette totale (€)</label><input type="number" id="${elId}-detteTotale" min="0" value="${stored.detteTotale}"></div>
+      <div class="field"><label for="${elId}-tresorerieActuelle">Trésorerie actuelle (€)</label><input type="number" id="${elId}-tresorerieActuelle" min="0" value="${stored.tresorerieActuelle}"></div>
+    </div>
+    <div id="${elId}-results" style="margin-top:16px;"></div>
+    <div id="${elId}-method"></div>`;
+
+  function readProduits(){
+    return Array.from(document.querySelectorAll(`#${elId}-produitsRows > div`)).map(row => ({
+      nom: row.querySelector('.produit-nom').value || 'Produit',
+      prix: +row.querySelector('.produit-prix').value || 0,
+      volume: +row.querySelector('.produit-volume').value || 0
+    }));
+  }
+
+  function addProduitRow(nom, prix, volume){
+    const row = document.createElement('div');
+    row.className = 'field';
+    row.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:6px;';
+    row.innerHTML = `
+      <input type="text" class="produit-nom" placeholder="Nom du produit" value="${nom || ''}" style="background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:8px 10px;border-radius:2px;flex:2;min-width:120px;">
+      <input type="number" class="produit-prix" placeholder="Prix (€)" value="${typeof prix === 'number' ? prix : 10}" min="0" style="background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:8px 10px;border-radius:2px;flex:1;min-width:90px;">
+      <input type="number" class="produit-volume" placeholder="Volume/an" value="${typeof volume === 'number' ? volume : 100}" min="0" style="background:var(--bg);border:1px solid var(--hairline);color:var(--text);padding:8px 10px;border-radius:2px;flex:1;min-width:90px;">
+      <button type="button" class="btn btn-sm produit-remove" aria-label="Retirer ce produit">✕</button>`;
+    document.getElementById(`${elId}-produitsRows`).appendChild(row);
+    row.querySelectorAll('input').forEach(i => i.addEventListener('input', update));
+    row.querySelectorAll('.produit-remove').forEach(btn => btn.addEventListener('click', () => { row.remove(); update(); }));
+  }
+
+  function updateModeVisibility(mode){
+    REVENUE_MODES.forEach(m => {
+      const group = document.getElementById(`${elId}-mode-${m}`);
+      if(group) group.style.display = (m === mode) ? '' : 'none';
+    });
+  }
+
+  function update(){
+    const inputs = {
+      nom: document.getElementById(`${elId}-nom`).value,
+      revenueMode: document.getElementById(`${elId}-revenueMode`).value,
+      ca: +document.getElementById(`${elId}-ca`).value,
+      prixUnitaire: +document.getElementById(`${elId}-prixUnitaire`).value,
+      volumeAnnuel: +document.getElementById(`${elId}-volumeAnnuel`).value,
+      clients: +document.getElementById(`${elId}-clients`).value,
+      panierMoyenAnnuel: +document.getElementById(`${elId}-panierMoyenAnnuel`).value,
+      nombreAbonnes: +document.getElementById(`${elId}-nombreAbonnes`).value,
+      prixAbonnementMensuel: +document.getElementById(`${elId}-prixAbonnementMensuel`).value,
+      produits: readProduits(),
+      coutsFixesMensuels: +document.getElementById(`${elId}-coutsFixesMensuels`).value,
+      coutsVariablesPct: +document.getElementById(`${elId}-coutsVariablesPct`).value,
+      effectif: +document.getElementById(`${elId}-effectif`).value,
+      masseSalarialeMensuelle: +document.getElementById(`${elId}-masseSalarialeMensuelle`).value,
+      budgetMarketingMensuel: +document.getElementById(`${elId}-budgetMarketingMensuel`).value,
+      detteTotale: +document.getElementById(`${elId}-detteTotale`).value,
+      tresorerieActuelle: +document.getElementById(`${elId}-tresorerieActuelle`).value
+    };
+    const saved = saveBusinessProfile(inputs);
+    const snap = computeBusinessProfileSnapshot(saved);
+    document.getElementById(`${elId}-results`).innerHTML = `
+      <span class="smallcaps" style="display:block;margin-bottom:8px;">Compte de résultat simplifié (mensuel)</span>
+      <div class="result-row" style="justify-content:space-between;"><span>Chiffre d'affaires</span><span class="mono">${fmtEUR(snap.caMensuel)}</span></div>
+      <div class="result-row" style="justify-content:space-between;"><span>− Coûts variables</span><span class="mono">${fmtEUR(snap.coutsVariablesMensuels)}</span></div>
+      <div class="result-row" style="justify-content:space-between;border-top:1px solid var(--hairline);padding-top:6px;"><span><strong>= Marge sur coûts variables</strong></span><span class="mono"><strong>${fmtEUR(snap.margeSurCoutsVariables)}</strong></span></div>
+      <div class="result-row" style="justify-content:space-between;"><span>− Charges fixes, salaires, marketing</span><span class="mono">${fmtEUR(snap.chargesMensuellesTotales)}</span></div>
+      <div class="result-row" style="justify-content:space-between;border-top:1px solid var(--hairline);padding-top:6px;margin-top:4px;"><span><strong>= Résultat net approximatif</strong></span><span class="mono" style="color:${snap.resultatMensuelApproximatif>=0?'var(--emerald)':'var(--bordeaux)'};font-size:16px;"><strong>${snap.resultatMensuelApproximatif>=0?'+':''}${fmtEUR(snap.resultatMensuelApproximatif)}</strong></span></div>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Chiffre d'affaires : ${snap.caDetail} (${fmtEUR(snap.ca)}/an).${snap.caParClient !== null ? ` CA par client : ${fmtEUR(snap.caParClient)}/an.` : ''}</p>
+      <p class="disclaimer-box" style="margin-top:10px;">Marge sur coûts variables, pas une EBITDA : ne tranche pas quels postes sont "opérationnels". Un compte de résultat simplifié, pas une vraie comptabilité (amortissements, impôts, charges sociales non détaillées ici).</p>`;
+    document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['profil-entreprise']);
+  }
+
+  document.getElementById(`${elId}-revenueMode`).addEventListener('change', () => { updateModeVisibility(document.getElementById(`${elId}-revenueMode`).value); update(); });
+  ['nom','ca','prixUnitaire','volumeAnnuel','clients','panierMoyenAnnuel','nombreAbonnes','prixAbonnementMensuel','coutsFixesMensuels','coutsVariablesPct','effectif','masseSalarialeMensuelle','budgetMarketingMensuel','detteTotale','tresorerieActuelle'].forEach(key => {
+    document.getElementById(`${elId}-${key}`).addEventListener('input', update);
+  });
+  document.getElementById(`${elId}-produitAdd`).addEventListener('click', () => { addProduitRow(); update(); });
+  stored.produits.forEach(p => addProduitRow(p.nom, p.prix, p.volume));
+
+  updateModeVisibility(stored.revenueMode);
+  update();
 }
 
 // ---------- Paper Trading : argent fictif, exécuté à de vrais cours en direct
