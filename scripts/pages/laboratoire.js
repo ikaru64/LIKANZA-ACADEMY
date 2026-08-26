@@ -20,6 +20,7 @@ renderLevelTip('levelTip', 'personalFinance');
 // prévues mais pas encore construites — jamais un onglet vide affiché en
 // attendant, seules les catégories réellement fonctionnelles apparaissent. ----------
 const LAB_TABS = [
+  {id:'tab-dashboard', title:'Tableau de bord', desc:'Ta situation, vue d\'ensemble', icon:'list'},
   {id:'tab-investissement', title:'Investissement', desc:'Tester des stratégies', icon:'trending-up'},
   {id:'tab-logement', title:'Logement', desc:'Achat, location, prêt', icon:'house'},
   {id:'tab-dettes', title:'Dettes & crédits', desc:'Coût et stratégies', icon:'landmark'},
@@ -28,7 +29,7 @@ const LAB_TABS = [
   {id:'tab-planification', title:'Planification', desc:'Comparer des décisions', icon:'scale'},
   {id:'tab-economie', title:'Économie', desc:'Effets des chocs macro', icon:'telescope'}
 ];
-let labActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-investissement';
+let labActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-dashboard';
 function renderLabTabs(){
   const el = document.getElementById('labTabsGrid');
   if(!el) return;
@@ -260,12 +261,146 @@ const LAB_METHODOLOGY = {
     donnees: "Aucune donnée externe : coût, durée et rendement hypothétique sont saisis par toi.",
     hypotheses: "Le coût mensuel, la durée et le rendement annuel hypothétique si investi à la place.",
     limites: "Le rendement utilisé est une hypothèse, jamais garanti — voir le mode « Historique » du simulateur Intérêts composés pour des taux réellement mesurés dans le passé."
+  },
+  'dashboard': {
+    calcul: "Taux d'épargne = solde du mois ÷ revenus du mois. Taux d'endettement = mensualités de crédit ÷ revenus du mois (seuil de 33 % généralement retenu par les banques françaises). Fonds d'urgence = épargne cash disponible ÷ dépenses du mois, exprimé en mois couverts (repère usuel : 3 mois).",
+    donnees: "Aucune donnée externe : uniquement les mouvements que tu ajoutes ici, et les dettes/actifs/charges déjà saisis dans les autres onglets de ce Laboratoire — jamais une estimation à ta place.",
+    hypotheses: "Suppose que les revenus et dépenses saisis pour un mois donné sont complets — un mois partiellement renseigné donnera un taux d'épargne ou un diagnostic optiquement faux.",
+    limites: "Ne modélise ni la saisonnalité (certains mois ont structurellement plus de dépenses), ni les revenus ou dépenses exceptionnels non récurrents.",
+    comprendre: "Chaque seuil (10 % d'épargne, 33 % d'endettement, 3 mois de fonds d'urgence) est un repère usuel de gestion budgétaire personnelle, jamais une règle universelle ni un conseil personnalisé adapté à ta situation exacte."
   }
 };
 Object.keys(LAB_METHODOLOGY).forEach(key => {
   const el = document.getElementById('method-' + key);
   if(el) el.innerHTML = renderMethodologyPanel(LAB_METHODOLOGY[key]);
 });
+
+// ---------- Tableau de bord (Financial Lab, Phase 1) : recompose
+// computeFinancialDashboard (scripts/data.js) à partir des registres déjà
+// existants (dettes, objectifs, charges, actifs) + les mouvements
+// revenus/dépenses ajoutés ici — ne stocke jamais de synthèse séparée
+// (source de vérité unique, §71 du prompt Financial Lab). ----------
+(function initLabDashboard(){
+  const typeEl = document.getElementById('dashEntryType');
+  const categorieEl = document.getElementById('dashEntryCategorie');
+  const montantEl = document.getElementById('dashEntryMontant');
+  const moisEl = document.getElementById('dashEntryMois');
+  const viewMoisEl = document.getElementById('dashViewMois');
+  if(!typeEl || !viewMoisEl) return;
+
+  function populateCategories(){
+    const type = BUDGET_CATEGORIES[typeEl.value] ? typeEl.value : 'depense';
+    categorieEl.innerHTML = BUDGET_CATEGORIES[type].map(c => `<option value="${c}">${c}</option>`).join('');
+  }
+  typeEl.addEventListener('change', populateCategories);
+  populateCategories();
+
+  const nowKey = currentMonthKey();
+  moisEl.value = nowKey;
+  viewMoisEl.value = nowKey;
+
+  function updateSaveSimulation(s){
+    const reductionEl = document.getElementById('dashSaveReduction');
+    const reductionValEl = document.getElementById('dashSaveReductionVal');
+    function update(){
+      const pct = +reductionEl.value;
+      reductionValEl.textContent = pct;
+      const economie = s.depenses * (pct / 100);
+      const nouveauSolde = s.solde + economie;
+      document.getElementById('dashSaveResult').innerHTML = `
+        <p style="font-size:13px;">Économie réalisée : <strong class="mono">${fmtEUR(economie)}</strong> — nouveau solde : <strong class="mono" style="color:${nouveauSolde>=0?'var(--emerald)':'var(--bordeaux)'};">${nouveauSolde>=0?'+':''}${fmtEUR(nouveauSolde)}</strong></p>
+        <p class="disclaimer-box" style="margin-top:8px;">Simulation uniforme sur l'ensemble des dépenses — en réalité, certaines dépenses (loyer, crédit) sont difficilement compressibles à court terme, contrairement aux loisirs ou abonnements.</p>`;
+    }
+    reductionEl.oninput = update;
+    update();
+  }
+
+  function renderDashboard(){
+    const mois = viewMoisEl.value || nowKey;
+    const dash = computeFinancialDashboard(mois);
+    const s = dash.budgetSummary;
+
+    document.getElementById('dashSummary').innerHTML = `
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));">
+        <div class="card"><span class="smallcaps">Revenus</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(s.revenus)}</div></div>
+        <div class="card"><span class="smallcaps">Dépenses</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(s.depenses)}</div></div>
+        <div class="card"><span class="smallcaps">Solde</span><div class="result-big" style="font-size:19px;margin-top:6px;color:${s.solde>=0?'var(--emerald)':'var(--bordeaux)'};">${s.solde>=0?'+':''}${fmtEUR(s.solde)}</div></div>
+        <div class="card"><span class="smallcaps">Taux d'épargne</span><div class="result-big" style="font-size:19px;margin-top:6px;">${s.tauxEpargnePct===null?'—':s.tauxEpargnePct.toFixed(0)+' %'}</div></div>
+      </div>`;
+
+    if(s.repartition.length === 0){
+      document.getElementById('dashRepartition').innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucune dépense saisie pour ce mois.</p>`;
+    } else {
+      const maxMontant = s.repartition[0].montant;
+      document.getElementById('dashRepartition').innerHTML = `
+        <span class="smallcaps" style="display:block;margin-bottom:8px;">Où part mon argent</span>
+        ${s.repartition.map(r => `
+          <div style="margin-bottom:8px;">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;"><span>${r.categorie}</span><span class="mono">${fmtEUR(r.montant)} (${r.pct.toFixed(0)} %)</span></div>
+            <div style="background:var(--bg);border-radius:2px;height:6px;overflow:hidden;"><div style="background:var(--gold-bright);height:100%;width:${(r.montant/maxMontant*100).toFixed(1)}%;"></div></div>
+          </div>`).join('')}`;
+    }
+
+    const entries = getBudgetEntries().filter(e => e.mois === mois);
+    if(entries.length === 0){
+      document.getElementById('dashEntriesList').innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucun mouvement enregistré pour ce mois.</p>`;
+    } else {
+      document.getElementById('dashEntriesList').innerHTML = `
+        <span class="smallcaps" style="display:block;margin-bottom:8px;">Mouvements du mois</span>
+        <div style="display:flex;flex-direction:column;gap:6px;">
+        ${entries.map(e => `
+          <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--hairline);">
+            <span>${e.type==='revenu'?'💰':'💸'} ${e.categorie}</span>
+            <span style="display:flex;align-items:center;gap:10px;"><span class="mono" style="color:${e.type==='revenu'?'var(--emerald)':'var(--text)'};">${e.type==='revenu'?'+':'-'}${fmtEUR(e.montant)}</span><button type="button" class="btn btn-sm dash-entry-remove" data-id="${e.id}" aria-label="Supprimer">✕</button></span>
+          </div>`).join('')}
+        </div>`;
+      document.querySelectorAll('.dash-entry-remove').forEach(btn => {
+        btn.addEventListener('click', () => { removeBudgetEntry(btn.dataset.id); renderDashboard(); });
+      });
+    }
+
+    const nbDettes = dash.debts.length;
+    const nbObjectifs = dash.goals.length;
+    document.getElementById('dashOverview').innerHTML = `
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+        <div class="card"><span class="smallcaps">Patrimoine net</span><div class="result-big" style="font-size:18px;margin-top:6px;color:${dash.netWorth.patrimoineNet>=0?'var(--emerald)':'var(--bordeaux)'};">${fmtEUR(dash.netWorth.patrimoineNet)}</div></div>
+        <div class="card"><span class="smallcaps">Dettes (${nbDettes})</span><div class="result-big" style="font-size:18px;margin-top:6px;">${fmtEUR(dash.netWorth.totalPassifs)}</div></div>
+        <div class="card"><span class="smallcaps">Charges récurrentes</span><div class="result-big" style="font-size:18px;margin-top:6px;">${fmtEUR(dash.recurringChargesTotal.mensuel)}/mois</div></div>
+        <div class="card"><span class="smallcaps">Objectifs (${nbObjectifs})</span><div class="result-big" style="font-size:18px;margin-top:6px;">${nbObjectifs === 0 ? '—' : dash.goals.filter(g=>g.projection && g.projection.statut==='ontrack').length + ' 🟢'}</div></div>
+      </div>
+      ${(nbDettes===0 && nbObjectifs===0 && dash.netWorth.totalActifs===0) ? `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Ajoute tes dettes, objectifs et actifs dans les autres onglets pour enrichir cette vue d'ensemble.</p>` : ''}`;
+
+    if(dash.diagnostics.length === 0){
+      document.getElementById('dashDiagnostics').innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Ajoute au moins un revenu ce mois-ci pour activer le diagnostic automatique.</p>`;
+    } else {
+      const emoji = {ok:'🟢', attention:'🟠', alerte:'🔴'};
+      document.getElementById('dashDiagnostics').innerHTML = dash.diagnostics.map(d => `<p style="font-size:13px;margin-top:8px;">${emoji[d.niveau]} ${d.message}</p>`).join('');
+    }
+
+    const redCard = document.getElementById('dashRedCard');
+    if(s.solde < 0){
+      redCard.style.display = '';
+      const top3 = s.repartition.slice(0, 3);
+      document.getElementById('dashRedExplain').innerHTML = `
+        <p style="font-size:13px;color:var(--text-dim);">Tes 3 plus grosses dépenses ce mois-ci :</p>
+        ${top3.map(r => `<p style="font-size:13px;margin-top:4px;"><strong>${r.categorie}</strong> — ${fmtEUR(r.montant)} (${r.pct.toFixed(0)} % de tes dépenses)</p>`).join('')}`;
+      updateSaveSimulation(s);
+    } else {
+      redCard.style.display = 'none';
+    }
+
+    document.getElementById('method-dashboard').innerHTML = renderMethodologyPanel(LAB_METHODOLOGY['dashboard']);
+    renderNextStepCard('nextstep-dashboard', {domainKey: 'personalFinance'});
+  }
+
+  document.getElementById('dashEntryAdd').addEventListener('click', () => {
+    const entry = saveBudgetEntry({type: typeEl.value, categorie: categorieEl.value, montant: +montantEl.value, mois: moisEl.value});
+    if(entry){ viewMoisEl.value = entry.mois; renderDashboard(); }
+  });
+  viewMoisEl.addEventListener('change', renderDashboard);
+
+  renderDashboard();
+})();
 
 const LAB_SUPPORT_LABELS = {
   URTH: 'Actions monde (MSCI World, ETF URTH)', '^GSPC': 'Actions US (S&P 500)', '^FCHI': 'Actions France (CAC 40)',

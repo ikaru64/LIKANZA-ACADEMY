@@ -5896,7 +5896,7 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
   'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
   'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
-  'fzr-net-worth-assets', 'fzr-business-profile'
+  'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
@@ -6726,6 +6726,143 @@ function computeNetWorth(assets, debts){
   NET_WORTH_ASSET_CATEGORIES.forEach(c => { parCategorie[c] = 0; });
   (assets || []).forEach(a => { if(parCategorie[a.categorie] !== undefined) parCategorie[a.categorie] += a.valeur; });
   return {totalActifs, totalPassifs, patrimoineNet: totalActifs - totalPassifs, parCategorie};
+}
+
+// ============================================================
+// ---------- BUDGET MENSUEL CATÉGORISÉ (Financial Lab, Phase 1 — Dashboard &
+// diagnostic) : liste de mouvements réels (revenu ou dépense), chacun
+// rattaché à un mois ('YYYY-MM') et une catégorie FIXE (pas de texte libre)
+// pour que "Où part mon argent" agrège de vrais totaux comparables d'un mois
+// à l'autre, jamais une liste de libellés disparates impossibles à regrouper.
+// ============================================================
+const BUDGET_ENTRY_KEY = 'fzr-budget-entries';
+const BUDGET_CATEGORIES = {
+  revenu: ['Salaire', 'Freelance / Business', 'Autre revenu'],
+  depense: ['Logement', 'Alimentation', 'Transport', 'Loisirs & sorties', 'Santé', 'Abonnements', 'Autre']
+};
+function getBudgetEntries(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(BUDGET_ENTRY_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function saveBudgetEntry(entry){
+  if(!entry || (entry.type !== 'revenu' && entry.type !== 'depense')) return null;
+  if(!BUDGET_CATEGORIES[entry.type].includes(entry.categorie)) return null;
+  if(!(entry.montant > 0)) return null;
+  if(typeof entry.mois !== 'string' || !/^\d{4}-\d{2}$/.test(entry.mois)) return null;
+  const list = getBudgetEntries();
+  const item = {
+    id: 'budget-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    type: entry.type, categorie: entry.categorie, montant: entry.montant, mois: entry.mois,
+    dateAjout: new Date().toISOString()
+  };
+  list.push(item);
+  localStorage.setItem(BUDGET_ENTRY_KEY, JSON.stringify(list));
+  return item;
+}
+function removeBudgetEntry(id){
+  const list = getBudgetEntries().filter(e => e.id !== id);
+  localStorage.setItem(BUDGET_ENTRY_KEY, JSON.stringify(list));
+}
+function currentMonthKey(){
+  const d = new Date();
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+function previousMonthKey(mois){
+  const [y, m] = mois.split('-').map(Number);
+  const d = new Date(y, m - 2, 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+}
+// Synthèse d'un mois précis — jamais une moyenne ou une estimation : sans
+// entrée saisie pour ce mois, revenus/dépenses valent 0, jamais un chiffre
+// d'un autre mois recopié silencieusement.
+function computeBudgetSummary(entries, mois){
+  const monthEntries = (entries || []).filter(e => e.mois === mois);
+  const revenus = monthEntries.filter(e => e.type === 'revenu').reduce((s, e) => s + e.montant, 0);
+  const depenses = monthEntries.filter(e => e.type === 'depense').reduce((s, e) => s + e.montant, 0);
+  const solde = revenus - depenses;
+  const tauxEpargnePct = revenus > 0 ? (solde / revenus) * 100 : null;
+  const parCategorie = {};
+  monthEntries.filter(e => e.type === 'depense').forEach(e => { parCategorie[e.categorie] = (parCategorie[e.categorie] || 0) + e.montant; });
+  const repartition = Object.keys(parCategorie)
+    .map(c => ({categorie: c, montant: parCategorie[c], pct: depenses > 0 ? (parCategorie[c] / depenses) * 100 : 0}))
+    .sort((a, b) => b.montant - a.montant);
+  return {mois, revenus, depenses, solde, tauxEpargnePct, repartition};
+}
+// Détecteur automatique — chaque règle ne s'active QUE si les données
+// nécessaires existent réellement (jamais un statut fabriqué faute de
+// donnée), et chaque message cite le chiffre réel calculé, jamais un
+// jugement seul ("tu dépenses trop") sans le nombre qui le justifie. Seuils
+// (33 % taux d'endettement, 3 mois de fonds d'urgence, 10 % taux d'épargne)
+// documentés ici et dans le panneau méthodologie comme des repères usuels de
+// gestion budgétaire, jamais présentés comme une règle universelle ou un
+// conseil personnalisé.
+function computeFinancialDiagnostics(ctx){
+  const diagnostics = [];
+  const budgetSummary = ctx && ctx.budgetSummary;
+  const debts = (ctx && ctx.debts) || [];
+  const recurringChargesTotal = ctx && ctx.recurringChargesTotal;
+  const assets = (ctx && ctx.assets) || [];
+
+  if(budgetSummary && budgetSummary.revenus > 0){
+    if(budgetSummary.solde < 0){
+      diagnostics.push({id:'solde-negatif', niveau:'alerte', message:`Tu as dépensé ${fmtEUR(-budgetSummary.solde)} de plus que tu n'as gagné ce mois-ci.`});
+    } else if(budgetSummary.tauxEpargnePct < 10){
+      diagnostics.push({id:'epargne-faible', niveau:'attention', message:`Ton taux d'épargne ce mois-ci est de ${budgetSummary.tauxEpargnePct.toFixed(0)} % — sous le repère usuel de 10 % souvent cité en gestion budgétaire.`});
+    } else {
+      diagnostics.push({id:'epargne-ok', niveau:'ok', message:`Ton taux d'épargne ce mois-ci est de ${budgetSummary.tauxEpargnePct.toFixed(0)} %.`});
+    }
+  }
+
+  if(budgetSummary && budgetSummary.revenus > 0 && debts.length > 0){
+    const mensualites = debts.reduce((s, d) => s + (typeof d.minPayment === 'number' ? d.minPayment : 0), 0);
+    const tauxEndettementPct = (mensualites / budgetSummary.revenus) * 100;
+    if(tauxEndettementPct > 33){
+      diagnostics.push({id:'endettement-eleve', niveau:'alerte', message:`Tes mensualités de crédit représentent ${tauxEndettementPct.toFixed(0)} % de tes revenus — au-dessus du seuil de 33 % généralement retenu par les banques françaises pour le taux d'endettement.`});
+    } else if(tauxEndettementPct > 25){
+      diagnostics.push({id:'endettement-moyen', niveau:'attention', message:`Tes mensualités de crédit représentent ${tauxEndettementPct.toFixed(0)} % de tes revenus.`});
+    } else {
+      diagnostics.push({id:'endettement-ok', niveau:'ok', message:`Tes mensualités de crédit représentent ${tauxEndettementPct.toFixed(0)} % de tes revenus.`});
+    }
+  }
+
+  if(budgetSummary && budgetSummary.revenus > 0 && recurringChargesTotal && recurringChargesTotal.mensuel > 0){
+    const pct = (recurringChargesTotal.mensuel / budgetSummary.revenus) * 100;
+    if(pct > 15){
+      diagnostics.push({id:'charges-elevees', niveau:'attention', message:`Tes abonnements et factures récurrents représentent ${pct.toFixed(0)} % de tes revenus (${fmtEUR(recurringChargesTotal.mensuel)}/mois).`});
+    }
+  }
+
+  if(budgetSummary && budgetSummary.depenses > 0 && assets.length > 0){
+    const cash = assets.filter(a => a.categorie === 'cash').reduce((s, a) => s + a.valeur, 0);
+    const moisCouverts = cash / budgetSummary.depenses;
+    if(moisCouverts < 1){
+      diagnostics.push({id:'urgence-faible', niveau:'alerte', message:`Ton épargne disponible (${fmtEUR(cash)}) couvre moins d'1 mois de dépenses au rythme actuel.`});
+    } else if(moisCouverts < 3){
+      diagnostics.push({id:'urgence-moyenne', niveau:'attention', message:`Ton épargne disponible couvre environ ${moisCouverts.toFixed(1)} mois de dépenses — sous le repère usuel de 3 mois pour un fonds d'urgence.`});
+    } else {
+      diagnostics.push({id:'urgence-ok', niveau:'ok', message:`Ton épargne disponible couvre environ ${moisCouverts.toFixed(1)} mois de dépenses.`});
+    }
+  }
+
+  return diagnostics;
+}
+// Dashboard central — ne stocke jamais rien lui-même, recompose uniquement à
+// partir des registres existants (source de vérité unique, §71 du prompt
+// Financial Lab) : fzr-budget-entries, fzr-personal-debts,
+// fzr-financial-goals, fzr-recurring-charges, fzr-net-worth-assets.
+function computeFinancialDashboard(mois){
+  const entries = getBudgetEntries();
+  const budgetSummary = computeBudgetSummary(entries, mois);
+  const budgetSummaryPrecedent = computeBudgetSummary(entries, previousMonthKey(mois));
+  const debts = getPersonalDebts();
+  const goals = getFinancialGoals().map(g => ({...g, projection: computeGoalProjection(g)}));
+  const recurringChargesTotal = computeRecurringChargesTotal(getRecurringCharges());
+  const assets = getNetWorthAssets();
+  const netWorth = computeNetWorth(assets, debts);
+  const diagnostics = computeFinancialDiagnostics({budgetSummary, debts, recurringChargesTotal, assets});
+  return {mois, budgetSummary, budgetSummaryPrecedent, debts, goals, recurringChargesTotal, netWorth, diagnostics};
 }
 
 // ============================================================

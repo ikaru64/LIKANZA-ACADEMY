@@ -88,6 +88,62 @@
 
   <div class="quick-access-grid" id="labTabsGrid"></div>
 
+  <div class="home-tab-panel" id="tab-dashboard">
+  <div class="section-head"><h2>🧭 Tableau de bord</h2><span class="meta-line">ta situation financière, recomposée à partir de ce que tu as saisi</span></div>
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+      <h3>Ajouter un mouvement</h3>
+      <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span>
+    </div>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Un revenu ou une dépense réelle, rattaché à un mois précis — le tableau de bord ne recalcule qu'à partir de ce que tu ajoutes ici, jamais une estimation à ta place.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:120px;"><label for="dashEntryType">Type</label><select id="dashEntryType"><option value="depense">Dépense</option><option value="revenu">Revenu</option></select></div>
+      <div class="field" style="flex:1;min-width:160px;"><label for="dashEntryCategorie">Catégorie</label><select id="dashEntryCategorie"></select></div>
+      <div class="field" style="flex:1;min-width:110px;"><label for="dashEntryMontant">Montant (€)</label><input type="number" id="dashEntryMontant" min="0" step="0.01" value="50"></div>
+      <div class="field" style="flex:1;min-width:130px;"><label for="dashEntryMois">Mois</label><input type="month" id="dashEntryMois"></div>
+    </div>
+    <button class="btn btn-sm btn-gold" id="dashEntryAdd" style="margin-top:10px;">+ Ajouter</button>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+      <h3>Vue du mois</h3>
+      <div class="field" style="margin:0;"><input type="month" id="dashViewMois"></div>
+    </div>
+    <div id="dashSummary"></div>
+    <div id="dashRepartition" style="margin-top:16px;"></div>
+    <div id="dashEntriesList" style="margin-top:16px;"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <h3>Vue d'ensemble</h3>
+    <div id="dashOverview" style="margin-top:10px;"></div>
+  </div>
+
+  <div class="card" style="margin-bottom:16px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
+      <h3>Diagnostic automatique</h3>
+      <span class="data-badge data-badge-calcul" style="margin-left:6px;">🧮 Calcul</span>
+    </div>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:10px;">Jamais un jugement : chaque ligne cite le chiffre réel qui la justifie, calculé uniquement à partir de ce que tu as saisi.</p>
+    <div id="dashDiagnostics"></div>
+  </div>
+
+  <div class="card" id="dashRedCard" style="display:none;margin-bottom:16px;">
+    <h3>🔴 Pourquoi suis-je dans le rouge ce mois-ci ?</h3>
+    <div id="dashRedExplain" style="margin-top:10px;"></div>
+    <span class="smallcaps" style="display:block;margin-top:16px;">Sauver mon budget</span>
+    <div class="field" style="max-width:340px;margin-top:8px;">
+      <label for="dashSaveReduction">Réduire toutes les dépenses variables de <span id="dashSaveReductionVal">10</span> %</label>
+      <input type="range" id="dashSaveReduction" min="0" max="50" step="5" value="10">
+    </div>
+    <div id="dashSaveResult" style="margin-top:10px;"></div>
+  </div>
+
+  <div id="method-dashboard"></div>
+  <div id="nextstep-dashboard" style="margin-top:10px;"></div>
+  </div>
+
   <div class="home-tab-panel" id="tab-investissement">
   <div class="section-head"><h2>📈 Investissement</h2><span class="meta-line">performances réelles des marchés, pas un rendement moyen lissé</span></div>
   <button type="button" class="btn btn-sm" id="tab-investissement-back" style="display:none;margin-bottom:14px;">← Retour aux outils</button>
