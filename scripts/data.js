@@ -4045,6 +4045,24 @@ function renderBusinessLab(elId){
       <h3 style="margin:10px 0 6px;">Simulateur RH / Recrutement</h3>
       <p>Coût réel d'une embauche et durée pour la rentabiliser.</p>
       <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-expenses" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.wallet}</span>
+      <h3 style="margin:10px 0 6px;">Dépenses & trésorerie</h3>
+      <p>OPEX, CAPEX, et projection de trésorerie sur plusieurs mois.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-pricing" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.coins}</span>
+      <h3 style="margin:10px 0 6px;">Pricing interactif</h3>
+      <p>Teste un nouveau prix : impact sur la marge et le volume nécessaire.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
+    </button>
+    <button type="button" class="card play-tile" id="${elId}-funnel" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon" style="color:var(--gold-bright);">${ICONS.compass}</span>
+      <h3 style="margin:10px 0 6px;">Sales funnel interactif</h3>
+      <p>Visiteurs → leads → prospects → clients, et le CAC implicite.</p>
+      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
     </button>`;
   document.getElementById(`${elId}-decisions`).addEventListener('click', () => {
     if(!sessionEl) return;
@@ -4066,6 +4084,24 @@ function renderBusinessLab(elId){
     if(!sessionEl) return;
     sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-headcount"></div></div>`;
     renderHeadcountSimulator(`${elId}-session-headcount`);
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  document.getElementById(`${elId}-expenses`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-expenses"></div></div>`;
+    renderBusinessExpenses(`${elId}-session-expenses`);
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  document.getElementById(`${elId}-pricing`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-pricing"></div></div>`;
+    renderPricingSimulator(`${elId}-session-pricing`);
+    sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+  });
+  document.getElementById(`${elId}-funnel`).addEventListener('click', () => {
+    if(!sessionEl) return;
+    sessionEl.innerHTML = `<div class="card" style="max-width:none;"><div id="${elId}-session-funnel"></div></div>`;
+    renderSalesFunnel(`${elId}-session-funnel`);
     sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
   });
 }
@@ -4134,6 +4170,24 @@ const BUSINESS_METHODOLOGY = {
     hypotheses: "Suppose que la marge générée par le poste est constante dès le premier mois — en réalité, une nouvelle recrue met généralement du temps à devenir pleinement opérationnelle (montée en compétence).",
     limites: "Ne modélise ni la formation, ni la période d'essai, ni le risque de turnover — un vrai coût de recrutement inclut souvent bien plus que les frais d'annonce ou d'agence (temps de l'équipe consacré au recrutement, par exemple).",
     comprendre: "Si la marge nette mensuelle est négative, l'embauche ne se rentabilise jamais au rythme actuel — augmenter la marge générée (prix, volume) ou réduire le coût (négociation salariale, aide à l'embauche) sont les deux seuls leviers."
+  },
+  'expenses-cashflow': {
+    calcul: "OPEX mensuel = somme des dépenses récurrentes saisies. Solde mensuel projeté = résultat du profil entreprise − OPEX. Trésorerie projetée au mois n = trésorerie actuelle − CAPEX total + (n × solde mensuel).",
+    donnees: "Le résultat mensuel et la trésorerie de départ viennent de \"Mon profil entreprise\" ; l'OPEX et le CAPEX viennent des dépenses que tu ajoutes ici.",
+    hypotheses: "Le CAPEX est supposé payé comptant intégralement dès aujourd'hui — jamais un étalement fabriqué faute de date de paiement précisée. Le solde mensuel est supposé constant sur tout l'horizon.",
+    limites: "Ne modélise ni la saisonnalité, ni un financement du CAPEX par emprunt (qui étalerait le décaissement dans le temps plutôt qu'un paiement comptant immédiat)."
+  },
+  'pricing': {
+    calcul: "Marge par vente = prix − coût direct. Marge totale à volume constant = marge par vente × volume actuel. Volume nécessaire pour la même marge totale = marge totale actuelle ÷ nouvelle marge par vente.",
+    donnees: "Aucune donnée externe : uniquement les hypothèses que tu saisis toi-même.",
+    hypotheses: "Suppose que le volume de ventes reste constant quel que soit le prix testé — aucune élasticité prix/volume n'est modélisée, faute de pouvoir la mesurer sans donnée réelle.",
+    limites: "Un vrai changement de prix affecte presque toujours le volume vendu (à la hausse si le prix baisse, à la baisse s'il augmente) — ce calcul montre l'impact mécanique à volume constant, jamais une prédiction de la réaction réelle du marché."
+  },
+  'sales-funnel': {
+    calcul: "Leads = visiteurs × taux de conversion visiteur→lead. Prospects = leads × taux lead→prospect. Clients = prospects × taux prospect→client. CAC implicite = budget marketing ÷ clients.",
+    donnees: "Aucune donnée externe : uniquement les taux de conversion que tu saisis toi-même à chaque étage.",
+    hypotheses: "Suppose des taux de conversion constants à chaque étage, indépendamment du volume de visiteurs.",
+    limites: "En réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser les taux de conversion réels à chaque étage — ce calcul ne modélise pas cet effet."
   },
   'business-game': {
     calcul: "Chaque décision prise pendant la partie modifie plusieurs variables (trésorerie, clients, MRR, satisfaction...) selon des règles définies à l'avance pour le secteur choisi (voir scripts/games/business-game-data.js) ; le résultat final est l'état cumulé de ces variables après toutes les décisions.",
@@ -4282,6 +4336,273 @@ function renderHeadcountSimulator(elId){
   });
   update();
   tryAwardQuizPoints(`headcount-sim-${new Date().toDateString()}`, 5, {usedHeadcountSim:true});
+}
+
+// ---------- Dépenses OPEX/CAPEX & projection de trésorerie (Financial Lab,
+// Phase 5) : liste persistante (même patron fzr-real-portfolio que partout
+// ailleurs) — OPEX = charges d'exploitation récurrentes mensuelles, CAPEX =
+// investissement ponctuel (non récurrent, jamais mensualisé automatiquement).
+// La projection s'ajoute explicitement au résultat déjà calculé dans le
+// profil entreprise, sans jamais tenter de fusionner les deux registres
+// (risque de double comptage disclosed plutôt que masqué par une fausse
+// fusion automatique). ----------
+const BUSINESS_EXPENSES_KEY = 'fzr-business-expenses';
+function getBusinessExpenses(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(BUSINESS_EXPENSES_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function saveBusinessExpense(expense){
+  if(!expense || typeof expense.nom !== 'string' || !expense.nom.trim() || !(expense.montant > 0) || (expense.categorie !== 'opex' && expense.categorie !== 'capex')) return null;
+  const list = getBusinessExpenses();
+  const entry = {
+    id: 'expense-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    nom: expense.nom.trim().slice(0, 60), montant: expense.montant, categorie: expense.categorie,
+    dateAjout: new Date().toISOString()
+  };
+  list.push(entry);
+  localStorage.setItem(BUSINESS_EXPENSES_KEY, JSON.stringify(list));
+  return entry;
+}
+function removeBusinessExpense(id){
+  const list = getBusinessExpenses().filter(e => e.id !== id);
+  localStorage.setItem(BUSINESS_EXPENSES_KEY, JSON.stringify(list));
+}
+function computeBusinessExpensesTotal(expenses){
+  return (expenses || []).reduce((acc, e) => {
+    if(e.categorie === 'opex') acc.opexMensuel += e.montant; else acc.capexTotal += e.montant;
+    return acc;
+  }, {opexMensuel: 0, capexTotal: 0});
+}
+// Projection simplifiée : le CAPEX est soustrait intégralement dès le mois 0
+// (hypothèse d'un paiement comptant immédiat, jamais un étalement fabriqué
+// faute de date de paiement réellement précisée par l'utilisateur).
+function computeBusinessCashflowProjection(snapshot, opexMensuel, capexTotal, horizonMois, tresorerieActuelle){
+  const soldeMensuel = snapshot.resultatMensuelApproximatif - (opexMensuel || 0);
+  const series = [];
+  let cash = (tresorerieActuelle || 0) - (capexTotal || 0);
+  for(let m = 0; m <= horizonMois; m++){ series.push(cash); cash += soldeMensuel; }
+  return {series, soldeMensuel, finalCash: series[series.length - 1]};
+}
+function renderBusinessExpenses(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} OPEX = charge d'exploitation récurrente mensuelle. CAPEX = investissement ponctuel (matériel, équipement). Ces dépenses s'ajoutent au résultat déjà calculé dans "Mon profil entreprise" — vérifie que tu ne les comptes pas deux fois dans "coûts fixes mensuels" là-bas.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="field" style="flex:2;min-width:140px;"><label for="${elId}-nom">Nom</label><input type="text" id="${elId}-nom" placeholder="Loyer bureau"></div>
+      <div class="field" style="flex:1;min-width:110px;"><label for="${elId}-montant">Montant (€)</label><input type="number" id="${elId}-montant" min="0" value="200"></div>
+      <div class="field" style="flex:1;min-width:130px;"><label for="${elId}-categorie">Catégorie</label><select id="${elId}-categorie"><option value="opex">OPEX (mensuel)</option><option value="capex">CAPEX (ponctuel)</option></select></div>
+    </div>
+    <button type="button" class="btn btn-sm btn-gold" id="${elId}-add" style="margin-top:10px;">+ Ajouter</button>
+    <div id="${elId}-list" style="margin-top:14px;"></div>
+    <div class="card" style="margin-top:16px;">
+      <span class="smallcaps">Projection de trésorerie</span>
+      <div class="slider-row field" style="max-width:280px;margin-top:8px;"><label for="${elId}-horizon">Horizon <span class="v mono" id="${elId}-horizonVal">12 mois</span></label><input type="range" id="${elId}-horizon" min="3" max="24" step="1" value="12"></div>
+      <div id="${elId}-cashflow" style="margin-top:10px;"></div>
+    </div>
+    <div id="${elId}-method"></div>`;
+
+  function renderList(){
+    const expenses = getBusinessExpenses();
+    const totals = computeBusinessExpensesTotal(expenses);
+    if(expenses.length === 0){
+      document.getElementById(`${elId}-list`).innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucune dépense enregistrée pour l'instant.</p>`;
+    } else {
+      document.getElementById(`${elId}-list`).innerHTML = `
+        <p style="font-size:13px;margin-bottom:10px;"><strong>OPEX : ${fmtEUR(totals.opexMensuel)}/mois</strong> — <strong>CAPEX : ${fmtEUR(totals.capexTotal)} au total</strong></p>
+        ${expenses.map(e => `
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--hairline);">
+          <span>${e.categorie === 'opex' ? '🔁' : '🏗️'} ${e.nom}</span>
+          <span style="display:flex;align-items:center;gap:10px;"><span class="mono">${fmtEUR(e.montant)}${e.categorie === 'opex' ? '/mois' : ''}</span><button type="button" class="btn btn-sm expense-remove" data-id="${e.id}" aria-label="Supprimer">✕</button></span>
+        </div>`).join('')}`;
+      document.querySelectorAll(`#${elId}-list .expense-remove`).forEach(btn => {
+        btn.addEventListener('click', () => { removeBusinessExpense(btn.dataset.id); renderList(); updateCashflow(); });
+      });
+    }
+    return totals;
+  }
+
+  function updateCashflow(){
+    const horizon = +document.getElementById(`${elId}-horizon`).value;
+    document.getElementById(`${elId}-horizonVal`).textContent = horizon + ' mois';
+    const totals = computeBusinessExpensesTotal(getBusinessExpenses());
+    const profile = getBusinessProfile();
+    const snapshot = computeBusinessProfileSnapshot(profile);
+    if(snapshot.ca === 0){
+      document.getElementById(`${elId}-cashflow`).innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Renseigne d'abord "Mon profil entreprise" (chiffre d'affaires) pour activer la projection.</p>`;
+      return;
+    }
+    const proj = computeBusinessCashflowProjection(snapshot, totals.opexMensuel, totals.capexTotal, horizon, profile.tresorerieActuelle);
+    const chart = renderMultiLineChart([{data: proj.series, color: proj.soldeMensuel >= 0 ? 'var(--emerald)' : 'var(--bordeaux)', width: 2.5}]);
+    document.getElementById(`${elId}-cashflow`).innerHTML = `
+      <div class="pattern-chart">${chart}</div>
+      <p style="font-size:13px;margin-top:10px;">Au rythme actuel (résultat du profil ${fmtEUR(snapshot.resultatMensuelApproximatif)}/mois − OPEX ${fmtEUR(totals.opexMensuel)}/mois = ${proj.soldeMensuel>=0?'+':''}${fmtEUR(proj.soldeMensuel)}/mois), ta trésorerie passerait de ${fmtEUR(profile.tresorerieActuelle - totals.capexTotal)} (après CAPEX) à <strong style="color:${proj.finalCash>=0?'var(--emerald)':'var(--bordeaux)'};">${fmtEUR(proj.finalCash)}</strong> dans ${horizon} mois.</p>
+      <p class="disclaimer-box" style="margin-top:10px;">Hypothèse forte : ce rythme se maintient à l'identique, et le CAPEX est payé comptant intégralement dès aujourd'hui — jamais un étalement fabriqué faute de date de paiement précisée.</p>`;
+  }
+
+  document.getElementById(`${elId}-add`).addEventListener('click', () => {
+    const entry = saveBusinessExpense({
+      nom: document.getElementById(`${elId}-nom`).value,
+      montant: +document.getElementById(`${elId}-montant`).value,
+      categorie: document.getElementById(`${elId}-categorie`).value
+    });
+    if(entry){ renderList(); updateCashflow(); }
+  });
+  document.getElementById(`${elId}-horizon`).addEventListener('input', updateCashflow);
+
+  renderList();
+  updateCashflow();
+  document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['expenses-cashflow']);
+}
+
+// ---------- Pricing interactif (Financial Lab, Phase 5) : curseur de prix
+// testé, jamais une élasticité prix/volume inventée — seulement 2 vérités
+// mécaniques : l'impact sur la marge à volume constant, et le volume qu'il
+// faudrait vendre au nouveau prix pour générer la MÊME marge totale
+// qu'aujourd'hui. ----------
+function computePricingImpact(a){
+  const prixActuel = Number(a.prixActuel) || 0;
+  const coutDirect = Number(a.coutDirect) || 0;
+  const volumeActuel = Number(a.volumeActuel) || 0;
+  const nouveauPrix = Number(a.nouveauPrix) || 0;
+
+  const margeActuelle = prixActuel - coutDirect;
+  const margeNouvelle = nouveauPrix - coutDirect;
+  const margeTotaleActuelle = margeActuelle * volumeActuel;
+  const caActuel = prixActuel * volumeActuel;
+  const caNouveauVolumeConstant = nouveauPrix * volumeActuel;
+  const margeTotaleNouvelleVolumeConstant = margeNouvelle * volumeActuel;
+  const volumeNecessairePourMemeMarge = margeNouvelle > 0 ? margeTotaleActuelle / margeNouvelle : null;
+
+  return {
+    prixActuel, coutDirect, volumeActuel, nouveauPrix,
+    margeActuelle, margeNouvelle, margeTotaleActuelle, caActuel, caNouveauVolumeConstant,
+    margeTotaleNouvelleVolumeConstant, volumeNecessairePourMemeMarge
+  };
+}
+function renderPricingSimulator(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const stored = safeGetJSON('fzr-pricing-sim', {prixActuel:50, coutDirect:20, volumeActuel:100});
+
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Jamais une élasticité prix/volume inventée : seulement ce que le calcul mécanique montre à volume constant, et ce qu'il faudrait vendre en plus pour compenser.</p>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;">
+      <div class="field" style="flex:1;min-width:140px;"><label for="${elId}-prixActuel">Prix de vente actuel (€)</label><input type="number" id="${elId}-prixActuel" min="0" value="${stored.prixActuel}"></div>
+      <div class="field" style="flex:1;min-width:140px;"><label for="${elId}-coutDirect">Coût direct par vente (€)</label><input type="number" id="${elId}-coutDirect" min="0" value="${stored.coutDirect}"></div>
+      <div class="field" style="flex:1;min-width:140px;"><label for="${elId}-volumeActuel">Volume de ventes actuel /mois</label><input type="number" id="${elId}-volumeActuel" min="0" value="${stored.volumeActuel}"></div>
+    </div>
+    <div class="slider-row field" style="max-width:340px;margin-top:10px;"><label for="${elId}-nouveauPrix">Prix testé <span class="v mono" id="${elId}-nouveauPrixVal"></span></label><input type="range" id="${elId}-nouveauPrix" min="1" step="1"></div>
+    <div id="${elId}-results" style="margin-top:14px;"></div>
+    <div id="${elId}-method"></div>`;
+
+  const sliderEl = document.getElementById(`${elId}-nouveauPrix`);
+  function syncSliderRange(){
+    const prixActuel = +document.getElementById(`${elId}-prixActuel`).value || 1;
+    sliderEl.min = Math.max(1, Math.round(prixActuel * 0.5));
+    sliderEl.max = Math.round(prixActuel * 1.5);
+    if(!sliderEl.dataset.touched) sliderEl.value = prixActuel;
+  }
+  function update(){
+    syncSliderRange();
+    const a = {
+      prixActuel: document.getElementById(`${elId}-prixActuel`).value,
+      coutDirect: document.getElementById(`${elId}-coutDirect`).value,
+      volumeActuel: document.getElementById(`${elId}-volumeActuel`).value,
+      nouveauPrix: sliderEl.value
+    };
+    safeSetJSON('fzr-pricing-sim', {prixActuel: a.prixActuel, coutDirect: a.coutDirect, volumeActuel: a.volumeActuel});
+    document.getElementById(`${elId}-nouveauPrixVal`).textContent = fmtEUR(+a.nouveauPrix);
+    const r = computePricingImpact(a);
+    const deltaMarge = r.margeTotaleNouvelleVolumeConstant - r.margeTotaleActuelle;
+    document.getElementById(`${elId}-results`).innerHTML = `
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+        <div class="card"><span class="smallcaps">Marge par vente (actuelle → testée)</span><div class="result-big" style="font-size:17px;margin-top:6px;">${fmtEUR(r.margeActuelle)} → ${fmtEUR(r.margeNouvelle)}</div></div>
+        <div class="card"><span class="smallcaps">Marge totale à volume constant</span><div class="result-big" style="font-size:17px;margin-top:6px;color:${deltaMarge>=0?'var(--emerald)':'var(--bordeaux)'};">${deltaMarge>=0?'+':''}${fmtEUR(deltaMarge)}</div></div>
+        <div class="card"><span class="smallcaps">Volume nécessaire pour la même marge totale</span><div class="result-big" style="font-size:17px;margin-top:6px;">${r.volumeNecessairePourMemeMarge===null?'Jamais (marge nulle ou négative)':Math.ceil(r.volumeNecessairePourMemeMarge)+'/mois'}</div></div>
+      </div>
+      <p class="disclaimer-box" style="margin-top:12px;">Ce calcul ne modélise jamais comment le volume réagirait réellement à un changement de prix (élasticité) — seulement l'arithmétique mécanique à volume supposé constant, ou le volume qu'il faudrait atteindre pour compenser.</p>`;
+    document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['pricing']);
+  }
+  ['prixActuel','coutDirect','volumeActuel'].forEach(key => {
+    document.getElementById(`${elId}-${key}`).addEventListener('input', update);
+  });
+  sliderEl.addEventListener('input', () => { sliderEl.dataset.touched = '1'; update(); });
+  update();
+}
+
+// ---------- Sales funnel interactif (Financial Lab, Phase 5) : conversion
+// étage par étage, jamais un taux de conversion moyen "du marché" inventé —
+// uniquement les taux que l'utilisateur saisit lui-même. ----------
+function computeSalesFunnel(a){
+  const visiteurs = Number(a.visiteurs) || 0;
+  const tauxLead = Number(a.tauxLead) || 0;
+  const tauxProspect = Number(a.tauxProspect) || 0;
+  const tauxClient = Number(a.tauxClient) || 0;
+  const budgetMarketing = Number(a.budgetMarketing) || 0;
+
+  const leads = visiteurs * (tauxLead / 100);
+  const prospects = leads * (tauxProspect / 100);
+  const clients = prospects * (tauxClient / 100);
+  const tauxConversionGlobal = visiteurs > 0 ? (clients / visiteurs) * 100 : null;
+  const cac = (budgetMarketing > 0 && clients > 0) ? budgetMarketing / clients : null;
+
+  return {visiteurs, leads, prospects, clients, tauxConversionGlobal, cac};
+}
+function renderSalesFunnel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const stored = safeGetJSON('fzr-sales-funnel', {visiteurs:5000, tauxLead:10, tauxProspect:30, tauxClient:20, budgetMarketing:2000});
+
+  el.innerHTML = `
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Jamais un taux de conversion "moyen du marché" — uniquement tes propres taux, étage par étage.</p>
+    <div class="card-grid" style="margin-bottom:16px;">
+      <div class="field"><label for="${elId}-visiteurs">Visiteurs / mois</label><input type="number" id="${elId}-visiteurs" min="0" value="${stored.visiteurs}"></div>
+      <div class="field"><label for="${elId}-tauxLead">Visiteur → Lead (%)</label><input type="number" id="${elId}-tauxLead" min="0" max="100" value="${stored.tauxLead}"></div>
+      <div class="field"><label for="${elId}-tauxProspect">Lead → Prospect qualifié (%)</label><input type="number" id="${elId}-tauxProspect" min="0" max="100" value="${stored.tauxProspect}"></div>
+      <div class="field"><label for="${elId}-tauxClient">Prospect → Client (%)</label><input type="number" id="${elId}-tauxClient" min="0" max="100" value="${stored.tauxClient}"></div>
+      <div class="field"><label for="${elId}-budgetMarketing">Budget marketing mensuel (€, optionnel)</label><input type="number" id="${elId}-budgetMarketing" min="0" value="${stored.budgetMarketing}"></div>
+    </div>
+    <div id="${elId}-results"></div>
+    <div id="${elId}-method"></div>`;
+
+  function update(){
+    const a = {
+      visiteurs: document.getElementById(`${elId}-visiteurs`).value,
+      tauxLead: document.getElementById(`${elId}-tauxLead`).value,
+      tauxProspect: document.getElementById(`${elId}-tauxProspect`).value,
+      tauxClient: document.getElementById(`${elId}-tauxClient`).value,
+      budgetMarketing: document.getElementById(`${elId}-budgetMarketing`).value
+    };
+    safeSetJSON('fzr-sales-funnel', a);
+    const r = computeSalesFunnel(a);
+    const maxVal = Math.max(r.visiteurs, 1);
+    const stages = [
+      {label: 'Visiteurs', value: r.visiteurs},
+      {label: 'Leads', value: r.leads},
+      {label: 'Prospects qualifiés', value: r.prospects},
+      {label: 'Clients', value: r.clients}
+    ];
+    document.getElementById(`${elId}-results`).innerHTML = `
+      <div class="card">
+        <span class="smallcaps">Ton entonnoir</span>
+        ${stages.map(s => `
+          <div style="margin-top:10px;">
+            <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;"><span>${s.label}</span><span class="mono">${Math.round(s.value).toLocaleString('fr-FR')}</span></div>
+            <div style="background:var(--bg);border-radius:2px;height:10px;overflow:hidden;"><div style="background:var(--gold-bright);height:100%;width:${(s.value/maxVal*100).toFixed(1)}%;"></div></div>
+          </div>`).join('')}
+        <div class="result-row" style="justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid var(--hairline);"><span>Taux de conversion global</span><span class="mono">${r.tauxConversionGlobal===null?'—':r.tauxConversionGlobal.toFixed(2)+' %'}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>CAC implicite (budget ÷ clients)</span><span class="mono">${r.cac===null?'—':fmtEUR(r.cac)}</span></div>
+      </div>
+      <p class="disclaimer-box" style="margin-top:10px;">Suppose des taux de conversion constants à chaque étage, indépendamment du volume — en réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser ces taux.</p>`;
+    document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['sales-funnel']);
+  }
+  ['visiteurs','tauxLead','tauxProspect','tauxClient','budgetMarketing'].forEach(key => {
+    document.getElementById(`${elId}-${key}`).addEventListener('input', update);
+  });
+  update();
 }
 
 // 30 secondes / 2 minutes / Approfondir — réutilise les champs déjà existants
@@ -6014,7 +6335,8 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
   'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
   'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
-  'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries', 'fzr-net-worth-history'
+  'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries', 'fzr-net-worth-history',
+  'fzr-business-expenses'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
