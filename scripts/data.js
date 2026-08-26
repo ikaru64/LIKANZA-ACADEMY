@@ -4211,19 +4211,22 @@ const BUSINESS_METHODOLOGY = {
     calcul: "OPEX mensuel = somme des dépenses récurrentes saisies. Solde mensuel projeté = résultat du profil entreprise − OPEX. Trésorerie projetée au mois n = trésorerie actuelle − CAPEX total + (n × solde mensuel).",
     donnees: "Le résultat mensuel et la trésorerie de départ viennent de \"Mon profil entreprise\" ; l'OPEX et le CAPEX viennent des dépenses que tu ajoutes ici.",
     hypotheses: "Le CAPEX est supposé payé comptant intégralement dès aujourd'hui — jamais un étalement fabriqué faute de date de paiement précisée. Le solde mensuel est supposé constant sur tout l'horizon.",
-    limites: "Ne modélise ni la saisonnalité, ni un financement du CAPEX par emprunt (qui étalerait le décaissement dans le temps plutôt qu'un paiement comptant immédiat)."
+    limites: "Ne modélise ni la saisonnalité, ni un financement du CAPEX par emprunt (qui étalerait le décaissement dans le temps plutôt qu'un paiement comptant immédiat).",
+    comprendre: "Séparer OPEX et CAPEX compte parce qu'ils se comportent différemment sur la trésorerie : le CAPEX est un choc ponctuel qu'on peut choisir de retarder, alors que l'OPEX pèse tous les mois — deux entreprises avec le même résultat net peuvent avoir des trajectoires de trésorerie très différentes selon ce mélange."
   },
   'pricing': {
     calcul: "Marge par vente = prix − coût direct. Marge totale à volume constant = marge par vente × volume actuel. Volume nécessaire pour la même marge totale = marge totale actuelle ÷ nouvelle marge par vente.",
     donnees: "Aucune donnée externe : uniquement les hypothèses que tu saisis toi-même.",
     hypotheses: "Suppose que le volume de ventes reste constant quel que soit le prix testé — aucune élasticité prix/volume n'est modélisée, faute de pouvoir la mesurer sans donnée réelle.",
-    limites: "Un vrai changement de prix affecte presque toujours le volume vendu (à la hausse si le prix baisse, à la baisse s'il augmente) — ce calcul montre l'impact mécanique à volume constant, jamais une prédiction de la réaction réelle du marché."
+    limites: "Un vrai changement de prix affecte presque toujours le volume vendu (à la hausse si le prix baisse, à la baisse s'il augmente) — ce calcul montre l'impact mécanique à volume constant, jamais une prédiction de la réaction réelle du marché.",
+    comprendre: "Le \"volume nécessaire pour la même marge totale\" répond à la question qui compte vraiment avant de baisser un prix : pas \"combien vais-je vendre en plus ?\" (personne ne le sait avec certitude), mais \"combien devrais-je vendre en plus pour au moins ne pas perdre d'argent ?\" — un repère concret pour juger si l'objectif est réaliste."
   },
   'sales-funnel': {
     calcul: "Leads = visiteurs × taux de conversion visiteur→lead. Prospects = leads × taux lead→prospect. Clients = prospects × taux prospect→client. CAC implicite = budget marketing ÷ clients.",
     donnees: "Aucune donnée externe : uniquement les taux de conversion que tu saisis toi-même à chaque étage.",
     hypotheses: "Suppose des taux de conversion constants à chaque étage, indépendamment du volume de visiteurs.",
-    limites: "En réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser les taux de conversion réels à chaque étage — ce calcul ne modélise pas cet effet."
+    limites: "En réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser les taux de conversion réels à chaque étage — ce calcul ne modélise pas cet effet.",
+    comprendre: "Un entonnoir rend visible OÙ agir en priorité : améliorer de 50% le taux le plus faible des 3 étages a souvent plus d'impact sur le nombre final de clients que d'améliorer légèrement les 3 — teste plusieurs combinaisons de taux pour voir lequel pèse le plus dans ton cas."
   },
   'scenarios': {
     calcul: "CA ajusté = CA du profil × (1 + variation CA %) − (clients perdus × CA moyen par client). Charges ajustées = charges du profil × (1 + variation charges %). Résultat ajusté = marge sur CA ajusté − charges ajustées.",
@@ -4232,16 +4235,18 @@ const BUSINESS_METHODOLOGY = {
     limites: "Un scénario sauvegardé est toujours recalculé contre ton profil ACTUEL, jamais figé au moment de la sauvegarde — si tu modifies ton profil entreprise plus tard, les scénarios déjà sauvegardés refléteront honnêtement l'impact sur ta nouvelle situation."
   },
   'runway': {
-    calcul: "Burn mensuel = résultat mensuel du profil entreprise, si négatif (0 si l'entreprise est profitable). Runway = trésorerie actuelle ÷ burn mensuel.",
+    calcul: "Burn mensuel = résultat mensuel du profil entreprise, si négatif (0 si l'entreprise est profitable). Runway = trésorerie actuelle ÷ burn mensuel. Le simulateur \"Et si...\" recalcule ce runway avec une levée de fonds hypothétique et/ou une variation du burn, sans jamais modifier le profil entreprise réel.",
     donnees: "Trésorerie actuelle et résultat mensuel viennent directement de \"Mon profil entreprise\".",
-    hypotheses: "Suppose que le burn mensuel actuel se maintient à l'identique — jamais une projection tenant compte d'une évolution prévue (nouvelle levée de fonds, réduction de coûts planifiée).",
-    limites: "Le résultat approximatif du profil n'est pas un vrai suivi de trésorerie (encaissements/décaissements réels, délais de paiement clients/fournisseurs non modélisés) — un runway réel peut différer de ce calcul."
+    hypotheses: "Le calcul de base suppose que le burn mensuel actuel se maintient à l'identique — le simulateur \"Et si...\" permet de tester une évolution hypothétique (levée de fonds, réduction de coûts) sans l'écrire dans le profil.",
+    limites: "Le résultat approximatif du profil n'est pas un vrai suivi de trésorerie (encaissements/décaissements réels, délais de paiement clients/fournisseurs non modélisés) — un runway réel peut différer de ce calcul.",
+    comprendre: "Le runway répond à une seule question mais elle est décisive : combien de temps as-tu pour changer de trajectoire (trouver des clients, lever des fonds, réduire les coûts) avant d'être à court de trésorerie ? Un runway court n'est pas une fatalité, mais il fixe une vraie échéance."
   },
   'valorisation': {
     calcul: "Valorisation par EV/EBITDA = EBITDA annuel × multiple choisi. Valorisation par PER = résultat net annuel × PER choisi.",
     donnees: "Aucune donnée externe : EBITDA, multiple, résultat net et PER sont tous des saisies manuelles.",
     hypotheses: "Le multiple ou le PER utilisé est une hypothèse que tu choisis toi-même — aucun multiple de marché réel n'est recherché ou suggéré automatiquement.",
-    limites: "Le multiple approprié varie énormément selon le secteur, la taille et la croissance de l'entreprise. Les 2 méthodes donnent souvent des résultats différents pour la même entreprise, et une vraie valorisation de transaction dépend de bien plus que ce calcul (négociation, due diligence, actifs et passifs hors bilan)."
+    limites: "Le multiple approprié varie énormément selon le secteur, la taille et la croissance de l'entreprise. Les 2 méthodes donnent souvent des résultats différents pour la même entreprise, et une vraie valorisation de transaction dépend de bien plus que ce calcul (négociation, due diligence, actifs et passifs hors bilan).",
+    comprendre: "Une valorisation par multiples n'est jamais un prix figé : elle donne un ordre de grandeur discutable, pas un chiffre définitif — c'est pour ça que 2 méthodes différentes donnent souvent 2 résultats différents pour la même entreprise, et qu'une vraie négociation part de là plutôt que de s'y arrêter."
   },
   'business-game': {
     calcul: "Chaque décision prise pendant la partie modifie plusieurs variables (trésorerie, clients, MRR, satisfaction...) selon des règles définies à l'avance pour le secteur choisi (voir scripts/games/business-game-data.js) ; le résultat final est l'état cumulé de ces variables après toutes les décisions.",
@@ -4277,7 +4282,8 @@ function renderUnitEconomics(elId){
       <div class="field"><label for="${elId}-arpuMensuel">Revenu moyen par client et par mois — ARPU (€)</label><input type="number" id="${elId}-arpuMensuel" value="${stored.arpuMensuel || 0}" min="0"></div>
     </div>
     <div id="${elId}-results"></div>
-    <div id="${elId}-method"></div>`;
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
 
   function readInputs(){
     return {
@@ -4316,8 +4322,10 @@ function renderUnitEconomics(elId){
       <div class="card-grid">
         <div class="card"><h4>CAC +20%</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Ratio LTV/CAC : <strong class="mono">${r.cac>0 ? (r.ltv/(r.cac*1.2)).toFixed(1)+'×' : '—'}</strong></p></div>
         <div class="card"><h4>1 achat de moins par client</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">LTV : <strong class="mono">${fmtEUR(r.margeBrute * Math.max(0, r.achatsMoyens - 1))}</strong></p></div>
-      </div>`;
+      </div>
+      ${renderCourseLibraryLinks(['CAC', 'LTV'])}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['unit-economics']);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
   ['prix','coutDirect','cac','achatsMoyens','chargesFixes','churnMensuelPct','arpuMensuel'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
@@ -4360,7 +4368,8 @@ function renderHeadcountSimulator(elId){
       <div class="field"><label for="${elId}-margeGenereeParEmploye">Marge générée par ce poste (€/mois)</label><input type="number" id="${elId}-margeGenereeParEmploye" min="0" value="${stored.margeGenereeParEmploye}"></div>
     </div>
     <div id="${elId}-results"></div>
-    <div id="${elId}-method"></div>`;
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
 
   function readInputs(){
     return {
@@ -4384,6 +4393,7 @@ function renderHeadcountSimulator(elId){
       </div>
       <p class="disclaimer-box">La "marge générée par ce poste" est une hypothèse que tu fixes toi-même (ex. chiffre d'affaires additionnel × marge, ou temps libéré valorisé) — jamais un chiffre garanti ni mesuré automatiquement.</p>`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['headcount']);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
   ['salaireBrutMensuel','chargesPatronalesPct','coutRecrutement','margeGenereeParEmploye'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
@@ -4456,7 +4466,8 @@ function renderBusinessExpenses(elId){
       <div class="slider-row field" style="max-width:280px;margin-top:8px;"><label for="${elId}-horizon">Horizon <span class="v mono" id="${elId}-horizonVal">12 mois</span></label><input type="range" id="${elId}-horizon" min="3" max="24" step="1" value="12"></div>
       <div id="${elId}-cashflow" style="margin-top:10px;"></div>
     </div>
-    <div id="${elId}-method"></div>`;
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
 
   function renderList(){
     const expenses = getBusinessExpenses();
@@ -4509,6 +4520,7 @@ function renderBusinessExpenses(elId){
   renderList();
   updateCashflow();
   document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['expenses-cashflow']);
+  renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
 }
 
 // ---------- Pricing interactif (Financial Lab, Phase 5) : curseur de prix
@@ -4550,7 +4562,8 @@ function renderPricingSimulator(elId){
     </div>
     <div class="slider-row field" style="max-width:340px;margin-top:10px;"><label for="${elId}-nouveauPrix">Prix testé <span class="v mono" id="${elId}-nouveauPrixVal"></span></label><input type="range" id="${elId}-nouveauPrix" min="1" step="1"></div>
     <div id="${elId}-results" style="margin-top:14px;"></div>
-    <div id="${elId}-method"></div>`;
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
 
   const sliderEl = document.getElementById(`${elId}-nouveauPrix`);
   function syncSliderRange(){
@@ -4579,6 +4592,7 @@ function renderPricingSimulator(elId){
       </div>
       <p class="disclaimer-box" style="margin-top:12px;">Ce calcul ne modélise jamais comment le volume réagirait réellement à un changement de prix (élasticité) — seulement l'arithmétique mécanique à volume supposé constant, ou le volume qu'il faudrait atteindre pour compenser.</p>`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['pricing']);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
   ['prixActuel','coutDirect','volumeActuel'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
@@ -4620,7 +4634,8 @@ function renderSalesFunnel(elId){
       <div class="field"><label for="${elId}-budgetMarketing">Budget marketing mensuel (€, optionnel)</label><input type="number" id="${elId}-budgetMarketing" min="0" value="${stored.budgetMarketing}"></div>
     </div>
     <div id="${elId}-results"></div>
-    <div id="${elId}-method"></div>`;
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
 
   function update(){
     const a = {
@@ -4652,6 +4667,7 @@ function renderSalesFunnel(elId){
       </div>
       <p class="disclaimer-box" style="margin-top:10px;">Suppose des taux de conversion constants à chaque étage, indépendamment du volume — en réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser ces taux.</p>`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['sales-funnel']);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
   ['visiteurs','tauxLead','tauxProspect','tauxClient','budgetMarketing'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
@@ -4731,7 +4747,8 @@ function renderBusinessScenarios(elId){
       <button type="button" class="btn btn-sm btn-gold" id="${elId}-scenarioSave">💾 Sauvegarder ce scénario</button>
     </div>
     <div id="${elId}-comparatif" style="margin-top:18px;"></div>
-    <div id="${elId}-method"></div>`;
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
 
   function currentDeltas(){
     return {
@@ -4782,6 +4799,7 @@ function renderBusinessScenarios(elId){
       </div>
       <p class="disclaimer-box" style="margin-top:10px;">Scénario appliqué à côté du profil, jamais écrit dedans. Les 3 préréglages (+15/−5, −15/+10, −30/+20) sont des illustrations documentées, jamais une prévision réelle de ton marché.</p>`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['scenarios']);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
   el.querySelectorAll('[data-preset]').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -4821,15 +4839,37 @@ function renderRunwaySimulator(elId){
   if(!el) return;
   const r = computeRunway();
   el.innerHTML = `
-    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Calculé à partir de "Mon profil entreprise" (trésorerie actuelle et résultat mensuel) — modifie ton profil pour changer ce calcul.</p>
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Calculé à partir de "Mon profil entreprise" (trésorerie actuelle et résultat mensuel) — modifie ton profil pour changer ce calcul de base.</p>
     <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
       <div class="card"><span class="smallcaps">Trésorerie actuelle</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(r.tresorerieActuelle)}</div></div>
       <div class="card"><span class="smallcaps">Burn mensuel</span><div class="result-big" style="font-size:19px;margin-top:6px;color:${r.burnMensuel>0?'var(--bordeaux)':'var(--emerald)'};">${r.burnMensuel>0?fmtEUR(r.burnMensuel):'Aucun'}</div></div>
       <div class="card"><span class="smallcaps">Runway</span><div class="result-big" style="font-size:19px;margin-top:6px;">${r.runwayMois===null?'Profitable, non applicable':r.runwayMois.toFixed(1)+' mois'}</div></div>
     </div>
     <p class="disclaimer-box" style="margin-top:12px;">Le burn mensuel est déduit du résultat approximatif du profil entreprise — jamais un vrai suivi de trésorerie mois par mois (encaissements/décaissements réels, délais de paiement clients/fournisseurs non modélisés).</p>
-    <div id="${elId}-method"></div>`;
+    ${r.burnMensuel > 0 ? `
+    <span class="smallcaps" style="display:block;margin:16px 0 8px;">Et si... (simulation, jamais écrite dans ton profil)</span>
+    <div class="slider-row field" style="max-width:320px;"><label for="${elId}-levee">Levée de fonds simulée <span class="v mono" id="${elId}-leveeVal">0 €</span></label><input type="range" id="${elId}-levee" min="0" max="200000" step="5000" value="0"></div>
+    <div class="slider-row field" style="max-width:320px;"><label for="${elId}-burnDelta">Variation du burn mensuel <span class="v mono" id="${elId}-burnDeltaVal">0 %</span></label><input type="range" id="${elId}-burnDelta" min="-50" max="50" step="5" value="0"></div>
+    <div id="${elId}-simResult" style="margin-top:10px;"></div>` : ''}
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
   document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['runway']);
+  renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
+
+  if(r.burnMensuel > 0){
+    function updateSim(){
+      const levee = +document.getElementById(`${elId}-levee`).value;
+      const burnDeltaPct = +document.getElementById(`${elId}-burnDelta`).value;
+      document.getElementById(`${elId}-leveeVal`).textContent = fmtEUR(levee);
+      document.getElementById(`${elId}-burnDeltaVal`).textContent = (burnDeltaPct>=0?'+':'') + burnDeltaPct + ' %';
+      const nouveauBurn = r.burnMensuel * (1 + burnDeltaPct / 100);
+      const nouveauRunway = nouveauBurn > 0 ? (r.tresorerieActuelle + levee) / nouveauBurn : null;
+      document.getElementById(`${elId}-simResult`).innerHTML = `
+        <p style="font-size:13px;">Nouveau runway : <strong class="mono" style="color:var(--gold-bright);">${nouveauRunway===null?'Profitable':nouveauRunway.toFixed(1)+' mois'}</strong> (contre ${r.runwayMois.toFixed(1)} mois aujourd'hui)</p>`;
+    }
+    ['levee','burnDelta'].forEach(key => document.getElementById(`${elId}-${key}`).addEventListener('input', updateSim));
+    updateSim();
+  }
 }
 
 // ---------- Valorisation par multiples (Financial Lab, Phase 6) : de vrais
@@ -4862,7 +4902,8 @@ function renderValorisationSimulator(elId){
       <div class="field" style="flex:1;min-width:140px;"><label for="${elId}-per">PER (×)</label><input type="number" id="${elId}-per" min="0" step="0.5" value="${stored.per}"></div>
     </div>
     <div id="${elId}-results" style="margin-top:16px;"></div>
-    <div id="${elId}-method"></div>`;
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
 
   function update(){
     const a = {
@@ -4880,6 +4921,7 @@ function renderValorisationSimulator(elId){
       </div>
       <p class="disclaimer-box" style="margin-top:12px;">Le multiple approprié varie énormément selon le secteur, la taille et la croissance de l'entreprise — jamais un multiple universel. Ces 2 méthodes donnent souvent des résultats différents pour la même entreprise : la valorisation réelle d'une transaction dépend de bien plus que ce calcul (négociation, due diligence, actifs et passifs hors bilan...).</p>`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['valorisation']);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
   ['ebitda','multipleEV','resultatNet','per'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
@@ -7819,7 +7861,8 @@ function renderCompanyProfile(elId){
       <div class="field"><label for="${elId}-tresorerieActuelle">Trésorerie actuelle (€)</label><input type="number" id="${elId}-tresorerieActuelle" min="0" value="${stored.tresorerieActuelle}"></div>
     </div>
     <div id="${elId}-results" style="margin-top:16px;"></div>
-    <div id="${elId}-method"></div>`;
+    <div id="${elId}-method"></div>
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
 
   function readProduits(){
     return Array.from(document.querySelectorAll(`#${elId}-produitsRows > div`)).map(row => ({
@@ -7882,6 +7925,7 @@ function renderCompanyProfile(elId){
       <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Chiffre d'affaires : ${snap.caDetail} (${fmtEUR(snap.ca)}/an).${snap.caParClient !== null ? ` CA par client : ${fmtEUR(snap.caParClient)}/an.` : ''}</p>
       <p class="disclaimer-box" style="margin-top:10px;">Marge sur coûts variables, pas une EBITDA : ne tranche pas quels postes sont "opérationnels". Un compte de résultat simplifié, pas une vraie comptabilité (amortissements, impôts, charges sociales non détaillées ici).</p>`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['profil-entreprise']);
+    renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
     // Tient le check-up "Analyser ma situation" à jour en direct — si sa
     // section n'existe pas sur la page (getElementById renvoie null),
     // renderBusinessDiagnostics ressort silencieusement sans rien faire.

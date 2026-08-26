@@ -174,7 +174,8 @@ const LAB_METHODOLOGY = {
     calcul: "Prix moyen = (somme de chaque quantité × son prix d'achat) ÷ quantité totale achetée.",
     donnees: "Aucune donnée externe : uniquement les quantités et prix que tu saisis toi-même.",
     hypotheses: "Le nombre d'achats, leur quantité et leur prix unitaire.",
-    limites: "Ne tient pas compte des frais de courtage à l'achat."
+    limites: "Ne tient pas compte des frais de courtage à l'achat.",
+    comprendre: "Le prix moyen d'achat n'est pas le prix d'un achat en particulier : c'est ce prix de référence unique qui détermine si tu es en gain ou en perte latente sur l'ensemble de ta position, quel que soit le nombre d'achats déjà effectués."
   },
   'invest-var': {
     calcul: "VaR (en %) = z(niveau de confiance) × volatilité annuelle × √(horizon en jours ÷ 252) − rendement annuel attendu × (horizon en jours ÷ 252). Le z est une constante standard associée au niveau de confiance choisi (1,645 pour 95%, 2,326 pour 99%...). VaR en € = VaR en % × valeur du portefeuille.",
@@ -257,19 +258,22 @@ const LAB_METHODOLOGY = {
     calcul: "Capacité d'épargne = revenus mensuels nets − loyer/crédit − charges fixes − dépenses variables.",
     donnees: "Aucune donnée externe : uniquement les montants que tu saisis toi-même.",
     hypotheses: "Tes revenus et dépenses tels que tu les renseignes.",
-    limites: "Ne détaille pas les postes de dépenses individuellement — un budget réel varie souvent d'un mois à l'autre."
+    limites: "Ne détaille pas les postes de dépenses individuellement — un budget réel varie souvent d'un mois à l'autre.",
+    comprendre: "Une capacité d'épargne négative n'est pas juste un chiffre à ignorer : elle signale qu'un mois normal dépense plus qu'il ne rapporte, un signal à traiter avant tout projet d'investissement — voir le Tableau de bord pour un suivi catégorisé plus précis dans le temps."
   },
   'budget-goal': {
     calcul: "Durée nécessaire = montant visé ÷ épargne mensuelle possible.",
     donnees: "Aucune donnée externe.",
     hypotheses: "Le montant visé et l'épargne mensuelle que tu penses pouvoir mettre de côté.",
-    limites: "Ne tient pas compte d'un éventuel rendement de l'épargne placée (calcul à versements simples, sans intérêts) ni d'imprévus qui pourraient interrompre l'épargne."
+    limites: "Ne tient pas compte d'un éventuel rendement de l'épargne placée (calcul à versements simples, sans intérêts) ni d'imprévus qui pourraient interrompre l'épargne.",
+    comprendre: "Ce calcul teste un seul objectif isolé — pour suivre plusieurs objectifs en parallèle, chacun avec son propre statut 🟢🟠🔴 selon sa date cible, utilise \"Mes objectifs\" dans l'onglet Budget & épargne."
   },
   'budget-sub': {
     calcul: "Compare le total simplement dépensé (coût mensuel × durée) à ce que ce même montant aurait pu devenir s'il avait été investi à un rendement annuel composé plutôt que dépensé.",
     donnees: "Aucune donnée externe : coût, durée et rendement hypothétique sont saisis par toi.",
     hypotheses: "Le coût mensuel, la durée et le rendement annuel hypothétique si investi à la place.",
-    limites: "Le rendement utilisé est une hypothèse, jamais garanti — voir le mode « Historique » du simulateur Intérêts composés pour des taux réellement mesurés dans le passé."
+    limites: "Le rendement utilisé est une hypothèse, jamais garanti — voir le mode « Historique » du simulateur Intérêts composés pour des taux réellement mesurés dans le passé.",
+    comprendre: "Ce n'est pas un jugement sur l'abonnement lui-même (certains valent largement leur prix) — c'est un ordre de grandeur pour décider en connaissance de cause, pas pour culpabiliser une dépense de plaisir."
   },
   'urgence-choc': {
     calcul: "Mois couverts = épargne cash disponible ÷ dépenses mensuelles essentielles. Montant cible = dépenses mensuelles × nombre de mois visé. Manquant = montant cible − épargne cash disponible (jamais négatif).",
@@ -282,13 +286,15 @@ const LAB_METHODOLOGY = {
     calcul: "Trésorerie projetée au mois n = trésorerie actuelle + (n × solde mensuel actuel), où le solde mensuel vient du Tableau de bord (revenus − dépenses du mois en cours).",
     donnees: "Le solde mensuel et la trésorerie cash de départ viennent directement du Tableau de bord et de \"Mon patrimoine net\" — aucune donnée externe.",
     hypotheses: "Suppose que le solde du mois observé se répète à l'identique sur tout l'horizon choisi — jamais une moyenne sur plusieurs mois, faute d'historique suffisant pour l'instant.",
-    limites: "Une projection linéaire à partir d'un seul mois ignore la saisonnalité (certains mois ont structurellement plus de dépenses) et tout événement ponctuel futur (une dépense exceptionnelle, un objectif atteint qui libère un versement)."
+    limites: "Une projection linéaire à partir d'un seul mois ignore la saisonnalité (certains mois ont structurellement plus de dépenses) et tout événement ponctuel futur (une dépense exceptionnelle, un objectif atteint qui libère un versement).",
+    comprendre: "Cette projection devient plus fiable avec le temps : plus tu ajoutes de mois réels au Tableau de bord, moins elle dépend d'un seul mois qui pourrait être atypique — reviens-y régulièrement plutôt qu'une seule fois."
   },
   'life-change': {
     calcul: "Nouveau solde = solde actuel du mois (Tableau de bord) + l'effet net du changement simulé (revenu ajouté, écart de loyer, ou revenu et charges d'un·e partenaire).",
     donnees: "Aucune donnée externe : uniquement le solde déjà calculé dans le Tableau de bord et les hypothèses saisies ici.",
     hypotheses: "Suppose que le reste du budget (toutes les autres dépenses) reste inchangé — une augmentation ou un déménagement réel s'accompagne souvent d'ajustements de dépenses non modélisés ici.",
-    limites: "Ne modélise jamais l'impact fiscal ou social (une augmentation de salaire ou un revenu complémentaire peut changer la tranche d'imposition ou les droits sociaux) — un chiffre brut d'impact budgétaire, pas un conseil fiscal."
+    limites: "Ne modélise jamais l'impact fiscal ou social (une augmentation de salaire ou un revenu complémentaire peut changer la tranche d'imposition ou les droits sociaux) — un chiffre brut d'impact budgétaire, pas un conseil fiscal.",
+    comprendre: "Comparer plusieurs modes (augmentation vs side-hustle vs déménagement) sur le MÊME solde de départ permet de voir lequel a le plus d'impact réel sur ton budget, plutôt que de deviner lequel est le plus significatif."
   },
   'dashboard': {
     calcul: "Taux d'épargne = solde du mois ÷ revenus du mois. Taux d'endettement = mensualités de crédit ÷ revenus du mois (seuil de 33 % généralement retenu par les banques françaises). Fonds d'urgence = épargne cash disponible ÷ dépenses du mois, exprimé en mois couverts (repère usuel : 3 mois).",
@@ -1639,7 +1645,8 @@ function updateVar(){
       <span>Soit, en % du portefeuille</span><span class="mono">${(r.perteEnPct * 100).toFixed(2)} %</span>
     </div>
     <p style="font-size:13px;margin-top:14px;color:var(--text-dim);">Avec ${confiance}% de confiance, la perte sur ${horizon} jour${horizon>1?'s':''} ne devrait pas dépasser <strong style="color:var(--text);">${fmtEUR(r.perteEnMontant)}</strong> — et donc ${100-confiance}% de chances (selon ce modèle) qu'elle soit plus élevée, potentiellement bien plus élevée : la VaR ne dit rien sur l'ampleur d'une perte au-delà de ce seuil.</p>
-    <p class="disclaimer-box" style="margin-top:10px;">Ce calcul suppose que les rendements suivent approximativement une loi normale — une simplification aux limites connues : les marchés réels connaissent des mouvements extrêmes plus fréquents que ce qu'une loi normale prédirait. Cette VaR peut donc sous-estimer le risque des pertes les plus sévères.</p>`;
+    <p class="disclaimer-box" style="margin-top:10px;">Ce calcul suppose que les rendements suivent approximativement une loi normale — une simplification aux limites connues : les marchés réels connaissent des mouvements extrêmes plus fréquents que ce qu'une loi normale prédirait. Cette VaR peut donc sous-estimer le risque des pertes les plus sévères.</p>
+    ${renderCourseLibraryLinks(['Loi normale des rendements et ses limites'])}`;
 }
 ['varPortefeuille','varRendement','varVolatilite','varConfiance','varHorizon'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => { updateVar(); markVarUsed(); });
@@ -1758,7 +1765,8 @@ function updatePosition(){
     <div class="result-row" style="margin-top:10px;"><span>Taille de position</span><span class="mono" style="font-size:18px;color:var(--gold-bright);">${r.positionSizeUnits.toFixed(2)} unités</span></div>
     <div class="result-row"><span>Valeur de la position</span><span class="mono">${fmtEUR(r.positionValueAtEntry)}</span></div>
     <div class="result-row"><span>Montant risqué</span><span class="mono">${fmtEUR(r.riskAmount)}</span></div>
-    <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">Risque de ${fmtEUR(r.riskPerUnit)} par unité (écart entre le prix d'entrée et le stop-loss). Si le stop-loss est touché, la perte correspond exactement au montant risqué ci-dessus — jamais plus, jamais moins.</p>`;
+    <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">Risque de ${fmtEUR(r.riskPerUnit)} par unité (écart entre le prix d'entrée et le stop-loss). Si le stop-loss est touché, la perte correspond exactement au montant risqué ci-dessus — jamais plus, jamais moins.</p>
+    ${renderCourseLibraryLinks(['Ordre stop (stop de vente / stop d\'achat)', 'Taille de position'])}`;
 }
 ['posCapital','posRiskPct','posEntry','posStop'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => { updatePosition(); markPositionUsed(); });
