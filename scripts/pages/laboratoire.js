@@ -425,6 +425,7 @@ Object.keys(LAB_METHODOLOGY).forEach(key => {
 
     document.getElementById('method-dashboard').innerHTML = renderMethodologyPanel(LAB_METHODOLOGY['dashboard']);
     renderNextStepCard('nextstep-dashboard', {domainKey: 'personalFinance'});
+    document.getElementById('dashboardLinks').innerHTML = renderCourseLibraryLinks(['Valeur nette', 'Patrimoine', 'Cash-flow personnel', 'Fonds d\'urgence']) + renderRelatedCourseLink('budget-securite', null);
   }
 
   document.getElementById('dashEntryAdd').addEventListener('click', () => {
@@ -639,6 +640,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       ${livretAHtml}
       <div id="labInvestExplainer" style="margin-top:14px;"></div>
       <p class="disclaimer-box" style="margin-top:12px;">Simulation strictement rétrospective sur des cours réels passés. Les performances passées ne préjugent jamais des performances futures. Le Livret A affiché capitalise mensuellement le taux réel en vigueur (simplification par rapport à la règle bancaire des quinzaines).</p>
+      ${renderCourseLibraryLinks(['Total return'])}
     `;
     renderResultExplainer('labInvestExplainer', {invested: result.totalInvested, final: result.finalValue, mainFactorLabel: mainFactor});
     renderNextStepCard('nextstep-invest-whatif', {domainKey: 'stockMarket'});
@@ -782,7 +784,8 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
         </table>
         <p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">Le taux s'applique chaque année sur tout le capital restant dû, pas seulement au départ : sur 20-25 ans, un écart d'1 point se cumule fortement.</p>
       </div>
-      <p class="disclaimer-box" style="margin-top:14px;">Simulation pédagogique, pas une offre de prêt. Le taux réellement proposé dépend du profil emprunteur, de l'apport et de la banque.</p>`;
+      <p class="disclaimer-box" style="margin-top:14px;">Simulation pédagogique, pas une offre de prêt. Le taux réellement proposé dépend du profil emprunteur, de l'apport et de la banque.</p>
+      ${renderCourseLibraryLinks(['Crédit immobilier'])}`;
     renderNextStepCard('nextstep-credit', {domainKey: 'realEstate'});
   }
 
@@ -840,7 +843,8 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       <div class="result-big">${fmtEUR(amount)} de ${startEl.value} ≈ <strong>${fmtEUR(equivalent)}</strong> en ${endEl.value}</div>
       <div class="result-row" style="margin-top:10px;"><span>Inflation cumulée : ${totalInflationPct >= 0 ? '+' : ''}${totalInflationPct.toFixed(1)} %</span><span>Inflation annualisée : ${annualizedPct >= 0 ? '+' : ''}${annualizedPct.toFixed(1)} % / an</span></div>
       ${renderSourceNote('inflationFR', {period: `${startEl.value} → ${endEl.value}`})}
-      <p class="disclaimer-box" style="margin-top:10px;">Calculé à partir de l'indice réel des prix à la consommation (IPCH France, BCE) — jamais une inflation constante supposée.</p>`;
+      <p class="disclaimer-box" style="margin-top:10px;">Calculé à partir de l'indice réel des prix à la consommation (IPCH France, BCE) — jamais une inflation constante supposée.</p>
+      ${renderCourseLibraryLinks(['Inflation'])}`;
     renderNextStepCard('nextstep-budget-inflation', {domainKey: 'personalFinance'});
   }
 
@@ -1286,7 +1290,8 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
         </table>
       </div>
       <p style="margin-top:12px;font-size:13.5px;">${result.breakevenYear ? `Dans ces hypothèses, le patrimoine net du propriétaire dépasse celui du locataire à partir d'environ <strong>${result.breakevenYear} ans</strong>.` : `Dans ces hypothèses, le patrimoine net du locataire reste supérieur sur toute la période testée.`}</p>
-      <p class="disclaimer-box" style="margin-top:8px;">Ceci n'est pas une recommandation d'achat ou de location. Le résultat dépend entièrement des hypothèses saisies ci-dessus (taux, appréciation, rendement d'opportunité) : en modifier une peut changer la conclusion.</p>`;
+      <p class="disclaimer-box" style="margin-top:8px;">Ceci n'est pas une recommandation d'achat ou de location. Le résultat dépend entièrement des hypothèses saisies ci-dessus (taux, appréciation, rendement d'opportunité) : en modifier une peut changer la conclusion.</p>
+      ${renderCourseLibraryLinks(['Crédit immobilier', 'Apport personnel'])}`;
     renderNextStepCard('nextstep-buyrent', {domainKey: 'realEstate'});
   }
 
@@ -1350,6 +1355,7 @@ function updateBudget(){
 }
 updateBudget();
 renderNextStepCard('nextstep-budget-calc', {domainKey: 'personalFinance'});
+document.getElementById('budgetCalcLinks').innerHTML = renderCourseLibraryLinks(['Budget', 'Revenus', 'Dépenses']) + renderRelatedCourseLink('budget-securite', 'Construire un vrai budget');
 
 // Objectif épargne
 ['goalAmount','goalMonthly'].forEach(id=>document.getElementById(id).addEventListener('input', updateGoal));
@@ -1364,6 +1370,7 @@ function updateGoal(){
 }
 updateGoal();
 renderNextStepCard('nextstep-budget-goal', {domainKey: 'personalFinance'});
+document.getElementById('budgetGoalLinks').innerHTML = renderCourseLibraryLinks(['Épargne']) + renderRelatedCourseLink('budget-securite', 'Épargner : de la sécurité au projet');
 
 // Coût futur d'un abonnement
 const subCost = document.getElementById('subCost'), subYears = document.getElementById('subYears'), subRate = document.getElementById('subRate');
@@ -1389,6 +1396,7 @@ function updateSub(){
 [subCost, subYears, subRate].forEach(el=>el.addEventListener('input', updateSub));
 updateSub();
 renderNextStepCard('nextstep-budget-sub', {domainKey: 'personalFinance'});
+document.getElementById('subLinks').innerHTML = renderCourseLibraryLinks(['Intérêts composés']) + renderRelatedCourseLink('epargne-interets', null);
 
 // Scénarios futurs d'inflation (hypothèses, panneau secondaire de la carte inflation réelle)
 const inflAmount = document.getElementById('inflAmount'), inflReturn = document.getElementById('inflReturn'), inflRate = document.getElementById('inflRate'), inflYears = document.getElementById('inflYears');
@@ -1560,6 +1568,7 @@ rateEl.disabled = true;
 updateModeDesc();
 updateSim();
 renderNextStepCard('nextstep-invest-compound', {domainKey: 'stockMarket'});
+document.getElementById('compoundLinks').innerHTML = renderCourseLibraryLinks(['Intérêts composés', 'CAGR (taux de croissance annuel composé)']) + renderRelatedCourseLink('epargne-interets', null);
 
 // Remplace les 3 ronds chiffres de repli (Prudente/Centrale/Optimiste) par
 // un vrai CAGR sourcé dès qu'il est disponible, sans action de l'utilisateur
@@ -1646,7 +1655,8 @@ function updateVar(){
     </div>
     <p style="font-size:13px;margin-top:14px;color:var(--text-dim);">Avec ${confiance}% de confiance, la perte sur ${horizon} jour${horizon>1?'s':''} ne devrait pas dépasser <strong style="color:var(--text);">${fmtEUR(r.perteEnMontant)}</strong> — et donc ${100-confiance}% de chances (selon ce modèle) qu'elle soit plus élevée, potentiellement bien plus élevée : la VaR ne dit rien sur l'ampleur d'une perte au-delà de ce seuil.</p>
     <p class="disclaimer-box" style="margin-top:10px;">Ce calcul suppose que les rendements suivent approximativement une loi normale — une simplification aux limites connues : les marchés réels connaissent des mouvements extrêmes plus fréquents que ce qu'une loi normale prédirait. Cette VaR peut donc sous-estimer le risque des pertes les plus sévères.</p>
-    ${renderCourseLibraryLinks(['Loi normale des rendements et ses limites'])}`;
+    ${renderCourseLibraryLinks(['Value at Risk (VaR)', 'Loi normale des rendements et ses limites'])}
+    ${renderRelatedCourseLink('mathematiques-financieres', 'Value at Risk et les limites de la loi normale')}`;
 }
 ['varPortefeuille','varRendement','varVolatilite','varConfiance','varHorizon'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => { updateVar(); markVarUsed(); });
@@ -1710,6 +1720,7 @@ function updateBond(){
 });
 updateBond();
 renderNextStepCard('nextstep-invest-bond', {domainKey: 'stockMarket'});
+document.getElementById('bondLinks').innerHTML = renderCourseLibraryLinks(['Obligation', 'Rendement à l\'échéance (YTM)', 'Duration (obligation)']) + renderRelatedCourseLink('bourse-actions', 'Le prix d\'une obligation, au-delà de l\'intuition');
 
 // ---------- Calculateur de position Forex — computeForexPositionSize
 // (scripts/data.js) : jamais un taux de change en direct utilisé pour la
@@ -1742,6 +1753,7 @@ function updateForex(){
 });
 updateForex();
 renderNextStepCard('nextstep-invest-forex', {domainKey: 'stockMarket'});
+document.getElementById('forexLinks').innerHTML = renderCourseLibraryLinks(['Pip', 'Lot (Forex)', 'Marge (Forex)']) + renderRelatedCourseLink('forex-essentiels', 'Lot, marge et effet de levier');
 
 // ---------- Calculateur de taille de position générique (actions, crypto,
 // tout actif tradé à l'unité) — computeTradePositionSize (scripts/data.js),
@@ -1766,7 +1778,8 @@ function updatePosition(){
     <div class="result-row"><span>Valeur de la position</span><span class="mono">${fmtEUR(r.positionValueAtEntry)}</span></div>
     <div class="result-row"><span>Montant risqué</span><span class="mono">${fmtEUR(r.riskAmount)}</span></div>
     <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">Risque de ${fmtEUR(r.riskPerUnit)} par unité (écart entre le prix d'entrée et le stop-loss). Si le stop-loss est touché, la perte correspond exactement au montant risqué ci-dessus — jamais plus, jamais moins.</p>
-    ${renderCourseLibraryLinks(['Ordre stop (stop de vente / stop d\'achat)', 'Taille de position'])}`;
+    ${renderCourseLibraryLinks(['Ordre stop (stop de vente / stop d\'achat)', 'Taille de position', 'Stop-loss et take-profit'])}
+    ${renderRelatedCourseLink('risque-diversification', 'Le risque par trade : stop-loss, taille de position, ratio risque/rendement')}`;
 }
 ['posCapital','posRiskPct','posEntry','posStop'].forEach(id => {
   document.getElementById(id).addEventListener('input', () => { updatePosition(); markPositionUsed(); });
@@ -1813,6 +1826,7 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
   [depensesEl, moisCibleEl].forEach(el => el.addEventListener('input', update));
   update();
   renderNextStepCard('nextstep-urgence-choc', {domainKey: 'personalFinance'});
+  document.getElementById('urgenceLinks').innerHTML = renderCourseLibraryLinks(['Fonds d\'urgence']) + renderRelatedCourseLink('budget-securite', 'Épargner : de la sécurité au projet');
 })();
 
 // ---------- Projection de trésorerie (Financial Lab, Phase 3) : projette le
@@ -1847,6 +1861,7 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
   moisEl.addEventListener('input', update);
   update();
   renderNextStepCard('nextstep-cashflow-projection', {domainKey: 'personalFinance'});
+  document.getElementById('cashflowLinks').innerHTML = renderCourseLibraryLinks(['Cash-flow personnel']) + renderRelatedCourseLink('budget-securite', 'Ta valeur nette');
 })();
 
 // ---------- Simulateur de changement de situation (Financial Lab, Phase 3) :

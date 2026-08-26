@@ -3360,6 +3360,18 @@ function renderCourseLibraryLinks(libraryTermes){
   if(termes.length === 0) return '';
   return `<p style="font-size:12px;color:var(--text-dim);margin-top:16px;">📚 Voir aussi dans la Bibliothèque : ${termes.map(t => `<a href="bibliotheque.html#${encodeURIComponent(t.replace(/\s+/g,'-'))}" style="color:var(--gold-bright);">${t}</a>`).join(' · ')}</p>`;
 }
+// Lien réel vers un cours (étape "Cours" de la Boucle Likanza) — cours.html
+// n'a aucun moyen d'ouvrir directement un chapitre précis (navigation par
+// index JS en mémoire dans renderCoursRich, jamais adressable par URL), donc
+// ce lien pointe vers le cours entier et nomme le chapitre pertinent dans le
+// TEXTE, pas dans l'URL. Jamais un lien mort : chaîne vide si l'id n'existe
+// pas réellement dans COURS_CATALOG.
+function renderRelatedCourseLink(coursId, chapitreLabel){
+  const cours = COURS_CATALOG.find(c => c.id === coursId);
+  if(!cours) return '';
+  const chapitreText = chapitreLabel ? `, chapitre « ${chapitreLabel} »` : '';
+  return `<p style="font-size:12px;color:var(--text-dim);margin-top:6px;"><a href="cours.html#${encodeURIComponent(coursId)}" style="color:var(--gold-bright);">🎓 Voir le cours « ${cours.titre} »${chapitreText} →</a></p>`;
+}
 
 // ---------- Feedback qualité pédagogique (section 26 du prompt Learning
 // Engine) : simple, jamais bloquant, un avis par contenu (pas un vote répété
@@ -4323,7 +4335,7 @@ function renderUnitEconomics(elId){
         <div class="card"><h4>CAC +20%</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Ratio LTV/CAC : <strong class="mono">${r.cac>0 ? (r.ltv/(r.cac*1.2)).toFixed(1)+'×' : '—'}</strong></p></div>
         <div class="card"><h4>1 achat de moins par client</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">LTV : <strong class="mono">${fmtEUR(r.margeBrute * Math.max(0, r.achatsMoyens - 1))}</strong></p></div>
       </div>
-      ${renderCourseLibraryLinks(['CAC', 'LTV'])}`;
+      ${renderCourseLibraryLinks(['CAC', 'LTV', 'Marge brute', 'Seuil de rentabilité', 'Churn'])}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['unit-economics']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
@@ -4391,7 +4403,9 @@ function renderHeadcountSimulator(elId){
         <div class="result-row" style="justify-content:space-between;"><span>Marge nette mensuelle (marge générée − coût)</span><span class="mono" style="color:${r.margeNetteMensuelle>=0?'var(--emerald)':'var(--bordeaux)'};">${r.margeNetteMensuelle>=0?'+':''}${fmtEUR(r.margeNetteMensuelle)}</span></div>
         <div class="result-row" style="justify-content:space-between;"><span>Rentabilisée (coût de recrutement récupéré) en</span><span class="mono">${r.moisBreakEven===null?'Jamais, au rythme actuel':r.moisBreakEven.toFixed(1)+' mois'}</span></div>
       </div>
-      <p class="disclaimer-box">La "marge générée par ce poste" est une hypothèse que tu fixes toi-même (ex. chiffre d'affaires additionnel × marge, ou temps libéré valorisé) — jamais un chiffre garanti ni mesuré automatiquement.</p>`;
+      <p class="disclaimer-box">La "marge générée par ce poste" est une hypothèse que tu fixes toi-même (ex. chiffre d'affaires additionnel × marge, ou temps libéré valorisé) — jamais un chiffre garanti ni mesuré automatiquement.</p>
+      ${renderCourseLibraryLinks(['Recrutement'])}
+      ${renderRelatedCourseLink('operations-rh-essentiels', 'RH : recruter, intégrer et retenir')}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['headcount']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
@@ -4504,7 +4518,8 @@ function renderBusinessExpenses(elId){
     document.getElementById(`${elId}-cashflow`).innerHTML = `
       <div class="pattern-chart">${chart}</div>
       <p style="font-size:13px;margin-top:10px;">Au rythme actuel (résultat du profil ${fmtEUR(snapshot.resultatMensuelApproximatif)}/mois − OPEX ${fmtEUR(totals.opexMensuel)}/mois = ${proj.soldeMensuel>=0?'+':''}${fmtEUR(proj.soldeMensuel)}/mois), ta trésorerie passerait de ${fmtEUR(profile.tresorerieActuelle - totals.capexTotal)} (après CAPEX) à <strong style="color:${proj.finalCash>=0?'var(--emerald)':'var(--bordeaux)'};">${fmtEUR(proj.finalCash)}</strong> dans ${horizon} mois.</p>
-      <p class="disclaimer-box" style="margin-top:10px;">Hypothèse forte : ce rythme se maintient à l'identique, et le CAPEX est payé comptant intégralement dès aujourd'hui — jamais un étalement fabriqué faute de date de paiement précisée.</p>`;
+      <p class="disclaimer-box" style="margin-top:10px;">Hypothèse forte : ce rythme se maintient à l'identique, et le CAPEX est payé comptant intégralement dès aujourd'hui — jamais un étalement fabriqué faute de date de paiement précisée.</p>
+      ${renderCourseLibraryLinks(['OPEX', 'Trésorerie', 'Cash flow', 'Immobilisation'])}`;
   }
 
   document.getElementById(`${elId}-add`).addEventListener('click', () => {
@@ -4590,7 +4605,8 @@ function renderPricingSimulator(elId){
         <div class="card"><span class="smallcaps">Marge totale à volume constant</span><div class="result-big" style="font-size:17px;margin-top:6px;color:${deltaMarge>=0?'var(--emerald)':'var(--bordeaux)'};">${deltaMarge>=0?'+':''}${fmtEUR(deltaMarge)}</div></div>
         <div class="card"><span class="smallcaps">Volume nécessaire pour la même marge totale</span><div class="result-big" style="font-size:17px;margin-top:6px;">${r.volumeNecessairePourMemeMarge===null?'Jamais (marge nulle ou négative)':Math.ceil(r.volumeNecessairePourMemeMarge)+'/mois'}</div></div>
       </div>
-      <p class="disclaimer-box" style="margin-top:12px;">Ce calcul ne modélise jamais comment le volume réagirait réellement à un changement de prix (élasticité) — seulement l'arithmétique mécanique à volume supposé constant, ou le volume qu'il faudrait atteindre pour compenser.</p>`;
+      <p class="disclaimer-box" style="margin-top:12px;">Ce calcul ne modélise jamais comment le volume réagirait réellement à un changement de prix (élasticité) — seulement l'arithmétique mécanique à volume supposé constant, ou le volume qu'il faudrait atteindre pour compenser.</p>
+      ${renderCourseLibraryLinks(['Pricing', 'Stratégie de prix'])}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['pricing']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
@@ -4665,7 +4681,8 @@ function renderSalesFunnel(elId){
         <div class="result-row" style="justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid var(--hairline);"><span>Taux de conversion global</span><span class="mono">${r.tauxConversionGlobal===null?'—':r.tauxConversionGlobal.toFixed(2)+' %'}</span></div>
         <div class="result-row" style="justify-content:space-between;"><span>CAC implicite (budget ÷ clients)</span><span class="mono">${r.cac===null?'—':fmtEUR(r.cac)}</span></div>
       </div>
-      <p class="disclaimer-box" style="margin-top:10px;">Suppose des taux de conversion constants à chaque étage, indépendamment du volume — en réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser ces taux.</p>`;
+      <p class="disclaimer-box" style="margin-top:10px;">Suppose des taux de conversion constants à chaque étage, indépendamment du volume — en réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser ces taux.</p>
+      ${renderCourseLibraryLinks(['Pipeline commercial', 'Qualification', 'Taux de conversion'])}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['sales-funnel']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
@@ -4851,6 +4868,7 @@ function renderRunwaySimulator(elId){
     <div class="slider-row field" style="max-width:320px;"><label for="${elId}-levee">Levée de fonds simulée <span class="v mono" id="${elId}-leveeVal">0 €</span></label><input type="range" id="${elId}-levee" min="0" max="200000" step="5000" value="0"></div>
     <div class="slider-row field" style="max-width:320px;"><label for="${elId}-burnDelta">Variation du burn mensuel <span class="v mono" id="${elId}-burnDeltaVal">0 %</span></label><input type="range" id="${elId}-burnDelta" min="-50" max="50" step="5" value="0"></div>
     <div id="${elId}-simResult" style="margin-top:10px;"></div>` : ''}
+    ${renderCourseLibraryLinks(['Burn rate'])}
     <div id="${elId}-method"></div>
     <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
   document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['runway']);
@@ -4919,7 +4937,9 @@ function renderValorisationSimulator(elId){
         <div class="card"><span class="smallcaps">Valorisation par EV/EBITDA</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(r.ev)}</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">${fmtEUR(r.ebitda)} × ${r.multipleEV}</p></div>
         <div class="card"><span class="smallcaps">Valorisation par PER</span><div class="result-big" style="font-size:19px;margin-top:6px;">${fmtEUR(r.valorisationPER)}</div><p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">${fmtEUR(r.resultatNet)} × ${r.per}</p></div>
       </div>
-      <p class="disclaimer-box" style="margin-top:12px;">Le multiple approprié varie énormément selon le secteur, la taille et la croissance de l'entreprise — jamais un multiple universel. Ces 2 méthodes donnent souvent des résultats différents pour la même entreprise : la valorisation réelle d'une transaction dépend de bien plus que ce calcul (négociation, due diligence, actifs et passifs hors bilan...).</p>`;
+      <p class="disclaimer-box" style="margin-top:12px;">Le multiple approprié varie énormément selon le secteur, la taille et la croissance de l'entreprise — jamais un multiple universel. Ces 2 méthodes donnent souvent des résultats différents pour la même entreprise : la valorisation réelle d'une transaction dépend de bien plus que ce calcul (négociation, due diligence, actifs et passifs hors bilan...).</p>
+      ${renderCourseLibraryLinks(['Multiple de valorisation (EV/EBITDA)', 'Valorisation', 'EBITDA', 'PER (Price Earning Ratio)'])}
+      ${renderRelatedCourseLink('ma-private-equity', null)}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['valorisation']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
@@ -7923,7 +7943,9 @@ function renderCompanyProfile(elId){
       <div class="result-row" style="justify-content:space-between;"><span>− Charges fixes, salaires, marketing</span><span class="mono">${fmtEUR(snap.chargesMensuellesTotales)}</span></div>
       <div class="result-row" style="justify-content:space-between;border-top:1px solid var(--hairline);padding-top:6px;margin-top:4px;"><span><strong>= Résultat net approximatif</strong></span><span class="mono" style="color:${snap.resultatMensuelApproximatif>=0?'var(--emerald)':'var(--bordeaux)'};font-size:16px;"><strong>${snap.resultatMensuelApproximatif>=0?'+':''}${fmtEUR(snap.resultatMensuelApproximatif)}</strong></span></div>
       <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Chiffre d'affaires : ${snap.caDetail} (${fmtEUR(snap.ca)}/an).${snap.caParClient !== null ? ` CA par client : ${fmtEUR(snap.caParClient)}/an.` : ''}</p>
-      <p class="disclaimer-box" style="margin-top:10px;">Marge sur coûts variables, pas une EBITDA : ne tranche pas quels postes sont "opérationnels". Un compte de résultat simplifié, pas une vraie comptabilité (amortissements, impôts, charges sociales non détaillées ici).</p>`;
+      <p class="disclaimer-box" style="margin-top:10px;">Marge sur coûts variables, pas une EBITDA : ne tranche pas quels postes sont "opérationnels". Un compte de résultat simplifié, pas une vraie comptabilité (amortissements, impôts, charges sociales non détaillées ici).</p>
+      ${renderCourseLibraryLinks(['Chiffre d\'affaires', 'Compte de résultat', 'Résultat net'])}
+      ${renderRelatedCourseLink('lire-une-entreprise', 'Le compte de résultat : du chiffre d\'affaires au résultat net')}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['profil-entreprise']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
     // Tient le check-up "Analyser ma situation" à jour en direct — si sa

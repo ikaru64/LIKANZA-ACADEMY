@@ -140,6 +140,7 @@
     <div id="dashSaveResult" style="margin-top:10px;"></div>
   </div>
 
+  <div id="dashboardLinks"></div>
   <div id="method-dashboard"></div>
   <div id="nextstep-dashboard" style="margin-top:10px;"></div>
   </div>
@@ -248,6 +249,7 @@
       <div class="bar-labels" id="simChartLabels"></div>
       <div id="simWhatIf"></div>
       <p class="disclaimer-box"><strong>Ce scénario n'est pas une prévision.</strong> Les performances passées ne préjugent pas des performances futures. Les marchés actions ont déjà connu des baisses de plus de 30% sur une seule année dans le passé (crises de 2000, 2008, 2020) : un scénario réaliste doit intégrer cette possibilité, pas seulement une moyenne lissée.</p>
+      <div id="compoundLinks"></div>
       <div id="method-invest-compound"></div>
       <div id="nextstep-invest-compound" style="margin-top:10px;"></div>
     </div>
@@ -309,6 +311,7 @@
       <div class="field" id="bondRateField" style="max-width:220px;"><label for="bondRate">Taux du marché (%)</label><input type="number" id="bondRate" value="5" step="0.1"></div>
       <div class="field" id="bondPriceField" style="max-width:220px;display:none;"><label for="bondPriceInput">Prix observé (€)</label><input type="number" id="bondPriceInput" value="850" min="1"></div>
       <div id="bondResult" style="margin-top:16px;"></div>
+      <div id="bondLinks"></div>
       <div id="method-invest-bond"></div>
       <div id="nextstep-invest-bond" style="margin-top:10px;"></div>
     </div>
@@ -340,6 +343,7 @@
         </div>
       </div>
       <div id="forexResult" style="margin-top:16px;"></div>
+      <div id="forexLinks"></div>
       <div id="method-invest-forex"></div>
       <div id="nextstep-invest-forex" style="margin-top:10px;"></div>
     </div>
@@ -621,6 +625,7 @@
       <div class="result-label">Capacité d'épargne mensuelle</div>
       <div class="result-big" id="budgetResult">— €</div>
       <p class="disclaimer-box">Une capacité d'épargne négative signale un budget à revoir avant tout projet d'investissement.</p>
+      <div id="budgetCalcLinks"></div>
       <div id="method-budget-calc"></div>
       <div id="nextstep-budget-calc" style="margin-top:10px;"></div>
     </div>
@@ -631,6 +636,7 @@
       <div class="field"><label for="goalMonthly">Épargne mensuelle possible (€)</label><input type="number" id="goalMonthly" value="150"></div>
       <div class="result-label">Temps nécessaire pour atteindre l'objectif</div>
       <div class="result-big" id="goalResult">—</div>
+      <div id="budgetGoalLinks"></div>
       <div id="method-budget-goal"></div>
       <div id="nextstep-budget-goal" style="margin-top:10px;"></div>
     </div>
@@ -642,6 +648,7 @@
       <div class="slider-row field"><label for="subRate">Si investi à la place, rendement annuel <span class="v mono" id="valSubRate">6 %</span></label><input type="range" id="subRate" min="0" max="10" step="0.5" value="6"></div>
       <div class="result-row" id="subResult" style="margin-top:10px;"></div>
       <div id="subRateAlert"></div>
+      <div id="subLinks"></div>
       <div id="method-budget-sub"></div>
       <div id="nextstep-budget-sub" style="margin-top:10px;"></div>
     </div>
@@ -726,6 +733,7 @@
       </div>
       <div id="urgenceResult" style="margin-top:14px;"></div>
       <p class="disclaimer-box" style="margin-top:10px;">L'épargne cash prise en compte vient de "Mon patrimoine net" (catégorie Épargne / cash) — ajoute tes actifs là-bas pour un calcul à jour.</p>
+      <div id="urgenceLinks"></div>
       <div id="method-urgence-choc"></div>
       <div id="nextstep-urgence-choc" style="margin-top:10px;"></div>
     </div>
@@ -735,6 +743,7 @@
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Projette ton solde de trésorerie en supposant que ton rythme actuel (revenus − dépenses du mois, vu dans le Tableau de bord) se maintient — jamais une prévision garantie.</p>
       <div class="slider-row field" style="max-width:280px;"><label for="cashflowMois">Horizon <span class="v mono" id="valCashflowMois">12 mois</span></label><input type="range" id="cashflowMois" min="3" max="24" step="1" value="12"></div>
       <div id="cashflowResult" style="margin-top:14px;"></div>
+      <div id="cashflowLinks"></div>
       <div id="method-cashflow-projection"></div>
       <div id="nextstep-cashflow-projection" style="margin-top:10px;"></div>
     </div>
