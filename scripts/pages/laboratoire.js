@@ -77,6 +77,7 @@ const LAB_WIDGETS = {
     {id:'labBuyRentCard', title:'Acheter ou louer ?', desc:'Patrimoine net comparé entre achat et location.', icon:'house'}
   ],
   'tab-dettes': [
+    {id:'widget-debts-manager', title:'Mes crédits enregistrés', desc:'Liste persistante utilisée par le tableau de bord.', icon:'wallet'},
     {id:'widget-debt-strategy', title:'Quel crédit rembourser en premier ?', desc:'Compare deux stratégies sur tes vrais crédits.', icon:'landmark'},
     {id:'widget-debt-consolidation', title:'Regrouper ou conserver ses crédits ?', desc:'Mensualité vs coût total réel du regroupement.', icon:'scale'}
   ],
@@ -88,7 +89,10 @@ const LAB_WIDGETS = {
     {id:'widget-budget-inflation', title:'Que valent mes euros ?', desc:'Inflation réelle mesurée, pas une hypothèse constante.', icon:'trending-down'},
     {id:'widget-budget-calc', title:'Calculateur de budget', desc:"Ta capacité d'épargne mensuelle réelle.", icon:'wallet'},
     {id:'widget-budget-goal', title:"Objectif d'épargne", desc:'Combien de temps pour atteindre un montant visé.', icon:'target'},
-    {id:'widget-budget-sub', title:"Coût futur d'un abonnement", desc:'Ce que représente un abonnement sur plusieurs années.', icon:'coins'}
+    {id:'widget-budget-sub', title:"Coût futur d'un abonnement", desc:'Ce que représente un abonnement sur plusieurs années.', icon:'coins'},
+    {id:'widget-goals-manager', title:'Mes objectifs', desc:'Plusieurs objectifs en parallèle, statut 🟢🟠🔴.', icon:'target'},
+    {id:'widget-charges-manager', title:'Mes abonnements & factures', desc:'Liste multi-entrées, coût cumulé réel.', icon:'coins'},
+    {id:'widget-net-worth', title:'Mon patrimoine net', desc:'Actifs et dettes réels, dans le temps.', icon:'gem'}
   ]
 };
 function renderLabWidgetGrid(categoryId){
@@ -873,7 +877,20 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
         minPayment: +row.querySelector('.debt-min').value || 0
       }));
     }
-    return {addRow, readRows};
+    // Remplace entièrement les lignes locales par les crédits réellement
+    // enregistrés (fzr-personal-debts) — un import ponctuel, pas une liaison
+    // permanente : modifier une ligne ici n'écrit jamais dans le registre
+    // persistant, pour ne jamais perturber une exploration "et si" en cours.
+    function loadFromSaved(){
+      const saved = getPersonalDebts();
+      if(saved.length === 0) return false;
+      const el = document.getElementById(containerId);
+      while(el.firstChild) el.removeChild(el.firstChild);
+      saved.forEach(d => addRow(d.label, d.balance, d.rate, d.minPayment));
+      onChange();
+      return true;
+    }
+    return {addRow, readRows, loadFromSaved};
   }
 
   const strategyRowsEl = document.getElementById('debtRows');
@@ -890,6 +907,12 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   strategyRows.addRow('Carte de crédit', 2000, 19, 80);
   strategyRows.addRow('Prêt personnel', 6000, 5, 150);
   updateDebtStrategy();
+  document.getElementById('debtLoadSaved').addEventListener('click', () => {
+    const ok = strategyRows.loadFromSaved();
+    document.getElementById('debtLoadStatus').textContent = ok
+      ? `${getPersonalDebts().length} crédit(s) chargé(s) depuis "Mes crédits enregistrés".`
+      : `Aucun crédit enregistré pour l'instant — ajoute-en dans "Mes crédits enregistrés" ci-dessus.`;
+  });
   renderNextStepCard('nextstep-debt-strategy', {domainKey: 'personalFinance'});
 
   const consoRows = createDebtRowList('debtConsoRows', () => updateDebtConsolidation());
@@ -907,7 +930,202 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   consoRows.addRow('Carte de crédit', 2000, 19, 80);
   consoRows.addRow('Prêt personnel', 6000, 5, 150);
   updateDebtConsolidation();
+  document.getElementById('debtConsoLoadSaved').addEventListener('click', () => {
+    const ok = consoRows.loadFromSaved();
+    document.getElementById('debtConsoLoadStatus').textContent = ok
+      ? `${getPersonalDebts().length} crédit(s) chargé(s) depuis "Mes crédits enregistrés".`
+      : `Aucun crédit enregistré pour l'instant — ajoute-en dans "Mes crédits enregistrés" ci-dessus.`;
+  });
   renderNextStepCard('nextstep-debt-consolidation', {domainKey: 'personalFinance'});
+})();
+
+// ---------- Mes crédits enregistrés (Financial Lab, Phase 2) : éditeur
+// persistant unique pour fzr-personal-debts — le tableau de bord (Phase 1)
+// et les 2 outils ci-dessus (import à la demande, jamais une liaison
+// permanente) le lisent, mais c'est ici et ici seulement qu'on l'écrit. ----------
+(function initDebtsManager(){
+  const listEl = document.getElementById('debtMgrList');
+  if(!listEl) return;
+  const labelEl = document.getElementById('debtMgrLabel');
+  const balanceEl = document.getElementById('debtMgrBalance');
+  const rateEl = document.getElementById('debtMgrRate');
+  const minEl = document.getElementById('debtMgrMin');
+
+  function render(){
+    const debts = getPersonalDebts();
+    if(debts.length === 0){
+      listEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucun crédit enregistré pour l'instant.</p>`;
+      return;
+    }
+    listEl.innerHTML = debts.map(d => `
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--hairline);">
+        <span>${d.label} — ${fmtEUR(d.balance)} à ${d.rate}%</span>
+        <span style="display:flex;align-items:center;gap:10px;"><span class="mono">${fmtEUR(d.minPayment)}/mois</span><button type="button" class="btn btn-sm debt-mgr-remove" data-id="${d.id}" aria-label="Supprimer">✕</button></span>
+      </div>`).join('');
+    listEl.querySelectorAll('.debt-mgr-remove').forEach(btn => {
+      btn.addEventListener('click', () => { removePersonalDebt(btn.dataset.id); render(); });
+    });
+  }
+
+  document.getElementById('debtMgrAdd').addEventListener('click', () => {
+    const entry = savePersonalDebt({label: labelEl.value, balance: +balanceEl.value, rate: +rateEl.value, minPayment: +minEl.value});
+    if(entry) render();
+  });
+
+  render();
+})();
+
+// ---------- Mes objectifs (Financial Lab, Phase 2) : éditeur persistant pour
+// fzr-financial-goals — statut 🟢🟠🔴 calculé par computeGoalProjection
+// (scripts/data.js), jamais un jugement fabriqué ici. ----------
+(function initGoalsManager(){
+  const listEl = document.getElementById('goalMgrList');
+  if(!listEl) return;
+  const nomEl = document.getElementById('goalMgrNom');
+  const cibleEl = document.getElementById('goalMgrCible');
+  const actuelEl = document.getElementById('goalMgrActuel');
+  const versementEl = document.getElementById('goalMgrVersement');
+  const dateEl = document.getElementById('goalMgrDate');
+  const STATUT_META = {
+    ontrack: {emoji:'🟢', label:'En bonne voie'},
+    atrisk: {emoji:'🟠', label:'À risque'},
+    impossible: {emoji:'🔴', label:"Hors d'atteinte au rythme actuel"},
+    atteint: {emoji:'🏆', label:'Atteint'}
+  };
+
+  function render(){
+    const goals = getFinancialGoals();
+    if(goals.length === 0){
+      listEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucun objectif enregistré pour l'instant.</p>`;
+      return;
+    }
+    listEl.innerHTML = goals.map(g => {
+      const p = computeGoalProjection(g);
+      const meta = p && p.statut ? STATUT_META[p.statut] : null;
+      const statutHtml = meta ? `${meta.emoji} ${meta.label}` : (p && p.moisNecessaires !== null ? `${p.moisNecessaires} mois nécessaires au rythme actuel` : '—');
+      return `
+      <div style="padding:8px 0;border-bottom:1px solid var(--hairline);">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+          <strong style="font-size:13px;">${g.nom}</strong>
+          <span style="display:flex;align-items:center;gap:10px;font-size:12.5px;"><span>${statutHtml}</span><button type="button" class="btn btn-sm goal-mgr-remove" data-id="${g.id}" aria-label="Supprimer">✕</button></span>
+        </div>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${fmtEUR(g.montantActuel)} / ${fmtEUR(g.montantCible)}${g.versementMensuel > 0 ? ` — ${fmtEUR(g.versementMensuel)}/mois` : ''}${g.dateCible ? ` — cible : ${g.dateCible}` : ''}</p>
+      </div>`;
+    }).join('');
+    listEl.querySelectorAll('.goal-mgr-remove').forEach(btn => {
+      btn.addEventListener('click', () => { removeFinancialGoal(btn.dataset.id); render(); });
+    });
+  }
+
+  document.getElementById('goalMgrAdd').addEventListener('click', () => {
+    const entry = saveFinancialGoal({nom: nomEl.value, montantCible: +cibleEl.value, montantActuel: +actuelEl.value, versementMensuel: +versementEl.value, dateCible: dateEl.value || null});
+    if(entry) render();
+  });
+
+  render();
+})();
+
+// ---------- Mes abonnements & factures (Financial Lab, Phase 2) : éditeur
+// persistant pour fzr-recurring-charges — le coût sur 10 ans (computeRecurringChargeCost)
+// répond directement à "que se passe-t-il si je supprime ça". ----------
+(function initChargesManager(){
+  const listEl = document.getElementById('chargeMgrList');
+  if(!listEl) return;
+  const nomEl = document.getElementById('chargeMgrNom');
+  const montantEl = document.getElementById('chargeMgrMontant');
+  const frequenceEl = document.getElementById('chargeMgrFrequence');
+  const categorieEl = document.getElementById('chargeMgrCategorie');
+
+  function render(){
+    const charges = getRecurringCharges();
+    if(charges.length === 0){
+      listEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucun abonnement ni facture enregistré pour l'instant.</p>`;
+      return;
+    }
+    const total = computeRecurringChargesTotal(charges);
+    listEl.innerHTML = `
+      <p style="font-size:13px;margin-bottom:10px;"><strong>Total : ${fmtEUR(total.mensuel)}/mois</strong> (${fmtEUR(total.annuel)}/an)</p>
+      ${charges.map(c => {
+        const cost = computeRecurringChargeCost(c);
+        return `
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--hairline);">
+          <span>${c.categorie === 'facture' ? '🧾' : '🔁'} ${c.nom} — ${fmtEUR(c.montant)}/${c.frequence}</span>
+          <span style="display:flex;align-items:center;gap:10px;"><span class="mono" style="color:var(--text-dim);">supprimer = ${fmtEUR(cost.sur10ans)} sur 10 ans</span><button type="button" class="btn btn-sm charge-mgr-remove" data-id="${c.id}" aria-label="Supprimer">✕</button></span>
+        </div>`;
+      }).join('')}`;
+    listEl.querySelectorAll('.charge-mgr-remove').forEach(btn => {
+      btn.addEventListener('click', () => { removeRecurringCharge(btn.dataset.id); render(); });
+    });
+  }
+
+  document.getElementById('chargeMgrAdd').addEventListener('click', () => {
+    const entry = saveRecurringCharge({nom: nomEl.value, montant: +montantEl.value, frequence: frequenceEl.value, categorie: categorieEl.value});
+    if(entry) render();
+  });
+
+  render();
+})();
+
+// ---------- Mon patrimoine net (Financial Lab, Phase 2) : éditeur persistant
+// pour fzr-net-worth-assets, les dettes venant TOUJOURS de fzr-personal-debts
+// (jamais une seconde liste de passifs, §71). Historique : un point réel par
+// mois (recordNetWorthSnapshot), jamais un historique rétroactif fabriqué —
+// il se construit au fil des visites. ----------
+(function initNetWorthManager(){
+  const listEl = document.getElementById('assetMgrList');
+  if(!listEl) return;
+  const nomEl = document.getElementById('assetMgrNom');
+  const valeurEl = document.getElementById('assetMgrValeur');
+  const categorieEl = document.getElementById('assetMgrCategorie');
+  const CATEGORY_LABELS = {cash:'Épargne / cash', actions:'Actions / placements', immobilier:'Immobilier', vehicule:'Véhicule', autre:'Autre'};
+
+  function render(){
+    const assets = getNetWorthAssets();
+    const debts = getPersonalDebts();
+    const net = computeNetWorth(assets, debts);
+
+    if(assets.length === 0){
+      listEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucun actif enregistré pour l'instant.</p>`;
+    } else {
+      listEl.innerHTML = assets.map(a => `
+        <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--hairline);">
+          <span>${a.nom} (${CATEGORY_LABELS[a.categorie] || a.categorie})</span>
+          <span style="display:flex;align-items:center;gap:10px;"><span class="mono">${fmtEUR(a.valeur)}</span><button type="button" class="btn btn-sm asset-mgr-remove" data-id="${a.id}" aria-label="Supprimer">✕</button></span>
+        </div>`).join('');
+      listEl.querySelectorAll('.asset-mgr-remove').forEach(btn => {
+        btn.addEventListener('click', () => { removeNetWorthAsset(btn.dataset.id); render(); });
+      });
+    }
+
+    document.getElementById('netWorthSummary').innerHTML = `
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(130px,1fr));">
+        <div class="card"><span class="smallcaps">Actifs</span><div class="result-big" style="font-size:18px;margin-top:6px;">${fmtEUR(net.totalActifs)}</div></div>
+        <div class="card"><span class="smallcaps">Dettes (${debts.length})</span><div class="result-big" style="font-size:18px;margin-top:6px;">${fmtEUR(net.totalPassifs)}</div></div>
+        <div class="card"><span class="smallcaps">Patrimoine net</span><div class="result-big" style="font-size:18px;margin-top:6px;color:${net.patrimoineNet>=0?'var(--emerald)':'var(--bordeaux)'};">${fmtEUR(net.patrimoineNet)}</div></div>
+      </div>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">Les dettes viennent de l'onglet "Dettes & crédits" — jamais saisies deux fois ici.</p>`;
+
+    if(assets.length > 0 || debts.length > 0){
+      recordNetWorthSnapshot(currentMonthKey(), net.patrimoineNet);
+    }
+    const history = getNetWorthHistory();
+    if(history.length < 2){
+      document.getElementById('netWorthHistory').innerHTML = `<p style="font-size:12px;color:var(--text-dim);">L'historique se construit au fil de tes visites — reviens le mois prochain pour voir l'évolution.</p>`;
+    } else {
+      const chart = renderMultiLineChart([{data: history.map(p => p.patrimoineNet), color: 'var(--gold-bright)', width: 2.5}]);
+      document.getElementById('netWorthHistory').innerHTML = `
+        <span class="smallcaps" style="display:block;margin-bottom:8px;">Évolution du patrimoine net</span>
+        <div class="pattern-chart">${chart}</div>
+        <p style="font-size:11px;color:var(--text-dim);margin-top:6px;">${history[0].mois} → ${history[history.length-1].mois}</p>`;
+    }
+  }
+
+  document.getElementById('assetMgrAdd').addEventListener('click', () => {
+    const entry = saveNetWorthAsset({nom: nomEl.value, valeur: +valeurEl.value, categorie: categorieEl.value});
+    if(entry) render();
+  });
+
+  render();
 })();
 
 // ---------- Transport : coût total de possession + comparaison de

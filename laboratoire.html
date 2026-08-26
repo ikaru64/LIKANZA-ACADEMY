@@ -454,6 +454,19 @@
   <div class="quick-access-grid" id="tab-dettes-widgets"></div>
   <div class="card-grid">
 
+    <div class="card" id="widget-debts-manager" style="display:none;grid-column:1/-1;">
+      <h3>Mes crédits enregistrés</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Liste persistante, utilisée par le tableau de bord et importable dans les 2 outils ci-dessous — jamais un crédit à ressaisir à deux endroits différents.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:2;min-width:140px;"><label for="debtMgrLabel">Nom du crédit</label><input type="text" id="debtMgrLabel" placeholder="Prêt auto"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="debtMgrBalance">Solde (€)</label><input type="number" id="debtMgrBalance" min="0" value="1000"></div>
+        <div class="field" style="flex:1;min-width:90px;"><label for="debtMgrRate">Taux (%)</label><input type="number" id="debtMgrRate" min="0" max="30" step="0.1" value="5"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="debtMgrMin">Mensualité min. (€)</label><input type="number" id="debtMgrMin" min="0" value="100"></div>
+      </div>
+      <button class="btn btn-sm btn-gold" id="debtMgrAdd" style="margin-top:10px;">+ Ajouter</button>
+      <div id="debtMgrList" style="margin-top:14px;"></div>
+    </div>
+
     <div class="card" id="widget-debt-strategy" style="display:none;grid-column:1/-1;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:10px;">
         <h3>Quel crédit rembourser en premier ?</h3>
@@ -461,7 +474,11 @@
       </div>
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Ajoute tes crédits réels (solde restant, taux, mensualité minimale) pour comparer deux stratégies de remboursement — jamais un ordre arbitraire.</p>
       <div id="debtRows"></div>
-      <button class="btn btn-sm" id="debtAdd" style="margin-top:10px;">+ Ajouter un crédit</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn btn-sm" id="debtAdd">+ Ajouter un crédit</button>
+        <button class="btn btn-sm" id="debtLoadSaved">📥 Charger mes crédits enregistrés</button>
+      </div>
+      <p id="debtLoadStatus" style="font-size:12px;color:var(--text-dim);margin-top:6px;"></p>
       <div class="field" style="max-width:300px;margin-top:14px;"><label for="debtExtra">Mensualité supplémentaire disponible (€)</label><input type="number" id="debtExtra" value="0" min="0"></div>
       <div id="debtStrategyOutput" style="margin-top:16px;"></div>
       <p class="disclaimer-box" style="margin-top:14px;">Simulation mois par mois à partir des vraies valeurs saisies — jamais une garantie que ta banque appliquera exactement ce calendrier (pénalités de remboursement anticipé éventuelles à vérifier auprès de chaque prêteur).</p>
@@ -477,7 +494,11 @@
       <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Compare tes crédits actuels à un unique crédit regroupé — une mensualité plus faible ne signifie pas toujours un coût total plus bas.</p>
       <span class="smallcaps">Crédits actuels</span>
       <div id="debtConsoRows" style="margin-top:8px;"></div>
-      <button class="btn btn-sm" id="debtConsoAdd" style="margin-top:10px;">+ Ajouter un crédit</button>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px;">
+        <button class="btn btn-sm" id="debtConsoAdd">+ Ajouter un crédit</button>
+        <button class="btn btn-sm" id="debtConsoLoadSaved">📥 Charger mes crédits enregistrés</button>
+      </div>
+      <p id="debtConsoLoadStatus" style="font-size:12px;color:var(--text-dim);margin-top:6px;"></p>
       <span class="smallcaps" style="display:block;margin-top:18px;">Nouveau crédit regroupé</span>
       <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px;">
         <div class="field" style="flex:1;min-width:140px;"><label for="consoAmount">Montant regroupé (€)</label><input type="number" id="consoAmount" value="9000" min="0"></div>
@@ -623,6 +644,47 @@
       <div id="subRateAlert"></div>
       <div id="method-budget-sub"></div>
       <div id="nextstep-budget-sub" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" id="widget-goals-manager" style="display:none;grid-column:1/-1;">
+      <h3>Mes objectifs</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Plusieurs objectifs en parallèle, chacun avec son propre statut — jamais un jugement, un chiffre comparé à ta date cible si tu en donnes une.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:2;min-width:140px;"><label for="goalMgrNom">Nom de l'objectif</label><input type="text" id="goalMgrNom" placeholder="Apport immobilier"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="goalMgrCible">Montant visé (€)</label><input type="number" id="goalMgrCible" min="0" value="5000"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="goalMgrActuel">Déjà épargné (€)</label><input type="number" id="goalMgrActuel" min="0" value="0"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="goalMgrVersement">Versement mensuel (€)</label><input type="number" id="goalMgrVersement" min="0" value="150"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="goalMgrDate">Date cible (optionnel)</label><input type="date" id="goalMgrDate"></div>
+      </div>
+      <button class="btn btn-sm btn-gold" id="goalMgrAdd" style="margin-top:10px;">+ Ajouter</button>
+      <div id="goalMgrList" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card" id="widget-charges-manager" style="display:none;grid-column:1/-1;">
+      <h3>Mes abonnements &amp; factures</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Liste multi-entrées, avec le vrai coût cumulé sur 3, 5 et 10 ans — pour voir d'un coup d'œil ce que représenterait la suppression de chacun.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:2;min-width:140px;"><label for="chargeMgrNom">Nom</label><input type="text" id="chargeMgrNom" placeholder="Streaming vidéo"></div>
+        <div class="field" style="flex:1;min-width:100px;"><label for="chargeMgrMontant">Montant (€)</label><input type="number" id="chargeMgrMontant" min="0" value="15"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="chargeMgrFrequence">Fréquence</label><select id="chargeMgrFrequence"><option value="mensuel">Mensuel</option><option value="trimestriel">Trimestriel</option><option value="annuel">Annuel</option></select></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="chargeMgrCategorie">Catégorie</label><select id="chargeMgrCategorie"><option value="abonnement">Abonnement</option><option value="facture">Facture</option></select></div>
+      </div>
+      <button class="btn btn-sm btn-gold" id="chargeMgrAdd" style="margin-top:10px;">+ Ajouter</button>
+      <div id="chargeMgrList" style="margin-top:14px;"></div>
+    </div>
+
+    <div class="card" id="widget-net-worth" style="display:none;grid-column:1/-1;">
+      <h3>Mon patrimoine net</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Actifs que tu ajoutes ici, moins tes crédits déjà enregistrés dans l'onglet Dettes &amp; crédits — jamais une dette saisie deux fois.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:2;min-width:140px;"><label for="assetMgrNom">Nom</label><input type="text" id="assetMgrNom" placeholder="Livret A"></div>
+        <div class="field" style="flex:1;min-width:110px;"><label for="assetMgrValeur">Valeur (€)</label><input type="number" id="assetMgrValeur" min="0" value="1000"></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="assetMgrCategorie">Catégorie</label><select id="assetMgrCategorie"><option value="cash">Épargne / cash</option><option value="actions">Actions / placements</option><option value="immobilier">Immobilier</option><option value="vehicule">Véhicule</option><option value="autre">Autre</option></select></div>
+      </div>
+      <button class="btn btn-sm btn-gold" id="assetMgrAdd" style="margin-top:10px;">+ Ajouter</button>
+      <div id="assetMgrList" style="margin-top:14px;"></div>
+      <div id="netWorthSummary" style="margin-top:16px;"></div>
+      <div id="netWorthHistory" style="margin-top:16px;"></div>
     </div>
 
   </div>

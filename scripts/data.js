@@ -5896,7 +5896,7 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
   'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
   'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
-  'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries'
+  'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries', 'fzr-net-worth-history'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
@@ -6726,6 +6726,27 @@ function computeNetWorth(assets, debts){
   NET_WORTH_ASSET_CATEGORIES.forEach(c => { parCategorie[c] = 0; });
   (assets || []).forEach(a => { if(parCategorie[a.categorie] !== undefined) parCategorie[a.categorie] += a.valeur; });
   return {totalActifs, totalPassifs, patrimoineNet: totalActifs - totalPassifs, parCategorie};
+}
+// Historique du patrimoine net (Financial Lab, Phase 2 — "avec historique") :
+// un point réel par mois, jamais un historique rétroactif fabriqué. Un seul
+// point par mois (écrasé s'il existe déjà) : rouvrir la page 3 fois le même
+// mois ne doit jamais créer 3 points, seulement mettre à jour le point du
+// mois en cours avec la valeur la plus récente.
+const NET_WORTH_HISTORY_KEY = 'fzr-net-worth-history';
+function getNetWorthHistory(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(NET_WORTH_HISTORY_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function recordNetWorthSnapshot(mois, patrimoineNet){
+  if(typeof mois !== 'string' || !/^\d{4}-\d{2}$/.test(mois) || typeof patrimoineNet !== 'number' || !isFinite(patrimoineNet)) return null;
+  const list = getNetWorthHistory().filter(p => p.mois !== mois);
+  const point = {mois, patrimoineNet, dateAjout: new Date().toISOString()};
+  list.push(point);
+  list.sort((a, b) => a.mois.localeCompare(b.mois));
+  localStorage.setItem(NET_WORTH_HISTORY_KEY, JSON.stringify(list));
+  return point;
 }
 
 // ============================================================
