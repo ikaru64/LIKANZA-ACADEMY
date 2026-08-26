@@ -4213,7 +4213,7 @@ const BUSINESS_METHODOLOGY = {
     comprendre: "Un ratio LTV/CAC élevé ne suffit pas à lui seul : si le seuil de rentabilité en ventes mensuelles n'est jamais atteint, l'activité peut rester déficitaire malgré un bon ratio par client. Un payback period long (>12-18 mois, repère usuel) signifie que l'entreprise doit financer longtemps l'acquisition avant de la rentabiliser."
   },
   'headcount': {
-    calcul: "Coût total mensuel = salaire brut × (1 + charges patronales %). Marge nette mensuelle = marge générée par le poste − coût total mensuel. Mois pour rentabiliser = coût de recrutement ÷ marge nette mensuelle (si positive).",
+    calcul: "Coût total mensuel = salaire brut × (1 + charges patronales %). Marge nette mensuelle = marge générée par le poste − coût total mensuel. Mois pour rentabiliser = coût de recrutement ÷ marge nette mensuelle (si positive). Comparaison optionnelle : coût mensuel freelance = tarif journalier × jours facturés par mois.",
     donnees: "Aucune donnée externe : uniquement les hypothèses que tu saisis toi-même.",
     hypotheses: "Suppose que la marge générée par le poste est constante dès le premier mois — en réalité, une nouvelle recrue met généralement du temps à devenir pleinement opérationnelle (montée en compétence).",
     limites: "Ne modélise ni la formation, ni la période d'essai, ni le risque de turnover — un vrai coût de recrutement inclut souvent bien plus que les frais d'annonce ou d'agence (temps de l'équipe consacré au recrutement, par exemple).",
@@ -4234,7 +4234,7 @@ const BUSINESS_METHODOLOGY = {
     comprendre: "Le \"volume nécessaire pour la même marge totale\" répond à la question qui compte vraiment avant de baisser un prix : pas \"combien vais-je vendre en plus ?\" (personne ne le sait avec certitude), mais \"combien devrais-je vendre en plus pour au moins ne pas perdre d'argent ?\" — un repère concret pour juger si l'objectif est réaliste."
   },
   'sales-funnel': {
-    calcul: "Leads = visiteurs × taux de conversion visiteur→lead. Prospects = leads × taux lead→prospect. Clients = prospects × taux prospect→client. CAC implicite = budget marketing ÷ clients.",
+    calcul: "Leads = visiteurs × taux de conversion visiteur→lead. Prospects = leads × taux lead→prospect. Clients = prospects × taux prospect→client. CAC implicite = budget marketing ÷ clients. Comparaison « où agir en priorité » : +20% appliqué à un seul taux à la fois, toutes choses égales par ailleurs.",
     donnees: "Aucune donnée externe : uniquement les taux de conversion que tu saisis toi-même à chaque étage.",
     hypotheses: "Suppose des taux de conversion constants à chaque étage, indépendamment du volume de visiteurs.",
     limites: "En réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser les taux de conversion réels à chaque étage — ce calcul ne modélise pas cet effet.",
@@ -4364,7 +4364,17 @@ function computeHeadcountBreakeven(a){
   // recrutement — statut "jamais", pas un chiffre de mois inventé.
   const moisBreakEven = margeNetteMensuelle > 0 ? (coutRecrutement > 0 ? coutRecrutement / margeNetteMensuelle : 0) : null;
 
-  return {salaireBrutMensuel, chargesPatronalesPct, coutRecrutement, margeGenereeParEmploye, coutTotalMensuel, coutTotalAnnuel, margeNetteMensuelle, moisBreakEven};
+  // Comparaison optionnelle salarié vs freelance/prestataire (§ Options/Impact) :
+  // jamais calculée si les 2 champs ne sont pas renseignés, pour ne jamais
+  // afficher un coût freelance fabriqué à partir d'hypothèses vides.
+  const tarifJournalierFreelance = Number(a.tarifJournalierFreelance) || 0;
+  const joursParMoisFreelance = Number(a.joursParMoisFreelance) || 0;
+  const coutFreelanceMensuel = (tarifJournalierFreelance > 0 && joursParMoisFreelance > 0) ? tarifJournalierFreelance * joursParMoisFreelance : null;
+
+  return {
+    salaireBrutMensuel, chargesPatronalesPct, coutRecrutement, margeGenereeParEmploye, coutTotalMensuel, coutTotalAnnuel, margeNetteMensuelle, moisBreakEven,
+    tarifJournalierFreelance, joursParMoisFreelance, coutFreelanceMensuel
+  };
 }
 function renderHeadcountSimulator(elId){
   const el = document.getElementById(elId);
@@ -4379,6 +4389,11 @@ function renderHeadcountSimulator(elId){
       <div class="field"><label for="${elId}-coutRecrutement">Coût de recrutement ponctuel (€)</label><input type="number" id="${elId}-coutRecrutement" min="0" value="${stored.coutRecrutement}"></div>
       <div class="field"><label for="${elId}-margeGenereeParEmploye">Marge générée par ce poste (€/mois)</label><input type="number" id="${elId}-margeGenereeParEmploye" min="0" value="${stored.margeGenereeParEmploye}"></div>
     </div>
+    <span class="smallcaps" style="display:block;margin-bottom:8px;">Comparer à un freelance/prestataire ? (optionnel)</span>
+    <div class="card-grid" style="margin-bottom:16px;">
+      <div class="field"><label for="${elId}-tarifJournalierFreelance">Tarif journalier freelance (€)</label><input type="number" id="${elId}-tarifJournalierFreelance" min="0" value="${stored.tarifJournalierFreelance || 0}"></div>
+      <div class="field"><label for="${elId}-joursParMoisFreelance">Jours facturés par mois</label><input type="number" id="${elId}-joursParMoisFreelance" min="0" max="31" value="${stored.joursParMoisFreelance || 0}"></div>
+    </div>
     <div id="${elId}-results"></div>
     <div id="${elId}-method"></div>
     <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
@@ -4388,7 +4403,9 @@ function renderHeadcountSimulator(elId){
       salaireBrutMensuel: document.getElementById(`${elId}-salaireBrutMensuel`).value,
       chargesPatronalesPct: document.getElementById(`${elId}-chargesPatronalesPct`).value,
       coutRecrutement: document.getElementById(`${elId}-coutRecrutement`).value,
-      margeGenereeParEmploye: document.getElementById(`${elId}-margeGenereeParEmploye`).value
+      margeGenereeParEmploye: document.getElementById(`${elId}-margeGenereeParEmploye`).value,
+      tarifJournalierFreelance: document.getElementById(`${elId}-tarifJournalierFreelance`).value,
+      joursParMoisFreelance: document.getElementById(`${elId}-joursParMoisFreelance`).value
     };
   }
   function update(){
@@ -4403,13 +4420,21 @@ function renderHeadcountSimulator(elId){
         <div class="result-row" style="justify-content:space-between;"><span>Marge nette mensuelle (marge générée − coût)</span><span class="mono" style="color:${r.margeNetteMensuelle>=0?'var(--emerald)':'var(--bordeaux)'};">${r.margeNetteMensuelle>=0?'+':''}${fmtEUR(r.margeNetteMensuelle)}</span></div>
         <div class="result-row" style="justify-content:space-between;"><span>Rentabilisée (coût de recrutement récupéré) en</span><span class="mono">${r.moisBreakEven===null?'Jamais, au rythme actuel':r.moisBreakEven.toFixed(1)+' mois'}</span></div>
       </div>
+      ${r.coutFreelanceMensuel !== null ? `
+      <div class="card" style="margin-bottom:14px;">
+        <span class="smallcaps">Salarié vs freelance/prestataire</span>
+        <div class="result-row" style="justify-content:space-between;margin-top:10px;"><span>Coût mensuel salarié</span><span class="mono">${fmtEUR(r.coutTotalMensuel)}</span></div>
+        <div class="result-row" style="justify-content:space-between;"><span>Coût mensuel freelance (${r.joursParMoisFreelance} j × ${fmtEUR(r.tarifJournalierFreelance)})</span><span class="mono">${fmtEUR(r.coutFreelanceMensuel)}</span></div>
+        <div class="result-row" style="justify-content:space-between;border-top:1px solid var(--hairline);padding-top:6px;margin-top:4px;"><span><strong>Écart mensuel</strong></span><span class="mono" style="color:${r.coutFreelanceMensuel<=r.coutTotalMensuel?'var(--emerald)':'var(--bordeaux)'};"><strong>${fmtEUR(Math.abs(r.coutFreelanceMensuel-r.coutTotalMensuel))} ${r.coutFreelanceMensuel<=r.coutTotalMensuel?'moins cher en freelance':'moins cher en salarié'}</strong></span></div>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:8px;">Le coût le plus bas ne fait pas tout : un salarié offre un engagement long terme, une disponibilité et une intégration à l'équipe qu'un freelance n'offre pas forcément, et inversement un freelance permet d'ajuster le volume sans engagement de durée — jamais une simple question de prix.</p>
+      </div>` : ''}
       <p class="disclaimer-box">La "marge générée par ce poste" est une hypothèse que tu fixes toi-même (ex. chiffre d'affaires additionnel × marge, ou temps libéré valorisé) — jamais un chiffre garanti ni mesuré automatiquement.</p>
       ${renderCourseLibraryLinks(['Recrutement'])}
       ${renderRelatedCourseLink('operations-rh-essentiels', 'RH : recruter, intégrer et retenir')}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['headcount']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
-  ['salaireBrutMensuel','chargesPatronalesPct','coutRecrutement','margeGenereeParEmploye'].forEach(key => {
+  ['salaireBrutMensuel','chargesPatronalesPct','coutRecrutement','margeGenereeParEmploye','tarifJournalierFreelance','joursParMoisFreelance'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
   });
   update();
@@ -4681,7 +4706,13 @@ function renderSalesFunnel(elId){
         <div class="result-row" style="justify-content:space-between;margin-top:14px;padding-top:10px;border-top:1px solid var(--hairline);"><span>Taux de conversion global</span><span class="mono">${r.tauxConversionGlobal===null?'—':r.tauxConversionGlobal.toFixed(2)+' %'}</span></div>
         <div class="result-row" style="justify-content:space-between;"><span>CAC implicite (budget ÷ clients)</span><span class="mono">${r.cac===null?'—':fmtEUR(r.cac)}</span></div>
       </div>
-      <p class="disclaimer-box" style="margin-top:10px;">Suppose des taux de conversion constants à chaque étage, indépendamment du volume — en réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser ces taux.</p>
+      <span class="smallcaps" style="display:block;margin:14px 0 8px;">Où agir en priorité ? +20% sur un seul taux, toutes choses égales par ailleurs</span>
+      <div class="card-grid">
+        <div class="card"><h4>Visiteur → Lead +20%</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Clients : <strong class="mono">${Math.round(computeSalesFunnel({...a, tauxLead: a.tauxLead*1.2}).clients)}</strong> (${Math.round(computeSalesFunnel({...a, tauxLead: a.tauxLead*1.2}).clients - r.clients)>=0?'+':''}${Math.round(computeSalesFunnel({...a, tauxLead: a.tauxLead*1.2}).clients - r.clients)})</p></div>
+        <div class="card"><h4>Lead → Prospect +20%</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Clients : <strong class="mono">${Math.round(computeSalesFunnel({...a, tauxProspect: a.tauxProspect*1.2}).clients)}</strong> (${Math.round(computeSalesFunnel({...a, tauxProspect: a.tauxProspect*1.2}).clients - r.clients)>=0?'+':''}${Math.round(computeSalesFunnel({...a, tauxProspect: a.tauxProspect*1.2}).clients - r.clients)})</p></div>
+        <div class="card"><h4>Prospect → Client +20%</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Clients : <strong class="mono">${Math.round(computeSalesFunnel({...a, tauxClient: a.tauxClient*1.2}).clients)}</strong> (${Math.round(computeSalesFunnel({...a, tauxClient: a.tauxClient*1.2}).clients - r.clients)>=0?'+':''}${Math.round(computeSalesFunnel({...a, tauxClient: a.tauxClient*1.2}).clients - r.clients)})</p></div>
+      </div>
+      <p class="disclaimer-box" style="margin-top:10px;">Suppose des taux de conversion constants à chaque étage, indépendamment du volume — en réalité, un volume de visiteurs plus élevé peut attirer un trafic moins qualifié et faire baisser ces taux. La comparaison "où agir en priorité" applique le même +20% relatif à chaque étage pour rester comparable, mais un effort marketing réel ne coûte pas forcément le même prix selon l'étage visé.</p>
       ${renderCourseLibraryLinks(['Pipeline commercial', 'Qualification', 'Taux de conversion'])}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['sales-funnel']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});

@@ -157,7 +157,7 @@ const LAB_METHODOLOGY = {
     comprendre: "Une simulation rétrospective ne prédit rien : elle montre ce qui se serait passé sur cette période précise, avec ce support précis — une autre période aurait donné un résultat différent."
   },
   'invest-dca': {
-    calcul: "Même principe que « Et si j'avais investi ? » : chaque versement mensuel achète des unités au vrai cours du mois. Le prix moyen d'achat réel est le total dépensé divisé par le nombre total d'unités achetées.",
+    calcul: "Même principe que « Et si j'avais investi ? » : chaque versement mensuel achète des unités au vrai cours du mois. Le prix moyen d'achat réel est le total dépensé divisé par le nombre total d'unités achetées. Comparaison : le même total, investi en une seule fois au premier cours de la période plutôt qu'étalé mois par mois.",
     donnees: "Cours de clôture mensuels réels (Yahoo Finance) du support choisi.",
     hypotheses: "Le versement mensuel et la date de départ.",
     limites: "Ne tient pas compte des frais de courtage ni de la fiscalité.",
@@ -704,9 +704,17 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
     const result = computeHistoricalInvestment(slice, 0, +monthlyEl.value || 0);
     if(!result){ outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">Pas assez de données sur cette période.</p>`; return; }
 
+    // Comparaison DCA vs investissement immédiat (§ Options/Impact) : le
+    // MÊME total versé, mais investi en une fois au premier cours de la
+    // période plutôt qu'étalé mois par mois — computeHistoricalInvestment
+    // avec ce total en capital initial et 0 en versement mensuel donne
+    // exactement ce scénario, sans nouvelle fonction de calcul.
+    const lumpSum = computeHistoricalInvestment(slice, result.totalInvested, 0);
+
     const chart = renderMultiLineChart([
       {data: result.investedSeries, color: 'var(--text-dim)', dashed: true, width: 1.5},
-      {data: result.valueSeries, color: 'var(--gold-bright)', width: 2.5}
+      {data: result.valueSeries, color: 'var(--gold-bright)', width: 2.5},
+      ...(lumpSum ? [{data: lumpSum.valueSeries, color: 'var(--emerald)', dashed: true, width: 2}] : [])
     ]);
 
     outputEl.innerHTML = `
@@ -717,7 +725,13 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
         <div class="card"><span class="smallcaps">Prix moyen d'achat réel</span><div class="result-big" style="font-size:19px;margin-top:6px;">${result.avgPurchasePrice.toFixed(2)} €</div></div>
         <div class="card"><span class="smallcaps">Achats pendant une baisse</span><div class="result-big" style="font-size:19px;margin-top:6px;">${result.buysDuringDip}</div></div>
       </div>
-      <p class="disclaimer-box" style="margin-top:12px;">Le DCA (achat régulier) ne garantit pas un meilleur résultat qu'un versement unique — il lisse le prix d'entrée. Voir le comparateur DCA vs investissement immédiat (phase à venir).</p>`;
+      ${lumpSum ? `
+      <div style="display:flex;gap:16px;flex-wrap:wrap;margin:10px 0;font-size:12px;color:var(--text-dim);">
+        <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-bright);border-radius:50%;margin-right:6px;"></span>DCA (versement régulier)</span>
+        <span><span style="display:inline-block;width:10px;height:2px;background:var(--emerald);margin-right:6px;vertical-align:middle;"></span>Même total, investi en une fois au départ</span>
+      </div>
+      <p style="font-size:13px;margin-top:6px;">Avec ces ${fmtEUR(result.totalInvested)} investis en une seule fois au premier cours connu de la période plutôt qu'étalés mois par mois, tu aurais obtenu <strong style="color:${lumpSum.finalValue>=result.finalValue?'var(--emerald)':'var(--bordeaux)'};">${fmtEUR(lumpSum.finalValue)}</strong> (${lumpSum.finalValue>=result.finalValue?'+':''}${fmtEUR(lumpSum.finalValue-result.finalValue)} par rapport au DCA sur cette période précise).</p>` : ''}
+      <p class="disclaimer-box" style="margin-top:12px;">Le DCA (achat régulier) ne garantit pas un meilleur résultat qu'un versement unique — il lisse le prix d'entrée, sans jamais garantir une performance supérieure ou inférieure. Une autre période aurait pu donner une conclusion opposée.</p>`;
     renderNextStepCard('nextstep-invest-dca', {domainKey: 'stockMarket'});
   }
 
@@ -1698,10 +1712,17 @@ function updateBond(){
     const ecart = price - face;
     const statut = ecart > 0.5 ? 'en prime (au-dessus du pair)' : (ecart < -0.5 ? 'en décote (en dessous du pair)' : 'au pair (proche de sa valeur nominale)');
     const comparaison = coupon > rate ? 'supérieur' : (coupon < rate ? 'inférieur' : 'égal');
+    const priceRateUp = computeBondPrice(face, coupon, years, rate + 1, freq);
+    const priceRateDown = computeBondPrice(face, coupon, years, Math.max(0, rate - 1), freq);
     resultEl.innerHTML = `
       ${renderDataBadge('calcul')}
       <div class="result-row" style="margin-top:10px;"><span>Prix théorique de l'obligation</span><span class="mono" style="font-size:18px;color:var(--gold-bright);">${fmtEUR(price)}</span></div>
-      <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">L'obligation se négocie <strong style="color:var(--text);">${statut}</strong>, car son taux de coupon (${coupon}%) est ${comparaison} au taux actuellement exigé par le marché (${rate}%).</p>`;
+      <p style="font-size:13px;margin-top:10px;color:var(--text-dim);">L'obligation se négocie <strong style="color:var(--text);">${statut}</strong>, car son taux de coupon (${coupon}%) est ${comparaison} au taux actuellement exigé par le marché (${rate}%).</p>
+      <span class="smallcaps" style="display:block;margin-top:14px;margin-bottom:8px;">Sensibilité au taux — que se passe-t-il si...</span>
+      <div class="card-grid">
+        <div class="card"><h4>Taux +1 point (${(rate+1).toFixed(1)}%)</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Prix : <strong class="mono" style="color:var(--bordeaux);">${priceRateUp===null?'—':fmtEUR(priceRateUp)}</strong></p></div>
+        <div class="card"><h4>Taux −1 point (${Math.max(0, rate-1).toFixed(1)}%)</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Prix : <strong class="mono" style="color:var(--emerald);">${priceRateDown===null?'—':fmtEUR(priceRateDown)}</strong></p></div>
+      </div>`;
   } else {
     const price = +document.getElementById('bondPriceInput').value;
     const ytm = computeBondYTM(price, face, coupon, years, freq);
