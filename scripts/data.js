@@ -4082,6 +4082,35 @@ function computeUnitEconomics(a){
   return {prix, coutDirect, cac, achatsMoyens, chargesFixes, margeBrute, margeBrutePct, ltv, ratioLtvCac, seuilVentes, revenuTotalMoyen};
 }
 
+// ---------- Panneaux de méthodologie côté Professionnel — même principe et
+// même forme que LAB_METHODOLOGY (scripts/pages/laboratoire.js) côté
+// Personnel, mais rempli à l'intérieur de la fonction de rendu elle-même
+// plutôt qu'en une boucle unique au chargement : contrairement au Laboratoire
+// personnel, les conteneurs de résultat de ces 3 outils sont créés
+// dynamiquement (clic, fin de partie, étape finale de l'assistant), jamais
+// présents dans le HTML statique au chargement de la page. ----------
+const BUSINESS_METHODOLOGY = {
+  'unit-economics': {
+    calcul: "Marge brute = prix de vente − coût direct. LTV = marge brute × nombre d'achats moyen par client. Ratio LTV/CAC = LTV ÷ coût d'acquisition. Seuil de rentabilité (ventes mensuelles) = charges fixes ÷ marge brute.",
+    donnees: "Aucune donnée externe : uniquement les 5 chiffres que tu saisis toi-même (prix, coût direct, CAC, achats moyens, charges fixes).",
+    hypotheses: "Suppose un coût direct et un prix constants sur toutes les ventes, et un nombre d'achats moyen par client représentatif — en réalité, ces chiffres varient d'un client à l'autre.",
+    limites: "Ne modélise ni la saisonnalité, ni le taux de désabonnement dans le temps, ni les coûts indirects (support client, retours) au-delà du coût direct saisi.",
+    comprendre: "Un ratio LTV/CAC élevé ne suffit pas à lui seul : si le seuil de rentabilité en ventes mensuelles n'est jamais atteint, l'activité peut rester déficitaire malgré un bon ratio par client."
+  },
+  'business-game': {
+    calcul: "Chaque décision prise pendant la partie modifie plusieurs variables (trésorerie, clients, MRR, satisfaction...) selon des règles définies à l'avance pour le secteur choisi (voir scripts/games/business-game-data.js) ; le résultat final est l'état cumulé de ces variables après toutes les décisions.",
+    donnees: "Aucune donnée réelle : effets de décisions pré-écrits par secteur (SaaS / E-commerce / Restaurant), pas une vraie modélisation économique ni une prédiction sur une entreprise réelle.",
+    hypotheses: "Suppose que les effets d'une décision sont toujours les mêmes, indépendamment du contexte réel de ton entreprise — un raccourci pédagogique nécessaire pour un jeu déterministe et rejouable.",
+    limites: "Ne remplace jamais un vrai business plan ou une vraie comptabilité : deux entreprises réelles confrontées aux mêmes décisions peuvent obtenir des résultats très différents selon leur marché, leur exécution et des facteurs externes non modélisés ici."
+  },
+  'construire-mon-projet': {
+    calcul: "Seuil de rentabilité = charges fixes mensuelles ÷ marge par vente (prix de vente − coût variable unitaire), à partir des chiffres que tu renseignes toi-même à chaque étape.",
+    donnees: "Aucune donnée externe : uniquement tes propres réponses au questionnaire guidé.",
+    hypotheses: "Suppose un prix de vente et un coût variable constants par unité vendue, sans tenir compte des paliers de charges ou des remises de volume.",
+    limites: "Cette fiche récapitule des hypothèses simplifiées et déclaratives — elle ne constitue ni un business plan complet, ni un conseil financier, ni une garantie de viabilité du projet."
+  }
+};
+
 function renderUnitEconomics(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -4096,7 +4125,8 @@ function renderUnitEconomics(elId){
       <div class="field"><label for="${elId}-achatsMoyens">Nombre d'achats moyen par client</label><input type="number" id="${elId}-achatsMoyens" value="${stored.achatsMoyens}" step="0.1"></div>
       <div class="field"><label for="${elId}-chargesFixes">Charges fixes mensuelles (€)</label><input type="number" id="${elId}-chargesFixes" value="${stored.chargesFixes}"></div>
     </div>
-    <div id="${elId}-results"></div>`;
+    <div id="${elId}-results"></div>
+    <div id="${elId}-method"></div>`;
 
   function readInputs(){
     return {
@@ -4127,6 +4157,7 @@ function renderUnitEconomics(elId){
         <div class="card"><h4>CAC +20%</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Ratio LTV/CAC : <strong class="mono">${r.cac>0 ? (r.ltv/(r.cac*1.2)).toFixed(1)+'×' : '—'}</strong></p></div>
         <div class="card"><h4>1 achat de moins par client</h4><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">LTV : <strong class="mono">${fmtEUR(r.margeBrute * Math.max(0, r.achatsMoyens - 1))}</strong></p></div>
       </div>`;
+    document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['unit-economics']);
   }
   ['prix','coutDirect','cac','achatsMoyens','chargesFixes'].forEach(key => {
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);

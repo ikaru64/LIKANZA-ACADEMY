@@ -256,9 +256,11 @@ function renderBusinessGame(elId){
         <div class="card"><span class="smallcaps">Décisions prises</span><div class="result-big" style="font-size:20px;margin-top:4px;">${game.decisionLog.length}</div></div>
       </div>
       <p class="disclaimer-box">${renderDataBadge('simulation')} Partie basée sur un modèle pédagogique déterministe (voir scripts/games/business-game-data.js) : les effets de chaque décision sont des paramètres de conception écrits à l'avance, jamais générés au hasard ni garantis pour une vraie entreprise.</p>
+      <div id="${elId}-method"></div>
       <button class="btn btn-sm btn-gold" id="${elId}-restart" style="margin-top:10px;">Nouvelle partie</button>
       <div id="${elId}-nextstep"></div>`;
     document.getElementById(`${elId}-restart`).addEventListener('click', renderSetup);
+    document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['business-game']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
 

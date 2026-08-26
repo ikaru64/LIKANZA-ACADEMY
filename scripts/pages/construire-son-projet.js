@@ -489,6 +489,7 @@ function renderFinalStep(a){
       ${chosenStrategy ? `<div style="margin-bottom:16px;"><strong style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--gold-bright);">Stratégie choisie</strong><p style="font-size:13.5px;margin-top:4px;">${chosenStrategy.label} — ${chosenStrategy.objectif}</p></div>` : ''}
       <p class="disclaimer-box" style="margin-top:16px;">Cette fiche récapitule tes propres réponses. Elle ne garantit aucun succès et ne constitue ni un conseil financier ni un business plan complet — elle t'aide à structurer une réflexion, pas à la remplacer.</p>
       ${!gameKey ? `<p class="disclaimer-box" style="margin-top:12px;">La catégorie « ${PROJECT_SECTOR_LABELS[a.secteur] || 'choisie'} » n'est pas encore simulable dans le Business Game. Secteurs disponibles pour l'instant : ${(typeof BUSINESS_SECTOR_ORDER !== 'undefined' ? BUSINESS_SECTOR_ORDER.map(k=>BUSINESS_SECTORS[k].label).join(', ') : 'SaaS B2B, e-commerce, restaurant')}.</p>` : ''}
+      <div id="wizardFinal-method"></div>
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
         <button class="btn btn-sm" id="wizardRestartBtn">Recommencer</button>
         <a href="business.html" class="btn btn-sm btn-gold">Retour à Business</a>
@@ -517,6 +518,7 @@ function renderFinalStep(a){
       window.location.href = 'jeu-business.html';
     });
   }
+  document.getElementById('wizardFinal-method').innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['construire-mon-projet']);
   awardXP(15, {businessProjectDone:true});
 }
 
