@@ -2247,6 +2247,107 @@ function renderCalculItem(elId, item, onAnswered){
   input.addEventListener('keydown', e => { if(e.key === 'Enter') check(); });
 }
 
+// ---------- Exercices à variables aléatoires (audit Formations Phase 2 du
+// 27/08/2026 : aucun exercice du site ne régénérait ses chiffres — un même
+// exercice affichait toujours les mêmes valeurs, mémorisables sans
+// comprendre la méthode). Chaque entrée décrit un `generate()` pur qui tire
+// des valeurs réalistes et calcule le résultat exact à partir d'elles —
+// jamais une réponse pré-écrite qui pourrait diverger des chiffres tirés.
+// Rendu ensuite via renderCalculItem, réutilisé tel quel (aucune nouvelle
+// mécanique de saisie/correction à maintenir). ----------
+function randMultiple(min, max, step){
+  const count = Math.floor((max - min) / step) + 1;
+  return min + step * Math.floor(Math.random() * count);
+}
+function randPick(options){
+  return options[Math.floor(Math.random() * options.length)];
+}
+const RANDOM_EXERCISE_TEMPLATES = {
+  interetsComposes: {
+    generate(){
+      const capital = randMultiple(1000, 5000, 100);
+      const taux = randMultiple(2, 8, 1);
+      const duree = randMultiple(2, 5, 1);
+      const valeurFinale = capital * Math.pow(1 + taux/100, duree);
+      const interets = valeurFinale - capital;
+      return {
+        prompt: `Tu places ${fmtEUR(capital)} à intérêts composés, à un taux de ${taux}% par an, pendant ${duree} ans. Combien d'intérêts au total ce placement a-t-il rapportés à la fin (arrondis à l'euro le plus proche) ?`,
+        unit: '€',
+        reponse: Math.round(interets),
+        tolerance: 1,
+        explication: `Valeur finale = ${fmtEUR(capital)} × (1 + ${taux}%)^${duree} ≈ ${fmtEUR(valeurFinale)}. Intérêts gagnés = valeur finale − capital de départ ≈ ${fmtEUR(interets)}.`
+      };
+    }
+  },
+  margeNette: {
+    generate(){
+      const ca = randMultiple(100000, 500000, 10000);
+      const margePct = randPick([3,5,8,10,12,15]);
+      const resultatNet = Math.round(ca * margePct / 100);
+      return {
+        prompt: `Une entreprise réalise ${fmtEUR(ca)} de chiffre d'affaires et ${fmtEUR(resultatNet)} de résultat net sur l'année. Quelle est sa marge nette, en % (arrondie à 1 décimale) ?`,
+        unit: '%',
+        reponse: Math.round((resultatNet/ca)*1000)/10,
+        tolerance: 0.15,
+        explication: `Marge nette = Résultat net ÷ Chiffre d'affaires = ${fmtEUR(resultatNet)} ÷ ${fmtEUR(ca)} = ${margePct}%.`
+      };
+    }
+  },
+  rendementLocatifBrut: {
+    generate(){
+      const prix = randMultiple(100000, 400000, 10000);
+      const rendementPct = randPick([4,5,6,7,8]);
+      const loyers = Math.round(prix * rendementPct / 100);
+      return {
+        prompt: `Un bien immobilier acheté ${fmtEUR(prix)} génère ${fmtEUR(loyers)} de loyers annuels. Quel est son rendement locatif brut, en % (arrondi à 1 décimale) ?`,
+        unit: '%',
+        reponse: Math.round((loyers/prix)*1000)/10,
+        tolerance: 0.15,
+        explication: `Rendement brut = Loyers annuels ÷ Prix d'achat = ${fmtEUR(loyers)} ÷ ${fmtEUR(prix)} = ${rendementPct}%.`
+      };
+    }
+  },
+  tailleDePosition: {
+    generate(){
+      const capital = randMultiple(2000, 20000, 1000);
+      const risquePct = randPick([0.5, 1, 1.5, 2]);
+      const distance = randPick([0.5, 1, 2, 2.5, 5]);
+      const maxLoss = capital * risquePct / 100;
+      const quantite = Math.floor(maxLoss / distance);
+      return {
+        prompt: `Ton capital est de ${fmtEUR(capital)} et tu acceptes de risquer ${risquePct}% de ce capital sur cette opération. L'écart entre ton prix d'entrée et ton stop-loss est de ${distance}€ par action. Combien d'actions au maximum peux-tu acheter pour respecter ce risque (nombre entier) ?`,
+        unit: 'actions',
+        reponse: quantite,
+        tolerance: 0,
+        explication: `Perte maximale acceptée = Capital × % risqué = ${fmtEUR(capital)} × ${risquePct}% = ${fmtEUR(maxLoss)}. Taille de position = Perte maximale ÷ distance entrée-stop = ${fmtEUR(maxLoss)} ÷ ${distance}€ = ${(maxLoss/distance).toFixed(2)}, arrondi à l'unité inférieure (on ne peut pas acheter une fraction d'action) : ${quantite} actions.`
+      };
+    }
+  },
+  seuilRentabilite: {
+    generate(){
+      const chargesFixes = randMultiple(2000, 10000, 500);
+      const margePct = randPick([20, 25, 30, 40, 50]);
+      const seuil = Math.round(chargesFixes / (margePct/100));
+      const tolerance = Math.max(50, Math.round(seuil * 0.01));
+      return {
+        prompt: `Une entreprise a ${fmtEUR(chargesFixes)} de charges fixes mensuelles, et chaque vente lui laisse une marge sur coût variable de ${margePct}%. Quel chiffre d'affaires mensuel doit-elle réaliser pour atteindre son seuil de rentabilité (arrondi à l'euro le plus proche) ?`,
+        unit: '€',
+        reponse: seuil,
+        tolerance,
+        explication: `Seuil de rentabilité = Charges fixes ÷ Marge sur coût variable (%) = ${fmtEUR(chargesFixes)} ÷ ${margePct}% ≈ ${fmtEUR(seuil)}. En dessous de ce chiffre d'affaires, l'entreprise est en perte ; au-dessus, elle devient bénéficiaire.`
+      };
+    }
+  }
+};
+function renderCalculAleatoireItem(elId, item, onAnswered){
+  const template = RANDOM_EXERCISE_TEMPLATES[item.templateId];
+  const host = document.getElementById(elId);
+  if(!host) return;
+  if(!template){ host.innerHTML = `<p class="empty-note">Exercice indisponible pour le moment.</p>`; return; }
+  const generated = Object.assign({}, item, template.generate());
+  renderCalculItem(elId, generated, onAnswered);
+}
+
 // ---------- Format "sequence" : remettre des étapes dans le bon ordre ----------
 // Boutons Monter/Descendre plutôt que drag & drop, volontairement : le
 // cahier des charges lui-même met en garde contre un drag & drop peu fiable
@@ -2483,7 +2584,8 @@ const DEFI_FORMAT_RENDERERS = {
   infomanquante: renderInfoManquanteItem,
   classe: renderClasseItem,
   dilemme: renderDilemmeItem,
-  enquete: renderEnqueteItem
+  enquete: renderEnqueteItem,
+  calculAleatoire: renderCalculAleatoireItem
 };
 
 // ---------- Adaptation de la difficulté (section 27 du prompt Learning

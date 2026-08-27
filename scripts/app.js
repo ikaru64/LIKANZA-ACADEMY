@@ -1361,7 +1361,21 @@ const MENTAL_CHALLENGES = [
       "Les travaux de rénovation énergétique n'ont aucun impact sur la rentabilité réelle"
     ],
     bonneReponse:1,
-    explication:"Le rendement BRUT (loyer annuel ÷ prix d'achat) ne déduit aucune charge réelle — pour connaître la rentabilité réelle, il faut soustraire les charges de copropriété, la taxe foncière, les périodes de vacance locative probables, et anticiper les travaux obligatoires à venir. Un rendement affiché nettement au-dessus du marché, sans que ces éléments soient précisés, est souvent présenté sous son angle le plus favorable — pas nécessairement trompeur en soi, mais incomplet tant que le calcul net n'est pas fait."}
+    explication:"Le rendement BRUT (loyer annuel ÷ prix d'achat) ne déduit aucune charge réelle — pour connaître la rentabilité réelle, il faut soustraire les charges de copropriété, la taxe foncière, les périodes de vacance locative probables, et anticiper les travaux obligatoires à venir. Un rendement affiché nettement au-dessus du marché, sans que ces éléments soient précisés, est souvent présenté sous son angle le plus favorable — pas nécessairement trompeur en soi, mais incomplet tant que le calcul net n'est pas fait."},
+
+  // ---- Exercices à variables aléatoires (audit Formations Phase 2 du
+  // 27/08/2026 : zéro exercice à chiffres régénérés n'existait nulle part
+  // sur le site — un même exercice montrait toujours les mêmes chiffres,
+  // mémorisables sans comprendre la méthode). Le format "calculAleatoire"
+  // ne stocke ni prompt ni réponse ici : au rendu, renderCalculAleatoireItem
+  // (data.js) appelle RANDOM_EXERCISE_TEMPLATES[templateId].generate() pour
+  // produire des chiffres et un résultat exact recalculés à chaque
+  // tentative, jamais les mêmes deux fois. ----------
+  {id:"mc-rand-001", domain:"Épargne", categorie:"Intérêts composés", niveau:"debutant", format:"calculAleatoire", templateId:"interetsComposes", estimatedTime:3, xp:12},
+  {id:"mc-rand-002", domain:"Business", categorie:"Marge nette", niveau:"intermediaire", format:"calculAleatoire", templateId:"margeNette", estimatedTime:2, xp:12},
+  {id:"mc-rand-003", domain:"Immobilier", categorie:"Immobilier", niveau:"intermediaire", format:"calculAleatoire", templateId:"rendementLocatifBrut", estimatedTime:2, xp:12},
+  {id:"mc-rand-004", domain:"Bourse", categorie:"Gestion du risque", niveau:"intermediaire", format:"calculAleatoire", templateId:"tailleDePosition", estimatedTime:3, xp:14},
+  {id:"mc-rand-005", domain:"Business", categorie:"Seuil de rentabilité", niveau:"intermediaire", format:"calculAleatoire", templateId:"seuilRentabilite", estimatedTime:2, xp:12}
 ];
 
 // ---------- Registre unique des 6 domaines Likanza ----------
