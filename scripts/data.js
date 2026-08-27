@@ -1861,7 +1861,7 @@ function renderMasteryList(elId){
       const pool = defisFullPool().filter(i => i.categorie === cat);
       const sessionEl = document.getElementById(`${elId}-session`);
       if(!sessionEl || pool.length === 0) return;
-      startMixedSession(`${elId}-session`, pool.slice(0, 6), {level: cat, categorie: cat, onRestart: () => renderMasteryList(elId)});
+      startMixedSession(`${elId}-session`, pickAdaptivePool(pool, cat, 6), {level: cat, categorie: cat, onRestart: () => renderMasteryList(elId)});
       sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
     });
   });
@@ -2774,6 +2774,11 @@ function renderDefisFormatLauncher(elId, pool, intro, buttonLabel){
     <button class="btn btn-gold" id="${elId}-start">${buttonLabel}</button>
     <div id="${elId}-session" style="margin-top:16px;"></div>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
+    // Volontairement PAS de pickAdaptivePool ici (audit Formations Phase 3
+    // du 27/08/2026) : ce lanceur mélange plusieurs thèmes à la fois par
+    // conception (variété de raisonnement, pas maîtrise d'un seul thème) —
+    // biaiser vers un seul niveau cible n'aurait pas de sens sur un pool
+    // multi-catégories comme celui-ci.
     const shuffled = [...pool];
     for(let i = shuffled.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]]; }
     const sessionEl = document.getElementById(`${elId}-session`);
@@ -2825,6 +2830,10 @@ function renderDefiDuJour(elId){
       </div>
       <button class="btn btn-gold" id="${elId}-start">Commencer</button>`;
     document.getElementById(`${elId}-start`).addEventListener('click', () => {
+      // Volontairement PAS de pickAdaptivePool ici (audit Formations Phase 3
+      // du 27/08/2026) : le Défi du jour est une sélection déjà curatée par
+      // pickDefiDuJourItems (multi-catégories, un défi identique pour tous
+      // ce jour-là) — la re-trier par mastery casserait cette identité.
       startMixedSession(elId, items, {onRestart: renderIntro});
     });
   }
@@ -2931,7 +2940,7 @@ function renderDefisParcours(elId){
       if(pool.length === 0) return;
       const sessionEl = document.getElementById(`${elId}-session`);
       if(!sessionEl) return;
-      startMixedSession(`${elId}-session`, pool.slice(0, 6), {
+      startMixedSession(`${elId}-session`, pickAdaptivePool(pool, cat, 6), {
         onComplete: () => {
           const p2 = getDefisParcoursProgress();
           p2[`${parcoursId}-${cat}`] = true;
@@ -4216,7 +4225,7 @@ function renderBusinessCasRecommande(elId){
     <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const catPool = pool.filter(i => i.categorie === categorie);
-    startMixedSession(elId, catPool.slice(0, 5), {level:'business', categorie, onRestart: () => renderBusinessCasRecommande(elId)});
+    startMixedSession(elId, pickAdaptivePool(catPool, categorie, 5), {level:'business', categorie, onRestart: () => renderBusinessCasRecommande(elId)});
   });
 }
 
@@ -4309,6 +4318,11 @@ function renderBusinessLab(elId){
       <p>EV/EBITDA et PER : de vrais calculateurs, pas juste des définitions.</p>
       <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Calculer →</span></div>
     </button>`;
+  // Volontairement PAS de pickAdaptivePool sur ces 2 pools (audit Formations
+  // Phase 3 du 27/08/2026) : "Décisions rapides" et "Business Cases"
+  // mélangent volontairement toutes les catégories Business à la fois — pas
+  // de maîtrise unique à cibler, contrairement à renderBusinessCasRecommande
+  // ci-dessus qui filtre déjà sur UNE seule catégorie avant de lancer.
   document.getElementById(`${elId}-decisions`).addEventListener('click', () => {
     if(!sessionEl) return;
     startMixedSession(`${elId}-session`, shuffleCopy(decisionsPool).slice(0, 6), {level:'business', categorie:'Décisions rapides', onRestart: () => renderBusinessLab(elId)});

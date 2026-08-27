@@ -52,6 +52,12 @@ if(!domain){
     document.getElementById('deepQuizStart').addEventListener('click', () => {
       introEl.style.display = 'none';
       sessionEl.style.display = 'block';
+      // Volontairement PAS de pickAdaptivePool ici (audit Formations Phase 3
+      // du 27/08/2026) : ce quiz sert justement à ÉVALUER le niveau réel sur
+      // tout le domaine (il remplace le niveau déclaré par un niveau
+      // mesuré) — biaiser le tirage vers le niveau déjà supposé rendrait
+      // l'évaluation circulaire, et un domaine entier n'a de toute façon pas
+      // une seule catégorie/maîtrise à cibler.
       startMixedSession('deepQuizSession', pool, {
         level: domain.key,
         categorie: domain.label,

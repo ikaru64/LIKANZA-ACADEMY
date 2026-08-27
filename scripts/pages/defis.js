@@ -74,7 +74,7 @@ if(requestedCat){
     const target = document.getElementById('modesEntrainement');
     if(target){
       target.scrollIntoView({behavior: 'smooth', block: 'start'});
-      startMixedSession('modesEntrainement', pool.slice(0, 8));
+      startMixedSession('modesEntrainement', pickAdaptivePool(pool, requestedCat, 8));
     }
   }
 }
