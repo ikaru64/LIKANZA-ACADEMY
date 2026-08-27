@@ -3453,6 +3453,60 @@ function markChapterVisited(coursId, chapitreTitre){
 // une catégorie inventée à la main : le domaine avec le plus de catégories en
 // commun l'emporte, à égalité le premier domaine testé (ordre de DOMAINS).
 // Reste correct même si COURS_CATALOG grandit sans mise à jour manuelle.
+// ---------- Parcours guidés (objectif/métier) : voir LEARNING_PATHS (app.js).
+// Progression dérivée de fzr-cours-progress, déjà la seule source de vérité
+// de complétion d'un cours — jamais un second compteur qui pourrait diverger. ----------
+function getLearningPathProgress(path){
+  const progress = getCoursProgress();
+  const done = path.coursIds.filter(id => progress[id]).length;
+  const total = path.coursIds.length;
+  return {done, total, pct: total ? Math.round((done / total) * 100) : 0};
+}
+function renderLearningPaths(elId, opts){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  opts = opts || {};
+  const paths = opts.type ? LEARNING_PATHS.filter(p => p.type === opts.type) : LEARNING_PATHS;
+  el.innerHTML = `<div class="card-grid">${paths.map(p => {
+    const prog = getLearningPathProgress(p);
+    return `<button type="button" class="card play-tile" data-parcours-id="${p.id}" style="width:100%;text-align:left;cursor:pointer;">
+      <span class="icon">${p.icon}</span>
+      <h3 style="margin:10px 0 6px;">${p.titre}</h3>
+      <p style="font-size:12.5px;color:var(--text-dim);">${p.description}</p>
+      <div class="dash-weekbar" style="width:100%;margin-top:10px;"><div class="dash-weekfill" style="width:${prog.pct}%;"></div></div>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">${prog.done} / ${prog.total} cours terminés${prog.total > 0 && prog.done === prog.total ? ' — parcours terminé' : ''}</p>
+    </button>`;
+  }).join('')}</div>
+  <div id="${elId}-detail" style="margin-top:18px;"></div>`;
+  el.querySelectorAll('[data-parcours-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      renderLearningPathDetail(`${elId}-detail`, btn.dataset.parcoursId);
+      const detailEl = document.getElementById(`${elId}-detail`);
+      if(detailEl.scrollIntoView) detailEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+  });
+  if(opts.openId) renderLearningPathDetail(`${elId}-detail`, opts.openId);
+}
+function renderLearningPathDetail(elId, pathId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const path = LEARNING_PATHS.find(p => p.id === pathId);
+  if(!path){ el.innerHTML = ''; return; }
+  const progress = getCoursProgress();
+  const courses = path.coursIds.map(id => COURS_CATALOG.find(c => c.id === id)).filter(Boolean);
+  el.innerHTML = `
+    <div class="card" style="max-width:640px;">
+      <span class="smallcaps">${path.icon} ${path.titre}</span>
+      <p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">${path.description}</p>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        ${courses.map((c, i) => `
+          <a href="cours.html#${encodeURIComponent(c.id)}" class="defi-parcours-step ${progress[c.id] ? 'is-done' : ''}" style="text-decoration:none;display:block;">
+            ${progress[c.id] ? ICONS.check + ' ' : (i + 1) + '. '}${c.titre}
+          </a>`).join('')}
+      </div>
+    </div>`;
+}
+
 function coursDomainKey(cours){
   if(!cours || !Array.isArray(cours.quizCategories)) return null;
   let best = null, bestScore = 0;

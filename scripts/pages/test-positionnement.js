@@ -123,6 +123,20 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
     return `<div class="panel-row"><span>${d.icon} ${d.label}</span><span class="val mono">${choice ? choice.label : '—'}</span></div>`;
   }).join('');
 
+  // Parcours recommandés (audit Formations Phase 4 du 27/08/2026) : jusqu'ici,
+  // l'objectif coché ici ne débouchait sur aucune suite concrète. Chaque clé
+  // de `goals` correspond directement à un id de LEARNING_PATHS (objectif) —
+  // "general" n'a pas de domaine réel, donc jamais de parcours inventé pour
+  // lui, seulement le lien "Explorer le site" déjà présent plus bas.
+  const matchedPaths = Object.keys(goals).map(key => LEARNING_PATHS.find(p => p.id === key && p.type === 'objectif')).filter(Boolean);
+  const pathsHtml = matchedPaths.length ? `
+    <div style="margin-top:16px;">
+      <span class="smallcaps">Le parcours qu'on te recommande</span>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+        ${matchedPaths.map(p => `<a href="formations.html?parcours=${encodeURIComponent(p.id)}" class="card play-tile" style="text-decoration:none;"><span class="icon">${p.icon}</span><h4 style="margin:8px 0 4px;">${p.titre}</h4><p style="font-size:12.5px;color:var(--text-dim);">${p.description}</p></a>`).join('')}
+      </div>
+    </div>` : '';
+
   resEl.innerHTML = `
     <div class="card" style="max-width:640px;margin:0 auto;">
       <span class="smallcaps">C'est noté</span>
@@ -130,6 +144,7 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
       <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Ces niveaux sont <strong style="color:var(--text);">déclarés par toi</strong> — une hypothèse de départ, pas encore vérifiée. Fais un quiz approfondi dans Mon Parcours (environ 8 minutes) quand tu veux vraiment savoir où tu en es dans un domaine.</p>
       <div class="panel">${declaredRows}</div>
       ${goalLabels.length ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:14px;"><strong style="color:var(--text);">Tu cherches à :</strong> ${goalLabels.join(' · ')}</p>` : ''}
+      ${pathsHtml}
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
         <a href="parcours.html" class="btn btn-gold">Voir Mon Parcours</a>
         <a href="index.html" class="btn btn-sm">Explorer le site</a>

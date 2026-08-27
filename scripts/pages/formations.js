@@ -40,3 +40,26 @@ window.addEventListener('hashchange', () => {
   const tab = location.hash.slice(1);
   if(FORMATION_TABS.some(t => t.id === tab)) setFormationTab(tab);
 });
+
+// ---------- Parcours guidés (audit Formations Phase 4 du 27/08/2026) :
+// ?parcours=<id> (arrivé depuis le bilan de "Ton profil Likanza") ouvre
+// directement le détail du parcours recommandé pour l'objectif choisi,
+// même mécanisme que defis.html?cat=. ----------
+let parcoursActiveType = 'objectif';
+function renderParcoursGuidesGrid(){
+  const requestedId = new URLSearchParams(location.search).get('parcours');
+  const openId = requestedId && LEARNING_PATHS.some(p => p.id === requestedId) ? requestedId : null;
+  if(openId){
+    parcoursActiveType = LEARNING_PATHS.find(p => p.id === openId).type;
+    document.querySelectorAll('#parcoursTypeToggle .pill').forEach(p => p.classList.toggle('active', p.dataset.type === parcoursActiveType));
+  }
+  renderLearningPaths('parcoursGuidesGrid', {type: parcoursActiveType, openId});
+}
+document.getElementById('parcoursTypeToggle').querySelectorAll('.pill').forEach(btn => {
+  btn.addEventListener('click', () => {
+    parcoursActiveType = btn.dataset.type;
+    document.querySelectorAll('#parcoursTypeToggle .pill').forEach(p => p.classList.toggle('active', p === btn));
+    renderLearningPaths('parcoursGuidesGrid', {type: parcoursActiveType});
+  });
+});
+renderParcoursGuidesGrid();

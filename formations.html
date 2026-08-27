@@ -82,6 +82,15 @@
 <h1 class="visually-hidden">Formations</h1>
 
 <section class="section">
+  <div class="section-head"><h2>Parcours guidés</h2><span class="meta-line">une séquence de cours pensée pour un objectif ou un métier</span></div>
+  <div class="mode-toggle" id="parcoursTypeToggle" style="margin-bottom:14px;">
+    <button class="pill active" data-type="objectif" type="button">Par objectif</button>
+    <button class="pill" data-type="metier" type="button">Par métier</button>
+  </div>
+  <div id="parcoursGuidesGrid"></div>
+</section>
+
+<section class="section">
   <div class="section-head"><h2>Cours</h2><span class="meta-line">lecture + quiz de validation</span></div>
   <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;max-width:70ch;">Lis un cours, puis valide-le avec son quiz : les points ne sont attribués qu'une fois le quiz réussi (60% de bonnes réponses minimum).</p>
   <div class="quick-access-grid" id="formationTabsGrid"></div>

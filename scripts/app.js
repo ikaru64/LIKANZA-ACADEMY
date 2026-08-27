@@ -1433,6 +1433,50 @@ const DOMAINS = [
     deepQuizHook:{title:'Crypto : sais-tu repérer les risques ?', subtitle:'Des situations concrètes pour tester tes réflexes.'}}
 ];
 
+// ---------- Parcours guidés (audit Formations Phase 4 du 27/08/2026) : un
+// objectif ou un métier n'a jusqu'ici jamais débouché sur une vraie séquence
+// de cours — juste une seule recommandation de quiz. Chaque parcours ici
+// réutilise des cours RÉELS de COURS_CATALOG (jamais un cours inventé),
+// dans un ordre qui respecte déjà, quand ils existent, les prerequis
+// déclarés sur ces cours (voir COURS_CATALOG, un cours cite son prerequis
+// seulement s'il partage une dépendance de contenu réelle) — un prerequis
+// d'un AUTRE domaine (ex. fiscalite-pea -> bourse-actions) n'est pas
+// dupliqué dans ce parcours-ci, l'écran d'intro du cours (renderCourseIntro,
+// data.js) le signale déjà de lui-même le moment venu. ----------
+const LEARNING_PATHS = [
+  {id:'personalFinance', type:'objectif', titre:'Maîtriser tes finances personnelles', icon:'💰',
+    description:"Budget, épargne, fiscalité : les bases pour reprendre le contrôle de ton argent.",
+    coursIds:['budget-securite','epargne-interets','fiscalite-pea']},
+  {id:'stockMarket', type:'objectif', titre:'Apprendre à investir en Bourse', icon:'📈',
+    description:"De l'action à la gestion du risque, jusqu'aux produits plus avancés.",
+    coursIds:['bourse-actions','risque-diversification','mathematiques-financieres','options-introduction','forex-essentiels']},
+  {id:'business', type:'objectif', titre:'Penser comme un entrepreneur', icon:'💼',
+    description:"Comprendre une entreprise de l'intérieur, chiffres compris.",
+    coursIds:['entreprise-essentiels','comptabilite-bases','lire-une-entreprise','operations-rh-essentiels','ma-private-equity']},
+  {id:'economics', type:'objectif', titre:"Comprendre l'économie", icon:'🌍',
+    description:"Les mécanismes macro qui influencent tes décisions financières.",
+    coursIds:['economie-generale','histoire-economique']},
+  {id:'realEstate', type:'objectif', titre:"Comprendre l'immobilier", icon:'🏠',
+    description:"Rendement, financement et fiscalité d'un investissement locatif.",
+    coursIds:['immobilier-locatif']},
+  {id:'crypto', type:'objectif', titre:'Comprendre la crypto', icon:'₿',
+    description:"Les bases de la blockchain avant de s'aventurer plus loin.",
+    coursIds:['crypto-blockchain']},
+
+  // Parcours métier : les mêmes cours, recombinés dans un ordre pensé pour
+  // un rôle précis plutôt que pour un seul thème — jamais un cours dupliqué
+  // avec un contenu différent, juste une autre séquence de lecture.
+  {id:'metier-analyste', type:'metier', titre:'Analyste financier', icon:'📊',
+    description:"Le socle attendu pour lire et valoriser une entreprise ou un placement.",
+    coursIds:['bourse-actions','lire-une-entreprise','risque-diversification','mathematiques-financieres','ma-private-equity']},
+  {id:'metier-entrepreneur', type:'metier', titre:'Entrepreneur', icon:'🚀',
+    description:"De la première vente aux premiers recrutements, en passant par les chiffres.",
+    coursIds:['entreprise-essentiels','comptabilite-bases','lire-une-entreprise','operations-rh-essentiels']},
+  {id:'metier-investisseur', type:'metier', titre:'Investisseur particulier', icon:'🧭',
+    description:"Construire un plan d'épargne et d'investissement cohérent, fiscalité comprise.",
+    coursIds:['budget-securite','epargne-interets','bourse-actions','risque-diversification','fiscalite-pea']}
+];
+
 // ---------- Premier quiz de profil (100% déclaratif, aucune question notée) ----------
 // « Pourquoi es-tu sur Likanza ? » — objectifs multiples, réutilisés pour la
 // personnalisation immédiate (accueil, recommandations) — jamais pour calculer
