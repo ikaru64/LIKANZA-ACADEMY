@@ -3677,7 +3677,19 @@ function renderCoursDetail(elId, coursId, onComplete){
 function renderCoursQuiz(elId, cours, onComplete){
   const el = document.getElementById(elId);
   if(!el) return;
-  let pool = QUIZ_BANK_FULL.filter(q=>cours.quizCategories.includes(q.categorie));
+  const simplePool = QUIZ_BANK_FULL.filter(q=>cours.quizCategories.includes(q.categorie));
+  // Mélange des formats "raisonnement" du moteur Défis (classement, mise en
+  // catégories) au pool classique du quiz de cours (audit Formations Phase 2
+  // du 27/08/2026 : ces formats existaient déjà pour les Défis mais
+  // n'étaient jamais proposés dans la validation d'un cours). Seuls
+  // "sequence" et "classe" sont inclus ici : leur correction est binaire
+  // (bon ordre / bon classement ou non), contrairement à "dilemme" (réponses
+  // "défendables", pas de vrai/faux), "infomanquante" (aucune mauvaise
+  // réponse par construction) ou "cas"/"enquête" (narratifs, à choix unique
+  // déjà couverts par le pool classique) — les mélanger fausserait le seuil
+  // de réussite du cours.
+  const richPool = MENTAL_CHALLENGES.filter(m => cours.quizCategories.includes(m.categorie) && (m.format === 'classe' || m.format === 'sequence'));
+  let pool = simplePool.concat(richPool);
   for(let i=pool.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
@@ -3689,6 +3701,27 @@ function renderCoursQuiz(elId, cours, onComplete){
     if(qIndex >= questions.length){ renderResults(); return; }
     const item = questions[qIndex];
     const pct = Math.round((qIndex/questions.length)*100);
+    if(item.format){
+      // Item enrichi (MENTAL_CHALLENGES) : délègue au moteur de rendu des
+      // Défis, qui gère lui-même son scoring/XP/feedback. Comme dans
+      // startMixedSession, l'avancée se fait sur un clic explicite (jamais
+      // un setTimeout) — ces formats ont plusieurs lignes à relire après
+      // correction, une avancée chronométrée couperait cette relecture.
+      el.innerHTML = `
+        <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
+          <span>Question ${qIndex+1} / ${questions.length}</span><span>${item.categorie}</span>
+        </div>
+        <div class="dash-weekbar" style="width:100%;margin-bottom:14px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+        <div id="${elId}-item"></div>
+        <div id="${elId}-next" style="margin-top:14px;"></div>`;
+      DEFI_FORMAT_RENDERERS[item.format](`${elId}-item`, item, (correct) => {
+        if(correct) score++;
+        const isLast = qIndex === questions.length - 1;
+        document.getElementById(`${elId}-next`).innerHTML = `<button class="btn btn-sm btn-gold" id="${elId}-advance">${isLast ? 'Voir le résultat' : 'Question suivante →'}</button>`;
+        document.getElementById(`${elId}-advance`).addEventListener('click', () => { qIndex++; renderQuestion(); });
+      });
+      return;
+    }
     el.innerHTML = `
       <div class="mono" style="font-size:11px;color:var(--text-dim);display:flex;justify-content:space-between;margin-bottom:6px;">
         <span>Question ${qIndex+1} / ${questions.length}</span><span>${item.categorie}</span>
