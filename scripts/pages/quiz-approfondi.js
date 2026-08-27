@@ -62,7 +62,16 @@ if(!domain){
         level: domain.key,
         categorie: domain.label,
         showParcoursLink: true,
-        onComplete: (score, total) => { saveDeepQuizResult(domain.key, score, total); }
+        onComplete: (score, total) => {
+          const result = saveDeepQuizResult(domain.key, score, total);
+          // Badge "examen réussi" (audit Formations Phase 6 du 27/08/2026) :
+          // injecté après coup, une fois que startMixedSession a déjà rendu
+          // son propre écran de résultat — jamais un second écran de résultat
+          // concurrent, juste un badge en tête de celui qui existe déjà.
+          const passed = result.pct >= DEEP_QUIZ_PASS_THRESHOLD * 100;
+          const badge = `<p class="disclaimer-box" style="margin-bottom:12px;border-color:${passed ? 'var(--emerald)' : 'var(--hairline)'};">${passed ? '✓ Examen réussi' : 'Pas encore réussi'} — seuil de réussite : ${Math.round(DEEP_QUIZ_PASS_THRESHOLD*100)}% sur ce quiz approfondi.</p>`;
+          sessionEl.innerHTML = badge + sessionEl.innerHTML;
+        }
       });
     });
   }

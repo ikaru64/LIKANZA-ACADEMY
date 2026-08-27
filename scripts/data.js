@@ -424,6 +424,19 @@ function saveDeepQuizResult(domainKey, correct, total){
   safeSetJSON('fzr-deep-quiz-results', results);
   return results[domainKey];
 }
+// Seuil de réussite d'un quiz approfondi = un vrai mini-examen par domaine
+// (audit Formations Phase 6 du 27/08/2026) : plus élevé que le seuil léger
+// du quiz de cours (COURS_PASS_THRESHOLD, 60%) puisqu'il porte sur tout un
+// domaine entier (8 à 15 questions), pas un seul cours — jamais confondu
+// avec ce seuil-là.
+const DEEP_QUIZ_PASS_THRESHOLD = 0.7;
+function isDeepQuizPassed(domainKey){
+  const result = getDeepQuizResults()[domainKey];
+  return !!result && result.pct >= DEEP_QUIZ_PASS_THRESHOLD * 100;
+}
+function getPassedExamsCount(){
+  return DOMAINS.filter(d => isDeepQuizPassed(d.key)).length;
+}
 
 // Niveau évalué (vérifié) par domaine — jamais inventé. Deux sources
 // possibles, jamais mélangées, par ordre de fiabilité :
@@ -466,6 +479,29 @@ const DOMAIN_LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire
 // gabarit visuel de renderBusinessNiveau (business-concept-row) plutôt que
 // d'introduire un nouveau composant pour la même idée (une ligne = un fait,
 // une étiquette).
+// ---------- Tableau de bord : compteurs réels à vie (audit Formations Phase 6
+// du 27/08/2026 — jusqu'ici, seul un compteur "à revoir" existait). Chaque
+// chiffre vient d'une source déjà existante, jamais un total inventé pour
+// remplir une case. ----------
+function renderParcoursStats(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const masteredCount = getSkillMastery().filter(m => m.niveau === 'maîtrisé').length;
+  const examsCount = getPassedExamsCount();
+  const defisCount = getPassedDefisSessionsCount();
+  const stats = [
+    {label: 'Notions maîtrisées', value: masteredCount, sub: 'sur les thèmes déjà pratiqués'},
+    {label: 'Examens réussis', value: `${examsCount} / ${DOMAINS.length}`, sub: `quiz approfondis, ≥${Math.round(DEEP_QUIZ_PASS_THRESHOLD*100)}%`},
+    {label: 'Défis réussis', value: defisCount, sub: `sessions à ≥${Math.round(DEFI_SESSION_PASS_THRESHOLD*100)}%, à vie`}
+  ];
+  el.innerHTML = `<div class="card-grid">${stats.map(s => `
+    <div class="card">
+      <span class="smallcaps">${s.label}</span>
+      <div class="result-big" style="font-size:24px;margin-top:6px;">${s.value}</div>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-top:4px;">${s.sub}</p>
+    </div>`).join('')}</div>`;
+}
+
 function renderDomainDashboard(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -1579,10 +1615,19 @@ function recordAnswer(categorie, correct, applied, niveau){
   }
   saveQuizStats(stats);
 }
+// Seuil "défi réussi" pour le compteur à vie (section suivante) — même
+// valeur que le palier "Très bon résultat" déjà affiché par startMixedSession,
+// jamais un second seuil qui contredirait le message montré à l'écran.
+const DEFI_SESSION_PASS_THRESHOLD = 0.7;
 function recordQuizCompletion(level, categorie, length, score){
   const stats = getQuizStats();
   stats.history.unshift({date:new Date().toLocaleDateString('fr-FR'), level, categorie, length, score});
   stats.history = stats.history.slice(0, 30);
+  // Compteur à vie de sessions réussies (section 24 du prompt Learning
+  // Engine : "défis réussis" au tableau de bord) — l'historique ci-dessus
+  // est volontairement plafonné à 30 entrées (rolling), donc incapable à lui
+  // seul de porter un total à vie.
+  if(score >= DEFI_SESSION_PASS_THRESHOLD * 100) stats.totalPassedSessions = (stats.totalPassedSessions || 0) + 1;
   saveQuizStats(stats);
   // Répétition espacée (voir plus haut) : une catégorie réelle (jamais
   // "mélange"/"mixte", qui échouent silencieusement le lookup de maîtrise)
@@ -1591,6 +1636,7 @@ function recordQuizCompletion(level, categorie, length, score){
   advanceSpacedReviewIfDue(categorie, score);
   scheduleSpacedReviewIfNewlyMastered(categorie);
 }
+function getPassedDefisSessionsCount(){ return getQuizStats().totalPassedSessions || 0; }
 // Score de maîtrise continu par catégorie, dérivé de fzr-quiz-stats (aucune
 // donnée inventée — uniquement de vraies réponses aux quiz). Seule mesure de
 // maîtrise du site (l'ancienne version à double seuil silencieux, avec son
@@ -3839,11 +3885,20 @@ function renderCourseCompletionMenu(elId, cours){
   const domain = coursDomainKey(cours);
   const next = COURS_CATALOG.find(c => c.id !== cours.id && coursDomainKey(c) === domain) || null;
   const acquis = Array.isArray(cours.acquis) ? cours.acquis : [];
+  // "Ce qui reste fragile" (audit Formations Phase 6 du 27/08/2026) : le
+  // reste de cet écran dit déjà quoi faire ensuite, mais jamais ce qui,
+  // PARMI les thèmes de ce cours précis, est encore faible d'après la vraie
+  // maîtrise mesurée (getSkillMastery) — jamais un jugement générique,
+  // seulement les catégories réellement rattachées à ce cours.
+  const weakCategories = (cours.quizCategories || [])
+    .map(cat => getSkillMastery().find(m => m.categorie === cat))
+    .filter(m => m && m.niveau === 'faible');
   el.innerHTML = `
     ${acquis.length ? `<div class="card" style="margin-top:18px;">
       <span class="smallcaps">Tu sais maintenant :</span>
       <ul style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--text-dim);line-height:1.8;">${acquis.map(a => `<li>${a}</li>`).join('')}</ul>
     </div>` : ''}
+    ${weakCategories.length ? `<p class="disclaimer-box" style="margin-top:14px;">⚠ Encore fragile : ${weakCategories.map(m => `${m.categorie} (${m.pct}%)`).join(', ')} — un point à retravailler avant de considérer ce cours vraiment acquis.</p>` : ''}
     <div class="card-grid" style="margin-top:14px;">
       ${next ? `<a href="cours.html#${encodeURIComponent(next.id)}" class="card play-tile"><span class="icon">📚</span><h4 style="margin:8px 0 4px;">Approfondir</h4><p style="font-size:12.5px;color:var(--text-dim);">${next.titre}</p></a>` : ''}
       ${cours.applyUrl ? `<a href="${cours.applyUrl}" class="card play-tile"><span class="icon">📈</span><h4 style="margin:8px 0 4px;">Appliquer</h4><p style="font-size:12.5px;color:var(--text-dim);">${cours.applyLabel || 'Voir dans Likanza'}</p></a>` : ''}
