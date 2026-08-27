@@ -1584,6 +1584,12 @@ function recordQuizCompletion(level, categorie, length, score){
   stats.history.unshift({date:new Date().toLocaleDateString('fr-FR'), level, categorie, length, score});
   stats.history = stats.history.slice(0, 30);
   saveQuizStats(stats);
+  // Répétition espacée (voir plus haut) : une catégorie réelle (jamais
+  // "mélange"/"mixte", qui échouent silencieusement le lookup de maîtrise)
+  // peut faire avancer une révision déjà due, ou entrer en suivi si elle
+  // vient tout juste d'atteindre "maîtrisé".
+  advanceSpacedReviewIfDue(categorie, score);
+  scheduleSpacedReviewIfNewlyMastered(categorie);
 }
 // Score de maîtrise continu par catégorie, dérivé de fzr-quiz-stats (aucune
 // donnée inventée — uniquement de vraies réponses aux quiz). Seule mesure de
@@ -1808,6 +1814,88 @@ function resolveMistake(questionId){
   saveMistakes(list);
   const totalResolved = list.filter(m => m.resolved).length;
   checkBadges(getGamification(), {mistakeResolved: true, totalResolved});
+}
+
+// ---------- Répétition espacée réelle (audit Formations Phase 3 du
+// 27/08/2026) : jusqu'ici, une notion maîtrisée ne revenait jamais se
+// retester automatiquement — seules les erreurs (fzr-mistakes, ci-dessus)
+// étaient reprogrammées, et seulement à l'initiative de l'utilisateur.
+// Ici, une catégorie qui atteint "maîtrisé" (getSkillMastery) est
+// programmée pour resurgir à J+7, puis J+14 si la révision réussit à
+// l'échéance, puis J+30 (et se répète ensuite à 30 jours) — jamais
+// réinitialisée tant qu'elle reste suivie, jamais avancée par une révision
+// faite en avance ou ratée. ----------
+const SPACED_REPETITION_INTERVALS_DAYS = [7, 14, 30];
+function getSpacedRepetition(){ return safeGetJSON('fzr-spaced-repetition', {}); }
+function saveSpacedRepetition(state){ safeSetJSON('fzr-spaced-repetition', state); }
+// toISOString() convertit d'abord en UTC : dans un fuseau en avance sur UTC
+// (ex. France), juste après minuit local, la date UTC est encore la veille —
+// ça décalerait toutes les échéances d'un jour. On formate donc toujours la
+// date LOCALE directement, sans jamais passer par toISOString().
+function formatDateISO(d){
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function todayISO(){ return formatDateISO(new Date()); }
+function addDaysISO(dateISO, days){
+  const d = new Date(dateISO + 'T00:00:00');
+  d.setDate(d.getDate() + days);
+  return formatDateISO(d);
+}
+function scheduleSpacedReviewIfNewlyMastered(categorie){
+  const mastery = getSkillMastery().find(m => m.categorie === categorie);
+  if(!mastery || mastery.niveau !== 'maîtrisé') return;
+  const state = getSpacedRepetition();
+  if(state[categorie]) return; // déjà en cours de suivi, jamais réinitialisée
+  state[categorie] = {stage: 0, nextReviewDate: addDaysISO(todayISO(), SPACED_REPETITION_INTERVALS_DAYS[0])};
+  saveSpacedRepetition(state);
+}
+function advanceSpacedReviewIfDue(categorie, scorePct){
+  const state = getSpacedRepetition();
+  const entry = state[categorie];
+  if(!entry) return;
+  const today = todayISO();
+  if(today < entry.nextReviewDate) return; // pas encore échue -> rien à avancer
+  if(scorePct < COURS_PASS_THRESHOLD * 100) return; // révisée mais ratée -> reste due, jamais avancée
+  const nextStage = Math.min(entry.stage + 1, SPACED_REPETITION_INTERVALS_DAYS.length - 1);
+  state[categorie] = {stage: nextStage, nextReviewDate: addDaysISO(today, SPACED_REPETITION_INTERVALS_DAYS[nextStage])};
+  saveSpacedRepetition(state);
+}
+function getDueSpacedReviews(){
+  const state = getSpacedRepetition();
+  const today = todayISO();
+  return Object.entries(state)
+    .filter(([, e]) => e.nextReviewDate <= today)
+    .map(([categorie, e]) => ({categorie, stage: e.stage, nextReviewDate: e.nextReviewDate}));
+}
+function renderSpacedReviewList(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const due = getDueSpacedReviews();
+  if(due.length === 0){
+    el.innerHTML = `<p style="color:var(--text-dim);font-size:13.5px;">Rien à repasser aujourd'hui : les notions déjà maîtrisées reviendront automatiquement à leur échéance.</p>`;
+    return;
+  }
+  el.innerHTML = `<div class="course-list">${due.map(d => `
+    <div class="course-item">
+      <div style="display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
+        <div>
+          <span class="smallcaps">${d.categorie}</span>
+          <p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">Maîtrisée il y a ${SPACED_REPETITION_INTERVALS_DAYS[d.stage]} jour${SPACED_REPETITION_INTERVALS_DAYS[d.stage] > 1 ? 's' : ''} · à repasser pour vérifier que c'est toujours acquis</p>
+        </div>
+        <button class="btn btn-sm btn-gold" data-spaced-cat="${d.categorie}" style="white-space:nowrap;">Réviser →</button>
+      </div>
+    </div>`).join('')}</div>
+    <div id="${elId}-session" style="margin-top:16px;"></div>`;
+  el.querySelectorAll('[data-spaced-cat]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const categorie = btn.dataset.spacedCat;
+      const pool = defisFullPool().filter(i => i.categorie === categorie);
+      const sessionEl = document.getElementById(`${elId}-session`);
+      if(!sessionEl || pool.length === 0) return;
+      startMixedSession(`${elId}-session`, pickAdaptivePool(pool, categorie, 5), {categorie, onRestart: () => renderSpacedReviewList(elId)});
+      sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
+    });
+  });
 }
 
 // ---------- Révisions (revisions.html) : vue complète des erreurs non
