@@ -1676,7 +1676,57 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"Un onboarding structuré dès les premiers jours réduit le délai avant qu'un nouvel employé devienne pleinement productif, et réduit le risque qu'il reparte prématurément faute d'accompagnement. Une évaluation de performance n'est utile que si ses critères sont communiqués à l'avance : révélés seulement au moment de l'évaluation, ils sont perçus comme arbitraires et ne peuvent orienter aucun effort en amont."}
       ]}
     ]},
-  {id:'epargne-interets', titre:"Épargne et intérêts composés", niveau:'Débutant', libraryTermes:['Intérêts composés','Assurance-vie'], quizCategories:['Épargne','Intérêts composés','Intérêts simples','Livret A','Assurance-vie']},
+  {id:'epargne-interets', titre:"Épargne et intérêts composés", niveau:'Débutant',
+    libraryTermes:['Intérêts composés','Assurance-vie'],
+    quizCategories:['Épargne','Intérêts composés','Intérêts simples','Livret A','Assurance-vie'],
+    applyUrl:'laboratoire.html', applyLabel:'Simuler ton propre plan d\'épargne',
+    acquis:[
+      "Distinguer épargne de précaution, épargne de projet et investissement",
+      "Calculer des intérêts simples, puis voir pourquoi les intérêts composés produisent un résultat différent sur la durée",
+      "Comprendre ce que garantit réellement le Livret A, et ce qu'il ne garantit pas",
+      "Comprendre le fonctionnement d'une assurance-vie et pourquoi sa fiscalité récompense la durée"
+    ],
+    chapitres:[
+      {titre:"1. L'épargne : mettre de côté avant d'investir", blocs:[
+        {type:'texte', texte:"Avant de parler de taux et de calculs, une distinction simple évite bien des confusions : épargner et investir ne sont pas la même chose."},
+        {type:'definition', texte:"L'épargne est la part des revenus mise de côté plutôt que dépensée. Elle se distingue de l'investissement, qui accepte un risque de perte en échange d'un potentiel de rendement supérieur."},
+        {type:'texte', texte:"On distingue généralement trois usages : l'épargne de précaution (disponible immédiatement, pour les imprévus — voir « Fonds d'urgence »), l'épargne de projet (objectif à moyen terme : apport, voyage) et l'investissement (horizon plus long, risque de perte accepté contre un rendement espéré supérieur)."},
+        {type:'attention', texte:"Laisser une épargne de précaution largement supérieure au besoin réel de sécurité a un coût d'opportunité réel : cet argent, placé sur un support à faible rendement, pourrait potentiellement être orienté vers un horizon plus long — mais il n'existe pas de montant \"parfait\" universel, cela dépend du niveau de dépenses, de la stabilité des revenus et de la tolérance au risque de chacun."},
+        {type:'retenir', texte:"Ce cours se concentre sur les mécanismes de calcul de l'épargne rémunérée (intérêts, Livret A, assurance-vie) — la question de combien épargner et sous quelle forme est développée dans le cours « Les fondations de tes finances personnelles »."}
+      ]},
+      {titre:"2. Les intérêts simples : la base du calcul d'un placement", blocs:[
+        {type:'texte', texte:"Avant de comprendre pourquoi les intérêts composés changent tout sur la durée, il faut d'abord maîtriser le calcul le plus basique : les intérêts simples."},
+        {type:'definition', texte:"Avec des intérêts simples, les intérêts se calculent chaque période uniquement sur le capital de départ — jamais sur les intérêts déjà versés les périodes précédentes."},
+        {type:'calcul', texte:"Intérêts simples = Capital × Taux annuel × Durée (en années).", schema:
+"Exemple :\nCapital  : 1 000 €\nTaux     : 5% par an\nDurée    : 3 ans\n\nIntérêts = 1 000 × 0,05 × 3 = 150 €\n\nChaque année rapporte exactement le même montant : 50 € en\nannée 1, 50 € en année 2, 50 € en année 3 — le capital sur\nlequel le taux s'applique ne change jamais."},
+        {type:'exerciceErreur', affirmation:"Avec des intérêts simples à 5% par an, un capital de 1 000 € rapporte de plus en plus chaque année.", pourquoi:"C'est l'inverse : avec des intérêts SIMPLES, le montant rapporté chaque année reste rigoureusement identique (ici 50 €/an), puisque le taux s'applique toujours au même capital de départ de 1 000 €, jamais aux intérêts déjà accumulés. Un montant qui augmente chaque année serait le signe d'intérêts COMPOSÉS, vus au chapitre suivant."}
+      ]},
+      {titre:"3. Les intérêts composés : l'effet boule de neige", blocs:[
+        {type:'texte', texte:"La plupart des placements réels (Livret A, assurance-vie, comptes à terme...) fonctionnent en réalité à intérêts composés, pas à intérêts simples. La différence peut sembler minime au début — elle devient considérable avec le temps."},
+        {type:'definition', texte:"Les intérêts composés, c'est gagner des intérêts sur les intérêts déjà accumulés : chaque année, les gains produits par le placement s'ajoutent au capital et génèrent eux-mêmes des gains l'année suivante. Ce mécanisme est aussi appelé « capitalisation des intérêts » — un sens de « capitalisation » totalement différent de la capitalisation boursière."},
+        {type:'calcul', texte:"Reprenons l'exemple précédent (1 000 €, 5% par an), mais avec des intérêts COMPOSÉS cette fois.", schema:
+"Année 1 : 1 000 × 1,05 = 1 050,00 €  (+50,00 €)\nAnnée 2 : 1 050 × 1,05 = 1 102,50 €  (+52,50 €)\nAnnée 3 : 1 102,50 × 1,05 = 1 157,63 €  (+55,13 €)\n\nTotal après 3 ans : 1 157,63 €  (+157,63 €)\n\nÀ comparer aux 150 € d'intérêts simples calculés plus haut :\nla différence (7,63 €) semble faible sur 3 ans, mais elle\nn'existe QUE parce que les intérêts de chaque année ont eux-\nmêmes généré des intérêts l'année suivante."},
+        {type:'attention', texte:"Sur 3 ans, l'écart entre intérêts simples et composés reste modeste. Mais mathématiquement, la valeur future suit une croissance EXPONENTIELLE avec les intérêts composés, contre une croissance seulement LINÉAIRE avec les intérêts simples — sur plusieurs décennies, cet écart devient considérable, pas seulement quelques euros."},
+        {type:'exerciceErreur', affirmation:"Doubler la durée d'un placement à intérêts composés double le montant final des intérêts gagnés.", pourquoi:"À cause de l'effet exponentiel des intérêts composés, doubler la durée fait plus que doubler le gain total : chaque euro d'intérêt supplémentaire généré continue lui-même à produire des intérêts pour toute la durée restante. C'est précisément cet effet cumulatif qui rend la durée de placement au moins aussi déterminante que le taux lui-même sur le résultat final."},
+        {type:'retenir', texte:"Plus la durée de placement est longue, plus l'écart entre intérêts simples et intérêts composés se creuse — c'est pour cette raison que commencer tôt à épargner compte souvent plus que le taux de rendement précis obtenu."}
+      ]},
+      {titre:"4. Le Livret A : la référence de l'épargne sans risque", blocs:[
+        {type:'texte', texte:"Le Livret A est le placement le plus détenu en France — un bon cas concret pour appliquer le calcul d'intérêts composés vu au chapitre précédent, à un vrai produit d'épargne réglementé."},
+        {type:'definition', texte:"Le Livret A est un livret d'épargne réglementé par l'État français : le capital est garanti à 100%, les gains sont exonérés d'impôt et de prélèvements sociaux, et l'argent reste disponible à tout moment sans pénalité — en échange d'un taux d'intérêt modéré, fixé et révisé périodiquement par les pouvoirs publics."},
+        {type:'calcul', texte:"Exemple avec le taux en vigueur.", schema:
+"Capital placé : 2 000 €\nTaux du Livret A : 3% par an\n\nIntérêts après 1 an = 2 000 × 3% = 60 €\n\nCes intérêts s'ajoutent ensuite au capital et généreront eux-\nmêmes des intérêts l'année suivante (intérêts composés)."},
+        {type:'exerciceErreur', affirmation:"Le taux du Livret A est fixé une fois pour toutes et ne change jamais.", pourquoi:"Le taux du Livret A est révisé périodiquement par les pouvoirs publics, notamment en fonction de l'inflation — ce n'est jamais un taux garanti à vie au moment de l'ouverture du livret, contrairement à ce qu'on pourrait croire. Un livret ouvert avec un taux donné voit ce taux évoluer avec les révisions officielles, à la hausse comme à la baisse."},
+        {type:'attention', texte:"La sécurité totale du capital et la disponibilité immédiate du Livret A ont une contrepartie : son rendement reste structurellement modéré comparé à un placement en actions sur le long terme, qui accepte un risque de perte en échange d'un potentiel de rendement supérieur (voir le cours « Comprendre la Bourse et les actions »)."}
+      ]},
+      {titre:"5. L'assurance-vie : une enveloppe flexible à fiscalité progressive", blocs:[
+        {type:'texte', texte:"Contrairement au Livret A, l'assurance-vie n'est pas un placement en soi mais une « enveloppe » : un cadre juridique et fiscal à l'intérieur duquel plusieurs types de placements peuvent cohabiter."},
+        {type:'definition', texte:"L'assurance-vie est une enveloppe d'épargne flexible, avec des avantages fiscaux qui augmentent avec le temps. Elle permet d'investir sur un fonds en euros (capital garanti, rendement modéré, proche du Livret A) et/ou des unités de compte (plus risquées, potentiel de rendement plus élevé), au sein d'un seul et même contrat."},
+        {type:'texte', texte:"Un même contrat d'assurance-vie peut ainsi mélanger, dans les proportions choisies par l'épargnant, une part sécurisée (fonds en euros) et une part plus dynamique (unités de compte, par exemple des ETF actions) — une flexibilité que le Livret A, uniforme et sans choix de répartition, n'offre pas."},
+        {type:'attention', texte:"La fiscalité de l'assurance-vie devient nettement plus favorable après 8 ans de détention, avec un abattement annuel sur les gains lors des retraits — retirer des fonds avant ce seuil de 8 ans reste possible, mais renonce à cet avantage fiscal progressif propre à la durée de détention."},
+        {type:'approfondir', texte:"Le détail complet de la fiscalité de l'assurance-vie (comparée au PEA et au PER selon l'horizon et l'objectif) est développé dans le cours « Comprendre la fiscalité de son épargne »."},
+        {type:'retenir', texte:"L'assurance-vie récompense la durée de détention, pas seulement le montant investi — un contrat ouvert tôt, même avec de petits versements, peut avoir un avantage fiscal qu'un contrat plus gros mais ouvert récemment n'a pas encore."}
+      ]}
+    ]},
   {id:'fiscalite-pea', titre:'Comprendre la fiscalité de son épargne', niveau:'Avancé', prerequis:['bourse-actions'],
     libraryTermes:["Barème progressif de l'impôt sur le revenu",'Quotient familial','PFU (prélèvement forfaitaire unique / flat tax)','Plus-value mobilière (imposition)','PEA','Fiscalité de l\'assurance-vie','PER (Plan d\'Épargne Retraite)','Plus-value immobilière (imposition)','LMNP (Loueur Meublé Non Professionnel)'],
     quizCategories:['Fiscalité de base','PEA','Retraite et PER','Assurance-vie'],
@@ -1804,7 +1854,58 @@ const COURS_CATALOG = [
         {type:'approfondir', texte:"La Bibliothèque Likanza distingue précisément l'offre en circulation (déjà disponible) de l'offre totale (y compris les unités encore bloquées) — une confusion fréquente lors de la comparaison de deux projets, qui peut fausser l'impression de \"rareté\" perçue d'un token."}
       ]}
     ]},
-  {id:'immobilier-locatif', titre:'Immobilier locatif', niveau:'Avancé', prerequis:['budget-securite'], libraryTermes:['Rendement locatif'], quizCategories:['Immobilier','SCPI']},
+  {id:'immobilier-locatif', titre:'Immobilier locatif', niveau:'Avancé', prerequis:['budget-securite'],
+    libraryTermes:['Rendement locatif'],
+    quizCategories:['Immobilier','SCPI'],
+    applyUrl:'laboratoire.html', applyLabel:'Simuler un investissement locatif',
+    acquis:[
+      "Calculer un rendement locatif brut, puis comprendre pourquoi le rendement net est plus fiable",
+      "Comprendre ce qu'est le cash-flow d'un investissement locatif à crédit, et pourquoi il compte souvent plus que le rendement affiché",
+      "Comprendre le principe d'une SCPI et ce qu'elle garantit réellement (et ce qu'elle ne garantit pas)",
+      "Comprendre les grandes lignes de la fiscalité d'une plus-value immobilière et le principe de l'amortissement en LMNP"
+    ],
+    chapitres:[
+      {titre:"1. Le rendement locatif brut : une première mesure, insuffisante seule", blocs:[
+        {type:'texte', texte:"Le premier chiffre regardé pour juger un investissement locatif est presque toujours le même : combien ce bien rapporte-t-il chaque année, en pourcentage de son prix ? C'est le rendement locatif brut."},
+        {type:'definition', texte:"Le rendement locatif brut se calcule en divisant les loyers annuels perçus par le prix d'achat du bien, sans tenir compte des charges ni de la fiscalité."},
+        {type:'calcul', texte:"Rendement brut = Loyers annuels ÷ Prix d'achat.", schema:
+"Exemple :\nPrix d'achat        : 200 000 €\nLoyers annuels reçus:  12 000 €\n\nRendement brut = 12 000 ÷ 200 000 = 6%"},
+        {type:'exerciceErreur', affirmation:"Un rendement locatif brut de 6% signifie que l'investisseur touchera bien 6% de rentabilité réelle chaque année.", pourquoi:"Le rendement BRUT ne déduit ni les charges (copropriété, entretien), ni la taxe foncière, ni la fiscalité sur les loyers perçus, ni les périodes de vacance locative (le bien inoccupé entre deux locataires). C'est un premier repère pour comparer rapidement des biens entre eux, jamais une estimation de la rentabilité réellement perçue — c'est le rôle du rendement net, vu au chapitre suivant."}
+      ]},
+      {titre:"2. Le rendement net : la vraie mesure de la rentabilité", blocs:[
+        {type:'texte', texte:"Deux biens affichant le même rendement brut de 6% peuvent avoir des rentabilités réelles très différentes selon leurs charges. Le rendement net corrige cet angle mort."},
+        {type:'definition', texte:"Le rendement net se calcule comme le rendement brut, mais en déduisant d'abord les charges, la taxe foncière et les frais de gestion des loyers perçus — donnant une image plus réaliste de la rentabilité."},
+        {type:'calcul', texte:"Rendement net = (Loyers annuels − Charges − Taxe foncière − Frais de gestion) ÷ Prix d'achat.", schema:
+"Exemple (même bien que le chapitre précédent) :\nLoyers annuels      : 12 000 €\nCharges + taxe foncière + gestion : 3 200 €\n\nLoyers nets = 12 000 − 3 200 = 8 800 €\nRendement net = 8 800 ÷ 200 000 = 4,4%\n\n(contre 6% de rendement brut sur le même bien —\nprès d'un tiers de la rentabilité affichée disparaît\nune fois les charges réelles déduites)"},
+        {type:'attention', texte:"Le rendement net déduit rarement l'impact de la fiscalité sur les loyers (impôt sur le revenu, prélèvements sociaux), qui varie selon le régime choisi (location nue ou meublée, LMNP...) et la tranche d'imposition de chacun — un rendement « net-net » (après fiscalité) serait encore inférieur, et propre à la situation de chaque investisseur."},
+        {type:'retenir', texte:"Comparer deux biens uniquement sur leur rendement brut peut inverser le classement réel une fois les charges prises en compte — toujours regarder le rendement net avant de comparer sérieusement plusieurs opportunités."}
+      ]},
+      {titre:"3. Le cash-flow : ce qu'il reste une fois le crédit remboursé", blocs:[
+        {type:'texte', texte:"La plupart des investissements locatifs sont financés en partie par un crédit. Le rendement, même net, ne dit rien de ce qui se passe réellement chaque mois sur le compte en banque de l'investisseur — c'est le rôle du cash-flow."},
+        {type:'definition', texte:"Le cash-flow d'un investissement locatif financé à crédit est la différence entre les loyers encaissés et l'ensemble des charges, crédit (mensualité) inclus."},
+        {type:'calcul', texte:"Cash-flow mensuel = Loyer mensuel − Charges mensuelles − Mensualité de crédit.", schema:
+"Exemple :\nLoyer mensuel        : 1 000 €\nCharges mensuelles   :   270 €\nMensualité de crédit :   800 €\n\nCash-flow = 1 000 − 270 − 800 = − 70 € par mois\n\nCet investissement affiche un cash-flow NÉGATIF : l'investisseur\ndoit compléter 70 €/mois de sa poche, même si le bien génère\nun rendement locatif positif sur le papier."},
+        {type:'pourquoi', texte:"Le cash-flow est souvent plus déterminant que le seul rendement pour juger la viabilité réelle d'un investissement à effet de levier (financé à crédit) : un rendement net positif ne garantit pas un cash-flow positif si la mensualité de crédit est élevée — et un cash-flow négatif prolongé peut mettre en difficulté un investisseur qui ne peut pas le compenser durablement sur ses autres revenus."},
+        {type:'exerciceErreur', affirmation:"Un investissement locatif avec un rendement net positif de 4% est nécessairement rentable pour l'investisseur, mois après mois.", pourquoi:"Le rendement net mesure la rentabilité du bien lui-même, indépendamment de son financement. Un bien à 4% de rendement net financé par un crédit à mensualité élevée peut très bien afficher un cash-flow négatif chaque mois (l'investisseur doit ajouter de l'argent), même si sur le papier — et à la revente, une fois le crédit soldé — l'opération reste rentable. Rendement et cash-flow répondent à deux questions différentes, qu'il ne faut jamais confondre."}
+      ]},
+      {titre:"4. La SCPI : investir dans l'immobilier sans gérer soi-même", blocs:[
+        {type:'texte', texte:"Acheter un bien en direct implique de choisir le bien, gérer les locataires, faire face aux impayés et aux travaux. La SCPI propose une alternative : mutualiser cette gestion entre de nombreux épargnants."},
+        {type:'definition', texte:"Une SCPI (société civile de placement immobilier) collecte l'argent de nombreux épargnants pour acheter et gérer un parc immobilier locatif, et leur reverse les loyers au prorata des parts détenues."},
+        {type:'retenir', texte:"Le principal avantage d'une SCPI par rapport à l'achat direct : aucune gestion locative à assurer soi-même (sélection des biens, locataires, travaux, impayés) — c'est la société de gestion qui s'en charge, en échange de frais de gestion prélevés sur les loyers."},
+        {type:'calcul', texte:"Le taux de distribution mesure le rendement d'une SCPI sur une année donnée.", schema:
+"Taux de distribution = Revenus versés sur l'année ÷ Prix de la part en début d'année\n\nExemple :\nPrix de la part en début d'année : 1 000 €\nRevenus versés sur l'année        :    45 €\n\nTaux de distribution = 45 ÷ 1 000 = 4,5%\n\nUn indicateur utile pour comparer des SCPI entre elles,\nmais qui ne garantit en rien sa reconduction future."},
+        {type:'exerciceErreur', affirmation:"Le capital investi dans une SCPI est garanti, comme sur un livret réglementé.", pourquoi:"Comme tout placement immobilier ou financier, la valeur des parts de SCPI peut baisser : il n'existe aucune garantie de capital, contrairement à un livret réglementé comme le Livret A. La valeur du parc immobilier détenu par la SCPI peut évoluer à la hausse comme à la baisse selon le marché."},
+        {type:'attention', texte:"Les parts de SCPI sont généralement considérées comme peu liquides : contrairement à une action cotée en continu, leur revente dépend de la présence d'un acheteur sur le marché secondaire ou du bon vouloir de la société de gestion, ce qui peut prendre du temps — un facteur à anticiper avant d'y placer une épargne dont on pourrait avoir besoin rapidement."}
+      ]},
+      {titre:"5. Fiscalité de la plus-value et amortissement en LMNP", blocs:[
+        {type:'texte', texte:"Deux notions fiscales reviennent régulièrement dans l'immobilier locatif, et sont souvent mal comprises : l'exonération de plus-value selon la durée de détention, et le rôle de l'amortissement en LMNP."},
+        {type:'definition', texte:"Lors de la revente d'un bien immobilier autre que la résidence principale, la plus-value réalisée bénéficie d'un abattement progressif selon la durée de détention — jusqu'à une exonération totale, mais selon deux calendriers DISTINCTS pour l'impôt sur le revenu et pour les prélèvements sociaux."},
+        {type:'exerciceErreur', affirmation:"Une résidence secondaire revendue avec plus-value après 25 ans de détention est totalement exonérée de toute imposition sur cette plus-value.", pourquoi:"L'exonération d'impôt sur le revenu intervient après 22 ans de détention, mais les prélèvements sociaux, eux, ne sont totalement exonérés qu'après 30 ans — ce sont deux durées distinctes, souvent confondues. Après 25 ans, la plus-value est donc bien exonérée d'impôt sur le revenu, mais reste partiellement soumise aux prélèvements sociaux."},
+        {type:'definition', texte:"En LMNP (Loueur Meublé Non Professionnel) au régime réel, l'amortissement comptable du bien et du mobilier permet de réduire le revenu locatif imposable — sans correspondre à une sortie de trésorerie réelle cette année-là (voir le cours « Comprendre l'entreprise » pour le principe général de l'amortissement)."},
+        {type:'attention', texte:"L'amortissement en LMNP peut réduire le revenu locatif imposable à zéro pendant plusieurs années, sans jamais affecter les loyers réellement perçus, qui restent encaissés en intégralité — un avantage fiscal réel, mais qui ne dispense pas de payer le crédit ou les charges réelles avec de la trésorerie réelle."},
+        {type:'approfondir', texte:"Le cadre fiscal complet de l'investissement immobilier (comparé au PEA, à l'assurance-vie et au PER) est développé dans le cours « Comprendre la fiscalité de son épargne »."}
+      ]}
+    ]},
   {id:'budget-securite', titre:'Les fondations de tes finances personnelles', niveau:'Débutant',
     libraryTermes:['Argent','Revenus','Dépenses','Budget','Épargne','Actifs','Passifs','Patrimoine','Valeur nette','Cash-flow personnel',"Fonds d'urgence",'Inflation'],
     quizCategories:['Budget','Épargne','Inflation','Arnaques financières','Crédit',"Constitution d'un patrimoine"],
@@ -1939,7 +2040,69 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"Face à cette poussée d'inflation, plusieurs banques centrales (dont la BCE et la Fed) ont relevé leurs taux directeurs de façon marquée à partir de 2022 — un mécanisme déjà vu dans le scénario « hausse des taux » du Laboratoire économique, appliqué ici à un épisode réel et récent."}
       ]}
     ]},
-  {id:'entreprise-essentiels', titre:"Comprendre l'entreprise", niveau:'Intermédiaire', libraryTermes:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds'], quizCategories:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds']},
+  {id:'entreprise-essentiels', titre:"Comprendre l'entreprise", niveau:'Intermédiaire',
+    libraryTermes:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds'],
+    quizCategories:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds'],
+    applyUrl:'business.html', applyLabel:'Explorer le Business Center Likanza',
+    acquis:[
+      "Distinguer le chiffre d'affaires (l'activité) de la marge nette (ce qu'il en reste réellement)",
+      "Comprendre ce que montre un bilan comptable et pourquoi actif et passif sont toujours égaux",
+      "Expliquer pourquoi un amortissement n'est pas une sortie d'argent réelle l'année où il est constaté",
+      "Distinguer une startup d'une PME classique, et comprendre le mécanisme d'une levée de fonds"
+    ],
+    chapitres:[
+      {titre:"1. Le chiffre d'affaires : mesurer l'activité, pas la rentabilité", blocs:[
+        {type:'texte', texte:"Le chiffre le plus souvent cité pour décrire la taille d'une entreprise — « combien elle vend » — est aussi l'un des plus mal interprétés. Avant d'aller plus loin, il faut comprendre précisément ce qu'il mesure, et surtout ce qu'il ne mesure pas."},
+        {type:'definition', texte:"Le chiffre d'affaires est le montant total des ventes réalisées par une entreprise sur une période donnée (souvent un an), avant déduction d'aucune charge."},
+        {type:'calcul', texte:"Le chiffre d'affaires s'obtient en multipliant les quantités vendues par leur prix de vente, tous produits confondus.", schema:
+"Exemple : une entreprise vend 200 000 unités d'un produit à 50 €\n\nChiffre d'affaires = 200 000 × 50 = 10 000 000 €\n(10 millions d'euros), quel que soit le coût de fabrication\nde ce produit ou le bénéfice final réalisé."},
+        {type:'exerciceErreur', affirmation:"Une entreprise avec 10 millions d'euros de chiffre d'affaires est forcément en meilleure santé financière qu'une entreprise avec 2 millions.", pourquoi:"Le chiffre d'affaires ne dit rien de la rentabilité. Une entreprise à 10 M€ de chiffre d'affaires mais dont les charges dépassent ce montant est déficitaire ; une entreprise à 2 M€ avec des charges bien maîtrisées peut être largement bénéficiaire. Le chiffre d'affaires mesure la taille de l'activité, jamais sa rentabilité — c'est le rôle du résultat net, vu plus loin dans ce cours."},
+        {type:'attention', texte:"Les analystes s'intéressent souvent plus à la croissance du chiffre d'affaires (l'évolution en % d'une année sur l'autre) qu'à son niveau absolu à un instant donné — une entreprise qui croît vite, même petite, peut être plus intéressante qu'une grande entreprise stagnante."}
+      ]},
+      {titre:"2. De la vente au bénéfice : la marge nette", blocs:[
+        {type:'texte', texte:"Le chapitre précédent a montré que le chiffre d'affaires ne dit rien de la rentabilité. La marge nette répond directement à la question qu'il laisse ouverte : sur chaque euro vendu, combien reste-t-il réellement à l'entreprise ?"},
+        {type:'definition', texte:"La marge nette est la part du chiffre d'affaires qui reste sous forme de bénéfice (résultat net) une fois TOUTES les charges payées — achats, salaires, loyers, impôts, intérêts de la dette..."},
+        {type:'calcul', texte:"Marge nette = Résultat net ÷ Chiffre d'affaires.", schema:
+"Exemple :\nChiffre d'affaires : 100 000 000 €\nRésultat net       :   8 000 000 €\n\nMarge nette = 8 000 000 ÷ 100 000 000 = 8%\n\nAutrement dit : pour chaque euro vendu, l'entreprise conserve\n8 centimes de bénéfice, une fois toutes les charges payées."},
+        {type:'exerciceErreur', affirmation:"Une entreprise avec 3% de marge nette est forcément moins bien gérée qu'une entreprise avec 20% de marge nette.", pourquoi:"Les niveaux de marge nette normaux varient énormément selon les secteurs. Un supermarché, qui vend en très grand volume avec des prix serrés, fonctionne structurellement avec une marge nette faible (souvent 1 à 3%) ; un éditeur de logiciels, qui vend un produit déjà développé à un coût marginal presque nul par client supplémentaire, peut afficher 20% ou plus. Comparer ces deux marges sans tenir compte du secteur ne dit rien sur la qualité de gestion de l'une ou de l'autre."},
+        {type:'casReel', texte:"Un supermarché et un éditeur de logiciels avec exactement le même chiffre d'affaires peuvent afficher des marges nettes radicalement différentes : le premier réachète en permanence des marchandises à écouler rapidement, le second vend un produit déjà créé, sans coût de fabrication répété à chaque vente. Comparer leurs marges nettes brutes, sans tenir compte de cette différence de modèle économique, mène à une conclusion fausse."},
+        {type:'retenir', texte:"La marge nette n'a de sens que comparée à des entreprises du même secteur, ou à l'historique de la même entreprise dans le temps — jamais en absolu, et jamais entre deux secteurs aux structures de coûts trop différentes."}
+      ]},
+      {titre:"3. Le bilan comptable : ce que l'entreprise possède, et comment c'est financé", blocs:[
+        {type:'texte', texte:"Le chiffre d'affaires et la marge nette racontent l'activité de l'entreprise sur une période. Le bilan comptable répond à une question différente : à un instant précis, qu'est-ce que l'entreprise possède, et qui a financé cela ?"},
+        {type:'definition', texte:"Le bilan comptable est une photographie du patrimoine d'une entreprise à un instant donné. L'actif regroupe ce qu'elle possède (trésorerie, stocks, équipements, créances...) ; le passif indique comment c'est financé — par les actionnaires (capitaux propres) ou par des créanciers (dettes)."},
+        {type:'visualisation', schema:
+"ACTIF                              PASSIF\n(ce que l'entreprise possède)      (comment c'est financé)\n────────────────────────           ─────────────────────────\nTrésorerie, stocks,                Capitaux propres (actionnaires)\néquipements, créances...           + Dettes (banques, fournisseurs...)\n────────────────────────           ─────────────────────────\n     TOTAL ACTIF          =             TOTAL PASSIF"},
+        {type:'retenir', texte:"Par construction comptable, le total de l'actif est TOUJOURS égal au total du passif — ce n'est jamais une coïncidence, mais une garantie intégrée à la méthode elle-même (voir le cours « Les bases de la comptabilité » pour comprendre pourquoi, en détail)."},
+        {type:'exerciceErreur', affirmation:"Un bilan qui afficherait un actif supérieur au passif montrerait un bénéfice caché non comptabilisé.", pourquoi:"L'actif et le passif d'un bilan sont toujours strictement égaux par construction — s'ils ne le sont pas dans un document donné, c'est le signe d'une ligne manquante ou d'une erreur de saisie, jamais un « bénéfice caché ». Le vrai indicateur de bénéfice est le résultat net, qui apparaît dans le compte de résultat, pas dans un déséquilibre du bilan."},
+        {type:'attention', texte:"Le bilan est une photo à un instant T, pas un film : il ne dit rien de l'évolution récente de l'entreprise ni de sa rentabilité sur l'année — c'est le rôle du compte de résultat, détaillé dans le cours « Apprendre à lire une entreprise »."}
+      ]},
+      {titre:"4. L'amortissement : étaler le coût d'un bien dans le temps", blocs:[
+        {type:'texte', texte:"Une entreprise qui achète une machine à 100 000 € ne passe presque jamais cette dépense en charge d'un seul coup dans ses comptes, même si elle l'a bien payée en une fois. Pourquoi ?"},
+        {type:'definition', texte:"L'amortissement consiste à étaler comptablement le coût d'un bien durable (machine, bâtiment, véhicule...) sur sa durée de vie estimée, plutôt que de le passer en charge la seule année de l'achat."},
+        {type:'calcul', texte:"Amortissement linéaire = Coût du bien ÷ Durée de vie estimée.", schema:
+"Exemple :\nCoût de la machine : 100 000 €\nDurée de vie estimée : 10 ans\n\nAmortissement annuel = 100 000 ÷ 10 = 10 000 € par an\n\nLa machine est payée en une fois, mais son coût est réparti\nsur 10 ans dans les comptes — reflétant son usure progressive."},
+        {type:'pourquoi', texte:"Étaler la charge plutôt que de la constater en une fois reflète mieux la réalité économique : la machine sert à produire pendant 10 ans, pas seulement l'année de son achat. Sans amortissement, le résultat de l'année d'achat serait artificiellement écrasé, et les 9 années suivantes artificiellement gonflées, alors que la machine rend le même service chaque année."},
+        {type:'exerciceErreur', affirmation:"Une charge d'amortissement de 10 000 € par an signifie que l'entreprise sort réellement 10 000 € de trésorerie cette année-là.", pourquoi:"L'amortissement est une charge comptable, pas un mouvement d'argent réel : la sortie de trésorerie a eu lieu une seule fois, au moment de l'achat de la machine (100 000 € payés en une fois). L'amortissement se contente d'étaler ce coût déjà payé dans le résultat comptable des années suivantes — c'est précisément pour cette raison que les analystes financiers regardent aussi des indicateurs comme l'EBITDA, calculé avant amortissements, pour juger la performance opérationnelle réelle indépendamment de ce choix comptable."},
+        {type:'approfondir', texte:"Ce mécanisme est développé plus en détail dans le cours « Apprendre à lire une entreprise », notamment le lien entre amortissement, EBITDA et résultat net dans le compte de résultat complet d'une entreprise."}
+      ]},
+      {titre:"5. La startup : une entreprise pas comme les autres", blocs:[
+        {type:'texte', texte:"Le mot « startup » est utilisé pour à peu près n'importe quelle jeune entreprise — à tort. Une startup répond en réalité à une définition plus précise."},
+        {type:'definition', texte:"Une startup est une jeune entreprise, généralement technologique, qui cherche encore un modèle économique reproductible et à forte croissance — par opposition à une entreprise qui a déjà un modèle éprouvé et cherche simplement à l'exécuter."},
+        {type:'texte', texte:"Contrairement à une PME classique, une startup opère souvent dans l'incertitude : elle teste rapidement plusieurs versions de son produit, et vise une croissance rapide quitte à ne pas être rentable pendant ses premières années."},
+        {type:'exerciceErreur', affirmation:"Toute jeune entreprise récemment créée est une startup.", pourquoi:"Une boulangerie ou un cabinet de conseil tout juste créés sont de jeunes entreprises, mais pas des startups au sens strict : ils ont un modèle économique déjà connu et éprouvé (vendre du pain, facturer du temps de conseil), sans ambition de croissance exponentielle ni recherche d'un modèle encore incertain. Le terme « startup » désigne une situation précise — l'incertitude sur le modèle économique et l'ambition de forte croissance — pas simplement la jeunesse de l'entreprise."},
+        {type:'attention', texte:"La majorité des startups échouent avant d'atteindre la rentabilité. Les investisseurs en capital-risque (voir le chapitre suivant) misent sur le fait qu'un petit nombre de réussites majeures dans leur portefeuille compensera largement les nombreux échecs."}
+      ]},
+      {titre:"6. La levée de fonds : faire entrer des investisseurs au capital", blocs:[
+        {type:'texte', texte:"Une startup en forte croissance mais pas encore rentable (chapitre précédent) doit financer ses dépenses avant que ses revenus ne suffisent. La levée de fonds est l'un des moyens les plus courants d'y parvenir."},
+        {type:'definition', texte:"Une levée de fonds consiste à faire entrer de nouveaux investisseurs au capital de l'entreprise en échange d'argent, pour financer sa croissance. En échange de leur investissement, ces investisseurs reçoivent des parts (actions) de l'entreprise."},
+        {type:'calcul', texte:"Le montant levé et le pourcentage du capital cédé déterminent la valorisation implicite de l'entreprise après l'opération.", schema:
+"Une startup lève 5 000 000 € en échange de 20% de son capital.\n\nValorisation post-levée = Montant levé ÷ % du capital cédé\n                        = 5 000 000 ÷ 0,20\n                        = 25 000 000 €\n\nL'entreprise est donc valorisée 25 M€ juste après l'opération\n(dont 5 M€ apportés en cash par les nouveaux investisseurs)."},
+        {type:'pourquoi', texte:"Une levée de fonds apporte des capitaux sans créer de dette à rembourser — contrairement à un emprunt bancaire. Mais elle a un coût réel : elle dilue la part de propriété des actionnaires déjà en place, qui possèdent désormais une plus petite fraction d'une entreprise plus grande."},
+        {type:'exerciceErreur', affirmation:"Une startup valorisée 25 millions d'euros lors de sa levée de fonds possède réellement 25 millions d'euros.", pourquoi:"Cette valorisation est une estimation issue de la négociation entre l'entreprise et ses investisseurs, pas un montant d'argent réel et disponible sur un compte. L'entreprise ne dispose concrètement que des 5 M€ effectivement apportés en cash par les nouveaux investisseurs — le reste de la valorisation reflète la valeur estimée des 80% du capital restés entre les mains des actionnaires déjà en place, une valeur qui ne devient réellement liquide qu'en cas de revente future (et qui peut aussi baisser lors d'une levée suivante, une « down round »)."},
+        {type:'retenir', texte:"Les levées de fonds successives portent des noms conventionnels (série A, B, C...) et valorisent en général l'entreprise à un niveau croissant si elle atteint ses objectifs de croissance — mais rien ne garantit cette progression : une levée à valorisation inférieure à la précédente reste possible en cas de difficultés."}
+      ]}
+    ]},
   {id:'ma-private-equity', titre:"Comprendre les fusions-acquisitions et le private equity", niveau:'Avancé', prerequis:['lire-une-entreprise'],
     libraryTermes:['Fusion-acquisition (M&A)','Due diligence','Private equity (capital-investissement)','LBO (rachat par effet de levier)','Multiple de valorisation (EV/EBITDA)','Exit (sortie d\'un investisseur)','Capital-risque et business angels','Effet de levier'],
     quizCategories:['M&A et Private Equity'],
