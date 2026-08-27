@@ -606,6 +606,22 @@ const BUSINESS_STORIES = [
         {id: 'refuse', label: "Refuser et continuer à financer la croissance uniquement par les revenus"}
       ]
     },
+    // Simule MÉCANIQUEMENT les 2 options avec le même modèle déterministe que
+    // le Business Game (audit Formations Phase 5 du 27/08/2026) — jamais une
+    // prédiction sur ce qu'aurait fait la VRAIE entreprise, seulement l'effet
+    // du même type de décision sur une entreprise dans une position de départ
+    // similaire. baseOverrides approxime la situation du récit (rentable,
+    // croissance organique) ; les deltas d'"accept" reprennent exactement les
+    // chiffres de l'événement réel "saas-levee-fonds" ci-dessus, pour rester
+    // cohérent avec le reste du modèle plutôt que d'inventer de nouveaux chiffres.
+    consequenceModel: {
+      baseOverrides: {cash: 60000, clients: 30, reputation: 55, satisfaction: 65},
+      monthsToProject: 6,
+      optionEffects: {
+        accept(s){ return {cash: s.cash + 80000, marketingBudgetMonthly: s.marketingBudgetMonthly + 1500}; },
+        refuse(s){ return {}; }
+      }
+    },
     reveal: {
       companyName: 'Mailchimp',
       whatReallyHappened: [
@@ -638,6 +654,19 @@ const BUSINESS_STORIES = [
         {id: 'refuse', label: "Refuser et continuer seul, quitte à prendre plus de risque"}
       ]
     },
+    // baseOverrides reflète la trésorerie tendue et la dette du récit (stocks
+    // financés par emprunt, crise 2008-2009) ; "sell" modélise un rachat qui
+    // sécurise le cash et efface une partie de la dette (pas les vrais termes
+    // financiers de l'accord réel, qui n'ont jamais été rendus publics dans
+    // le détail) ; "refuse" laisse la dette et la trésorerie tendue telles quelles.
+    consequenceModel: {
+      baseOverrides: {cash: 15000, debt: 40000, inventory: 800, reputation: 60},
+      monthsToProject: 6,
+      optionEffects: {
+        sell(s){ return {cash: s.cash + 50000, debt: Math.max(0, s.debt - 40000)}; },
+        refuse(s){ return {}; }
+      }
+    },
     reveal: {
       companyName: 'Zappos',
       whatReallyHappened: [
@@ -669,6 +698,18 @@ const BUSINESS_STORIES = [
         {id: 'invest', label: "Saisir l'opportunité et investir dans un kiosque permanent"},
         {id: 'stay', label: "Rester un chariot saisonnier, sans risque supplémentaire"}
       ]
+    },
+    // baseOverrides part d'un tout petit chariot déjà populaire (bonne
+    // réputation, peu de personnel, peu de trésorerie) ; "invest" reprend
+    // le même ordre de grandeur que l'événement réel "resto-terrasse"
+    // (agrandissement) ci-dessus, "stay" laisse l'activité saisonnière inchangée.
+    consequenceModel: {
+      baseOverrides: {cash: 15000, staffCount: 2, reputation: 55, locationQuality: 50},
+      monthsToProject: 6,
+      optionEffects: {
+        invest(s){ return {cash: s.cash - 10000, monthlyFixedCosts: s.monthlyFixedCosts + 400, staffCount: s.staffCount + 1, locationQuality: s.locationQuality + 15}; },
+        stay(s){ return {}; }
+      }
     },
     reveal: {
       companyName: 'Shake Shack',

@@ -267,6 +267,27 @@ function renderBusinessGame(elId){
   renderSetup();
 }
 
+// ---------- Simulation "et si..." pour Business Stories (audit Formations
+// Phase 5 du 27/08/2026) : applique l'effet d'UNE option au state de départ
+// du récit, puis fait tourner le même moteur mensuel déterministe que le
+// Business Game (sector.simulateMonth) pendant N mois — jamais une
+// prédiction sur ce qu'aurait fait la vraie entreprise, seulement l'effet
+// mécanique du même type de décision sur une entreprise en position
+// similaire, avec le modèle déjà utilisé (et testé) ailleurs sur le site. ----------
+function simulateStoryOption(story, optionId){
+  const sector = BUSINESS_SECTORS[story.sectorKey];
+  const model = story.consequenceModel;
+  const effect = model.optionEffects[optionId];
+  if(!sector || !model || !effect) return null;
+  let state = sector.startingState(model.baseOverrides);
+  const delta = effect(state) || {};
+  state = Object.assign({}, state, delta);
+  for(let m = 0; m < model.monthsToProject; m++){
+    state = sector.simulateMonth(state, 'actuel');
+  }
+  return state;
+}
+
 // ---------- UI : Business Stories — découvre la situation, décide, puis
 // seulement ensuite découvre de quelle entreprise réelle elle s'inspire
 // (§19 : jamais l'inverse, jamais un fait inventé sur une vraie entreprise). ----------
@@ -316,6 +337,24 @@ function renderBusinessStories(elId){
     });
   }
 
+  function renderConsequenceComparator(story){
+    const model = story.consequenceModel;
+    if(!model) return '';
+    const results = story.choice.options.map(opt => ({opt, state: simulateStoryOption(story, opt.id)}));
+    if(results.some(r => !r.state)) return '';
+    return `
+      <span class="smallcaps" style="display:block;margin:16px 0 8px;">Simulation : les 2 options, avec le modèle du Business Game</span>
+      <div class="card-grid" style="margin-bottom:8px;">
+        ${results.map(r => `
+          <div class="card ${r.opt.id === chosenOptionId ? 'is-active' : ''}">
+            <h4 style="margin-bottom:8px;">${r.opt.label}${r.opt.id === chosenOptionId ? ' (ton choix)' : ''}</h4>
+            <div class="panel-row"><span>Trésorerie après ${model.monthsToProject} mois</span><span class="val mono">${fmtEUR(Math.round(r.state.cash))}</span></div>
+            <div class="panel-row"><span>Résultat du dernier mois</span><span class="val mono" style="color:${r.state.profit >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${fmtEUR(Math.round(r.state.profit))}</span></div>
+          </div>`).join('')}
+      </div>
+      <p class="disclaimer-box" style="margin-bottom:12px;">${renderDataBadge('simulation')} Ces 2 trajectoires utilisent le même modèle déterministe que le Business Game (scripts/games/business-game-data.js), appliqué à un point de départ approximant la situation du récit — jamais les vrais chiffres de ${story.reveal.companyName}, ni une prédiction de ce que l'entreprise aurait réellement fait. Sert à comparer MÉCANIQUEMENT l'effet des deux options.</p>`;
+  }
+
   function renderReveal(){
     const story = currentStory();
     const chosenOption = story.choice.options.find(o => o.id === chosenOptionId);
@@ -332,6 +371,7 @@ function renderBusinessStories(elId){
         ${story.reveal.gameSimplifications.map(t => `<p style="margin-bottom:6px;">${renderDataBadge('simulation')} ${t}</p>`).join('')}
       </div>
       <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;">${story.reveal.playerChoiceNote}</p>
+      ${renderConsequenceComparator(story)}
       <a href="jeu-business.html" class="btn btn-sm btn-gold">🎮 Essayer ce secteur dans le Business Game</a>`;
     document.getElementById(`${elId}-back`).addEventListener('click', renderList);
   }
