@@ -1561,7 +1561,7 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"Aucun de ces 4 types d'ordre n'est \"le meilleur\" dans l'absolu : le choix dépend de ce que tu veux garantir en priorité — le prix, ou la certitude d'être exécuté — jamais les deux à la fois avec un seul et même ordre."}
       ]}
     ]},
-  {id:'lire-une-entreprise', titre:'Apprendre à lire une entreprise', niveau:'Intermédiaire',
+  {id:'lire-une-entreprise', titre:'Apprendre à lire une entreprise', niveau:'Intermédiaire', prerequis:['entreprise-essentiels'],
     libraryTermes:['Actif','Passif','Capitaux propres','Bilan comptable','Compte de résultat','Chiffre d\'affaires','Marge nette','Résultat net','Amortissement','BFR','Provisions','Goodwill','Consolidation'],
     quizCategories:['Bilan comptable','Chiffre d\'affaires','Marge nette','Amortissement'],
     applyUrl:'business.html', applyLabel:'Explorer le Business Center Likanza',
@@ -1605,7 +1605,7 @@ const COURS_CATALOG = [
         {type:'approfondir', texte:"Le niveau de détail de la consolidation dépend du contrôle exercé sur chaque filiale : une filiale détenue à 100% est intégrée globalement (100% de son actif, passif et résultat repris) ; une participation minoritaire peut n'être reprise qu'à hauteur de la quote-part détenue (mise en équivalence) — deux méthodes qui donnent une image très différente de la taille réelle du groupe."}
       ]}
     ]},
-  {id:'comptabilite-bases', titre:'Les bases de la comptabilité', niveau:'Intermédiaire',
+  {id:'comptabilite-bases', titre:'Les bases de la comptabilité', niveau:'Intermédiaire', prerequis:['entreprise-essentiels'],
     libraryTermes:['Débit et crédit (comptabilité)','Journal comptable','Grand livre','Immobilisation','Stock (comptable)','Créance','Bilan comptable','Amortissement','Trésorerie','Capitaux propres'],
     quizCategories:['Bilan comptable','Amortissement'],
     applyUrl:'bibliotheque.html', applyLabel:"Voir tous les termes de comptabilité",
@@ -1677,7 +1677,7 @@ const COURS_CATALOG = [
       ]}
     ]},
   {id:'epargne-interets', titre:"Épargne et intérêts composés", niveau:'Débutant', libraryTermes:['Intérêts composés','Assurance-vie'], quizCategories:['Épargne','Intérêts composés','Intérêts simples','Livret A','Assurance-vie']},
-  {id:'fiscalite-pea', titre:'Comprendre la fiscalité de son épargne', niveau:'Avancé',
+  {id:'fiscalite-pea', titre:'Comprendre la fiscalité de son épargne', niveau:'Avancé', prerequis:['bourse-actions'],
     libraryTermes:["Barème progressif de l'impôt sur le revenu",'Quotient familial','PFU (prélèvement forfaitaire unique / flat tax)','Plus-value mobilière (imposition)','PEA','Fiscalité de l\'assurance-vie','PER (Plan d\'Épargne Retraite)','Plus-value immobilière (imposition)','LMNP (Loueur Meublé Non Professionnel)'],
     quizCategories:['Fiscalité de base','PEA','Retraite et PER','Assurance-vie'],
     applyUrl:'bibliotheque.html', applyLabel:"Voir tous les termes de fiscalité",
@@ -1714,7 +1714,7 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"En immobilier, la durée de détention (plus-value) et le statut choisi pour la location (LMNP ou location nue) sont les deux leviers fiscaux les plus déterminants — bien plus que le choix du bien lui-même sur le plan strictement fiscal."}
       ]}
     ]},
-  {id:'risque-diversification', titre:'Risque, volatilité et gestion du risque', niveau:'Intermédiaire',
+  {id:'risque-diversification', titre:'Risque, volatilité et gestion du risque', niveau:'Intermédiaire', prerequis:['bourse-actions'],
     libraryTermes:['Diversification','Volatilité','Stop-loss et take-profit','Ratio risque/rendement','Taille de position','Risque de ruine','Espérance mathématique (trading)','Taux de réussite (win rate)','Biais du survivant (backtesting)','Surapprentissage (overfitting)'],
     quizCategories:['Diversification','Risque et volatilité','Gestion du risque',"Psychologie de l'investisseur"],
     applyUrl:'laboratoire.html', applyLabel:'Essayer le simulateur Market Panic',
@@ -1804,7 +1804,7 @@ const COURS_CATALOG = [
         {type:'approfondir', texte:"La Bibliothèque Likanza distingue précisément l'offre en circulation (déjà disponible) de l'offre totale (y compris les unités encore bloquées) — une confusion fréquente lors de la comparaison de deux projets, qui peut fausser l'impression de \"rareté\" perçue d'un token."}
       ]}
     ]},
-  {id:'immobilier-locatif', titre:'Immobilier locatif', niveau:'Avancé', libraryTermes:['Rendement locatif'], quizCategories:['Immobilier','SCPI']},
+  {id:'immobilier-locatif', titre:'Immobilier locatif', niveau:'Avancé', prerequis:['budget-securite'], libraryTermes:['Rendement locatif'], quizCategories:['Immobilier','SCPI']},
   {id:'budget-securite', titre:'Les fondations de tes finances personnelles', niveau:'Débutant',
     libraryTermes:['Argent','Revenus','Dépenses','Budget','Épargne','Actifs','Passifs','Patrimoine','Valeur nette','Cash-flow personnel',"Fonds d'urgence",'Inflation'],
     quizCategories:['Budget','Épargne','Inflation','Arnaques financières','Crédit',"Constitution d'un patrimoine"],
@@ -1891,7 +1891,7 @@ const COURS_CATALOG = [
         {type:'approfondir', texte:"Voir le simulateur \"Gouverneur de banque centrale\" du Laboratoire financier pour explorer concrètement comment une décision de taux directeur se propage, avec délai, sur l'inflation, le chômage et la croissance — le même arbitrage qu'affrontent réellement les banques centrales."}
       ]}
     ]},
-  {id:'histoire-economique', titre:"Comprendre l'histoire économique moderne", niveau:'Avancé',
+  {id:'histoire-economique', titre:"Comprendre l'histoire économique moderne", niveau:'Avancé', prerequis:['economie-generale'],
     libraryTermes:['Étalon-or','Stagflation','Crise des subprimes','Protectionnisme','Taux de change','Taux directeur','Banque centrale','Récession'],
     quizCategories:['Histoire économique'],
     applyUrl:'economie.html', applyLabel:"Voir aussi le Laboratoire économique",
@@ -1940,7 +1940,7 @@ const COURS_CATALOG = [
       ]}
     ]},
   {id:'entreprise-essentiels', titre:"Comprendre l'entreprise", niveau:'Intermédiaire', libraryTermes:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds'], quizCategories:["Chiffre d'affaires",'Marge nette','Bilan comptable','Amortissement','Startup','Levée de fonds']},
-  {id:'ma-private-equity', titre:"Comprendre les fusions-acquisitions et le private equity", niveau:'Avancé',
+  {id:'ma-private-equity', titre:"Comprendre les fusions-acquisitions et le private equity", niveau:'Avancé', prerequis:['lire-une-entreprise'],
     libraryTermes:['Fusion-acquisition (M&A)','Due diligence','Private equity (capital-investissement)','LBO (rachat par effet de levier)','Multiple de valorisation (EV/EBITDA)','Exit (sortie d\'un investisseur)','Capital-risque et business angels','Effet de levier'],
     quizCategories:['M&A et Private Equity'],
     applyUrl:'finance.html', applyLabel:"Essayer le simulateur LBO",
@@ -1976,7 +1976,7 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"Une performance d'investissement non réalisée (avant exit) doit toujours être interprétée avec prudence — c'est une estimation, jamais un gain acquis."}
       ]}
     ]},
-  {id:'mathematiques-financieres', titre:"Introduction aux mathématiques financières et à la finance quantitative", niveau:'Avancé',
+  {id:'mathematiques-financieres', titre:"Introduction aux mathématiques financières et à la finance quantitative", niveau:'Avancé', prerequis:['risque-diversification'],
     libraryTermes:['Écart-type','Distribution (statistique)','Probabilité','Régression (statistique)','Corrélation (entre actifs)','Ratio de Sharpe','Beta (β) d\'un actif','Value at Risk (VaR)','Loi normale des rendements et ses limites','Simulation de Monte Carlo','Volatilité','Diversification'],
     quizCategories:['Finance quantitative'],
     applyUrl:'laboratoire.html#tab-investissement', applyLabel:"Essayer le simulateur de risque (VaR)",
@@ -2023,7 +2023,7 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"Un outil quantitatif comme la VaR est utile pour standardiser et comparer des risques, mais reste construit sur des hypothèses simplificatrices dont il faut connaître les limites, jamais un chiffre à interpréter comme une certitude absolue."}
       ]}
     ]},
-  {id:'options-introduction', titre:"Comprendre les options (call, put, payoff)", niveau:'Avancé',
+  {id:'options-introduction', titre:"Comprendre les options (call, put, payoff)", niveau:'Avancé', prerequis:['bourse-actions'],
     libraryTermes:['Option (financière)','Call (option d\'achat)','Put (option de vente)','Prime (option)','Prix d\'exercice (strike)','Effet de levier','Volatilité implicite','Delta (option)','Gamma (option)','Theta (option)','Vega (option)'],
     quizCategories:['Options'],
     applyUrl:'bourse.html#tab-options', applyLabel:"Essayer le simulateur de payoff",
@@ -2060,7 +2060,7 @@ const COURS_CATALOG = [
         {type:'retenir', texte:"Les Grecques et la volatilité implicite sont des outils de compréhension du RISQUE d'une position d'options avant l'échéance — jamais une garantie de prix futur, et jamais un substitut à la règle de base déjà vue au chapitre précédent : connaître sa perte maximale possible avant d'ouvrir une position."}
       ]}
     ]},
-  {id:'forex-essentiels', titre:'Forex : lot, marge et gestion du risque sur une position', niveau:'Avancé',
+  {id:'forex-essentiels', titre:'Forex : lot, marge et gestion du risque sur une position', niveau:'Avancé', prerequis:['risque-diversification'],
     libraryTermes:['Pip','Spread (Forex)','Lot (Forex)','Marge (Forex)','Swap (rollover)','Carry trade'],
     quizCategories:['Forex'],
     applyUrl:'laboratoire.html#tab-investissement', applyLabel:"Essayer le calculateur de position Forex",

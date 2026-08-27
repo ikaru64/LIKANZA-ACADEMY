@@ -3231,6 +3231,24 @@ function renderChartPatternGame(elId){
 const COURS_PASS_THRESHOLD = 0.6;
 function getCoursProgress(){ return safeGetJSON('fzr-cours-progress', {}); }
 
+// Suivi des chapitres réellement ouverts par cours (audit Formations du
+// 27/08/2026 : le raccourci "Test" du sélecteur de format permettait de
+// sauter directement au quiz sans avoir ouvert un seul chapitre). Identifié
+// par le titre du chapitre plutôt que son index : l'index bouge selon le
+// format actif (getFormatFilteredChapitres retire des chapitres), le titre
+// reste stable quel que soit le format utilisé pour l'ouvrir.
+function getVisitedChapters(coursId){
+  const all = safeGetJSON('fzr-cours-visited', {});
+  return all[coursId] || [];
+}
+function markChapterVisited(coursId, chapitreTitre){
+  const all = safeGetJSON('fzr-cours-visited', {});
+  const list = all[coursId] || [];
+  if(!list.includes(chapitreTitre)) list.push(chapitreTitre);
+  all[coursId] = list;
+  safeSetJSON('fzr-cours-visited', all);
+}
+
 // Rattache chaque cours à son domaine réel (DOMAINS, app.js) en comptant le
 // recouvrement entre ses quizCategories et celles de chaque domaine — jamais
 // une catégorie inventée à la main : le domaine avec le plus de catégories en
@@ -3373,6 +3391,38 @@ function renderRelatedCourseLink(coursId, chapitreLabel){
   return `<p style="font-size:12px;color:var(--text-dim);margin-top:6px;"><a href="cours.html#${encodeURIComponent(coursId)}" style="color:var(--gold-bright);">🎓 Voir le cours « ${cours.titre} »${chapitreText} →</a></p>`;
 }
 
+// Écran affiché avant le 1er chapitre d'un cours enrichi (audit Formations du
+// 27/08/2026 : les objectifs (cours.acquis) n'étaient montrés qu'à la toute
+// fin, jamais avant de commencer). Les prérequis (cours.prerequis, quand ils
+// existent) sont montrés avec leur statut réel de progression — jamais un
+// verrou : juste une recommandation informée, l'utilisateur reste libre de
+// commencer sans les avoir faits.
+function renderCoursePrerequisites(prerequis){
+  const items = (prerequis || []).map(id => COURS_CATALOG.find(c => c.id === id)).filter(Boolean);
+  if(items.length === 0) return '';
+  const progress = getCoursProgress();
+  return `<div class="card" style="margin-bottom:14px;background:var(--bg-alt);">
+    <span class="smallcaps">Recommandé avant de commencer</span>
+    <ul style="margin:10px 0 0;padding-left:18px;font-size:13.5px;line-height:1.9;">
+      ${items.map(c => `<li><a href="cours.html#${encodeURIComponent(c.id)}" style="color:var(--gold-bright);">${c.titre}</a> — ${progress[c.id] ? '<span style="color:var(--emerald);">déjà validé ✓</span>' : '<span style="color:var(--text-dim);">pas encore fait</span>'}</li>`).join('')}
+    </ul>
+  </div>`;
+}
+function renderCourseIntro(elId, cours, onStart){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const acquis = Array.isArray(cours.acquis) ? cours.acquis : [];
+  el.innerHTML = `
+    <h4 style="margin-top:4px;">${cours.titre}</h4>
+    ${renderCoursePrerequisites(cours.prerequis)}
+    ${acquis.length ? `<div class="card" style="margin-bottom:16px;">
+      <span class="smallcaps">À la fin de ce cours, tu sauras :</span>
+      <ul style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--text-dim);line-height:1.8;">${acquis.map(a => `<li>${a}</li>`).join('')}</ul>
+    </div>` : ''}
+    <button class="btn btn-sm btn-gold" id="${elId}-start-course">Commencer →</button>`;
+  document.getElementById(`${elId}-start-course`).addEventListener('click', onStart);
+}
+
 // ---------- Feedback qualité pédagogique (section 26 du prompt Learning
 // Engine) : simple, jamais bloquant, un avis par contenu (pas un vote répété
 // à chaque relecture) — sert uniquement à repérer les cours à améliorer,
@@ -3434,8 +3484,15 @@ function renderCoursRich(elId, cours, onComplete){
       btn.addEventListener('click', () => {
         const key = btn.dataset.format;
         if(key === activeFormat) return;
+        if(key === 'test'){
+          const visited = getVisitedChapters(cours.id);
+          const unread = cours.chapitres.filter(ch => !visited.includes(ch.titre));
+          if(unread.length > 0){ renderReadingRequired(unread); return; }
+          activeFormat = key;
+          renderQuizStep();
+          return;
+        }
         activeFormat = key;
-        if(key === 'test'){ renderQuizStep(); return; }
         chapitres = getFormatFilteredChapitres(cours.chapitres, key);
         chapIndex = 0;
         renderChapterStep();
@@ -3443,7 +3500,30 @@ function renderCoursRich(elId, cours, onComplete){
     });
   }
 
+  // Bloque le raccourci "Test" tant que tous les chapitres n'ont pas été
+  // ouverts au moins une fois — jamais un blocage silencieux : le message
+  // liste ce qui reste et propose un bouton direct vers le premier chapitre
+  // non lu, plutôt qu'un simple refus.
+  function renderReadingRequired(unread){
+    el.innerHTML = `
+      ${formatSelectorHtml()}
+      <div class="card" style="margin-top:8px;">
+        <span class="smallcaps">Termine la lecture d'abord</span>
+        <p style="font-size:13.5px;color:var(--text-dim);margin-top:8px;">Il te reste ${unread.length} chapitre${unread.length > 1 ? 's' : ''} non ouvert${unread.length > 1 ? 's' : ''} avant de passer directement au quiz : ${unread.map(c => c.titre).join(', ')}.</p>
+        <button class="btn btn-sm btn-gold" id="${elId}-goto-unread" style="margin-top:10px;">Reprendre la lecture →</button>
+      </div>`;
+    wireFormatSelector();
+    document.getElementById(`${elId}-goto-unread`).addEventListener('click', () => {
+      activeFormat = 'complet';
+      chapitres = cours.chapitres;
+      const target = cours.chapitres.findIndex(ch => ch.titre === unread[0].titre);
+      chapIndex = target >= 0 ? target : 0;
+      renderChapterStep();
+    });
+  }
+
   function renderChapterStep(){
+    markChapterVisited(cours.id, chapitres[chapIndex].titre);
     const isLast = chapIndex === chapitres.length - 1;
     const pct = Math.round(((chapIndex + 1) / chapitres.length) * 100);
     el.innerHTML = `
@@ -3491,7 +3571,7 @@ function renderCoursRich(elId, cours, onComplete){
     });
   }
 
-  renderChapterStep();
+  renderCourseIntro(elId, cours, renderChapterStep);
 }
 
 // Écran de fin d'un cours enrichi : jamais un simple "Bravo", toujours les
@@ -3515,7 +3595,7 @@ function renderCourseCompletionMenu(elId, cours){
       ${next ? `<a href="cours.html#${encodeURIComponent(next.id)}" class="card play-tile"><span class="icon">📚</span><h4 style="margin:8px 0 4px;">Approfondir</h4><p style="font-size:12.5px;color:var(--text-dim);">${next.titre}</p></a>` : ''}
       ${cours.applyUrl ? `<a href="${cours.applyUrl}" class="card play-tile"><span class="icon">📈</span><h4 style="margin:8px 0 4px;">Appliquer</h4><p style="font-size:12.5px;color:var(--text-dim);">${cours.applyLabel || 'Voir dans Likanza'}</p></a>` : ''}
       <a href="laboratoire.html" class="card play-tile"><span class="icon">🧪</span><h4 style="margin:8px 0 4px;">Expérimenter</h4><p style="font-size:12.5px;color:var(--text-dim);">Tester dans le Laboratoire</p></a>
-      <a href="defis.html" class="card play-tile"><span class="icon">🧠</span><h4 style="margin:8px 0 4px;">Te tester</h4><p style="font-size:12.5px;color:var(--text-dim);">Faire un défi</p></a>
+      <a href="${Array.isArray(cours.quizCategories) && cours.quizCategories[0] ? `defis.html?cat=${encodeURIComponent(cours.quizCategories[0])}` : 'defis.html'}" class="card play-tile"><span class="icon">🧠</span><h4 style="margin:8px 0 4px;">Te tester</h4><p style="font-size:12.5px;color:var(--text-dim);">${Array.isArray(cours.quizCategories) && cours.quizCategories[0] ? `Défi sur « ${cours.quizCategories[0]} »` : 'Faire un défi'}</p></a>
     </div>`;
 }
 
