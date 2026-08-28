@@ -97,7 +97,8 @@ const LAB_WIDGETS = {
   'tab-planification': [
     {id:'widget-urgence-choc', title:"Fonds d'urgence & choc financier", desc:'Combien de temps tiendrais-tu sans revenu ?', icon:'shield'},
     {id:'widget-cashflow-projection', title:'Projection de trésorerie', desc:'Ton solde projeté au rythme actuel.', icon:'trending-up'},
-    {id:'widget-life-change', title:'Changement de situation', desc:'Augmentation, side-hustle, déménagement, vie à deux.', icon:'compass'}
+    {id:'widget-life-change', title:'Changement de situation', desc:'Augmentation, side-hustle, déménagement, vie à deux.', icon:'compass'},
+    {id:'widget-mon-futur', title:'🔮 Mon Futur', desc:'Projection du patrimoine sur 1/5/10/20 ans, 3 scénarios.', icon:'telescope'}
   ]
 };
 function renderLabWidgetGrid(categoryId){
@@ -326,6 +327,13 @@ const LAB_METHODOLOGY = {
     hypotheses: "Suppose que le solde restant dû saisi est à jour au moment où tu l'entres — il ne se met pas à jour tout seul entre deux visites.",
     limites: "Ne distingue pas les crédits à taux variable des crédits à taux fixe : un taux variable saisi ici reste figé jusqu'à ce que tu le mettes à jour toi-même.",
     comprendre: "Cette liste est la seule source de vérité des dettes sur tout le Laboratoire — jamais ressaisie séparément dans le calcul de patrimoine net ou les outils de stratégie de remboursement."
+  },
+  'mon-futur': {
+    calcul: "Chaque année : patrimoine = (patrimoine de l'année précédente × (1 + rendement annuel)) + épargne versée dans l'année. Le patrimoine \"réel\" déflate ce nominal par l'inflation cumulée depuis aujourd'hui (patrimoine réel = patrimoine nominal ÷ (1 + inflation)^nombre d'années).",
+    donnees: "Ton patrimoine net actuel (\"Mon patrimoine net\" ci-dessus) comme point de départ ; les 3 taux de rendement (prudent/central/optimiste) sont les mêmes que ceux du widget \"Intérêts composés\", jamais un 4e taux inventé pour cet outil.",
+    hypotheses: "Suppose un rendement annuel CONSTANT sur toute la période (aucun vrai marché ne se comporte ainsi d'une année sur l'autre) et une épargne mensuelle réellement versée chaque mois, sans interruption.",
+    limites: "Ne modélise ni la fiscalité sur les gains, ni un choc de marché ponctuel (une vraie trajectoire de marché alterne hausses et baisses, jamais une ligne lisse comme celle-ci) — 3 scénarios à taux fixe donnent un ORDRE DE GRANDEUR, jamais une prédiction précise à 20 ans.",
+    comprendre: "L'écart entre les 3 scénarios grandit avec le temps, pas de façon linéaire : c'est l'effet des intérêts composés (voir ce cours dans la Bibliothèque), la même mécanique qui explique pourquoi commencer tôt compte souvent plus que le taux précis obtenu."
   },
   'charges': {
     calcul: "Coût annualisé = montant × (12 pour mensuel, 4 pour trimestriel, 1 pour annuel). Coûts sur 3/5/10 ans = coût annualisé × le nombre d'années, sans actualisation ni inflation appliquée.",
@@ -2105,6 +2113,71 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
   renderFields();
   update();
   renderNextStepCard('nextstep-life-change', {domainKey: 'personalFinance'});
+})();
+
+// ---------- 🔮 Mon Futur (audit Dashboard du 28/08/2026, Chantier 4) :
+// projection longue (1/5/10/20 ans) du patrimoine, 3 scénarios de rendement
+// réutilisés tels quels de "Intérêts composés" (RETURN_ASSUMPTIONS) —
+// computeWealthProjection/computeWealthProjectionScenarios vivent dans
+// scripts/data.js, ce fichier ne fait que le rendu et le câblage. ----------
+(function initMonFuturSimulator(){
+  const resultEl = document.getElementById('futurResult');
+  if(!resultEl) return;
+  const epargneEl = document.getElementById('futurEpargne');
+  const augmentationEl = document.getElementById('futurAugmentation');
+  const inflationEl = document.getElementById('futurInflation');
+  let horizon = 10;
+
+  function update(){
+    document.getElementById('valFuturEpargne').textContent = fmtEUR(+epargneEl.value);
+    document.getElementById('valFuturAugmentation').textContent = `${augmentationEl.value} %`;
+    document.getElementById('valFuturInflation').textContent = `${inflationEl.value} %`;
+
+    const assets = getNetWorthAssets();
+    const debts = getPersonalDebts();
+    const patrimoineInitial = computeNetWorth(assets, debts).patrimoineNet;
+    const baseParams = {
+      patrimoineInitial,
+      epargneMensuelle: +epargneEl.value,
+      inflationPct: +inflationEl.value,
+      augmentationAnnuellePct: +augmentationEl.value
+    };
+    const scenarios = computeWealthProjectionScenarios(baseParams);
+
+    const SCENARIO_COLORS = {prudent: 'var(--bordeaux)', central: 'var(--gold-bright)', optimiste: 'var(--emerald)'};
+    resultEl.innerHTML = `
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">Patrimoine net actuel (point de départ) : <strong style="color:var(--text);">${fmtEUR(patrimoineInitial)}</strong></p>
+      <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));">
+        ${Object.keys(RETURN_ASSUMPTIONS).map(key => {
+          const point = scenarios[key].atHorizon[horizon];
+          return `<div class="card">
+            <span class="smallcaps" style="color:${SCENARIO_COLORS[key]};">${RETURN_ASSUMPTIONS[key].label} (${RETURN_ASSUMPTIONS[key].rate}%/an)</span>
+            <div class="result-big" style="font-size:18px;margin-top:6px;">${fmtEUR(point.patrimoineNominal)}</div>
+            <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">≈ ${fmtEUR(point.patrimoineReel)} en euros d'aujourd'hui</p>
+          </div>`;
+        }).join('')}
+      </div>`;
+
+    const chart = renderMultiLineChart([
+      {data: scenarios.prudent.points.map(p => p.patrimoineNominal), color: 'var(--bordeaux)', width: 2},
+      {data: scenarios.central.points.map(p => p.patrimoineNominal), color: 'var(--gold-bright)', width: 2.5},
+      {data: scenarios.optimiste.points.map(p => p.patrimoineNominal), color: 'var(--emerald)', width: 2}
+    ]);
+    document.getElementById('futurChart').innerHTML = chart;
+  }
+
+  [epargneEl, augmentationEl, inflationEl].forEach(el => el.addEventListener('input', update));
+  document.getElementById('futurHorizonToggle').querySelectorAll('.pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      horizon = +btn.dataset.horizon;
+      document.querySelectorAll('#futurHorizonToggle .pill').forEach(b => b.classList.toggle('active', b === btn));
+      update();
+    });
+  });
+
+  update();
+  document.getElementById('futurLinks').innerHTML = renderCourseLibraryLinks(['Intérêts composés', 'Valeur nette', 'Inflation']);
+  renderNextStepCard('nextstep-mon-futur', {domainKey: 'personalFinance'});
 })();
 
 // ============================================================

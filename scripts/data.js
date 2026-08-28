@@ -597,6 +597,31 @@ function renderDomainDashboardWidget(elId){
     <div id="${elId}-inner"></div>`;
   renderDomainDashboard(`${elId}-inner`);
 }
+function renderFutureDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const assets = getNetWorthAssets();
+  const debts = getPersonalDebts();
+  const patrimoineInitial = computeNetWorth(assets, debts).patrimoineNet;
+  // Aperçu compact : épargne mensuelle réelle du mois si connue (jamais une
+  // hypothèse d'épargne inventée), sinon 0 — l'outil complet (Laboratoire)
+  // permet de régler ce curseur toi-même.
+  const budgetSummary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+  const epargneMensuelle = Math.max(0, budgetSummary.solde || 0);
+  const scenarios = computeWealthProjectionScenarios({patrimoineInitial, epargneMensuelle, inflationPct: 2.1, augmentationAnnuellePct: 0});
+  const SCENARIO_COLORS = {prudent: 'var(--bordeaux)', central: 'var(--gold-bright)', optimiste: 'var(--emerald)'};
+  el.innerHTML = `
+    <span class="smallcaps">🔮 Mon Futur</span>
+    <p style="font-size:11.5px;color:var(--text-dim);margin:8px 0 10px;">Dans 10 ans, à ${fmtEUR(epargneMensuelle)}/mois${epargneMensuelle === 0 ? ' (aucune épargne mensuelle détectée)' : ''} :</p>
+    <div style="display:flex;flex-direction:column;gap:6px;">
+      ${Object.keys(RETURN_ASSUMPTIONS).map(key => `
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;">
+          <span style="color:${SCENARIO_COLORS[key]};">${RETURN_ASSUMPTIONS[key].label}</span>
+          <span class="mono">${fmtEUR(scenarios[key].atHorizon[10].patrimoineNominal)}</span>
+        </div>`).join('')}
+    </div>
+    <a href="laboratoire.html#tab-planification" class="btn btn-sm" style="margin-top:10px;">Simuler mes hypothèses →</a>`;
+}
 function renderMistakesDashboardWidget(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -627,6 +652,7 @@ const DASHBOARD_WIDGETS = [
   {id: 'profile-summary', title: null, mode: 'personal', selfCard: true, render: renderParcoursProfileSummary},
   {id: 'net-worth', title: null, mode: 'personal', selfCard: false, render: renderNetWorthDashboardWidget},
   {id: 'goals', title: null, mode: 'personal', selfCard: false, render: renderGoalsDashboardWidget},
+  {id: 'future', title: null, mode: 'personal', selfCard: false, render: renderFutureDashboardWidget},
   {id: 'business-snapshot', title: null, mode: 'professional', selfCard: false, render: renderBusinessSnapshotDashboardWidget},
   {id: 'stats', title: null, mode: 'both', selfCard: true, render: renderParcoursStats},
   {id: 'next-step', title: null, mode: 'both', selfCard: true, render: renderNextStepRecommendation},
@@ -643,6 +669,7 @@ const WIDGET_DISPLAY_NAMES = {
   'profile-summary': 'Ton profil Likanza',
   'net-worth': '💎 Mon Patrimoine',
   'goals': '🎯 Mes Objectifs',
+  'future': '🔮 Mon Futur',
   'business-snapshot': '💼 Mon Entreprise',
   'stats': 'En chiffres',
   'next-step': 'Ton prochain pas',
@@ -8254,6 +8281,45 @@ function computeGoalsPriorityAllocation(goals, capacity, priorityGoalId){
     const projection = computeGoalProjection({...goal, versementMensuel: allocated});
     return {goal, allocated, requested: goal.versementMensuel, projection};
   });
+}
+
+// ---- 🔮 Mon Futur : projection longue du patrimoine (audit Dashboard du
+// 28/08/2026, Chantier 4) — rien ne projetait au-delà de 24 mois jusqu'ici
+// (la projection de trésorerie existante est linéaire, sans rendement, sur
+// 3 à 24 mois). Réutilise les 3 taux déjà définis pour les intérêts
+// composés (RETURN_ASSUMPTIONS, prudent/central/optimiste — mêmes valeurs,
+// jamais un 4e taux inventé pour cet outil-ci). L'épargne annuelle suit
+// l'hypothèse d'augmentation salariale choisie ; le patrimoine réel déflate
+// le nominal par l'inflation cumulée, jamais présenté comme une garantie —
+// voir le disclaimer obligatoire dans le rendu (initMonFuturSimulator,
+// laboratoire.js). ----
+const WEALTH_PROJECTION_HORIZONS = [1, 5, 10, 20];
+function computeWealthProjection(params){
+  const patrimoineInitial = params.patrimoineInitial || 0;
+  const epargneMensuelle = params.epargneMensuelle || 0;
+  const rendementAnnuelPct = params.rendementAnnuelPct || 0;
+  const inflationPct = params.inflationPct || 0;
+  const augmentationAnnuellePct = params.augmentationAnnuellePct || 0;
+  const maxHorizon = Math.max(...WEALTH_PROJECTION_HORIZONS);
+  const points = [{annee: 0, patrimoineNominal: patrimoineInitial, patrimoineReel: patrimoineInitial}];
+  let patrimoine = patrimoineInitial;
+  let epargneAnnuelle = epargneMensuelle * 12;
+  for(let an = 1; an <= maxHorizon; an++){
+    patrimoine = patrimoine * (1 + rendementAnnuelPct / 100) + epargneAnnuelle;
+    const patrimoineReel = patrimoine / Math.pow(1 + inflationPct / 100, an);
+    points.push({annee: an, patrimoineNominal: patrimoine, patrimoineReel});
+    epargneAnnuelle *= (1 + augmentationAnnuellePct / 100);
+  }
+  const atHorizon = {};
+  WEALTH_PROJECTION_HORIZONS.forEach(h => { atHorizon[h] = points[h]; });
+  return {points, atHorizon};
+}
+function computeWealthProjectionScenarios(baseParams){
+  const scenarios = {};
+  Object.keys(RETURN_ASSUMPTIONS).forEach(key => {
+    scenarios[key] = computeWealthProjection({...baseParams, rendementAnnuelPct: RETURN_ASSUMPTIONS[key].rate});
+  });
+  return scenarios;
 }
 
 // ---- Charges récurrentes : abonnements ET factures (même structure, un

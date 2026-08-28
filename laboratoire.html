@@ -769,6 +769,33 @@
       <div id="nextstep-life-change" style="margin-top:10px;"></div>
     </div>
 
+    <div class="card" id="widget-mon-futur" style="display:none;grid-column:1/-1;">
+      <h3>🔮 Mon Futur <span class="data-badge data-badge-scenario" style="margin-left:6px;">🔮 Scénario</span></h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Projection de ton patrimoine sur 1, 5, 10 et 20 ans, à partir de ton patrimoine net actuel et de tes propres hypothèses — 3 scénarios de rendement (prudent, central, optimiste), jamais une seule trajectoire présentée comme certaine.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="slider-row field" style="flex:1;min-width:220px;"><label for="futurEpargne">Épargne/investissement mensuel <span class="v mono" id="valFuturEpargne">200 €</span></label><input type="range" id="futurEpargne" min="0" max="2000" step="10" value="200"></div>
+        <div class="slider-row field" style="flex:1;min-width:220px;"><label for="futurAugmentation">Augmentation annuelle de cette épargne <span class="v mono" id="valFuturAugmentation">0 %</span></label><input type="range" id="futurAugmentation" min="0" max="10" step="0.5" value="0"></div>
+        <div class="slider-row field" style="flex:1;min-width:220px;"><label for="futurInflation">Inflation annuelle supposée <span class="v mono" id="valFuturInflation">2.1 %</span></label><input type="range" id="futurInflation" min="0" max="8" step="0.1" value="2.1"></div>
+      </div>
+      <div class="mode-toggle" id="futurHorizonToggle" style="margin:14px 0;">
+        <button type="button" class="pill" data-horizon="1">1 an</button>
+        <button type="button" class="pill" data-horizon="5">5 ans</button>
+        <button type="button" class="pill active" data-horizon="10">10 ans</button>
+        <button type="button" class="pill" data-horizon="20">20 ans</button>
+      </div>
+      <div id="futurResult"></div>
+      <div class="pattern-chart" id="futurChart" style="margin-top:14px;"></div>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--text-dim);margin-top:8px;">
+        <span><span style="display:inline-block;width:10px;height:10px;background:var(--bordeaux);border-radius:50%;margin-right:6px;"></span>Prudent</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:var(--gold-bright);border-radius:50%;margin-right:6px;"></span>Central</span>
+        <span><span style="display:inline-block;width:10px;height:10px;background:var(--emerald);border-radius:50%;margin-right:6px;"></span>Optimiste</span>
+      </div>
+      <p class="disclaimer-box" style="margin-top:12px;">🔮 Simulation basée sur tes hypothèses (épargne mensuelle, rendement, inflation) — jamais une garantie de résultat. Les rendements passés des supports réels (voir "Intérêts composés") ne préjugent jamais des rendements futurs.</p>
+      <div id="futurLinks"></div>
+      <div id="method-mon-futur"></div>
+      <div id="nextstep-mon-futur" style="margin-top:10px;"></div>
+    </div>
+
   </div>
   </div>
 
