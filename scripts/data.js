@@ -4246,7 +4246,7 @@ const COURSE_FORMATS = [
 ];
 const COURSE_FORMAT_BLOCK_TYPES = {
   rapide: ['definition', 'retenir'],
-  pratique: ['calcul', 'exemple', 'exerciceErreur', 'casReel', 'visualisation'],
+  pratique: ['calcul', 'exemple', 'exerciceErreur', 'casReel', 'visualisation', 'outil'],
   avance: ['attention', 'pourquoi', 'approfondir']
 };
 function getFormatFilteredChapitres(chapitres, formatKey){
@@ -4276,6 +4276,20 @@ function renderCourseBlock(bloc){
       <details class="why-drawer" style="margin-top:8px;"><summary class="smallcaps" style="cursor:pointer;">Voir pourquoi c'est incomplet ou faux</summary>
         <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">${bloc.pourquoi}</p>
       </details>
+    </div>`;
+  }
+  // "outil" (Phase 1 remainder du 28/08/2026) : le premier bloc de chapitre
+  // qui pointe vers un VRAI calculateur du Laboratoire/Business Lab/Finance
+  // — jamais un embed d'état JS live (aucun mécanisme de ce type n'existe
+  // ailleurs sur le site, §5 de l'audit dédié), toujours un lien réel, jamais
+  // un lien fabriqué si url/label manquent.
+  if(bloc.type === 'outil'){
+    if(!bloc.url || !bloc.label) return '';
+    const textHtml = bloc.texte ? `<p style="margin-top:8px;line-height:1.7;">${bloc.texte}</p>` : '';
+    return `<div class="card" style="margin-top:14px;border-color:var(--gold);">
+      <span class="smallcaps">🧰 Essaie avec le vrai outil</span>
+      ${textHtml}
+      <a href="${bloc.url}" class="btn btn-sm btn-gold" style="margin-top:10px;">${bloc.label} →</a>
     </div>`;
   }
   const meta = COURSE_BLOCK_META[bloc.type];
@@ -6026,7 +6040,7 @@ function renderValorisationSimulator(elId){
       </div>
       <p class="disclaimer-box" style="margin-top:12px;">Le multiple approprié varie énormément selon le secteur, la taille et la croissance de l'entreprise — jamais un multiple universel. Ces 2 méthodes donnent souvent des résultats différents pour la même entreprise : la valorisation réelle d'une transaction dépend de bien plus que ce calcul (négociation, due diligence, actifs et passifs hors bilan...).</p>
       ${renderCourseLibraryLinks(['Multiple de valorisation (EV/EBITDA)', 'Valorisation', 'EBITDA', 'PER (Price Earning Ratio)'])}
-      ${renderRelatedCourseLink('ma-private-equity', null)}`;
+      ${renderRelatedCourseLink('ma-private-equity', 'Valoriser une entreprise : multiples et flux actualisés (DCF)')}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['valorisation']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
