@@ -2561,7 +2561,7 @@ function renderSpacedReviewList(elId){
       const pool = defisFullPool().filter(i => i.categorie === categorie);
       const sessionEl = document.getElementById(`${elId}-session`);
       if(!sessionEl || pool.length === 0) return;
-      startMixedSession(`${elId}-session`, pickAdaptivePool(pool, categorie, 5), {categorie, onRestart: () => renderSpacedReviewList(elId)});
+      startMixedSession(`${elId}-session`, pickAdaptivePool(pool, categorie, 5), {categorie, livePool: pool, onRestart: () => renderSpacedReviewList(elId)});
       sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
     });
   });
@@ -2618,7 +2618,7 @@ function renderMasteryList(elId){
       const pool = defisFullPool().filter(i => i.categorie === cat);
       const sessionEl = document.getElementById(`${elId}-session`);
       if(!sessionEl || pool.length === 0) return;
-      startMixedSession(`${elId}-session`, pickAdaptivePool(pool, cat, 6), {level: cat, categorie: cat, onRestart: () => renderMasteryList(elId)});
+      startMixedSession(`${elId}-session`, pickAdaptivePool(pool, cat, 6), {level: cat, categorie: cat, livePool: pool, onRestart: () => renderMasteryList(elId)});
       sessionEl.scrollIntoView({behavior:'smooth', block:'nearest'});
     });
   });
@@ -3379,6 +3379,29 @@ function pickAdaptivePool(pool, categorie, count){
     .map(s => s.item);
 }
 
+// ---------- Adaptation EN COURS de session (reliquat Phase 3, audit du
+// 28/08/2026) : pickAdaptivePool ne biaise que la sélection AVANT le
+// démarrage — une fois la session lancée, la difficulté restait figée même
+// après 5 bonnes réponses d'affilée ou 5 échecs. Seuils volontairement
+// asymétriques (3 bonnes réponses pour monter d'un cran, seulement 2
+// mauvaises pour redescendre) : mieux vaut réagir vite à une vraie
+// difficulté qu'à un succès, cohérent avec le "jamais un changement absurde
+// sur une seule réponse" déjà appliqué à pickAdaptivePool. Un palier
+// "avancé" ou "débutant" épuisé (beaucoup de catégories réelles n'ont AUCUN
+// item à un niveau donné, confirmé par audit) ne déclenche jamais d'erreur
+// ni de question fabriquée : le palier reste simplement inchangé.
+const LIVE_ADAPT_ESCALATE_STREAK = 3;
+const LIVE_ADAPT_DEESCALATE_STREAK = 2;
+function pickLiveReplacementItem(livePool, currentNiveau, direction, usedIds){
+  const idx = NIVEAU_ORDER.indexOf(currentNiveau);
+  const targetIdx = idx + direction;
+  if(idx === -1 || targetIdx < 0 || targetIdx >= NIVEAU_ORDER.length) return null;
+  const targetNiveau = NIVEAU_ORDER[targetIdx];
+  const candidates = (livePool || []).filter(it => it.niveau === targetNiveau && !usedIds.has(it.id));
+  if(candidates.length === 0) return null;
+  return candidates[Math.floor(Math.random() * candidates.length)];
+}
+
 // Contrairement à startQuizSession/renderVraiFaux (avance automatiquement
 // après 1400-1700ms), la session mixte avance sur un clic explicite : les
 // nouveaux formats (cas, séquence, info manquante...) ont un texte plus
@@ -3393,6 +3416,11 @@ function startMixedSession(elId, items, opts){
     return;
   }
   let index = 0, score = 0, totalXp = 0;
+  // Adaptation EN COURS de session (reliquat Phase 3) : ne s'active que si
+  // l'appelant fournit opts.livePool (le pool complet, toutes difficultés,
+  // de la catégorie ciblée) — sans lui, comportement strictement identique
+  // à avant, aucun site d'appel existant n'est affecté.
+  let consecutiveCorrect = 0, consecutiveWrong = 0;
   const startTime = Date.now();
 
   function renderItem(){
@@ -3418,9 +3446,29 @@ function startMixedSession(elId, items, opts){
     renderer(itemElId, item, (correct, xp) => {
       if(correct) score++;
       totalXp += xp;
+      let adaptNotice = '';
+      if(correct){ consecutiveCorrect++; consecutiveWrong = 0; } else { consecutiveWrong++; consecutiveCorrect = 0; }
+      if(opts.livePool && index < items.length - 1){
+        const usedIds = new Set(items.filter(Boolean).map(it => it.id));
+        if(consecutiveCorrect >= LIVE_ADAPT_ESCALATE_STREAK){
+          const replacement = pickLiveReplacementItem(opts.livePool, item.niveau, 1, usedIds);
+          if(replacement){
+            items[index + 1] = replacement;
+            consecutiveCorrect = 0;
+            adaptNotice = `<p style="font-size:12px;color:var(--gold-bright);margin-bottom:8px;">🔥 ${LIVE_ADAPT_ESCALATE_STREAK} bonnes réponses d'affilée — la question suivante monte d'un cran.</p>`;
+          }
+        } else if(consecutiveWrong >= LIVE_ADAPT_DEESCALATE_STREAK){
+          const replacement = pickLiveReplacementItem(opts.livePool, item.niveau, -1, usedIds);
+          if(replacement){
+            items[index + 1] = replacement;
+            consecutiveWrong = 0;
+            adaptNotice = `<p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">On repart sur une question un peu plus accessible.</p>`;
+          }
+        }
+      }
       const nextEl = document.getElementById(`${elId}-next`);
       const isLast = index === items.length - 1;
-      nextEl.innerHTML = `<button class="btn btn-sm btn-gold" id="${elId}-advance">${isLast ? 'Voir le résultat' : 'Question suivante →'}</button>`;
+      nextEl.innerHTML = `${adaptNotice}<button class="btn btn-sm btn-gold" id="${elId}-advance">${isLast ? 'Voir le résultat' : 'Question suivante →'}</button>`;
       document.getElementById(`${elId}-advance`).addEventListener('click', () => { index++; renderItem(); });
     });
   }
@@ -3630,7 +3678,7 @@ function renderRecommandePourToi(elId){
     <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const pool = defisFullPool().filter(i => i.categorie === categorie);
-    startMixedSession(elId, pickAdaptivePool(pool, categorie, 5), {onRestart: () => renderRecommandePourToi(elId)});
+    startMixedSession(elId, pickAdaptivePool(pool, categorie, 5), {livePool: pool, onRestart: () => renderRecommandePourToi(elId)});
   });
 }
 
@@ -3653,7 +3701,7 @@ function renderDefisARevoir(elId){
     <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ${topCategorie} →</button>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const pool = defisFullPool().filter(i => i.categorie === topCategorie);
-    startMixedSession(elId, pickAdaptivePool(pool, topCategorie, 5), {onRestart: () => renderDefisARevoir(elId)});
+    startMixedSession(elId, pickAdaptivePool(pool, topCategorie, 5), {livePool: pool, onRestart: () => renderDefisARevoir(elId)});
   });
 }
 
@@ -3698,6 +3746,7 @@ function renderDefisParcours(elId){
       const sessionEl = document.getElementById(`${elId}-session`);
       if(!sessionEl) return;
       startMixedSession(`${elId}-session`, pickAdaptivePool(pool, cat, 6), {
+        livePool: pool,
         onComplete: () => {
           const p2 = getDefisParcoursProgress();
           p2[`${parcoursId}-${cat}`] = true;
@@ -3751,9 +3800,10 @@ function renderModesEntrainement(elId){
     // jamais réécrit automatiquement. Adaptation (section 27) uniquement
     // quand "Tous niveaux" ET un thème précis sont sélectionnés : un mélange
     // de thèmes n'a pas de maîtrise unique à cibler.
-    let items;
+    let items, livePool = null;
     if(level === 'tous' && cat !== 'tous'){
       items = pickAdaptivePool(candidates, cat, length);
+      livePool = candidates;
     } else {
       for(let i = candidates.length - 1; i > 0; i--){
         const j = Math.floor(Math.random() * (i + 1));
@@ -3761,7 +3811,7 @@ function renderModesEntrainement(elId){
       }
       items = candidates.slice(0, length);
     }
-    startMixedSession(`${elId}-session`, items, {onRestart: () => document.getElementById(`${elId}-start`).click()});
+    startMixedSession(`${elId}-session`, items, {livePool, onRestart: () => document.getElementById(`${elId}-start`).click()});
   });
 }
 
@@ -5064,7 +5114,7 @@ function renderBusinessCasRecommande(elId){
     <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const catPool = pool.filter(i => i.categorie === categorie);
-    startMixedSession(elId, pickAdaptivePool(catPool, categorie, 5), {level:'business', categorie, onRestart: () => renderBusinessCasRecommande(elId)});
+    startMixedSession(elId, pickAdaptivePool(catPool, categorie, 5), {level:'business', categorie, livePool: catPool, onRestart: () => renderBusinessCasRecommande(elId)});
   });
 }
 
