@@ -315,9 +315,9 @@ const LAB_METHODOLOGY = {
   },
   'goals': {
     calcul: "Mois nécessaires = (montant cible − montant déjà épargné) ÷ versement mensuel. Si une date cible existe, le statut compare ce délai calculé au temps réellement restant jusqu'à cette date : en avance, dans les temps (jusqu'à 1,5× le temps restant), ou hors d'atteinte (au-delà).",
-    donnees: "Uniquement les montants que tu saisis toi-même pour chaque objectif — jamais une capacité d'épargne déduite automatiquement de ton budget dans ce calcul-ci.",
+    donnees: "Les montants que tu saisis toi-même pour chaque objectif, plus — pour la détection de conflit ci-dessous — ton solde du mois réel (Tableau de bord), jamais un chiffre inventé si ce budget n'est pas encore renseigné.",
     hypotheses: "Suppose que le versement mensuel indiqué est réellement tenu chaque mois, sans interruption ni variation.",
-    limites: "Chaque objectif est calculé isolément : si tu as plusieurs objectifs actifs en même temps, ce calcul ne vérifie pas que leurs versements mensuels additionnés restent compatibles avec tes revenus réels.",
+    limites: "La détection de conflit compare la somme de tes versements déclarés au solde d'UN SEUL mois (le mois en cours) — un mois exceptionnellement bon ou mauvais peut donner un diagnostic ponctuellement optimiste ou pessimiste.",
     comprendre: "Un statut 🔴 ne prédit pas un échec certain — il signale que, au rythme de versement actuel, la date cible ne sera pas tenue si rien ne change."
   },
   'debts': {
@@ -1072,10 +1072,22 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
     atteint: {emoji:'🏆', label:'Atteint'}
   };
 
+  // Formate un nombre de mois en texte lisible ("dans 8 mois", "dans 2 ans
+  // et 3 mois") — jamais juste un chiffre de mois brut, ni une fausse date
+  // calendaire (on ne connaît que la DURÉE nécessaire, jamais un mois précis).
+  function formatMoisNecessaires(mois){
+    if(mois === 0) return "atteint";
+    if(mois === null) return "jamais, au rythme actuel (0€/mois)";
+    if(mois < 12) return `dans ${mois} mois`;
+    const ans = Math.floor(mois / 12), reste = mois % 12;
+    return `dans ${ans} an${ans > 1 ? 's' : ''}${reste > 0 ? ` et ${reste} mois` : ''}`;
+  }
+
   function render(){
     const goals = getFinancialGoals();
     if(goals.length === 0){
       listEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucun objectif enregistré pour l'instant.</p>`;
+      document.getElementById('goalsConflict').innerHTML = '';
       return;
     }
     listEl.innerHTML = goals.map(g => {
@@ -1089,10 +1101,78 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
           <span style="display:flex;align-items:center;gap:10px;font-size:12.5px;"><span>${statutHtml}</span><button type="button" class="btn btn-sm goal-mgr-remove" data-id="${g.id}" aria-label="Supprimer">✕</button></span>
         </div>
         <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${fmtEUR(g.montantActuel)} / ${fmtEUR(g.montantCible)}${g.versementMensuel > 0 ? ` — ${fmtEUR(g.versementMensuel)}/mois` : ''}${g.dateCible ? ` — cible : ${g.dateCible}` : ''}</p>
+        <details style="margin-top:6px;">
+          <summary class="smallcaps" style="cursor:pointer;font-size:11px;">Simuler un autre versement</summary>
+          <div style="margin-top:8px;max-width:320px;">
+            <div class="slider-row field">
+              <label for="goalSim-${g.id}">Versement mensuel hypothétique <span class="v mono" id="goalSimVal-${g.id}">${fmtEUR(g.versementMensuel)}</span></label>
+              <input type="range" id="goalSim-${g.id}" min="0" max="${Math.max(500, g.versementMensuel * 3)}" step="10" value="${g.versementMensuel}">
+            </div>
+            <p style="font-size:12px;color:var(--text-dim);margin-top:4px;" id="goalSimResult-${g.id}"></p>
+          </div>
+        </details>
       </div>`;
     }).join('');
     listEl.querySelectorAll('.goal-mgr-remove').forEach(btn => {
       btn.addEventListener('click', () => { removeFinancialGoal(btn.dataset.id); render(); });
+    });
+    goals.forEach(g => {
+      const slider = document.getElementById(`goalSim-${g.id}`);
+      const valEl = document.getElementById(`goalSimVal-${g.id}`);
+      const resultEl = document.getElementById(`goalSimResult-${g.id}`);
+      function updateSim(){
+        const hypothetique = +slider.value;
+        valEl.textContent = fmtEUR(hypothetique);
+        const proj = computeGoalProjection({...g, versementMensuel: hypothetique});
+        resultEl.textContent = `À ${fmtEUR(hypothetique)}/mois : atteint ${formatMoisNecessaires(proj.moisNecessaires)}.`;
+      }
+      slider.addEventListener('input', updateSim);
+      updateSim();
+    });
+    renderGoalsConflict(goals);
+  }
+
+  // Conflit entre objectifs (audit Dashboard du 28/08/2026, Chantier 3) :
+  // jamais une décision prise à la place de l'utilisateur — 3 scénarios
+  // "priorité à cet objectif" affichés côte à côte, à comparer soi-même.
+  function renderGoalsConflict(goals){
+    const el = document.getElementById('goalsConflict');
+    if(!el) return;
+    const mois = currentMonthKey();
+    const budgetSummary = computeBudgetSummary(getBudgetEntries(), mois);
+    const conflict = computeGoalsConflict(goals, budgetSummary);
+    if(conflict.status === 'insufficient-data'){
+      el.innerHTML = `<p class="disclaimer-box" style="margin-top:14px;">Renseigne ton budget du mois (onglet Tableau de bord) pour que Likanza puisse vérifier que tes objectifs restent compatibles avec ta capacité d'épargne réelle.</p>`;
+      return;
+    }
+    if(conflict.status === 'ok'){
+      el.innerHTML = conflict.activeGoals.length > 0 ? `<p class="disclaimer-box" style="margin-top:14px;border-color:var(--emerald);">🟢 Tes objectifs actifs demandent ${fmtEUR(conflict.totalCommitted)}/mois, compatible avec ta capacité d'épargne actuelle (${fmtEUR(conflict.capacity)}/mois).</p>` : '';
+      return;
+    }
+    // conflict.status === 'conflict'
+    el.innerHTML = `
+      <div class="card" style="margin-top:14px;border-color:var(--bordeaux);">
+        <span class="smallcaps" style="color:var(--bordeaux);">⚠️ Conflit de projets</span>
+        <p style="font-size:13px;margin-top:8px;">Tes objectifs actifs demandent ${fmtEUR(conflict.totalCommitted)}/mois au total, mais ta capacité d'épargne réelle ce mois-ci n'est que de ${fmtEUR(conflict.capacity)}/mois — un manque de ${fmtEUR(conflict.overCommitted)}/mois. Avec ces hypothèses, tu ne peux pas atteindre tous ces objectifs aux dates prévues.</p>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:6px;">Compare ce que donnerait chaque priorité — Likanza ne décide jamais à ta place :</p>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;" id="goalsConflictScenarioBtns">
+          ${conflict.activeGoals.map(g => `<button type="button" class="btn btn-sm" data-priority="${g.id}">${g.nom} prioritaire</button>`).join('')}
+        </div>
+        <div id="goalsConflictScenarioOutput" style="margin-top:14px;"></div>
+      </div>`;
+    document.getElementById('goalsConflictScenarioBtns').querySelectorAll('button').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const allocation = computeGoalsPriorityAllocation(conflict.activeGoals, conflict.capacity, btn.dataset.priority);
+        document.getElementById('goalsConflictScenarioOutput').innerHTML = `
+          <span class="smallcaps">Scénario : ${btn.textContent}</span>
+          <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px;">
+            ${allocation.map(a => `
+              <div style="display:flex;justify-content:space-between;font-size:12.5px;">
+                <span>${a.goal.nom}</span>
+                <span class="mono">${fmtEUR(a.allocated)}/mois${a.allocated < a.requested ? ` (sur ${fmtEUR(a.requested)} demandés)` : ''} — ${formatMoisNecessaires(a.projection.moisNecessaires)}</span>
+              </div>`).join('')}
+          </div>`;
+      });
     });
   }
 

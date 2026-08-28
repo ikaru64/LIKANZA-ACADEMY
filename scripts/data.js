@@ -8215,6 +8215,47 @@ function computeGoalProjection(goal){
   return {manquant, progressionPct, moisNecessaires, moisRestants, statut};
 }
 
+// ---- Conflit entre objectifs (audit Dashboard du 28/08/2026, Chantier 3) :
+// jusqu'ici, chaque objectif était calculé isolément — rien ne vérifiait que
+// la somme des versements mensuels déclarés restait compatible avec la
+// capacité d'épargne réelle. "insufficient-data" tant qu'aucune donnée
+// budgétaire réelle n'existe pour le mois (jamais un faux conflit affiché
+// faute de données — un solde à 0€ par défaut déclencherait sinon
+// systématiquement une alerte). ----
+function computeGoalsConflict(goals, budgetSummary){
+  const activeGoals = (goals || []).filter(g => {
+    const proj = computeGoalProjection(g);
+    return proj && proj.statut !== 'atteint' && g.versementMensuel > 0;
+  });
+  const totalCommitted = activeGoals.reduce((s, g) => s + g.versementMensuel, 0);
+  if(!budgetSummary || (budgetSummary.revenus === 0 && budgetSummary.depenses === 0)){
+    return {status: 'insufficient-data', totalCommitted, activeGoals};
+  }
+  const capacity = budgetSummary.solde;
+  if(totalCommitted <= capacity){
+    return {status: 'ok', totalCommitted, capacity, activeGoals};
+  }
+  return {status: 'conflict', totalCommitted, capacity, overCommitted: totalCommitted - capacity, activeGoals};
+}
+// Scénario "priorité à un objectif" : cet objectif reçoit son versement
+// demandé en premier, les autres (dans leur ordre existant) se partagent ce
+// qui reste, chacun plafonné à ce qu'il demandait réellement — jamais plus.
+// Un objectif qui ne reçoit rien voit sa date recalculée avec un versement
+// nul (statut "impossible"), jamais masqué ni ignoré silencieusement.
+function computeGoalsPriorityAllocation(goals, capacity, priorityGoalId){
+  const ordered = [
+    ...goals.filter(g => g.id === priorityGoalId),
+    ...goals.filter(g => g.id !== priorityGoalId)
+  ];
+  let remaining = Math.max(0, capacity);
+  return ordered.map(goal => {
+    const allocated = Math.min(goal.versementMensuel, remaining);
+    remaining -= allocated;
+    const projection = computeGoalProjection({...goal, versementMensuel: allocated});
+    return {goal, allocated, requested: goal.versementMensuel, projection};
+  });
+}
+
 // ---- Charges récurrentes : abonnements ET factures (même structure, un
 // champ categorie les distingue) — remplace le calcul à une seule charge de
 // widget-budget-sub. ----
