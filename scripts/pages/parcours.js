@@ -9,6 +9,10 @@
    6 domaines listés comme une to-do list.
    ============================================================ */
 
+// Chantier 1 (audit Dashboard du 28/08/2026) : remplace la pile de sections
+// individuelles (profil, stats, prochain pas, Financial IQ, détail par
+// domaine) par la coquille de widgets (renderDashboardShell, scripts/data.js)
+// — personnalisable, avec bascule Personnel/Professionnel en page.
 function initParcoursHero(){
   const hasProfile = !!getPositioningResult();
   if(!hasProfile){
@@ -17,11 +21,8 @@ function initParcoursHero(){
     return;
   }
   document.getElementById('parcoursMainSection').style.display = 'block';
-  renderParcoursProfileSummary('parcoursProfileSummary');
-  renderParcoursStats('parcoursStats');
-  renderNextStepRecommendation('parcoursNextStep');
-  renderFinancialIQDetail('parcoursFinancialIQ');
-  renderDomainDashboard('domainDashboard');
+  renderDashboardHeader('dashboardHeader');
+  renderDashboardShell('dashboardShell');
 }
 
 // ---------- Missions par niveau (déplacé depuis formations.html : la liste
@@ -99,25 +100,10 @@ function renderFormationsConseil(){
   renderConseilBadge('formationsConseil', {text:"Explore les missions ci-dessous à ton rythme, dans l'ordre que tu veux : rien n'est obligatoire.", tone:'neutral'});
 }
 
-function renderMistakesSection(){
-  const section = document.getElementById('mistakesSection');
-  const summaryEl = document.getElementById('mistakesSummary');
-  if(!section || !summaryEl) return;
-  const allUnresolved = getMistakes().filter(m=>!m.resolved);
-  if(allUnresolved.length === 0){
-    section.style.display = 'none';
-    return;
-  }
-  section.style.display = '';
-  const counts = {};
-  allUnresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie]||0) + 1; });
-  const topCategorie = Object.entries(counts).sort((a,b)=>b[1]-a[1])[0][0];
-  summaryEl.textContent = `${allUnresolved.length} notion${allUnresolved.length>1?'s':''} à revoir, surtout en ${topCategorie}.`;
-}
-
+// "Notions à revoir" et les missions du jour/semaine vivent désormais dans
+// la coquille de widgets (renderMistakesDashboardWidget, DASHBOARD_WIDGETS
+// 'missions-daily'/'missions-weekly', scripts/data.js) — jamais rendues deux
+// fois sur la même page.
 initParcoursHero();
-renderMistakesSection();
 refreshLevelUI();
 renderFormationsConseil();
-renderDailyMissions('dailyMissions');
-renderWeeklyMissions('weeklyMissions');

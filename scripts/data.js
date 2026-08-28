@@ -502,6 +502,262 @@ function renderParcoursStats(elId){
     </div>`).join('')}</div>`;
 }
 
+// ---------- Widgets compacts "pont" entre Mon Parcours et le Laboratoire
+// (audit Dashboard du 28/08/2026, Chantier 1) — jusqu'ici, aucune donnée du
+// Laboratoire (patrimoine, objectifs) n'apparaissait nulle part sur Mon
+// Parcours. Toujours un aperçu compact + un lien vers l'outil complet,
+// jamais une réimplémentation parallèle des calculs déjà réels. ----------
+function renderNetWorthDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const assets = getNetWorthAssets();
+  const debts = getPersonalDebts();
+  if(assets.length === 0 && debts.length === 0){
+    el.innerHTML = `
+      <span class="smallcaps">💎 Mon Patrimoine</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:10px;">Ajoute tes premiers actifs pour construire ton patrimoine ici.</p>
+      <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm btn-gold" style="margin-top:10px;">Configurer →</a>`;
+    return;
+  }
+  const net = computeNetWorth(assets, debts);
+  const history = getNetWorthHistory();
+  let deltaHtml = '';
+  if(history.length >= 2){
+    const delta = net.patrimoineNet - history[history.length - 2].patrimoineNet;
+    deltaHtml = `<p style="font-size:12px;margin-top:2px;"><span class="mono" style="color:${delta >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${delta >= 0 ? '+' : ''}${fmtEUR(delta)}</span> <span style="color:var(--text-dim);">vs mois dernier</span></p>`;
+  }
+  const chart = history.length >= 2 ? renderMultiLineChart([{data: history.slice(-12).map(p => p.patrimoineNet), color: 'var(--gold-bright)', width: 2}]) : '';
+  el.innerHTML = `
+    <span class="smallcaps">💎 Mon Patrimoine</span>
+    <div class="result-big" style="font-size:26px;margin-top:6px;color:${net.patrimoineNet >= 0 ? 'var(--text)' : 'var(--bordeaux)'};">${fmtEUR(net.patrimoineNet)}</div>
+    ${deltaHtml}
+    ${chart ? `<div class="pattern-chart" style="margin-top:10px;">${chart}</div>` : ''}
+    <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Voir le détail →</a>`;
+}
+const GOAL_STATUS_META = {atteint: {emoji: '🏆', label: 'Atteint'}, ontrack: {emoji: '🟢', label: 'Dans les temps'}, atrisk: {emoji: '🟠', label: 'À risque'}, impossible: {emoji: '🔴', label: "Hors d'atteinte au rythme actuel"}};
+function renderGoalsDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const goals = getFinancialGoals();
+  if(goals.length === 0){
+    el.innerHTML = `
+      <span class="smallcaps">🎯 Mes Objectifs</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:10px;">Quel est ton prochain objectif ?</p>
+      <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm btn-gold" style="margin-top:10px;">Créer un objectif →</a>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps">🎯 Mes Objectifs (${goals.length})</span>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+      ${goals.slice(0, 4).map(g => {
+        const proj = computeGoalProjection(g);
+        const meta = proj && proj.statut ? GOAL_STATUS_META[proj.statut] : null;
+        return `<div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:4px;">
+            <span>${g.nom}</span>
+            <span class="mono" style="color:var(--text-dim);">${meta ? meta.emoji + ' ' : ''}${Math.round(proj.progressionPct)}%</span>
+          </div>
+          <div class="dash-weekbar" style="width:100%;"><div class="dash-weekfill" style="width:${proj.progressionPct}%;"></div></div>
+        </div>`;
+      }).join('')}
+    </div>
+    ${goals.length > 4 ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">+${goals.length - 4} autre${goals.length - 4 > 1 ? 's' : ''}</p>` : ''}
+    <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Gérer mes objectifs →</a>`;
+}
+function renderBusinessSnapshotDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const profile = getBusinessProfile();
+  const snapshot = computeBusinessProfileSnapshot(profile);
+  if(snapshot.ca === 0){
+    el.innerHTML = `
+      <span class="smallcaps">💼 Mon Entreprise</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:10px;">Renseigne ton profil entreprise pour voir un aperçu ici.</p>
+      <a href="business-lab.html" class="btn btn-sm btn-gold" style="margin-top:10px;">Configurer →</a>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps">💼 Mon Entreprise${profile.nom ? ' — ' + profile.nom : ''}</span>
+    <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));margin-top:10px;">
+      <div class="card"><span class="smallcaps">CA annuel</span><div class="result-big" style="font-size:16px;margin-top:4px;">${fmtEUR(snapshot.ca)}</div></div>
+      <div class="card"><span class="smallcaps">Résultat mensuel</span><div class="result-big" style="font-size:16px;margin-top:4px;color:${snapshot.resultatMensuelApproximatif >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${fmtEUR(snapshot.resultatMensuelApproximatif)}</div></div>
+      <div class="card"><span class="smallcaps">Trésorerie</span><div class="result-big" style="font-size:16px;margin-top:4px;">${fmtEUR(profile.tresorerieActuelle)}</div></div>
+    </div>
+    <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;">Voir le Business Lab →</a>`;
+}
+// Le disclaimer déclaré-vs-évalué vivait auparavant dans le HTML de
+// parcours.html autour de renderDomainDashboard — préservé ici pour que le
+// passage en widget (Chantier 1) ne perde pas cette explication.
+function renderDomainDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <span class="smallcaps">Niveau par domaine</span>
+    <p class="disclaimer-box" style="margin:10px 0 14px;">Le niveau déclaré vient de <a href="test-positionnement.html" style="color:var(--gold-bright);">ton profil Likanza</a> : une hypothèse de départ, jamais présentée comme vérifiée. Le niveau évalué vient d'un quiz approfondi ou de ton activité réelle (Défis, cours) — et n'apparaît que lorsqu'il y a assez de données pour être honnête.</p>
+    <div id="${elId}-inner"></div>`;
+  renderDomainDashboard(`${elId}-inner`);
+}
+function renderMistakesDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const unresolved = getMistakes().filter(m => !m.resolved);
+  if(unresolved.length === 0){
+    el.innerHTML = `<span class="smallcaps">🧠 Notions à revoir</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Rien en attente — continue comme ça !</p>`;
+    return;
+  }
+  const counts = {};
+  unresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie] || 0) + 1; });
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
+  el.innerHTML = `
+    <span class="smallcaps">🧠 Notions à revoir</span>
+    <p style="font-size:13px;color:var(--text-dim);margin:8px 0 10px;">${unresolved.length} notion${unresolved.length > 1 ? 's' : ''} à revoir, surtout en ${top}.</p>
+    <a href="revisions.html" class="btn btn-sm">Réviser →</a>`;
+}
+
+// ---------- Coquille du Dashboard "Mon Univers Financier" : registre de
+// widgets + personnalisation (Chantier 1). Remplace la page à sections
+// empilées par une grille de widgets, avec bascule Personnel/Professionnel
+// en page (jamais une navigation vers 2 pages séparées) et personnalisation
+// par cases à cocher + Monter/Descendre — JAMAIS de glisser-déposer,
+// décision documentée dans l'audit du 28/08/2026 : le code contenait déjà
+// une décision explicite inverse (défis "sequence", boutons Monter/Descendre
+// choisis pour la fiabilité mobile) — cohérence plutôt que rupture. ----------
+const DASHBOARD_WIDGETS = [
+  {id: 'gamification', title: null, mode: 'both', selfCard: false, render: elId => renderGamificationWidget(elId, false)},
+  {id: 'profile-summary', title: null, mode: 'personal', selfCard: true, render: renderParcoursProfileSummary},
+  {id: 'net-worth', title: null, mode: 'personal', selfCard: false, render: renderNetWorthDashboardWidget},
+  {id: 'goals', title: null, mode: 'personal', selfCard: false, render: renderGoalsDashboardWidget},
+  {id: 'business-snapshot', title: null, mode: 'professional', selfCard: false, render: renderBusinessSnapshotDashboardWidget},
+  {id: 'stats', title: null, mode: 'both', selfCard: true, render: renderParcoursStats},
+  {id: 'next-step', title: null, mode: 'both', selfCard: true, render: renderNextStepRecommendation},
+  {id: 'financial-iq', title: null, mode: 'personal', selfCard: false, render: renderFinancialIQDetail},
+  {id: 'learning-paths', title: 'Parcours guidés', mode: 'both', selfCard: true, render: elId => renderLearningPaths(elId, {})},
+  {id: 'missions-daily', title: 'Missions du jour', mode: 'both', selfCard: false, render: renderDailyMissions},
+  {id: 'missions-weekly', title: 'Missions de la semaine', mode: 'both', selfCard: false, render: renderWeeklyMissions},
+  {id: 'spaced-review', title: "À repasser aujourd'hui", mode: 'both', selfCard: false, render: renderSpacedReviewList},
+  {id: 'mistakes', title: null, mode: 'both', selfCard: false, render: renderMistakesDashboardWidget},
+  {id: 'domain-dashboard', title: null, mode: 'personal', selfCard: true, render: renderDomainDashboardWidget}
+];
+const WIDGET_DISPLAY_NAMES = {
+  'gamification': 'Progression (niveau, XP, série)',
+  'profile-summary': 'Ton profil Likanza',
+  'net-worth': '💎 Mon Patrimoine',
+  'goals': '🎯 Mes Objectifs',
+  'business-snapshot': '💼 Mon Entreprise',
+  'stats': 'En chiffres',
+  'next-step': 'Ton prochain pas',
+  'financial-iq': 'Financial IQ',
+  'mistakes': 'Notions à revoir',
+  'domain-dashboard': 'Niveau par domaine'
+};
+const DASHBOARD_LAYOUT_KEY = 'fzr-dashboard-layout';
+function getDashboardLayout(){
+  const knownIds = DASHBOARD_WIDGETS.map(w => w.id);
+  const stored = safeGetJSON(DASHBOARD_LAYOUT_KEY, null);
+  if(!stored) return {order: knownIds.slice(), hidden: [], mode: 'personal'};
+  // Migration douce : un widget ajouté après coup (nouvelle version du site)
+  // rejoint la fin de l'ordre déjà enregistré, jamais masqué par erreur ni
+  // perdu silencieusement.
+  const order = (stored.order || []).filter(id => knownIds.includes(id));
+  knownIds.forEach(id => { if(!order.includes(id)) order.push(id); });
+  const hidden = (stored.hidden || []).filter(id => knownIds.includes(id));
+  const mode = stored.mode === 'professional' ? 'professional' : 'personal';
+  return {order, hidden, mode};
+}
+function saveDashboardLayout(layout){ safeSetJSON(DASHBOARD_LAYOUT_KEY, layout); }
+
+function renderDashboardShell(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  let layout = getDashboardLayout();
+  let customizing = false;
+
+  function applicableWidgets(){
+    return DASHBOARD_WIDGETS.filter(w => w.mode === 'both' || w.mode === layout.mode);
+  }
+  function visibleWidgets(){
+    const applicable = applicableWidgets();
+    return layout.order.map(id => applicable.find(w => w.id === id)).filter(w => w && !layout.hidden.includes(w.id));
+  }
+  // Échange les positions RÉELLES dans layout.order (pas seulement dans la
+  // vue filtrée par mode) : l'ordre de l'autre mode ne doit jamais être
+  // perturbé par un widget qui n'y apparaît même pas.
+  function moveWidget(id, dir){
+    const orderedApplicable = layout.order.filter(oid => applicableWidgets().some(w => w.id === oid));
+    const pos = orderedApplicable.indexOf(id);
+    const targetPos = pos + dir;
+    if(pos === -1 || targetPos < 0 || targetPos >= orderedApplicable.length) return;
+    const otherId = orderedApplicable[targetPos];
+    const idxA = layout.order.indexOf(id), idxB = layout.order.indexOf(otherId);
+    [layout.order[idxA], layout.order[idxB]] = [layout.order[idxB], layout.order[idxA]];
+    saveDashboardLayout(layout);
+    render();
+  }
+
+  function renderCustomizePanel(){
+    const ordered = layout.order.map(id => applicableWidgets().find(w => w.id === id)).filter(Boolean);
+    return `<div class="card" style="margin-bottom:16px;">
+      <span class="smallcaps">Personnaliser</span>
+      <p style="font-size:12px;color:var(--text-dim);margin:6px 0 12px;">Affiche, masque ou réordonne les widgets de ce mode.</p>
+      <div style="display:flex;flex-direction:column;gap:2px;">
+        ${ordered.map((w, i) => `
+          <div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--hairline);">
+            <label style="display:flex;align-items:center;gap:8px;flex:1;font-size:13px;cursor:pointer;">
+              <input type="checkbox" class="dash-widget-toggle" data-id="${w.id}" ${layout.hidden.includes(w.id) ? '' : 'checked'}>
+              ${w.title || WIDGET_DISPLAY_NAMES[w.id] || w.id}
+            </label>
+            <button type="button" class="btn btn-sm dash-widget-up" data-id="${w.id}" ${i === 0 ? 'disabled' : ''} aria-label="Monter">↑</button>
+            <button type="button" class="btn btn-sm dash-widget-down" data-id="${w.id}" ${i === ordered.length - 1 ? 'disabled' : ''} aria-label="Descendre">↓</button>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }
+
+  function render(){
+    const widgets = visibleWidgets();
+    el.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px;">
+        <div class="mode-toggle" id="${elId}-mode" style="margin:0;">
+          <button type="button" class="pill${layout.mode === 'personal' ? ' active' : ''}" data-mode="personal">👤 Personnel</button>
+          <button type="button" class="pill${layout.mode === 'professional' ? ' active' : ''}" data-mode="professional">🏢 Professionnel</button>
+        </div>
+        <button type="button" class="btn btn-sm" id="${elId}-customize-toggle">⚙️ ${customizing ? 'Terminer' : 'Personnaliser'}</button>
+      </div>
+      <div id="${elId}-customize">${customizing ? renderCustomizePanel() : ''}</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:16px;">
+        ${widgets.map(w => `
+          <div${w.selfCard ? '' : ' class="card"'} id="${elId}-tile-${w.id}">
+            ${w.title ? `<span class="smallcaps">${w.title}</span><div style="margin-top:10px;" id="${elId}-body-${w.id}"></div>` : `<div id="${elId}-body-${w.id}"></div>`}
+          </div>`).join('')}
+      </div>`;
+
+    document.getElementById(`${elId}-mode`).querySelectorAll('.pill').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.dataset.mode === layout.mode) return;
+        layout.mode = btn.dataset.mode;
+        saveDashboardLayout(layout);
+        render();
+      });
+    });
+    document.getElementById(`${elId}-customize-toggle`).addEventListener('click', () => { customizing = !customizing; render(); });
+    if(customizing){
+      el.querySelectorAll('.dash-widget-toggle').forEach(cb => {
+        cb.addEventListener('change', () => {
+          const id = cb.dataset.id;
+          layout.hidden = cb.checked ? layout.hidden.filter(h => h !== id) : [...layout.hidden, id];
+          saveDashboardLayout(layout);
+          render();
+        });
+      });
+      el.querySelectorAll('.dash-widget-up').forEach(btn => btn.addEventListener('click', () => moveWidget(btn.dataset.id, -1)));
+      el.querySelectorAll('.dash-widget-down').forEach(btn => btn.addEventListener('click', () => moveWidget(btn.dataset.id, 1)));
+    }
+    widgets.forEach(w => w.render(`${elId}-body-${w.id}`));
+  }
+
+  render();
+}
+
 function renderDomainDashboard(elId){
   const el = document.getElementById(elId);
   if(!el) return;
