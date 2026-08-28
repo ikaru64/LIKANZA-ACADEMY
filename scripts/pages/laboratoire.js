@@ -302,6 +302,37 @@ const LAB_METHODOLOGY = {
     hypotheses: "Suppose que les revenus et dépenses saisis pour un mois donné sont complets — un mois partiellement renseigné donnera un taux d'épargne ou un diagnostic optiquement faux.",
     limites: "Ne modélise ni la saisonnalité (certains mois ont structurellement plus de dépenses), ni les revenus ou dépenses exceptionnels non récurrents.",
     comprendre: "Chaque seuil (10 % d'épargne, 33 % d'endettement, 3 mois de fonds d'urgence) est un repère usuel de gestion budgétaire personnelle, jamais une règle universelle ni un conseil personnalisé adapté à ta situation exacte."
+  },
+  // Les 4 gestionnaires CRUD (patrimoine/objectifs/dettes/charges) n'avaient
+  // jusqu'ici aucun panneau méthodologique — seuls les vrais calculateurs en
+  // avaient un (audit Dashboard du 28/08/2026).
+  'net-worth': {
+    calcul: "Patrimoine net = total des actifs saisis − total des dettes déjà enregistrées dans l'onglet Dettes & crédits. Chaque catégorie d'actif (cash, PEA, CTO, crypto, immobilier, véhicule, autre) est simplement additionnée telle que tu la saisis, sans revalorisation automatique.",
+    donnees: "Uniquement ce que tu ajoutes toi-même ici et dans l'onglet Dettes — jamais une valeur de marché récupérée automatiquement (un PEA ou un compte-titres doit être remis à jour à la main pour rester exact).",
+    hypotheses: "Suppose que la valeur saisie pour chaque actif est sa valeur actuelle réelle, pas son prix d'achat historique.",
+    limites: "Aucune fiscalité latente n'est déduite (un PEA ou un CTO avec de fortes plus-values non réalisées a un patrimoine net affiché supérieur à ce qu'il vaudrait net d'impôt après une vente réelle).",
+    comprendre: "L'historique n'enregistre qu'un seul point par mois (celui de ta dernière visite ce mois-là) — jamais une reconstruction rétroactive d'un historique que tu n'as pas saisi."
+  },
+  'goals': {
+    calcul: "Mois nécessaires = (montant cible − montant déjà épargné) ÷ versement mensuel. Si une date cible existe, le statut compare ce délai calculé au temps réellement restant jusqu'à cette date : en avance, dans les temps (jusqu'à 1,5× le temps restant), ou hors d'atteinte (au-delà).",
+    donnees: "Uniquement les montants que tu saisis toi-même pour chaque objectif — jamais une capacité d'épargne déduite automatiquement de ton budget dans ce calcul-ci.",
+    hypotheses: "Suppose que le versement mensuel indiqué est réellement tenu chaque mois, sans interruption ni variation.",
+    limites: "Chaque objectif est calculé isolément : si tu as plusieurs objectifs actifs en même temps, ce calcul ne vérifie pas que leurs versements mensuels additionnés restent compatibles avec tes revenus réels.",
+    comprendre: "Un statut 🔴 ne prédit pas un échec certain — il signale que, au rythme de versement actuel, la date cible ne sera pas tenue si rien ne change."
+  },
+  'debts': {
+    calcul: "Aucun calcul ici au-delà de la liste elle-même : solde, taux et mensualité minimale sont simplement stockés tels que saisis, pour être réutilisés par les 2 outils de comparaison ci-dessus (stratégie de remboursement, regroupement de crédits).",
+    donnees: "Uniquement les crédits que tu ajoutes toi-même — jamais une dette récupérée automatiquement auprès d'un établissement bancaire.",
+    hypotheses: "Suppose que le solde restant dû saisi est à jour au moment où tu l'entres — il ne se met pas à jour tout seul entre deux visites.",
+    limites: "Ne distingue pas les crédits à taux variable des crédits à taux fixe : un taux variable saisi ici reste figé jusqu'à ce que tu le mettes à jour toi-même.",
+    comprendre: "Cette liste est la seule source de vérité des dettes sur tout le Laboratoire — jamais ressaisie séparément dans le calcul de patrimoine net ou les outils de stratégie de remboursement."
+  },
+  'charges': {
+    calcul: "Coût annualisé = montant × (12 pour mensuel, 4 pour trimestriel, 1 pour annuel). Coûts sur 3/5/10 ans = coût annualisé × le nombre d'années, sans actualisation ni inflation appliquée.",
+    donnees: "Uniquement les abonnements et factures que tu ajoutes toi-même — jamais une charge détectée automatiquement dans un relevé bancaire.",
+    hypotheses: "Suppose que le montant et la fréquence saisis restent stables sur toute la période affichée (3/5/10 ans) — une hausse de prix future n'est jamais anticipée.",
+    limites: "Ne tient pas compte d'un rendement alternatif si cet argent était investi à la place (contrairement au widget \"Coût futur d'un abonnement\", qui lui l'inclut explicitement).",
+    comprendre: "Le total sur 10 ans d'une charge modeste (15€/mois) paraît souvent plus élevé qu'attendu — c'est l'effet de la répétition, pas une erreur de calcul."
   }
 };
 Object.keys(LAB_METHODOLOGY).forEach(key => {
@@ -1125,7 +1156,16 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   const nomEl = document.getElementById('assetMgrNom');
   const valeurEl = document.getElementById('assetMgrValeur');
   const categorieEl = document.getElementById('assetMgrCategorie');
-  const CATEGORY_LABELS = {cash:'Épargne / cash', actions:'Actions / placements', immobilier:'Immobilier', vehicule:'Véhicule', autre:'Autre'};
+  const CATEGORY_LABELS = {cash:'Épargne / cash', pea:'PEA', cto:'Compte-titres (CTO)', crypto:'Crypto', actions:'Actions / placements', immobilier:'Immobilier', vehicule:'Véhicule', autre:'Autre'};
+  // Plages disponibles pour le graphique d'évolution — un point par mois
+  // (recordNetWorthSnapshot), donc pas de plage plus courte que le mois :
+  // jamais une plage "1 mois" qui n'afficherait qu'un seul point.
+  const NET_WORTH_RANGES = [
+    {key:'6m', label:'6 mois', months:6}, {key:'1a', label:'1 an', months:12},
+    {key:'2a', label:'2 ans', months:24}, {key:'5a', label:'5 ans', months:60},
+    {key:'tout', label:'Tout', months:null}
+  ];
+  let netWorthRangeKey = 'tout';
 
   function render(){
     const assets = getNetWorthAssets();
@@ -1153,19 +1193,48 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       </div>
       <p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">Les dettes viennent de l'onglet "Dettes & crédits" — jamais saisies deux fois ici.</p>`;
 
+    // Décomposition par catégorie — seulement les catégories réellement
+    // renseignées, jamais une ligne à 0€ affichée pour "faire complet".
+    const catEntries = Object.entries(net.parCategorie).filter(([, v]) => v > 0);
+    document.getElementById('netWorthCategories').innerHTML = catEntries.length === 0 ? '' : `
+      <span class="smallcaps" style="display:block;margin-bottom:8px;">Répartition des actifs</span>
+      <div class="panel">${catEntries.map(([cat, val]) => `
+        <div class="panel-row"><span>${CATEGORY_LABELS[cat] || cat}</span><span class="val mono">${fmtEUR(val)} <span style="color:var(--text-dim);">(${Math.round(val / net.totalActifs * 100)}%)</span></span></div>`).join('')}</div>`;
+
     if(assets.length > 0 || debts.length > 0){
       recordNetWorthSnapshot(currentMonthKey(), net.patrimoineNet);
     }
+    renderNetWorthHistory();
+  }
+
+  // Sélecteur de plage (audit Dashboard du 28/08/2026 : le graphique
+  // traçait toujours 100% de l'historique, jamais de plage sélectionnable).
+  // Une entrée = un mois (recordNetWorthSnapshot), donc on tranche les N
+  // DERNIERS points plutôt qu'une vraie fenêtre de dates.
+  function renderNetWorthHistory(){
     const history = getNetWorthHistory();
     if(history.length < 2){
       document.getElementById('netWorthHistory').innerHTML = `<p style="font-size:12px;color:var(--text-dim);">L'historique se construit au fil de tes visites — reviens le mois prochain pour voir l'évolution.</p>`;
-    } else {
-      const chart = renderMultiLineChart([{data: history.map(p => p.patrimoineNet), color: 'var(--gold-bright)', width: 2.5}]);
-      document.getElementById('netWorthHistory').innerHTML = `
-        <span class="smallcaps" style="display:block;margin-bottom:8px;">Évolution du patrimoine net</span>
-        <div class="pattern-chart">${chart}</div>
-        <p style="font-size:11px;color:var(--text-dim);margin-top:6px;">${history[0].mois} → ${history[history.length-1].mois}</p>`;
+      return;
     }
+    const range = NET_WORTH_RANGES.find(r => r.key === netWorthRangeKey) || NET_WORTH_RANGES[NET_WORTH_RANGES.length - 1];
+    const sliced = range.months ? history.slice(-range.months) : history;
+    const chart = renderMultiLineChart([{data: sliced.map(p => p.patrimoineNet), color: 'var(--gold-bright)', width: 2.5}]);
+    const first = sliced[0].patrimoineNet, last = sliced[sliced.length - 1].patrimoineNet;
+    const deltaEUR = last - first;
+    const deltaPct = first !== 0 ? Math.round((deltaEUR / Math.abs(first)) * 100) : null;
+    document.getElementById('netWorthHistory').innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:8px;">
+        <span class="smallcaps">Évolution du patrimoine net</span>
+        <div class="mode-toggle" id="netWorthRangeToggle" style="margin:0;">
+          ${NET_WORTH_RANGES.map(r => `<button type="button" class="pill${r.key === netWorthRangeKey ? ' active' : ''}" data-range="${r.key}">${r.label}</button>`).join('')}
+        </div>
+      </div>
+      <div class="pattern-chart">${chart}</div>
+      <p style="font-size:11px;color:var(--text-dim);margin-top:6px;">${sliced[0].mois} → ${sliced[sliced.length-1].mois} · ${sliced.length < 2 ? 'pas assez de points sur cette plage' : `${deltaEUR >= 0 ? '+' : ''}${fmtEUR(deltaEUR)}${deltaPct !== null ? ` (${deltaPct >= 0 ? '+' : ''}${deltaPct}%)` : ''}`}</p>`;
+    document.getElementById('netWorthRangeToggle').querySelectorAll('.pill').forEach(btn => {
+      btn.addEventListener('click', () => { netWorthRangeKey = btn.dataset.range; renderNetWorthHistory(); });
+    });
   }
 
   document.getElementById('assetMgrAdd').addEventListener('click', () => {

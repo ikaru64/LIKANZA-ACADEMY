@@ -469,6 +469,7 @@
       </div>
       <button class="btn btn-sm btn-gold" id="debtMgrAdd" style="margin-top:10px;">+ Ajouter</button>
       <div id="debtMgrList" style="margin-top:14px;"></div>
+      <div id="method-debts"></div>
     </div>
 
     <div class="card" id="widget-debt-strategy" style="display:none;grid-column:1/-1;">
@@ -665,6 +666,7 @@
       </div>
       <button class="btn btn-sm btn-gold" id="goalMgrAdd" style="margin-top:10px;">+ Ajouter</button>
       <div id="goalMgrList" style="margin-top:14px;"></div>
+      <div id="method-goals"></div>
     </div>
 
     <div class="card" id="widget-charges-manager" style="display:none;grid-column:1/-1;">
@@ -678,6 +680,7 @@
       </div>
       <button class="btn btn-sm btn-gold" id="chargeMgrAdd" style="margin-top:10px;">+ Ajouter</button>
       <div id="chargeMgrList" style="margin-top:14px;"></div>
+      <div id="method-charges"></div>
     </div>
 
     <div class="card" id="widget-net-worth" style="display:none;grid-column:1/-1;">
@@ -686,12 +689,14 @@
       <div style="display:flex;gap:12px;flex-wrap:wrap;">
         <div class="field" style="flex:2;min-width:140px;"><label for="assetMgrNom">Nom</label><input type="text" id="assetMgrNom" placeholder="Livret A"></div>
         <div class="field" style="flex:1;min-width:110px;"><label for="assetMgrValeur">Valeur (€)</label><input type="number" id="assetMgrValeur" min="0" value="1000"></div>
-        <div class="field" style="flex:1;min-width:130px;"><label for="assetMgrCategorie">Catégorie</label><select id="assetMgrCategorie"><option value="cash">Épargne / cash</option><option value="actions">Actions / placements</option><option value="immobilier">Immobilier</option><option value="vehicule">Véhicule</option><option value="autre">Autre</option></select></div>
+        <div class="field" style="flex:1;min-width:130px;"><label for="assetMgrCategorie">Catégorie</label><select id="assetMgrCategorie"><option value="cash">Épargne / cash</option><option value="pea">PEA</option><option value="cto">Compte-titres (CTO)</option><option value="crypto">Crypto</option><option value="actions">Actions / placements (autre enveloppe)</option><option value="immobilier">Immobilier</option><option value="vehicule">Véhicule</option><option value="autre">Autre</option></select></div>
       </div>
       <button class="btn btn-sm btn-gold" id="assetMgrAdd" style="margin-top:10px;">+ Ajouter</button>
       <div id="assetMgrList" style="margin-top:14px;"></div>
       <div id="netWorthSummary" style="margin-top:16px;"></div>
+      <div id="netWorthCategories" style="margin-top:16px;"></div>
       <div id="netWorthHistory" style="margin-top:16px;"></div>
+      <div id="method-net-worth"></div>
     </div>
 
   </div>

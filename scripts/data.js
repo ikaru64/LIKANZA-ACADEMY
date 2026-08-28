@@ -5271,7 +5271,9 @@ function renderBusinessScenarios(elId){
         <div class="card"><span class="smallcaps">Résultat mensuel dans ce scénario</span><div class="result-big" style="font-size:18px;margin-top:6px;color:${scenario.resultatMensuelAjuste>=0?'var(--emerald)':'var(--bordeaux)'};">${scenario.resultatMensuelAjuste>=0?'+':''}${fmtEUR(scenario.resultatMensuelAjuste)}</div></div>
         <div class="card"><span class="smallcaps">Écart</span><div class="result-big" style="font-size:18px;margin-top:6px;">${fmtEUR(scenario.resultatMensuelAjuste - base.resultatMensuelApproximatif)}</div></div>
       </div>
-      <p class="disclaimer-box" style="margin-top:10px;">Scénario appliqué à côté du profil, jamais écrit dedans. Les 3 préréglages (+15/−5, −15/+10, −30/+20) sont des illustrations documentées, jamais une prévision réelle de ton marché.</p>`;
+      <p class="disclaimer-box" style="margin-top:10px;">Scénario appliqué à côté du profil, jamais écrit dedans. Les 3 préréglages (+15/−5, −15/+10, −30/+20) sont des illustrations documentées, jamais une prévision réelle de ton marché.</p>
+      ${renderCourseLibraryLinks(['Compte de résultat', 'Résultat net'])}
+      ${renderRelatedCourseLink('lire-une-entreprise', 'Le compte de résultat : du chiffre d\'affaires au résultat net')}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['scenarios']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }
@@ -5471,7 +5473,11 @@ function renderBusinessDiagnostics(elId){
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px;">${renderDataBadge('calcul')} Jamais un jugement : chaque ligne cite le chiffre réel qui la justifie, calculé à partir de "Mon profil entreprise"${runway.burnMensuel>0?', du Runway':''}${unitEconomics?' et de Unit Economics':''}.</p>
     ${diagnostics.map(d => `<p style="font-size:13px;margin-top:8px;">${emoji[d.niveau]} ${d.message}</p>`).join('')}
-    ${!unitEconomics ? `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Remplis aussi Unit Economics pour enrichir ce check-up avec ton ratio LTV/CAC.</p>` : ''}`;
+    ${!unitEconomics ? `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Remplis aussi Unit Economics pour enrichir ce check-up avec ton ratio LTV/CAC.</p>` : ''}
+    ${renderCourseLibraryLinks(['Marge nette', 'Trésorerie'])}
+    ${renderRelatedCourseLink('entreprise-essentiels', 'De la vente au bénéfice : la marge nette')}
+    <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
+  renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
 }
 
 // 30 secondes / 2 minutes / Approfondir — réutilise les champs déjà existants
@@ -8002,7 +8008,11 @@ function computeRecurringChargesTotal(charges){
 // ---- Actifs (patrimoine) — le passif vient TOUJOURS des dettes
 // personnelles ci-dessus, jamais d'une liste de passifs séparée. ----
 const NET_WORTH_ASSETS_KEY = 'fzr-net-worth-assets';
-const NET_WORTH_ASSET_CATEGORIES = ['cash', 'actions', 'immobilier', 'vehicule', 'autre'];
+// 'actions' conservé pour ne jamais casser une catégorie déjà enregistrée
+// chez un utilisateur existant (audit Dashboard du 28/08/2026 : les
+// enveloppes PEA/CTO/crypto sont assez distinctes fiscalement et en risque
+// pour mériter leur propre ligne plutôt que de rester noyées dans "actions").
+const NET_WORTH_ASSET_CATEGORIES = ['cash', 'pea', 'cto', 'crypto', 'actions', 'immobilier', 'vehicule', 'autre'];
 function getNetWorthAssets(){
   try {
     const raw = JSON.parse(localStorage.getItem(NET_WORTH_ASSETS_KEY) || '[]');
