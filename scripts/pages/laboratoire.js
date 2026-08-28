@@ -92,7 +92,8 @@ const LAB_WIDGETS = {
     {id:'widget-budget-sub', title:"Coût futur d'un abonnement", desc:'Ce que représente un abonnement sur plusieurs années.', icon:'coins'},
     {id:'widget-goals-manager', title:'Mes objectifs', desc:'Objectifs et dépenses irrégulières à venir, statut 🟢🟠🔴.', icon:'target'},
     {id:'widget-charges-manager', title:'Mes abonnements & factures', desc:'Liste multi-entrées, coût cumulé réel.', icon:'coins'},
-    {id:'widget-net-worth', title:'Mon patrimoine net', desc:'Actifs et dettes réels, dans le temps.', icon:'gem'}
+    {id:'widget-net-worth', title:'Mon patrimoine net', desc:'Actifs et dettes réels, dans le temps.', icon:'gem'},
+    {id:'widget-health-score', title:'🩺 Ma santé financière', desc:'6 axes, radar visuel, jamais un axe deviné.', icon:'shield'}
   ],
   'tab-planification': [
     {id:'widget-urgence-choc', title:"Fonds d'urgence & choc financier", desc:'Combien de temps tiendrais-tu sans revenu ?', icon:'shield'},
@@ -349,6 +350,13 @@ const LAB_METHODOLOGY = {
     hypotheses: "Suppose que la fréquence et le jour d'échéance saisis restent valables pour le mois affiché — un abonnement résilié entre-temps mais non supprimé de la liste continue d'apparaître.",
     limites: "Un abonnement/facture sans jour d'échéance renseigné n'apparaît pas ici, même si son montant est bien compté dans le total de \"Mes abonnements & factures\" — deux vues complémentaires, pas redondantes.",
     comprendre: "Un mois vide ne veut pas dire \"aucune charge\" — cela signifie le plus souvent qu'aucun jour d'échéance n'a encore été renseigné sur tes abonnements/factures."
+  },
+  'health-score': {
+    calcul: "Chaque axe reprend un calcul déjà utilisé ailleurs dans ce Laboratoire (jamais un seuil réinventé pour ce widget) : Budget = ton taux d'épargne du mois ; Dette = tes mensualités de crédit ÷ revenus ; Sécurité = ton épargne cash exprimée en mois de dépenses couverts ; Trésorerie = le poids de tes abonnements/factures récurrents dans tes revenus ; Investissement = la part de ton patrimoine qui n'est pas de l'épargne cash pure ; Objectifs = la part de tes objectifs avec une date cible qui restent dans les temps au rythme de versement actuel. Chaque axe reçoit 100 points si son diagnostic est \"ok\", 55 si \"attention\", 15 si \"alerte\". Le score global est la moyenne simple des seuls axes réellement calculables.",
+    donnees: "Uniquement ce que tu as déjà saisi ailleurs dans ce Laboratoire (budget du mois, crédits, patrimoine, abonnements/factures, objectifs) — aucune nouvelle saisie propre à ce widget.",
+    hypotheses: "Suppose que les données du mois en cours (budget, patrimoine) sont à jour et complètes — un mois partiellement renseigné donne un axe optiquement faux, comme pour le Tableau de bord.",
+    limites: "Une moyenne simple entre 3 et 6 axes selon ce qui est renseigné : deux profils avec le même score global peuvent avoir des situations très différentes — le détail par axe compte plus que le chiffre global seul.",
+    comprendre: "Un axe \"Données insuffisantes\" n'est jamais compté comme un mauvais score (jamais 0 fabriqué) — il est simplement exclu de la moyenne jusqu'à ce que tu renseignes la donnée qui lui manque."
   }
 };
 Object.keys(LAB_METHODOLOGY).forEach(key => {
@@ -2237,6 +2245,34 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
   update();
   document.getElementById('calLinks').innerHTML = renderCourseLibraryLinks(['Budget', 'Épargne']);
   renderNextStepCard('nextstep-calendrier', {domainKey: 'personalFinance'});
+})();
+
+// ---------- 🩺 Ma santé financière (Dashboard "Mon Univers Financier",
+// Chantier 6) : version détaillée (radar + détail axe par axe) de
+// renderHealthScoreDashboardWidget (data.js), qui n'affiche que la version
+// compacte sur le Dashboard. Aucun état local propre : recompose uniquement
+// computeHealthScore() à chaque ouverture de l'onglet. ----------
+(function initHealthScoreWidget(){
+  const resultEl = document.getElementById('healthScoreResult');
+  if(!resultEl) return;
+
+  const health = computeHealthScore();
+  const NIVEAU_EMOJI = {ok: '🟢', attention: '🟠', alerte: '🔴'};
+  const axesList = Object.values(health.axes);
+
+  resultEl.innerHTML = `
+    ${health.globalScore !== null ? `<div class="result-big" style="font-size:30px;">${health.globalScore}/100</div>` : `<p style="font-size:13px;color:var(--text-dim);">Score global indisponible : aucun axe n'a encore assez de données.</p>`}
+    <p style="font-size:12px;color:var(--text-dim);margin:4px 0 14px;">${health.axesConnues}/${health.axesTotal} axes évalués.</p>
+    ${renderRadarChart(axesList)}
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:16px;">
+      ${axesList.map(ax => ax.insuffisant
+        ? `<div style="font-size:13px;"><span>⚪ ${ax.label}</span><p style="font-size:12px;color:var(--text-dim);margin-top:2px;">Données insuffisantes.</p></div>`
+        : `<div style="font-size:13px;"><span>${NIVEAU_EMOJI[ax.niveau]} ${ax.label}</span><p style="font-size:12px;color:var(--text-dim);margin-top:2px;">${ax.detail}</p></div>`
+      ).join('')}
+    </div>`;
+
+  document.getElementById('healthScoreLinks').innerHTML = renderCourseLibraryLinks(['Budget', "Fonds d'urgence", 'Valeur nette']);
+  renderNextStepCard('nextstep-health-score', {domainKey: 'personalFinance'});
 })();
 
 // ============================================================

@@ -666,6 +666,237 @@ function renderMistakesDashboardWidget(elId){
     <a href="revisions.html" class="btn btn-sm">Réviser →</a>`;
 }
 
+// ---- 🚨 Alertes unifiées (audit Dashboard du 28/08/2026, Chantier 6) :
+// agrège en un seul flux des signaux qui existaient déjà séparément
+// (diagnostics budgétaires, conflit d'objectifs, échéances imminentes) —
+// jamais un signal recalculé différemment ici, toujours le même calcul déjà
+// testé ailleurs. Volontairement exclus : notions à revoir / révisions
+// espacées, qui ont déjà leur propre widget Dashboard dédié ('mistakes',
+// 'spaced-review') — les dupliquer ici serait redondant, pas plus complet.
+// Chaque alerte pointe vers le vrai outil qui l'a calculée (jamais un lien
+// générique) : c'est le "Analyser"/"Simuler" du prompt d'origine, sans
+// bouton "Pourquoi ?" séparé (le message cite déjà le chiffre qui justifie
+// l'alerte) ni "Ignorer" persistant (aucun modèle de données pour un
+// masquage durable n'existait avant cette passe — hors scope pour l'instant,
+// décision documentée plutôt qu'un mécanisme construit sans vrai besoin
+// observé).
+function computeUnifiedAlerts(){
+  const alerts = [];
+  const mois = currentMonthKey();
+  const entries = getBudgetEntries();
+  const budgetSummary = computeBudgetSummary(entries, mois);
+  const debts = getPersonalDebts();
+  const assets = getNetWorthAssets();
+  const goals = getFinancialGoals();
+  const recurringChargesTotal = computeRecurringChargesTotal(getRecurringCharges());
+
+  computeFinancialDiagnostics({budgetSummary, debts, recurringChargesTotal, assets})
+    .filter(d => d.niveau !== 'ok')
+    .forEach(d => alerts.push({niveau: d.niveau, message: d.message, lien: 'laboratoire.html#tab-budget-epargne', cta: 'Analyser'}));
+
+  const conflict = computeGoalsConflict(goals, budgetSummary);
+  if(conflict.status === 'conflict'){
+    alerts.push({niveau: 'alerte', message: `Tes objectifs demandent ${fmtEUR(conflict.totalCommitted)}/mois, ${fmtEUR(conflict.overCommitted)} de plus que ta capacité d'épargne actuelle (${fmtEUR(conflict.capacity)}/mois).`, lien: 'laboratoire.html#tab-budget-epargne', cta: 'Simuler'});
+  }
+
+  computeUpcomingReminders(3).forEach(r => {
+    const delai = r.dans === 0 ? "aujourd'hui" : r.dans === 1 ? 'demain' : `dans ${r.dans} j`;
+    alerts.push({niveau: r.dans <= 1 ? 'attention' : 'info', message: `${r.label} ${delai}${r.montant !== null ? ` (${fmtEUR(r.montant)})` : ''}.`, lien: 'laboratoire.html#tab-planification', cta: 'Voir'});
+  });
+
+  const NIVEAU_ORDER = {alerte: 0, attention: 1, info: 2};
+  return alerts.sort((a, b) => NIVEAU_ORDER[a.niveau] - NIVEAU_ORDER[b.niveau]);
+}
+function renderAlertsDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const alerts = computeUnifiedAlerts();
+  if(alerts.length === 0){
+    el.innerHTML = `<span class="smallcaps">🚨 Likanza détecte</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Rien à signaler pour l'instant.</p>`;
+    return;
+  }
+  const EMOJI = {alerte: '🔴', attention: '🟠', info: 'ℹ️'};
+  el.innerHTML = `
+    <span class="smallcaps">🚨 Likanza détecte</span>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+      ${alerts.slice(0, 6).map(a => `
+        <div style="font-size:12.5px;">
+          <span>${EMOJI[a.niveau]} ${a.message}</span>
+          <a href="${a.lien}" style="color:var(--gold-bright);margin-left:4px;">${a.cta} →</a>
+        </div>`).join('')}
+    </div>
+    ${alerts.length > 6 ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">+${alerts.length - 6} autre${alerts.length - 6 > 1 ? 's' : ''}</p>` : ''}`;
+}
+
+// ---- 🩺 Financial Health Score (audit Dashboard du 28/08/2026, Chantier 6) :
+// 6 axes réutilisant des calculs déjà établis et testés ailleurs (jamais un
+// seuil réinventé pour ce widget). "trésorerie" ≠ "budget" : trésorerie
+// mesure le poids des charges récurrentes déjà engagées sur le revenu (une
+// contrainte de flexibilité immédiate), budget mesure le taux d'épargne (une
+// habitude, dans la durée) — deux lectures réellement distinctes, pas un
+// doublon habillé différemment. Chaque axe affiche "Données insuffisantes"
+// s'il manque la donnée source, JAMAIS un score à 0 fabriqué faute de
+// donnée (0 serait indiscernable d'un vrai mauvais score).
+const HEALTH_SCORE_NIVEAU_POINTS = {ok: 100, attention: 55, alerte: 15};
+function computeHealthScore(){
+  const mois = currentMonthKey();
+  const entries = getBudgetEntries();
+  const budgetSummary = computeBudgetSummary(entries, mois);
+  const debts = getPersonalDebts();
+  const assets = getNetWorthAssets();
+  const goals = getFinancialGoals();
+  const recurringChargesTotal = computeRecurringChargesTotal(getRecurringCharges());
+  const diagnostics = computeFinancialDiagnostics({budgetSummary, debts, recurringChargesTotal, assets});
+  const findDiag = prefixes => diagnostics.find(d => prefixes.some(p => d.id.startsWith(p))) || null;
+
+  const axes = {};
+
+  const budgetDiag = findDiag(['solde-negatif', 'epargne-']);
+  axes.budget = {label: 'Budget', insuffisant: !budgetDiag};
+  if(budgetDiag) Object.assign(axes.budget, {score: HEALTH_SCORE_NIVEAU_POINTS[budgetDiag.niveau], niveau: budgetDiag.niveau, detail: budgetDiag.message});
+
+  const detteDiag = findDiag(['endettement-']);
+  axes.dette = {label: 'Dette'};
+  if(detteDiag) Object.assign(axes.dette, {insuffisant: false, score: HEALTH_SCORE_NIVEAU_POINTS[detteDiag.niveau], niveau: detteDiag.niveau, detail: detteDiag.message});
+  else if(budgetSummary.revenus > 0) Object.assign(axes.dette, {insuffisant: false, score: 100, niveau: 'ok', detail: 'Aucune mensualité de crédit enregistrée.'});
+  else axes.dette.insuffisant = true;
+
+  const securiteDiag = findDiag(['urgence-']);
+  axes.securite = {label: 'Sécurité', insuffisant: !securiteDiag};
+  if(securiteDiag) Object.assign(axes.securite, {score: HEALTH_SCORE_NIVEAU_POINTS[securiteDiag.niveau], niveau: securiteDiag.niveau, detail: securiteDiag.message});
+
+  const chargesDiag = findDiag(['charges-elevees']);
+  axes.tresorerie = {label: 'Trésorerie'};
+  if(chargesDiag) Object.assign(axes.tresorerie, {insuffisant: false, score: HEALTH_SCORE_NIVEAU_POINTS[chargesDiag.niveau], niveau: chargesDiag.niveau, detail: chargesDiag.message});
+  else if(budgetSummary.revenus > 0 && recurringChargesTotal.mensuel > 0){
+    const pct = (recurringChargesTotal.mensuel / budgetSummary.revenus) * 100;
+    Object.assign(axes.tresorerie, {insuffisant: false, score: 100, niveau: 'ok', detail: `Tes abonnements et factures récurrents représentent ${pct.toFixed(0)} % de tes revenus.`});
+  } else axes.tresorerie.insuffisant = true;
+
+  axes.investissement = {label: 'Investissement'};
+  if(assets.length > 0){
+    const total = assets.reduce((s, a) => s + a.valeur, 0);
+    const investi = assets.filter(a => a.categorie !== 'cash').reduce((s, a) => s + a.valeur, 0);
+    if(total > 0){
+      const pct = (investi / total) * 100;
+      const niveau = pct >= 40 ? 'ok' : pct >= 15 ? 'attention' : 'alerte';
+      Object.assign(axes.investissement, {insuffisant: false, score: HEALTH_SCORE_NIVEAU_POINTS[niveau], niveau, detail: `${pct.toFixed(0)} % de ton patrimoine est investi hors épargne cash.`});
+    } else axes.investissement.insuffisant = true;
+  } else axes.investissement.insuffisant = true;
+
+  axes.objectifs = {label: 'Objectifs'};
+  const statuses = goals.map(g => computeGoalProjection(g)).filter(p => p && p.statut);
+  if(statuses.length > 0){
+    const enBonneVoie = statuses.filter(p => p.statut === 'atteint' || p.statut === 'ontrack').length;
+    const pct = (enBonneVoie / statuses.length) * 100;
+    const niveau = pct >= 70 ? 'ok' : pct >= 40 ? 'attention' : 'alerte';
+    Object.assign(axes.objectifs, {insuffisant: false, score: HEALTH_SCORE_NIVEAU_POINTS[niveau], niveau, detail: `${enBonneVoie}/${statuses.length} objectif(s) dans les temps.`});
+  } else axes.objectifs.insuffisant = true;
+
+  const known = Object.values(axes).filter(a => !a.insuffisant);
+  const globalScore = known.length > 0 ? Math.round(known.reduce((s, a) => s + a.score, 0) / known.length) : null;
+  return {axes, globalScore, axesConnues: known.length, axesTotal: Object.keys(axes).length};
+}
+// Radar/spider chart générique, sans précédent sur le site (audit du
+// 28/08/2026 confirmé : aucun graphique radar nulle part) — construit à la
+// main en SVG, comme tous les autres graphiques du site. Un axe
+// "insuffisant" n'est JAMAIS relié au polygone de données (jamais un score 0
+// fabriqué) : son sommet est marqué par un simple repère pointillé, et le
+// tracé du polygone saute la valeur manquante plutôt que d'inventer un point.
+function renderRadarChart(axes){
+  const size = 260, center = size / 2, maxR = 92;
+  const n = axes.length;
+  if(n === 0) return '';
+  const angleFor = i => (Math.PI * 2 * i / n) - Math.PI / 2;
+  const pointFor = (i, r) => [center + r * Math.cos(angleFor(i)), center + r * Math.sin(angleFor(i))];
+
+  const rings = [0.25, 0.5, 0.75, 1].map(f => {
+    const pts = axes.map((_, i) => pointFor(i, maxR * f).join(',')).join(' ');
+    return `<polygon points="${pts}" fill="none" stroke="var(--hairline)" stroke-width="1"/>`;
+  }).join('');
+  const spokes = axes.map((_, i) => {
+    const [x, y] = pointFor(i, maxR);
+    return `<line x1="${center}" y1="${center}" x2="${x}" y2="${y}" stroke="var(--hairline)" stroke-width="1"/>`;
+  }).join('');
+
+  let dataPath = '', started = false;
+  axes.forEach((ax, i) => {
+    if(ax.insuffisant){ started = false; return; }
+    const [x, y] = pointFor(i, maxR * (ax.score / 100));
+    dataPath += (started ? ' L' : ' M') + `${x.toFixed(1)},${y.toFixed(1)}`;
+    started = true;
+  });
+
+  const markers = axes.map((ax, i) => {
+    if(ax.insuffisant){
+      const [x, y] = pointFor(i, maxR * 0.16);
+      return `<circle cx="${x}" cy="${y}" r="4" fill="none" stroke="var(--ivory-dim)" stroke-width="1.5" stroke-dasharray="2,2"/>`;
+    }
+    const [x, y] = pointFor(i, maxR * (ax.score / 100));
+    const color = ax.score >= 70 ? 'var(--emerald)' : ax.score >= 40 ? 'var(--gold-bright)' : 'var(--bordeaux)';
+    return `<circle cx="${x}" cy="${y}" r="4" fill="${color}"/>`;
+  }).join('');
+
+  const labels = axes.map((ax, i) => {
+    const [x, y] = pointFor(i, maxR + 24);
+    const cos = Math.cos(angleFor(i));
+    const anchor = Math.abs(cos) < 0.3 ? 'middle' : (cos > 0 ? 'start' : 'end');
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="${anchor}" dominant-baseline="middle" font-size="11" fill="var(--ivory-dim)">${ax.label}</text>`;
+  }).join('');
+
+  return `<svg viewBox="0 0 ${size} ${size}" width="100%" style="max-width:320px;display:block;margin:0 auto;">
+    ${rings}${spokes}
+    ${dataPath ? `<path d="${dataPath}" fill="var(--gold-bright)" fill-opacity="0.18" stroke="var(--gold-bright)" stroke-width="2"/>` : ''}
+    ${markers}${labels}
+  </svg>`;
+}
+function renderHealthScoreDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const health = computeHealthScore();
+  if(health.axesConnues === 0){
+    el.innerHTML = `
+      <span class="smallcaps">🩺 Santé financière</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:10px;">Renseigne ton budget, tes objectifs et ton patrimoine pour voir apparaître ton score ici.</p>
+      <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm btn-gold" style="margin-top:10px;">Configurer →</a>`;
+    return;
+  }
+  const axesList = Object.values(health.axes);
+  el.innerHTML = `
+    <span class="smallcaps">🩺 Santé financière</span>
+    ${health.globalScore !== null ? `<div class="result-big" style="font-size:24px;margin-top:6px;">${health.globalScore}/100</div>` : ''}
+    <p style="font-size:11.5px;color:var(--text-dim);margin:4px 0 10px;">${health.axesConnues}/${health.axesTotal} axes évalués — jamais un axe deviné.</p>
+    ${renderRadarChart(axesList)}
+    <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Voir le détail →</a>`;
+}
+// Pendant professionnel du widget d'alertes (Chantier 6) : réutilise
+// computeBusinessDiagnostics telle quelle (mêmes seuils, déjà testés dans
+// Business Lab), jamais un recalcul parallèle.
+function renderBusinessAlertsDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const profile = getBusinessProfile();
+  const snapshot = computeBusinessProfileSnapshot(profile);
+  if(snapshot.ca === 0){
+    el.innerHTML = `<span class="smallcaps">🚨 Likanza détecte</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Renseigne ton profil entreprise pour activer le check-up.</p>`;
+    return;
+  }
+  const runway = computeRunway(profile);
+  const unitEconomics = safeGetJSON('fzr-unit-economics', null) ? computeUnitEconomics(safeGetJSON('fzr-unit-economics', {})) : null;
+  const alerts = computeBusinessDiagnostics({snapshot, runway, unitEconomics}).filter(d => d.niveau !== 'ok');
+  if(alerts.length === 0){
+    el.innerHTML = `<span class="smallcaps">🚨 Likanza détecte</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Rien à signaler pour l'instant.</p>`;
+    return;
+  }
+  const EMOJI = {alerte: '🔴', attention: '🟠'};
+  el.innerHTML = `
+    <span class="smallcaps">🚨 Likanza détecte</span>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+      ${alerts.map(a => `<div style="font-size:12.5px;">${EMOJI[a.niveau]} ${a.message}</div>`).join('')}
+    </div>
+    <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;">Voir le Business Lab →</a>`;
+}
+
 // ---------- Coquille du Dashboard "Mon Univers Financier" : registre de
 // widgets + personnalisation (Chantier 1). Remplace la page à sections
 // empilées par une grille de widgets, avec bascule Personnel/Professionnel
@@ -681,7 +912,10 @@ const DASHBOARD_WIDGETS = [
   {id: 'goals', title: null, mode: 'personal', selfCard: false, render: renderGoalsDashboardWidget},
   {id: 'future', title: null, mode: 'personal', selfCard: false, render: renderFutureDashboardWidget},
   {id: 'today', title: null, mode: 'personal', selfCard: false, render: renderTodayDashboardWidget},
+  {id: 'alerts', title: null, mode: 'personal', selfCard: false, render: renderAlertsDashboardWidget},
+  {id: 'health-score', title: null, mode: 'personal', selfCard: false, render: renderHealthScoreDashboardWidget},
   {id: 'business-snapshot', title: null, mode: 'professional', selfCard: false, render: renderBusinessSnapshotDashboardWidget},
+  {id: 'business-alerts', title: null, mode: 'professional', selfCard: false, render: renderBusinessAlertsDashboardWidget},
   {id: 'stats', title: null, mode: 'both', selfCard: true, render: renderParcoursStats},
   {id: 'next-step', title: null, mode: 'both', selfCard: true, render: renderNextStepRecommendation},
   {id: 'financial-iq', title: null, mode: 'personal', selfCard: false, render: renderFinancialIQDetail},
@@ -699,7 +933,10 @@ const WIDGET_DISPLAY_NAMES = {
   'goals': '🎯 Mes Objectifs',
   'future': '🔮 Mon Futur',
   'today': "📅 Aujourd'hui",
+  'alerts': '🚨 Likanza détecte',
+  'health-score': '🩺 Santé financière',
   'business-snapshot': '💼 Mon Entreprise',
+  'business-alerts': '🚨 Likanza détecte (Pro)',
   'stats': 'En chiffres',
   'next-step': 'Ton prochain pas',
   'financial-iq': 'Financial IQ',
