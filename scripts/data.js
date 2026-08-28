@@ -896,6 +896,32 @@ function renderBusinessAlertsDashboardWidget(elId){
     </div>
     <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;">Voir le Business Lab →</a>`;
 }
+function renderLifeProjectsDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const projects = getLifeProjects();
+  if(projects.length === 0){
+    el.innerHTML = `
+      <span class="smallcaps">🗺️ Mes Projets de vie</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:10px;">Quel est ton prochain grand projet ?</p>
+      <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm btn-gold" style="margin-top:10px;">Créer un projet →</a>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps">🗺️ Mes Projets de vie</span>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+      ${projects.slice(0, 4).map(p => {
+        const meta = LIFE_PROJECT_CATEGORY_META[p.categorie];
+        const progress = computeProjectProgress(p);
+        return `<div style="font-size:12.5px;">
+          <span>${meta.emoji} ${p.nom}</span>
+          <span style="color:var(--text-dim);margin-left:6px;">${progress.progressionPct !== null ? `${progress.progressionPct}%` : `${fmtEUR(progress.depensesEngagees)}/${fmtEUR(p.budgetTotal)}`}</span>
+        </div>`;
+      }).join('')}
+    </div>
+    ${projects.length > 4 ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">+${projects.length - 4} autre${projects.length - 4 > 1 ? 's' : ''}</p>` : ''}
+    <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Gérer mes projets →</a>`;
+}
 
 // ---------- Coquille du Dashboard "Mon Univers Financier" : registre de
 // widgets + personnalisation (Chantier 1). Remplace la page à sections
@@ -914,6 +940,7 @@ const DASHBOARD_WIDGETS = [
   {id: 'today', title: null, mode: 'personal', selfCard: false, render: renderTodayDashboardWidget},
   {id: 'alerts', title: null, mode: 'personal', selfCard: false, render: renderAlertsDashboardWidget},
   {id: 'health-score', title: null, mode: 'personal', selfCard: false, render: renderHealthScoreDashboardWidget},
+  {id: 'life-projects', title: null, mode: 'personal', selfCard: false, render: renderLifeProjectsDashboardWidget},
   {id: 'business-snapshot', title: null, mode: 'professional', selfCard: false, render: renderBusinessSnapshotDashboardWidget},
   {id: 'business-alerts', title: null, mode: 'professional', selfCard: false, render: renderBusinessAlertsDashboardWidget},
   {id: 'stats', title: null, mode: 'both', selfCard: true, render: renderParcoursStats},
@@ -935,6 +962,7 @@ const WIDGET_DISPLAY_NAMES = {
   'today': "📅 Aujourd'hui",
   'alerts': '🚨 Likanza détecte',
   'health-score': '🩺 Santé financière',
+  'life-projects': '🗺️ Mes Projets de vie',
   'business-snapshot': '💼 Mon Entreprise',
   'business-alerts': '🚨 Likanza détecte (Pro)',
   'stats': 'En chiffres',
@@ -8547,6 +8575,140 @@ function computeGoalsPriorityAllocation(goals, capacity, priorityGoalId){
     const projection = computeGoalProjection({...goal, versementMensuel: allocated});
     return {goal, allocated, requested: goal.versementMensuel, projection};
   });
+}
+
+// ---- 🗺️ Mes Projets de vie (audit Dashboard du 28/08/2026, Chantier 7) :
+// décision de modèle de données actée dans l'audit — un Projet reste un
+// registre SÉPARÉ de fzr-financial-goals plutôt qu'une extension du modèle
+// Objectif. Un Objectif est un montant plat à épargner ; un Projet a des
+// étapes propres (chacune avec son propre statut et sa propre dépense
+// réelle), un budget total, et des risques — retrofitter ce modèle dans les
+// Objectifs aurait complexifié un CRUD déjà testé (dont la détection de
+// conflit, computeGoalsConflict) pour un besoin structurellement différent.
+// Jamais une progression fabriquée : sans étape ajoutée, progressionPct est
+// null (jamais 0 %, qui laisserait croire à un vrai calcul).
+const LIFE_PROJECT_CATEGORIES = ['immobilier', 'entreprise', 'mariage', 'voyage', 'etudes', 'famille', 'autre'];
+const LIFE_PROJECT_CATEGORY_META = {
+  immobilier: {emoji: '🏠', label: 'Immobilier'}, entreprise: {emoji: '💼', label: 'Entreprise'},
+  mariage: {emoji: '💍', label: 'Mariage'}, voyage: {emoji: '✈️', label: 'Voyage'},
+  etudes: {emoji: '🎓', label: 'Études'}, famille: {emoji: '👶', label: 'Famille'}, autre: {emoji: '📌', label: 'Autre'}
+};
+const LIFE_PROJECTS_KEY = 'fzr-life-projects';
+function getLifeProjects(){
+  try {
+    const raw = JSON.parse(localStorage.getItem(LIFE_PROJECTS_KEY) || '[]');
+    return Array.isArray(raw) ? raw : [];
+  } catch(e){ return []; }
+}
+function saveLifeProject(project){
+  if(!project || typeof project.nom !== 'string' || !project.nom.trim()) return null;
+  if(!LIFE_PROJECT_CATEGORIES.includes(project.categorie)) return null;
+  if(!(project.budgetTotal >= 0)) return null;
+  if(project.dateCible !== null && project.dateCible !== undefined && (typeof project.dateCible !== 'string' || isNaN(Date.parse(project.dateCible)))) return null;
+  const list = getLifeProjects();
+  const entry = {
+    id: 'project-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    nom: project.nom.trim().slice(0, 60),
+    categorie: project.categorie,
+    budgetTotal: project.budgetTotal,
+    dateCible: (typeof project.dateCible === 'string' && project.dateCible) ? project.dateCible : null,
+    etapes: [],
+    dateCreation: new Date().toISOString()
+  };
+  list.push(entry);
+  localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(list));
+  return entry;
+}
+function removeLifeProject(id){
+  localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(getLifeProjects().filter(p => p.id !== id)));
+}
+function saveProjectEtape(projectId, etape){
+  if(!etape || typeof etape.nom !== 'string' || !etape.nom.trim()) return null;
+  if(etape.dateCible !== null && etape.dateCible !== undefined && (typeof etape.dateCible !== 'string' || isNaN(Date.parse(etape.dateCible)))) return null;
+  const list = getLifeProjects();
+  const project = list.find(p => p.id === projectId);
+  if(!project) return null;
+  const entry = {
+    id: 'etape-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    nom: etape.nom.trim().slice(0, 60),
+    dateCible: (typeof etape.dateCible === 'string' && etape.dateCible) ? etape.dateCible : null,
+    statut: 'a-faire',
+    depense: 0
+  };
+  project.etapes.push(entry);
+  localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(list));
+  return entry;
+}
+const PROJECT_ETAPE_STATUTS = ['a-faire', 'en-cours', 'termine'];
+function updateProjectEtapeStatut(projectId, etapeId, statut, depense){
+  if(!PROJECT_ETAPE_STATUTS.includes(statut)) return null;
+  const list = getLifeProjects();
+  const project = list.find(p => p.id === projectId);
+  const etape = project && project.etapes.find(e => e.id === etapeId);
+  if(!etape) return null;
+  etape.statut = statut;
+  if(typeof depense === 'number' && depense >= 0) etape.depense = depense;
+  localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(list));
+  return etape;
+}
+function removeProjectEtape(projectId, etapeId){
+  const list = getLifeProjects();
+  const project = list.find(p => p.id === projectId);
+  if(!project) return;
+  project.etapes = project.etapes.filter(e => e.id !== etapeId);
+  localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(list));
+}
+function computeProjectProgress(project){
+  const etapes = project.etapes || [];
+  const depensesEngagees = etapes.reduce((s, e) => s + (e.depense || 0), 0);
+  const budgetRestant = Math.max(0, project.budgetTotal - depensesEngagees);
+  if(etapes.length === 0) return {progressionPct: null, etapesTerminees: 0, etapesTotal: 0, depensesEngagees, budgetRestant};
+  const etapesTerminees = etapes.filter(e => e.statut === 'termine').length;
+  return {progressionPct: Math.round((etapesTerminees / etapes.length) * 100), etapesTerminees, etapesTotal: etapes.length, depensesEngagees, budgetRestant};
+}
+// Ligne du temps PASSÉ ← AUJOURD'HUI → FUTUR : uniquement des points réels
+// (un historique de patrimoine déjà enregistré, ou une date cible que
+// l'utilisateur a lui-même saisie sur un objectif/projet/étape) — jamais une
+// date extrapolée ou un jalon inventé.
+function computeLifeTimeline(){
+  const events = [];
+  getNetWorthHistory().forEach(p => events.push({type: 'patrimoine', date: p.mois + '-01', label: `Patrimoine : ${fmtEUR(p.patrimoineNet)}`, lien: null}));
+  const today = todayISO();
+  events.push({type: 'aujourdhui', date: today, label: "Aujourd'hui", lien: null});
+  getFinancialGoals().filter(g => g.dateCible).forEach(g => events.push({type: 'goal', date: g.dateCible, label: `🎯 ${g.nom}`, lien: 'laboratoire.html#tab-budget-epargne'}));
+  getLifeProjects().forEach(p => {
+    const meta = LIFE_PROJECT_CATEGORY_META[p.categorie];
+    if(p.dateCible) events.push({type: 'project', date: p.dateCible, label: `${meta.emoji} ${p.nom}`, lien: 'laboratoire.html#tab-budget-epargne'});
+    (p.etapes || []).filter(e => e.dateCible && e.statut !== 'termine').forEach(e => events.push({type: 'etape', date: e.dateCible, label: `${meta.emoji} ${p.nom} — ${e.nom}`, lien: 'laboratoire.html#tab-budget-epargne'}));
+  });
+  events.sort((a, b) => a.date.localeCompare(b.date));
+  events.forEach(e => { e.temporalite = e.type === 'aujourdhui' ? 'present' : (e.date < today ? 'passe' : 'futur'); });
+  return events;
+}
+// Ligne du temps horizontale scrollable (jamais un débordement de la page,
+// §"Wide content" — overflow-x confiné à ce conteneur). Réutilisée telle
+// quelle par le widget Laboratoire complet et par l'aperçu Dashboard.
+function renderLifeTimeline(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const events = computeLifeTimeline();
+  if(events.length <= 1){
+    el.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Ajoute un objectif, un projet ou une étape avec une date pour voir ta ligne du temps ici.</p>`;
+    return;
+  }
+  const COLOR = {passe: 'var(--ivory-dim)', present: 'var(--gold-bright)', futur: 'var(--emerald)'};
+  el.innerHTML = `<div style="display:flex;overflow-x:auto;padding:10px 4px;">
+    ${events.map((e, i) => `
+      <div style="display:flex;flex-direction:column;align-items:center;min-width:130px;flex-shrink:0;">
+        <span style="font-size:10px;color:var(--text-dim);white-space:nowrap;">${new Date(e.date + 'T00:00:00').toLocaleDateString('fr-FR', {day: 'numeric', month: 'short', year: 'numeric'})}</span>
+        <div style="display:flex;align-items:center;width:100%;margin-top:4px;">
+          <div style="flex:1;height:1px;background:${i === 0 ? 'transparent' : 'var(--hairline)'};"></div>
+          <span style="width:10px;height:10px;border-radius:50%;background:${COLOR[e.temporalite]};flex-shrink:0;"></span>
+          <div style="flex:1;height:1px;background:${i === events.length - 1 ? 'transparent' : 'var(--hairline)'};"></div>
+        </div>
+        ${e.lien ? `<a href="${e.lien}" style="font-size:11.5px;text-align:center;margin-top:4px;color:var(--gold-bright);">${e.label}</a>` : `<span style="font-size:11.5px;text-align:center;margin-top:4px;">${e.label}</span>`}
+      </div>`).join('')}
+  </div>`;
 }
 
 // ---- 🔮 Mon Futur : projection longue du patrimoine (audit Dashboard du

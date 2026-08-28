@@ -93,7 +93,8 @@ const LAB_WIDGETS = {
     {id:'widget-goals-manager', title:'Mes objectifs', desc:'Objectifs et dépenses irrégulières à venir, statut 🟢🟠🔴.', icon:'target'},
     {id:'widget-charges-manager', title:'Mes abonnements & factures', desc:'Liste multi-entrées, coût cumulé réel.', icon:'coins'},
     {id:'widget-net-worth', title:'Mon patrimoine net', desc:'Actifs et dettes réels, dans le temps.', icon:'gem'},
-    {id:'widget-health-score', title:'🩺 Ma santé financière', desc:'6 axes, radar visuel, jamais un axe deviné.', icon:'shield'}
+    {id:'widget-health-score', title:'🩺 Ma santé financière', desc:'6 axes, radar visuel, jamais un axe deviné.', icon:'shield'},
+    {id:'widget-life-projects', title:'🗺️ Mes projets de vie', desc:'Budget, étapes, ligne du temps.', icon:'compass'}
   ],
   'tab-planification': [
     {id:'widget-urgence-choc', title:"Fonds d'urgence & choc financier", desc:'Combien de temps tiendrais-tu sans revenu ?', icon:'shield'},
@@ -357,6 +358,13 @@ const LAB_METHODOLOGY = {
     hypotheses: "Suppose que les données du mois en cours (budget, patrimoine) sont à jour et complètes — un mois partiellement renseigné donne un axe optiquement faux, comme pour le Tableau de bord.",
     limites: "Une moyenne simple entre 3 et 6 axes selon ce qui est renseigné : deux profils avec le même score global peuvent avoir des situations très différentes — le détail par axe compte plus que le chiffre global seul.",
     comprendre: "Un axe \"Données insuffisantes\" n'est jamais compté comme un mauvais score (jamais 0 fabriqué) — il est simplement exclu de la moyenne jusqu'à ce que tu renseignes la donnée qui lui manque."
+  },
+  'life-projects': {
+    calcul: "Progression = étapes terminées ÷ étapes totales du projet. Dépenses engagées = somme des dépenses réelles que tu saisis en marquant une étape \"Terminée\". Budget restant = budget total − dépenses engagées.",
+    donnees: "Uniquement les projets, étapes et dépenses que tu ajoutes toi-même ici — jamais une estimation automatique de coût pour une catégorie de projet.",
+    hypotheses: "Suppose que le budget total saisi à la création reste la référence, même si les dépenses réelles cumulées le dépassent (le \"budget restant\" peut alors afficher 0 sans jamais devenir négatif à l'affichage).",
+    limites: "Un projet sans aucune étape ajoutée n'a pas de pourcentage de progression (jamais 0 % affiché, qui laisserait croire à un vrai calcul) — ajoute au moins une étape pour activer le suivi.",
+    comprendre: "La ligne du temps ci-dessous ne montre que des dates que tu as toi-même saisies (objectifs, projets, étapes) plus ton historique de patrimoine déjà enregistré — jamais un jalon extrapolé ou deviné."
   }
 };
 Object.keys(LAB_METHODOLOGY).forEach(key => {
@@ -2273,6 +2281,90 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
 
   document.getElementById('healthScoreLinks').innerHTML = renderCourseLibraryLinks(['Budget', "Fonds d'urgence", 'Valeur nette']);
   renderNextStepCard('nextstep-health-score', {domainKey: 'personalFinance'});
+})();
+
+// ---------- 🗺️ Mes projets de vie (Dashboard "Mon Univers Financier",
+// Chantier 7) : CRUD projets + étapes (fzr-life-projects, data.js) + ligne du
+// temps (renderLifeTimeline, réutilisée telle quelle). Pas d'état local
+// propre à l'IIFE au-delà des champs du formulaire : re-render() complet à
+// chaque action, comme les autres gestionnaires CRUD de ce fichier. ----------
+(function initLifeProjectsManager(){
+  const listEl = document.getElementById('projectMgrList');
+  if(!listEl) return;
+  const nomEl = document.getElementById('projectMgrNom');
+  const categorieEl = document.getElementById('projectMgrCategorie');
+  const budgetEl = document.getElementById('projectMgrBudget');
+  const dateEl = document.getElementById('projectMgrDate');
+
+  const STATUT_LABELS = {'a-faire': 'À faire', 'en-cours': 'En cours', 'termine': 'Terminée'};
+  const STATUT_NEXT = {'a-faire': 'en-cours', 'en-cours': 'termine', 'termine': 'a-faire'};
+
+  function render(){
+    const projects = getLifeProjects();
+    if(projects.length === 0){
+      listEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucun projet pour l'instant.</p>`;
+    } else {
+      listEl.innerHTML = projects.map(p => {
+        const meta = LIFE_PROJECT_CATEGORY_META[p.categorie];
+        const progress = computeProjectProgress(p);
+        return `
+        <div class="card" style="margin-top:10px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;">
+            <div>
+              <strong>${meta.emoji} ${p.nom}</strong>
+              <p style="font-size:12px;color:var(--text-dim);margin-top:2px;">${meta.label}${p.dateCible ? ` · cible : ${new Date(p.dateCible + 'T00:00:00').toLocaleDateString('fr-FR')}` : ''}</p>
+            </div>
+            <button type="button" class="btn btn-sm project-remove" data-id="${p.id}" aria-label="Supprimer le projet">✕</button>
+          </div>
+          <p style="font-size:12.5px;margin-top:8px;">${progress.progressionPct !== null ? `${progress.progressionPct}% (${progress.etapesTerminees}/${progress.etapesTotal} étapes)` : "Pas encore d'étape ajoutée"} · ${fmtEUR(progress.depensesEngagees)} dépensés sur ${fmtEUR(p.budgetTotal)} (reste ${fmtEUR(progress.budgetRestant)})</p>
+          <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
+            ${p.etapes.map(e => `
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;gap:8px;flex-wrap:wrap;">
+                <span style="flex:1;min-width:90px;">${e.nom}${e.dateCible ? ` <span class="mono" style="color:var(--text-dim);">(${new Date(e.dateCible + 'T00:00:00').toLocaleDateString('fr-FR', {day: 'numeric', month: 'short'})})</span>` : ''}</span>
+                <input type="number" class="etape-depense-input mono" data-project="${p.id}" data-etape="${e.id}" min="0" value="${e.depense}" style="width:80px;" aria-label="Dépense réelle (€)">
+                <button type="button" class="btn btn-sm etape-toggle" data-project="${p.id}" data-etape="${e.id}" data-statut="${e.statut}">${STATUT_LABELS[e.statut]}</button>
+                <button type="button" class="btn btn-sm etape-remove" data-project="${p.id}" data-etape="${e.id}" aria-label="Supprimer l'étape">✕</button>
+              </div>`).join('')}
+          </div>
+          <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+            <input type="text" class="etape-nom-input" data-project="${p.id}" placeholder="Nouvelle étape" style="flex:2;min-width:120px;">
+            <input type="date" class="etape-date-input" data-project="${p.id}" style="flex:1;min-width:120px;">
+            <button type="button" class="btn btn-sm etape-add" data-project="${p.id}">+ Étape</button>
+          </div>
+        </div>`;
+      }).join('');
+
+      listEl.querySelectorAll('.project-remove').forEach(btn => btn.addEventListener('click', () => { removeLifeProject(btn.dataset.id); render(); }));
+      listEl.querySelectorAll('.etape-remove').forEach(btn => btn.addEventListener('click', () => { removeProjectEtape(btn.dataset.project, btn.dataset.etape); render(); }));
+      listEl.querySelectorAll('.etape-toggle').forEach(btn => btn.addEventListener('click', () => {
+        updateProjectEtapeStatut(btn.dataset.project, btn.dataset.etape, STATUT_NEXT[btn.dataset.statut]);
+        render();
+      }));
+      listEl.querySelectorAll('.etape-depense-input').forEach(input => input.addEventListener('change', () => {
+        const projects = getLifeProjects();
+        const project = projects.find(pr => pr.id === input.dataset.project);
+        const etape = project && project.etapes.find(e => e.id === input.dataset.etape);
+        if(etape) updateProjectEtapeStatut(input.dataset.project, input.dataset.etape, etape.statut, +input.value);
+        render();
+      }));
+      listEl.querySelectorAll('.etape-add').forEach(btn => btn.addEventListener('click', () => {
+        const nomInput = listEl.querySelector(`.etape-nom-input[data-project="${btn.dataset.project}"]`);
+        const dateInput = listEl.querySelector(`.etape-date-input[data-project="${btn.dataset.project}"]`);
+        const entry = saveProjectEtape(btn.dataset.project, {nom: nomInput.value, dateCible: dateInput.value || null});
+        if(entry) render();
+      }));
+    }
+    renderLifeTimeline('lifeTimeline');
+  }
+
+  document.getElementById('projectMgrAdd').addEventListener('click', () => {
+    const entry = saveLifeProject({nom: nomEl.value, categorie: categorieEl.value, budgetTotal: +budgetEl.value, dateCible: dateEl.value || null});
+    if(entry){ nomEl.value = ''; budgetEl.value = '20000'; dateEl.value = ''; render(); }
+  });
+
+  render();
+  document.getElementById('projectLinks').innerHTML = renderCourseLibraryLinks(['Budget', 'Épargne', 'Patrimoine']);
+  renderNextStepCard('nextstep-life-projects', {domainKey: 'personalFinance'});
 })();
 
 // ============================================================

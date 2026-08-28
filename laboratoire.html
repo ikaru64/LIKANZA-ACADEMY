@@ -710,6 +710,27 @@
       <div id="nextstep-health-score" style="margin-top:10px;"></div>
     </div>
 
+    <div class="card" id="widget-life-projects" style="display:none;grid-column:1/-1;">
+      <h3>🗺️ Mes projets de vie</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Plus qu'un objectif d'épargne : un budget, des étapes, un vrai suivi de dépenses engagées. Pour un simple montant à épargner sans étapes, "Mes objectifs" ci-dessus suffit souvent.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="field" style="flex:2;min-width:160px;"><label for="projectMgrNom">Nom du projet</label><input type="text" id="projectMgrNom" placeholder="Acheter un appartement"></div>
+        <div class="field" style="flex:1;min-width:150px;"><label for="projectMgrCategorie">Catégorie</label><select id="projectMgrCategorie"><option value="immobilier">🏠 Immobilier</option><option value="entreprise">💼 Entreprise</option><option value="mariage">💍 Mariage</option><option value="voyage">✈️ Voyage</option><option value="etudes">🎓 Études</option><option value="famille">👶 Famille</option><option value="autre">📌 Autre</option></select></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="projectMgrBudget">Budget total (€)</label><input type="number" id="projectMgrBudget" min="0" value="20000"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="projectMgrDate">Date cible (optionnel)</label><input type="date" id="projectMgrDate"></div>
+      </div>
+      <button class="btn btn-sm btn-gold" id="projectMgrAdd" style="margin-top:10px;">+ Créer le projet</button>
+      <div id="projectMgrList" style="margin-top:16px;"></div>
+      <div style="margin-top:20px;">
+        <span class="smallcaps">Ligne du temps</span>
+        <p style="font-size:12px;color:var(--text-dim);margin:4px 0 0;">Ton patrimoine passé, aujourd'hui, et tes échéances futures connues (objectifs, projets, étapes) — jamais une date inventée.</p>
+        <div id="lifeTimeline" style="margin-top:8px;"></div>
+      </div>
+      <div id="projectLinks"></div>
+      <div id="method-life-projects"></div>
+      <div id="nextstep-life-projects" style="margin-top:10px;"></div>
+    </div>
+
   </div>
   </div>
 
