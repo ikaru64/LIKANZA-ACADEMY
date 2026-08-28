@@ -923,6 +923,50 @@ function renderLifeProjectsDashboardWidget(elId){
     <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Gérer mes projets →</a>`;
 }
 
+// ---- Patrimoine combiné personnel + professionnel (audit Dashboard du
+// 28/08/2026, Chantier 8) : jusqu'ici deux silos totalement séparés, sans
+// aucune vue combinée même quand les deux profils existent. Côté
+// professionnel, jamais une vraie valorisation d'entreprise fabriquée
+// (multiples EV/EBITDA ou PER — déjà un outil dédié et explicite pour ça,
+// "Valorisation par multiples") : seulement trésorerie − dette totale, une
+// vraie position de cash, jamais une estimation de la valeur de l'entreprise
+// elle-même.
+function computeCombinedWealth(){
+  const personalAssets = getNetWorthAssets();
+  const personalDebts = getPersonalDebts();
+  const hasPersonal = personalAssets.length > 0 || personalDebts.length > 0;
+  const personalNet = computeNetWorth(personalAssets, personalDebts).patrimoineNet;
+  const profile = getBusinessProfile();
+  const hasBusiness = profile.ca > 0 || profile.tresorerieActuelle > 0 || profile.detteTotale > 0;
+  const businessNet = profile.tresorerieActuelle - profile.detteTotale;
+  return {hasPersonal, hasBusiness, personalNet, businessNet, total: personalNet + businessNet};
+}
+function renderCombinedWealthDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const wealth = computeCombinedWealth();
+  if(!wealth.hasPersonal && !wealth.hasBusiness){
+    el.innerHTML = `<span class="smallcaps">💰 Patrimoine total</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Renseigne ton patrimoine personnel et/ou ton profil entreprise pour voir ton patrimoine total ici.</p>`;
+    return;
+  }
+  if(!wealth.hasBusiness){
+    el.innerHTML = `<span class="smallcaps">💰 Patrimoine total</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Renseigne aussi ton profil entreprise (Business Lab) pour voir ton patrimoine personnel + professionnel combiné.</p>`;
+    return;
+  }
+  if(!wealth.hasPersonal){
+    el.innerHTML = `<span class="smallcaps">💰 Patrimoine total</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Renseigne aussi ton patrimoine personnel (Laboratoire) pour voir ton patrimoine personnel + professionnel combiné.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps">💰 Patrimoine total</span>
+    <div class="result-big" style="font-size:24px;margin-top:6px;">${fmtEUR(wealth.total)}</div>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-top:8px;font-size:12.5px;">
+      <div style="display:flex;justify-content:space-between;"><span>👤 Personnel</span><span class="mono">${fmtEUR(wealth.personalNet)}</span></div>
+      <div style="display:flex;justify-content:space-between;"><span>🏢 Professionnel (trésorerie nette)</span><span class="mono">${fmtEUR(wealth.businessNet)}</span></div>
+    </div>
+    <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">Côté professionnel : trésorerie − dette totale, jamais une valorisation d'entreprise (voir "Valorisation par multiples" dans le Business Lab pour ça).</p>`;
+}
+
 // ---------- Coquille du Dashboard "Mon Univers Financier" : registre de
 // widgets + personnalisation (Chantier 1). Remplace la page à sections
 // empilées par une grille de widgets, avec bascule Personnel/Professionnel
@@ -933,6 +977,7 @@ function renderLifeProjectsDashboardWidget(elId){
 // choisis pour la fiabilité mobile) — cohérence plutôt que rupture. ----------
 const DASHBOARD_WIDGETS = [
   {id: 'gamification', title: null, mode: 'both', selfCard: false, render: elId => renderGamificationWidget(elId, false)},
+  {id: 'combined-wealth', title: null, mode: 'both', selfCard: false, render: renderCombinedWealthDashboardWidget},
   {id: 'profile-summary', title: null, mode: 'personal', selfCard: true, render: renderParcoursProfileSummary},
   {id: 'net-worth', title: null, mode: 'personal', selfCard: false, render: renderNetWorthDashboardWidget},
   {id: 'goals', title: null, mode: 'personal', selfCard: false, render: renderGoalsDashboardWidget},
@@ -955,6 +1000,7 @@ const DASHBOARD_WIDGETS = [
 ];
 const WIDGET_DISPLAY_NAMES = {
   'gamification': 'Progression (niveau, XP, série)',
+  'combined-wealth': '💰 Patrimoine total (personnel + pro)',
   'profile-summary': 'Ton profil Likanza',
   'net-worth': '💎 Mon Patrimoine',
   'goals': '🎯 Mes Objectifs',
@@ -5564,6 +5610,7 @@ function renderBusinessExpenses(elId){
   updateCashflow();
   document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['expenses-cashflow']);
   renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
+  tryAwardQuizPoints(`expenses-cashflow-${new Date().toDateString()}`, 5, {usedExpensesCashflow: true});
 }
 
 // ---------- Pricing interactif (Financial Lab, Phase 5) : curseur de prix
@@ -5643,6 +5690,7 @@ function renderPricingSimulator(elId){
   });
   sliderEl.addEventListener('input', () => { sliderEl.dataset.touched = '1'; update(); });
   update();
+  tryAwardQuizPoints(`pricing-sim-${new Date().toDateString()}`, 5, {usedPricingSim: true});
 }
 
 // ---------- Sales funnel interactif (Financial Lab, Phase 5) : conversion
@@ -5724,6 +5772,7 @@ function renderSalesFunnel(elId){
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
   });
   update();
+  tryAwardQuizPoints(`sales-funnel-${new Date().toDateString()}`, 5, {usedSalesFunnel: true});
 }
 
 // ---------- Scénarios & stress-test (Financial Lab, Phase 6) : applique un
@@ -5875,6 +5924,7 @@ function renderBusinessScenarios(elId){
 
   update();
   renderComparatif();
+  tryAwardQuizPoints(`business-scenarios-${new Date().toDateString()}`, 5, {usedBusinessScenarios: true});
 }
 
 // ---------- Runway (Financial Lab, Phase 6) : trésorerie ÷ burn mensuel —
@@ -5909,6 +5959,7 @@ function renderRunwaySimulator(elId){
     <div id="${elId}-nextstep" style="margin-top:10px;"></div>`;
   document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['runway']);
   renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
+  tryAwardQuizPoints(`runway-${new Date().toDateString()}`, 5, {usedRunway: true});
 
   if(r.burnMensuel > 0){
     function updateSim(){
@@ -5983,6 +6034,7 @@ function renderValorisationSimulator(elId){
     document.getElementById(`${elId}-${key}`).addEventListener('input', update);
   });
   update();
+  tryAwardQuizPoints(`valorisation-sim-${new Date().toDateString()}`, 5, {usedValorisationSim: true});
 }
 
 // ---------- "Analyser ma situation" — check-up automatique côté
