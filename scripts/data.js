@@ -4624,16 +4624,21 @@ function renderCoursQuiz(elId, cours, onComplete){
   if(!el) return;
   const simplePool = QUIZ_BANK_FULL.filter(q=>cours.quizCategories.includes(q.categorie));
   // Mélange des formats "raisonnement" du moteur Défis (classement, mise en
-  // catégories) au pool classique du quiz de cours (audit Formations Phase 2
-  // du 27/08/2026 : ces formats existaient déjà pour les Défis mais
-  // n'étaient jamais proposés dans la validation d'un cours). Seuls
-  // "sequence" et "classe" sont inclus ici : leur correction est binaire
-  // (bon ordre / bon classement ou non), contrairement à "dilemme" (réponses
-  // "défendables", pas de vrai/faux), "infomanquante" (aucune mauvaise
-  // réponse par construction) ou "cas"/"enquête" (narratifs, à choix unique
-  // déjà couverts par le pool classique) — les mélanger fausserait le seuil
-  // de réussite du cours.
-  const richPool = MENTAL_CHALLENGES.filter(m => cours.quizCategories.includes(m.categorie) && (m.format === 'classe' || m.format === 'sequence'));
+  // catégories, calcul à variables aléatoires) au pool classique du quiz de
+  // cours (audit Formations Phase 2 du 27/08/2026, complété par son reliquat
+  // le 28/08/2026 : ces formats existaient déjà pour les Défis mais
+  // n'étaient jamais proposés dans la validation d'un cours). "sequence",
+  // "classe" et "calculAleatoire" sont inclus : leur correction est binaire
+  // (bon ordre / bon classement / réponse numérique dans la tolérance, ou
+  // non) — contrairement à "dilemme" (réponses "défendables", pas de
+  // vrai/faux), "infomanquante" (aucune mauvaise réponse par construction)
+  // ou "cas"/"enquête" (narratifs, à choix unique déjà couverts par le pool
+  // classique) — les mélanger fausserait le seuil de réussite du cours.
+  // "calculAleatoire" ne nécessite aucune nouvelle politique de tolérance :
+  // chaque template (RANDOM_EXERCISE_TEMPLATES) fournit déjà son propre
+  // champ "tolerance", comparé via renderCalculItem exactement comme les
+  // items "calcul" fixes — mécanisme déjà en place, jamais réinventé ici.
+  const richPool = MENTAL_CHALLENGES.filter(m => cours.quizCategories.includes(m.categorie) && (m.format === 'classe' || m.format === 'sequence' || m.format === 'calculAleatoire'));
   let pool = simplePool.concat(richPool);
   for(let i=pool.length-1;i>0;i--){
     const j = Math.floor(Math.random()*(i+1));
