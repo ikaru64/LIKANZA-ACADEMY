@@ -622,6 +622,33 @@ function renderFutureDashboardWidget(elId){
     </div>
     <a href="laboratoire.html#tab-planification" class="btn btn-sm" style="margin-top:10px;">Simuler mes hypothèses →</a>`;
 }
+// Aperçu compact du calendrier financier (Chantier 5) : uniquement les
+// échéances réelles à venir sous 7 jours (computeUpcomingReminders) — jamais
+// une date inventée, jamais un rappel de "salaire" (aucune donnée de date de
+// versement n'existe nulle part sur le site).
+function renderTodayDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const reminders = computeUpcomingReminders(7);
+  if(reminders.length === 0){
+    el.innerHTML = `
+      <span class="smallcaps">📅 Aujourd'hui</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Aucune échéance connue dans les 7 prochains jours.</p>
+      <a href="laboratoire.html#tab-planification" class="btn btn-sm" style="margin-top:10px;">Voir le calendrier →</a>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps">📅 Aujourd'hui</span>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+      ${reminders.slice(0, 5).map(r => `
+        <div style="display:flex;justify-content:space-between;font-size:12.5px;">
+          <span>${r.type === 'goal' ? '🎯' : '🔁'} ${r.label}</span>
+          <span class="mono" style="color:var(--text-dim);">${r.dans === 0 ? "aujourd'hui" : r.dans === 1 ? 'demain' : `dans ${r.dans} j`}</span>
+        </div>`).join('')}
+    </div>
+    ${reminders.length > 5 ? `<p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">+${reminders.length - 5} autre${reminders.length - 5 > 1 ? 's' : ''}</p>` : ''}
+    <a href="laboratoire.html#tab-planification" class="btn btn-sm" style="margin-top:10px;">Voir le calendrier →</a>`;
+}
 function renderMistakesDashboardWidget(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -653,6 +680,7 @@ const DASHBOARD_WIDGETS = [
   {id: 'net-worth', title: null, mode: 'personal', selfCard: false, render: renderNetWorthDashboardWidget},
   {id: 'goals', title: null, mode: 'personal', selfCard: false, render: renderGoalsDashboardWidget},
   {id: 'future', title: null, mode: 'personal', selfCard: false, render: renderFutureDashboardWidget},
+  {id: 'today', title: null, mode: 'personal', selfCard: false, render: renderTodayDashboardWidget},
   {id: 'business-snapshot', title: null, mode: 'professional', selfCard: false, render: renderBusinessSnapshotDashboardWidget},
   {id: 'stats', title: null, mode: 'both', selfCard: true, render: renderParcoursStats},
   {id: 'next-step', title: null, mode: 'both', selfCard: true, render: renderNextStepRecommendation},
@@ -670,6 +698,7 @@ const WIDGET_DISPLAY_NAMES = {
   'net-worth': '💎 Mon Patrimoine',
   'goals': '🎯 Mes Objectifs',
   'future': '🔮 Mon Futur',
+  'today': "📅 Aujourd'hui",
   'business-snapshot': '💼 Mon Entreprise',
   'stats': 'En chiffres',
   'next-step': 'Ton prochain pas',
@@ -8333,13 +8362,18 @@ function getRecurringCharges(){
     return Array.isArray(raw) ? raw : [];
   } catch(e){ return []; }
 }
+// jourEcheance (1-31, optionnel — audit Dashboard du 28/08/2026, Chantier 5)
+// : jamais un jour inventé. Sans valeur fournie, la charge reste réelle mais
+// n'apparaît jamais sur un jour précis du calendrier, seulement groupée par
+// mois — voir computeCalendarEvents.
 function saveRecurringCharge(charge){
   if(!charge || typeof charge.nom !== 'string' || !charge.nom.trim() || !(charge.montant > 0) || !RECURRING_CHARGE_FREQUENCIES.includes(charge.frequence)) return null;
   const categorie = charge.categorie === 'facture' ? 'facture' : 'abonnement';
+  const jourEcheance = (Number.isInteger(charge.jourEcheance) && charge.jourEcheance >= 1 && charge.jourEcheance <= 31) ? charge.jourEcheance : null;
   const list = getRecurringCharges();
   const entry = {
     id: 'charge-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
-    nom: charge.nom.trim().slice(0, 60), montant: charge.montant, frequence: charge.frequence, categorie,
+    nom: charge.nom.trim().slice(0, 60), montant: charge.montant, frequence: charge.frequence, categorie, jourEcheance,
     dateAjout: new Date().toISOString()
   };
   list.push(entry);
@@ -8366,6 +8400,52 @@ function computeRecurringChargesTotal(charges){
     if(c.categorie === 'facture') acc.mensuelFactures += cost.mensuel; else acc.mensuelAbonnements += cost.mensuel;
     return acc;
   }, {mensuel: 0, annuel: 0, mensuelAbonnements: 0, mensuelFactures: 0});
+}
+
+// ---- 📅 Calendrier financier (audit Dashboard du 28/08/2026, Chantier 5) :
+// confirmé absent de tout le site avant cette passe. Construit uniquement à
+// partir de données réellement déclarées par l'utilisateur (charges
+// récurrentes, échéances d'objectifs) — jamais une vraie transaction
+// bancaire tant qu'aucune connexion n'existe (section 30 du prompt). ----
+// Une charge "trimestriel"/"annuel" ne tombe pas tous les mois : le calcul
+// compte le nombre de mois écoulés depuis son ajout réel (dateAjout),
+// jamais une date de première échéance inventée.
+function computeCalendarEvents(mois){
+  if(typeof mois !== 'string' || !/^\d{4}-\d{2}$/.test(mois)) return [];
+  const [y, m] = mois.split('-').map(Number);
+  const chargeEvents = getRecurringCharges().filter(c => {
+    const added = new Date(c.dateAjout);
+    const monthsSince = (y - added.getFullYear()) * 12 + (m - (added.getMonth() + 1));
+    if(monthsSince < 0) return false;
+    if(c.frequence === 'mensuel') return true;
+    if(c.frequence === 'trimestriel') return monthsSince % 3 === 0;
+    return monthsSince % 12 === 0; // annuel
+  }).map(c => ({type: 'charge', id: c.id, label: c.nom, montant: -c.montant, jour: c.jourEcheance, categorie: c.categorie}));
+
+  const goalEvents = getFinancialGoals()
+    .filter(g => g.dateCible && g.dateCible.slice(0, 7) === mois)
+    .map(g => ({type: 'goal', id: g.id, label: `Échéance : ${g.nom}`, montant: null, jour: +g.dateCible.slice(8, 10), categorie: 'objectif'}));
+
+  return [...chargeEvents, ...goalEvents].sort((a, b) => (a.jour || 99) - (b.jour || 99));
+}
+// Rappels des N prochains jours (widget "Aujourd'hui") — seules les charges
+// avec un jour d'échéance réellement saisi peuvent apparaître ici (jamais un
+// jour deviné) ; une échéance d'objectif dans le passé n'est jamais un rappel.
+function computeUpcomingReminders(daysAhead){
+  const today = new Date(); today.setHours(0, 0, 0, 0);
+  const reminders = [];
+  getRecurringCharges().filter(c => c.jourEcheance).forEach(c => {
+    let target = new Date(today.getFullYear(), today.getMonth(), c.jourEcheance);
+    if(target < today) target = new Date(today.getFullYear(), today.getMonth() + 1, c.jourEcheance);
+    const dans = Math.round((target - today) / 86400000);
+    if(dans <= daysAhead) reminders.push({type: 'charge', label: c.nom, montant: c.montant, dans});
+  });
+  getFinancialGoals().filter(g => g.dateCible).forEach(g => {
+    const target = new Date(g.dateCible + 'T00:00:00');
+    const dans = Math.round((target - today) / 86400000);
+    if(dans >= 0 && dans <= daysAhead) reminders.push({type: 'goal', label: g.nom, montant: null, dans});
+  });
+  return reminders.sort((a, b) => a.dans - b.dans);
 }
 
 // ---- Actifs (patrimoine) — le passif vient TOUJOURS des dettes

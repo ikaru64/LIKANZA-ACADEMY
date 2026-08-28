@@ -98,7 +98,8 @@ const LAB_WIDGETS = {
     {id:'widget-urgence-choc', title:"Fonds d'urgence & choc financier", desc:'Combien de temps tiendrais-tu sans revenu ?', icon:'shield'},
     {id:'widget-cashflow-projection', title:'Projection de trésorerie', desc:'Ton solde projeté au rythme actuel.', icon:'trending-up'},
     {id:'widget-life-change', title:'Changement de situation', desc:'Augmentation, side-hustle, déménagement, vie à deux.', icon:'compass'},
-    {id:'widget-mon-futur', title:'🔮 Mon Futur', desc:'Projection du patrimoine sur 1/5/10/20 ans, 3 scénarios.', icon:'telescope'}
+    {id:'widget-mon-futur', title:'🔮 Mon Futur', desc:'Projection du patrimoine sur 1/5/10/20 ans, 3 scénarios.', icon:'telescope'},
+    {id:'widget-calendrier', title:'📅 Calendrier financier', desc:'Tes échéances réelles du mois : abonnements, factures, objectifs.', icon:'calendar-days'}
   ]
 };
 function renderLabWidgetGrid(categoryId){
@@ -341,6 +342,13 @@ const LAB_METHODOLOGY = {
     hypotheses: "Suppose que le montant et la fréquence saisis restent stables sur toute la période affichée (3/5/10 ans) — une hausse de prix future n'est jamais anticipée.",
     limites: "Ne tient pas compte d'un rendement alternatif si cet argent était investi à la place (contrairement au widget \"Coût futur d'un abonnement\", qui lui l'inclut explicitement).",
     comprendre: "Le total sur 10 ans d'une charge modeste (15€/mois) paraît souvent plus élevé qu'attendu — c'est l'effet de la répétition, pas une erreur de calcul."
+  },
+  'calendrier': {
+    calcul: "Pour chaque mois affiché : les abonnements/factures dont la fréquence tombe ce mois-ci (mensuel = tous les mois, trimestriel = tous les 3 mois depuis leur ajout, annuel = tous les 12 mois), plus les objectifs dont la date cible tombe ce mois-ci.",
+    donnees: "Uniquement 2 sources déjà saisies ailleurs : \"Mes abonnements & factures\" (avec un jour d'échéance renseigné) et \"Mes objectifs\" (avec une date cible) — jamais une date de versement de salaire, aucune donnée de ce type n'existant nulle part sur le site.",
+    hypotheses: "Suppose que la fréquence et le jour d'échéance saisis restent valables pour le mois affiché — un abonnement résilié entre-temps mais non supprimé de la liste continue d'apparaître.",
+    limites: "Un abonnement/facture sans jour d'échéance renseigné n'apparaît pas ici, même si son montant est bien compté dans le total de \"Mes abonnements & factures\" — deux vues complémentaires, pas redondantes.",
+    comprendre: "Un mois vide ne veut pas dire \"aucune charge\" — cela signifie le plus souvent qu'aucun jour d'échéance n'a encore été renseigné sur tes abonnements/factures."
   }
 };
 Object.keys(LAB_METHODOLOGY).forEach(key => {
@@ -1202,6 +1210,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   const montantEl = document.getElementById('chargeMgrMontant');
   const frequenceEl = document.getElementById('chargeMgrFrequence');
   const categorieEl = document.getElementById('chargeMgrCategorie');
+  const jourEl = document.getElementById('chargeMgrJour');
 
   function render(){
     const charges = getRecurringCharges();
@@ -1214,9 +1223,10 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       <p style="font-size:13px;margin-bottom:10px;"><strong>Total : ${fmtEUR(total.mensuel)}/mois</strong> (${fmtEUR(total.annuel)}/an)</p>
       ${charges.map(c => {
         const cost = computeRecurringChargeCost(c);
+        const jourLabel = c.jourEcheance ? ` · le ${c.jourEcheance}` : '';
         return `
         <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;padding:6px 0;border-bottom:1px solid var(--hairline);">
-          <span>${c.categorie === 'facture' ? '🧾' : '🔁'} ${c.nom} — ${fmtEUR(c.montant)}/${c.frequence}</span>
+          <span>${c.categorie === 'facture' ? '🧾' : '🔁'} ${c.nom} — ${fmtEUR(c.montant)}/${c.frequence}${jourLabel}</span>
           <span style="display:flex;align-items:center;gap:10px;"><span class="mono" style="color:var(--text-dim);">supprimer = ${fmtEUR(cost.sur10ans)} sur 10 ans</span><button type="button" class="btn btn-sm charge-mgr-remove" data-id="${c.id}" aria-label="Supprimer">✕</button></span>
         </div>`;
       }).join('')}`;
@@ -1226,8 +1236,9 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   }
 
   document.getElementById('chargeMgrAdd').addEventListener('click', () => {
-    const entry = saveRecurringCharge({nom: nomEl.value, montant: +montantEl.value, frequence: frequenceEl.value, categorie: categorieEl.value});
-    if(entry) render();
+    const jourEcheance = jourEl && jourEl.value ? +jourEl.value : null;
+    const entry = saveRecurringCharge({nom: nomEl.value, montant: +montantEl.value, frequence: frequenceEl.value, categorie: categorieEl.value, jourEcheance});
+    if(entry){ if(jourEl) jourEl.value = ''; render(); }
   });
 
   render();
@@ -2178,6 +2189,54 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
   update();
   document.getElementById('futurLinks').innerHTML = renderCourseLibraryLinks(['Intérêts composés', 'Valeur nette', 'Inflation']);
   renderNextStepCard('nextstep-mon-futur', {domainKey: 'personalFinance'});
+})();
+
+// ---------- Calendrier financier (Dashboard "Mon Univers Financier", Chantier
+// 5) : uniquement des échéances réelles — un abonnement/facture avec un jour
+// d'échéance renseigné, ou la date cible d'un objectif (computeCalendarEvents,
+// data.js). Jamais un événement inventé (pas de "salaire" simulé : aucune
+// donnée de date de versement n'existe nulle part sur le site). ----------
+(function initCalendrierManager(){
+  const resultEl = document.getElementById('calResult');
+  if(!resultEl) return;
+  const labelEl = document.getElementById('calMoisLabel');
+  const today = new Date();
+  let current = new Date(today.getFullYear(), today.getMonth(), 1);
+
+  const EVENT_META = {
+    charge: {icon: '🔁'},
+    goal: {icon: '🎯'}
+  };
+
+  function moisKey(d){ return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`; }
+
+  function update(){
+    const mois = moisKey(current);
+    labelEl.textContent = current.toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
+    const events = computeCalendarEvents(mois);
+    if(events.length === 0){
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucune échéance connue ce mois-ci. Renseigne un "jour d'échéance" sur tes abonnements/factures, ou une date cible sur tes objectifs, pour les voir apparaître ici.</p>`;
+      return;
+    }
+    resultEl.innerHTML = events.map(e => `
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:13px;padding:8px 0;border-bottom:1px solid var(--hairline);">
+        <span>${EVENT_META[e.type].icon} ${e.jour ? `<span class="mono" style="color:var(--text-dim);">${String(e.jour).padStart(2, '0')} —</span> ` : ''}${e.label}</span>
+        ${e.montant !== null ? `<span class="mono" style="color:${e.montant < 0 ? 'var(--bordeaux)' : 'var(--emerald)'};">${fmtEUR(e.montant)}</span>` : ''}
+      </div>`).join('');
+  }
+
+  document.getElementById('calMoisPrev').addEventListener('click', () => {
+    current = new Date(current.getFullYear(), current.getMonth() - 1, 1);
+    update();
+  });
+  document.getElementById('calMoisNext').addEventListener('click', () => {
+    current = new Date(current.getFullYear(), current.getMonth() + 1, 1);
+    update();
+  });
+
+  update();
+  document.getElementById('calLinks').innerHTML = renderCourseLibraryLinks(['Budget', 'Épargne']);
+  renderNextStepCard('nextstep-calendrier', {domainKey: 'personalFinance'});
 })();
 
 // ============================================================

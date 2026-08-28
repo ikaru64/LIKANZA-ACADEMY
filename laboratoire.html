@@ -678,6 +678,7 @@
         <div class="field" style="flex:1;min-width:100px;"><label for="chargeMgrMontant">Montant (€)</label><input type="number" id="chargeMgrMontant" min="0" value="15"></div>
         <div class="field" style="flex:1;min-width:120px;"><label for="chargeMgrFrequence">Fréquence</label><select id="chargeMgrFrequence"><option value="mensuel">Mensuel</option><option value="trimestriel">Trimestriel</option><option value="annuel">Annuel</option></select></div>
         <div class="field" style="flex:1;min-width:120px;"><label for="chargeMgrCategorie">Catégorie</label><select id="chargeMgrCategorie"><option value="abonnement">Abonnement</option><option value="facture">Facture</option></select></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="chargeMgrJour">Jour d'échéance (optionnel)</label><input type="number" id="chargeMgrJour" min="1" max="31" placeholder="Ex : 5"></div>
       </div>
       <button class="btn btn-sm btn-gold" id="chargeMgrAdd" style="margin-top:10px;">+ Ajouter</button>
       <div id="chargeMgrList" style="margin-top:14px;"></div>
@@ -794,6 +795,20 @@
       <div id="futurLinks"></div>
       <div id="method-mon-futur"></div>
       <div id="nextstep-mon-futur" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card" id="widget-calendrier" style="display:none;grid-column:1/-1;">
+      <h3>📅 Calendrier financier</h3>
+      <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Uniquement les échéances issues de tes propres données — un abonnement/facture avec un jour d'échéance renseigné (dans "Mes abonnements & factures"), ou la date cible d'un objectif. Jamais une date inventée.</p>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <button type="button" class="btn btn-sm" id="calMoisPrev">← Mois précédent</button>
+        <strong id="calMoisLabel" class="mono"></strong>
+        <button type="button" class="btn btn-sm" id="calMoisNext">Mois suivant →</button>
+      </div>
+      <div id="calResult"></div>
+      <div id="calLinks"></div>
+      <div id="method-calendrier"></div>
+      <div id="nextstep-calendrier" style="margin-top:10px;"></div>
     </div>
 
   </div>
