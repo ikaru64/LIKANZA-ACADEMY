@@ -22,7 +22,7 @@ renderLevelTip('levelTip', 'business');
 renderBusinessResume('businessResume');
 
 renderConceptLevels('businessLevelPib', 'PIB (Produit intérieur brut)');
-renderConceptLevels('businessLevelTaux', "Taux d'intérêt directeur");
+renderConceptLevels('businessLevelTaux', "Taux directeur");
 renderConceptLevels('businessLevelLevier', "Effet de levier");
 renderBusinessToolsProgress('businessToolsProgress');
 renderBusinessQuestionDuJour('businessQuestion');

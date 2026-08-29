@@ -17,7 +17,7 @@ const STRATEGIE_ROADMAP = [
   'Comparer plusieurs approches sur un même problème'
 ];
 
-const STRATEGIE_CONCEPTS = ['Analyse de marché', 'Positionnement', 'Avantage concurrentiel', 'Barrières à l\'entrée', 'Niche', 'Stratégie de prix', 'Économies d\'échelle', 'Effet réseau', 'Intégration verticale', 'Diversification', 'Croissance'];
+const STRATEGIE_CONCEPTS = ['Analyse de marché', 'Positionnement', 'Avantage concurrentiel', 'Barrières à l\'entrée', 'Niche', 'Pricing', 'Économies d\'échelle', 'Effet réseau', 'Intégration verticale', 'Diversification', 'Croissance'];
 
 const STRATEGIE_EXEMPLES = [
   {caseId: 'apple', angle: "Différenciation par l'intégration d'un écosystème entier, pas un seul produit"},

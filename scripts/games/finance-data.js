@@ -17,7 +17,7 @@ const FINANCE_ROADMAP = [
   'Tester tes propres chiffres dans Unit Economics'
 ];
 
-const FINANCE_CONCEPTS = ["Chiffre d'affaires", 'Marge brute', 'Marge nette', 'EBITDA', 'Cash flow', 'BFR', 'Point mort', 'Trésorerie', 'Rentabilité', 'Dette', 'Dilution', 'Valorisation',
+const FINANCE_CONCEPTS = ["Chiffre d'affaires", 'Marge brute', 'Marge nette', 'EBITDA', 'Cash flow', 'BFR', 'Seuil de rentabilité', 'Trésorerie', 'Rentabilité', 'Dette', 'Dilution', 'Valorisation',
   'VAN (Valeur Actuelle Nette)', 'TRI (Taux de Rentabilité Interne)', 'WACC (coût moyen pondéré du capital)', 'ROIC', 'ROE', 'Structure financière', "Rachat d'actions", 'Création de valeur'];
 
 const FINANCE_EXEMPLES = [

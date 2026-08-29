@@ -5750,7 +5750,7 @@ function renderPricingSimulator(elId){
         <div class="card"><span class="smallcaps">Volume nécessaire pour la même marge totale</span><div class="result-big" style="font-size:17px;margin-top:6px;">${r.volumeNecessairePourMemeMarge===null?'Jamais (marge nulle ou négative)':Math.ceil(r.volumeNecessairePourMemeMarge)+'/mois'}</div></div>
       </div>
       <p class="disclaimer-box" style="margin-top:12px;">Ce calcul ne modélise jamais comment le volume réagirait réellement à un changement de prix (élasticité) — seulement l'arithmétique mécanique à volume supposé constant, ou le volume qu'il faudrait atteindre pour compenser.</p>
-      ${renderCourseLibraryLinks(['Pricing', 'Stratégie de prix'])}`;
+      ${renderCourseLibraryLinks(['Pricing'])}`;
     document.getElementById(`${elId}-method`).innerHTML = renderMethodologyPanel(BUSINESS_METHODOLOGY['pricing']);
     renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
   }

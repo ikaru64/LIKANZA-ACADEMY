@@ -48,7 +48,7 @@ const BUSINESS_PROBLEMS = [
     id: 'prix-mal-calibre', tag: 'prix', icon: '🏷️',
     titre: "Mon prix est peut-être mal calibré",
     description: "Un prix trop bas peut sembler attirer plus de clients tout en tuant la marge ; un prix trop haut peut sembler prudent tout en éloignant les clients. Les deux se testent avec des chiffres, pas avec une intuition.",
-    libraryTermes: ['Marge brute', 'Point mort'],
+    libraryTermes: ['Marge brute', 'Seuil de rentabilité'],
     outil: { type: 'lab', id: 'unit-economics', label: 'Tester mon prix dans Unit Economics' },
     questions: [
       "Si je baisse mon prix de 10%, combien de ventes en plus faudrait-il pour gagner autant qu'avant ?",
@@ -92,7 +92,7 @@ const BUSINESS_PROBLEMS = [
     id: 'pas-rentable', tag: 'rentabilite', icon: '📊',
     titre: "Mon activité n'est pas (encore) rentable",
     description: "Ne pas être rentable au début n'est pas anormal — la question utile est de savoir à partir de combien de ventes ça deviendrait rentable, et si c'est réaliste.",
-    libraryTermes: ['Point mort', 'Marge brute', 'Cash flow'],
+    libraryTermes: ['Seuil de rentabilité', 'Marge brute', 'Cash flow'],
     outil: { type: 'lab', id: 'unit-economics', label: 'Calculer mon seuil de rentabilité dans Unit Economics' },
     questions: [
       "Combien de ventes par mois faudrait-il pour couvrir mes charges fixes, avec ma marge actuelle ?",
@@ -103,7 +103,7 @@ const BUSINESS_PROBLEMS = [
     id: 'changer-modele', tag: 'business-model', icon: '🔄',
     titre: "Je me demande si je devrais changer de modèle économique",
     description: "Changer de modèle (vente unique vers abonnement, gratuit vers freemium...) change aussi les coûts, les risques et le rythme d'encaissement — ce n'est jamais un changement neutre.",
-    libraryTermes: ['Business Model', 'Cash flow'],
+    libraryTermes: ['Modèle économique', 'Cash flow'],
     outil: { type: 'link', href: 'business-cases.html', label: 'Comparer les modèles économiques' },
     questions: [
       "Est-ce que le nouveau modèle correspond à la façon dont mes clients préfèrent déjà payer ?",
