@@ -18,6 +18,15 @@
    jamais une recommandation ("fais comme cette entreprise") — une
    stratégie qui a fonctionné pour une entreprise réelle n'est pas
    automatiquement adaptée à un autre projet, contexte différent.
+
+   `ticker` (Formations Phase 5, 29/08/2026) : présent UNIQUEMENT sur les
+   8 cas dont l'entreprise est encore cotée aujourd'hui (Shake Shack,
+   Netflix, Duolingo, Costco, Apple, Starbucks, Shopify, Airbnb) — jamais
+   ajouté sur les 4 entreprises non cotées/disparues (Mailchimp, Zappos,
+   Blockbuster, WeWork), qui n'ont donc aucune donnée financière réelle
+   récupérable via /api/company-profile. Utilisé par
+   scripts/pages/analyser-entreprise.js pour ne proposer le mode "vrais
+   chiffres en direct" que sur les cas où c'est honnêtement possible.
    ============================================================ */
 
 const BUSINESS_CASES = [
@@ -80,6 +89,7 @@ const BUSINESS_CASES = [
   {
     id: 'shake-shack',
     entreprise: 'Shake Shack',
+    ticker: 'SHAK',
     icon: '🍔',
     type: 'succes',
     tags: ['croissance', 'premiers-clients'],
@@ -108,6 +118,7 @@ const BUSINESS_CASES = [
   {
     id: 'netflix-streaming',
     entreprise: 'Netflix',
+    ticker: 'NFLX',
     icon: '📼',
     type: 'pivot',
     tags: ['business-model', 'concurrence', 'croissance'],
@@ -164,6 +175,7 @@ const BUSINESS_CASES = [
   {
     id: 'duolingo',
     entreprise: 'Duolingo',
+    ticker: 'DUOL',
     icon: '🦉',
     type: 'succes',
     tags: ['conversion', 'retention', 'business-model', 'differenciation'],
@@ -192,6 +204,7 @@ const BUSINESS_CASES = [
   {
     id: 'costco',
     entreprise: 'Costco',
+    ticker: 'COST',
     icon: '🏬',
     type: 'succes',
     tags: ['business-model', 'rentabilite', 'differenciation'],
@@ -220,6 +233,7 @@ const BUSINESS_CASES = [
   {
     id: 'apple',
     entreprise: 'Apple',
+    ticker: 'AAPL',
     icon: '🍎',
     type: 'succes',
     tags: ['differenciation', 'retention'],
@@ -247,6 +261,7 @@ const BUSINESS_CASES = [
   {
     id: 'starbucks',
     entreprise: 'Starbucks',
+    ticker: 'SBUX',
     icon: '☕',
     type: 'succes',
     tags: ['differenciation', 'retention'],
@@ -274,6 +289,7 @@ const BUSINESS_CASES = [
   {
     id: 'shopify',
     entreprise: 'Shopify',
+    ticker: 'SHOP',
     icon: '🛍️',
     type: 'succes',
     tags: ['business-model', 'croissance'],
@@ -301,6 +317,7 @@ const BUSINESS_CASES = [
   {
     id: 'airbnb',
     entreprise: 'Airbnb',
+    ticker: 'ABNB',
     icon: '🏠',
     type: 'succes',
     tags: ['effet-reseau', 'premiers-clients'],
