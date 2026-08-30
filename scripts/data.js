@@ -2686,13 +2686,35 @@ const DOMAIN_LAB_LINK = {
   stockMarket: {url:'laboratoire.html#tab-investissement', label:'Simuler dans le Laboratoire'},
   realEstate: {url:'laboratoire.html#tab-logement', label:'Simuler dans le Laboratoire'}
 };
-function findLibraryEntryForCategorie(categorie, domain){
+function findLibraryEntryForCategorie(categorie){
   const norm = s => s.toLowerCase().trim();
   const target = norm(categorie);
   const singular = target.replace(/s$/, '');
   let entry = LIBRARY.find(l => norm(l.terme) === target || norm(l.terme) === singular);
-  if(!entry && domain) entry = LIBRARY.find(l => (domain.libraryCategories || []).includes(l.categorie));
+  if(!entry){
+    // Variante avec un intitulé plus complet entre parenthèses côté LIBRARY
+    // (ex: catégorie de quiz "PIB" -> terme "PIB (Produit intérieur brut)",
+    // "SCPI" -> "SCPI (société civile de placement immobilier)") — un vrai
+    // même sigle/préfixe, jamais une correspondance approximative (chantier
+    // Continuité, phase 3, 30/08/2026 : sur 50 catégories de quiz, 4
+    // correspondaient déjà exactement à un terme sous cette seule variante).
+    entry = LIBRARY.find(l => {
+      const stripped = norm(l.terme).replace(/\s*\([^)]*\)\s*$/, '').trim();
+      return stripped === target || stripped === singular;
+    });
+  }
   return entry || null;
+}
+// Quand la catégorie de quiz correspond exactement à une catégorie ENTIÈRE de
+// la Bibliothèque (ex: "Bourse", "Immobilier", "Forex") plutôt qu'à un terme
+// précis, aucun terme unique ne serait honnête à choisir seul pour la
+// représenter — on propose le thème entier (même convention #theme: que
+// renderNewsApprofondirLink) plutôt qu'un terme arbitraire. Remplace un
+// ancien repli de findLibraryEntryForCategorie qui piochait le premier terme
+// du domaine entier, parfois sans rapport réel avec la catégorie de quiz
+// recherchée (chantier Continuité, phase 3, 30/08/2026).
+function findLibraryThemeForCategorie(categorie){
+  return LIBRARY.some(l => l.categorie === categorie) ? categorie : null;
 }
 // Sens inverse de findLibraryEntryForCategorie : depuis un terme de
 // Bibliothèque (ex. "ETF"), retrouve la vraie catégorie de quiz correspondante
@@ -2729,24 +2751,25 @@ function renderTermeRecommendationsRow(terme){
 // correspondance partout, jamais deux résultats différents pour la même
 // catégorie selon l'endroit du site.
 function findRecommendationsFor(categorie){
-  if(!categorie) return {domainKey:null, cours:null, def:null, defi:null, labo:null, hasRetryContent:false};
+  if(!categorie) return {domainKey:null, cours:null, def:null, defTheme:null, defi:null, labo:null, hasRetryContent:false};
   const domainKey = categorieDomainKey(categorie);
-  const domain = DOMAINS.find(d => d.key === domainKey);
   const cours = COURS_CATALOG.find(c => (c.quizCategories || []).includes(categorie))
     || (domainKey ? COURS_CATALOG.find(c => coursDomainKey(c) === domainKey) : null);
-  const def = findLibraryEntryForCategorie(categorie, domain);
+  const def = findLibraryEntryForCategorie(categorie);
+  const defTheme = !def ? findLibraryThemeForCategorie(categorie) : null;
   const defi = MENTAL_CHALLENGES.find(m => m.categorie === categorie);
   const labo = domainKey ? DOMAIN_LAB_LINK[domainKey] : null;
   const hasRetryContent = QUIZ_BANK_FULL.concat(MENTAL_CHALLENGES).some(i => i.categorie === categorie);
-  return {domainKey, cours, def, defi, labo, hasRetryContent};
+  return {domainKey, cours, def, defTheme, defi, labo, hasRetryContent};
 }
 function renderRecommendationPanel(categorie){
   if(!categorie) return '';
-  const {domainKey, cours, def, defi, labo, hasRetryContent} = findRecommendationsFor(categorie);
+  const {domainKey, cours, def, defTheme, defi, labo, hasRetryContent} = findRecommendationsFor(categorie);
 
   const links = [];
   if(cours && domainKey) links.push(`<a class="btn btn-sm" href="formations.html#tab-formation-${domainKey}">${ICONS['book-open']} Cours : ${cours.titre}</a>`);
   if(def) links.push(`<a class="btn btn-sm" href="bibliotheque.html#${encodeURIComponent(def.terme.replace(/\s+/g,'-'))}">${ICONS.lightbulb} Définition : ${def.terme}</a>`);
+  else if(defTheme) links.push(`<a class="btn btn-sm" href="bibliotheque.html#theme:${encodeURIComponent(defTheme)}">${ICONS.lightbulb} Explorer le thème ${defTheme}</a>`);
   if(labo) links.push(`<a class="btn btn-sm" href="${labo.url}">${ICONS.calculator} ${labo.label}</a>`);
   if(defi) links.push(`<a class="btn btn-sm" href="defis.html?cat=${encodeURIComponent(categorie)}">${ICONS.target} Refaire un défi sur ce thème</a>`);
   else if(hasRetryContent) links.push(`<a class="btn btn-sm" href="defis.html?cat=${encodeURIComponent(categorie)}">${ICONS.target} Refaire le test</a>`);
@@ -2777,11 +2800,12 @@ function renderTodayWeakness(elId){
       <p style="font-size:13px;color:var(--text-dim);">Fais quelques quiz ou défis pour que Likanza repère tes points à renforcer.</p>`;
     return;
   }
-  const {domainKey, cours, def, defi} = findRecommendationsFor(weakest.categorie);
+  const {domainKey, cours, def, defTheme, defi} = findRecommendationsFor(weakest.categorie);
   let cta = null;
   if(defi) cta = {href:`defis.html?cat=${encodeURIComponent(weakest.categorie)}`, label:'Faire un défi'};
   else if(cours && domainKey) cta = {href:`formations.html#tab-formation-${domainKey}`, label:'Voir le cours'};
   else if(def) cta = {href:`bibliotheque.html#${encodeURIComponent(def.terme.replace(/\s+/g,'-'))}`, label:'Lire la définition'};
+  else if(defTheme) cta = {href:`bibliotheque.html#theme:${encodeURIComponent(defTheme)}`, label:'Explorer le thème'};
 
   el.innerHTML = `
     <h4>À apprendre</h4>
