@@ -4287,10 +4287,13 @@ function renderContinueWidget(elId){
     el.innerHTML = `<span class="smallcaps">▶ Continuer</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Aucune activité récente à reprendre.</p>`;
     return;
   }
+  // Cible directement le bon chapitre (adressage par chapitre, réouverture
+  // du 30/08/2026) : "Reprendre" ramène désormais exactement où l'utilisateur
+  // s'était arrêté, sans passer par l'écran d'introduction ni un second clic.
   el.innerHTML = `
     <span class="smallcaps">▶ Continuer</span>
     <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${cours.titre} — Chapitre ${pos.chapitreIndex + 1} : ${pos.chapitreTitre}</p>
-    <a href="cours.html#${encodeURIComponent(pos.id)}" class="btn btn-sm btn-gold">Reprendre →</a>`;
+    <a href="cours.html#${encodeURIComponent(pos.id)}:${encodeURIComponent(pos.chapitreTitre.replace(/\s+/g, '-'))}" class="btn btn-sm btn-gold">Reprendre →</a>`;
 }
 
 // Rattache chaque cours à son domaine réel (DOMAINS, app.js) en comptant le
@@ -4499,8 +4502,17 @@ function renderCourseLibraryLinks(libraryTermes){
 function renderRelatedCourseLink(coursId, chapitreLabel){
   const cours = COURS_CATALOG.find(c => c.id === coursId);
   if(!cours) return '';
+  // Lien direct vers le chapitre précis (réouverture du 30/08/2026 d'une
+  // limite du chantier Continuité : adressage par chapitre) — seulement si
+  // chapitreLabel correspond EXACTEMENT à un vrai titre de chapitre, jamais
+  // un lien fabriqué sur un intitulé approximatif. Sinon, repli inchangé sur
+  // le cours entier (comportement d'avant cette réouverture).
+  const chapitreReel = chapitreLabel ? (cours.chapitres || []).find(ch => ch.titre === chapitreLabel) : null;
+  const hash = chapitreReel
+    ? `${encodeURIComponent(coursId)}:${encodeURIComponent(chapitreReel.titre.replace(/\s+/g, '-'))}`
+    : encodeURIComponent(coursId);
   const chapitreText = chapitreLabel ? `, chapitre « ${chapitreLabel} »` : '';
-  return `<p style="font-size:12px;color:var(--text-dim);margin-top:6px;"><a href="cours.html#${encodeURIComponent(coursId)}" style="color:var(--gold-bright);">🎓 Voir le cours « ${cours.titre} »${chapitreText} →</a></p>`;
+  return `<p style="font-size:12px;color:var(--text-dim);margin-top:6px;"><a href="cours.html#${hash}" style="color:var(--gold-bright);">🎓 Voir le cours « ${cours.titre} »${chapitreText} →</a></p>`;
 }
 
 // Écran affiché avant le 1er chapitre d'un cours enrichi (audit Formations du
@@ -4584,7 +4596,7 @@ function renderClarityFeedback(elId, contentId){
 // inchangé). Utilisé uniquement pour les cours qui déclarent cours.chapitres
 // — les cours sans chapitres réels gardent l'ancien rendu (bundle de
 // notions), jamais une régression sur ce qui existe déjà.
-function renderCoursRich(elId, cours, onComplete){
+function renderCoursRich(elId, cours, onComplete, targetChapterSlug){
   const el = document.getElementById(elId);
   if(!el) return;
   let activeFormat = 'complet';
@@ -4675,8 +4687,12 @@ function renderCoursRich(elId, cours, onComplete){
     // soit — jamais besoin de modifier chaque page de Lab individuellement.
     el.querySelectorAll('[data-course-outil-link]').forEach(link => {
       link.addEventListener('click', () => {
+        // Cible directement le chapitre quitté (adressage par chapitre,
+        // réouverture du 30/08/2026) plutôt que le cours entier — le bandeau
+        // "Retour au cours" ramène maintenant exactement là où l'utilisateur
+        // était, sans passer par l'écran d'introduction.
         writeContext('course-return', {
-          url: `cours.html#${encodeURIComponent(cours.id)}`,
+          url: `cours.html#${encodeURIComponent(cours.id)}:${encodeURIComponent(chapitres[chapIndex].titre.replace(/\s+/g, '-'))}`,
           label: `Retour au cours « ${cours.titre} »`
         });
       });
@@ -4708,10 +4724,24 @@ function renderCoursRich(elId, cours, onComplete){
     });
   }
 
-  renderCourseIntro(elId, cours, startIndex => {
-    if(startIndex > 0 && startIndex < chapitres.length) chapIndex = startIndex;
+  // Adressage par chapitre (réouverture du 30/08/2026 d'une limite du
+  // chantier Continuité, sections 41-44 : décidée hors scope lors d'un
+  // chantier précédent — Financial Lab/Boucle Likanza — mais rouverte à la
+  // demande explicite de l'utilisateur). Un slug qui ne correspond à AUCUN
+  // vrai titre de chapitre retombe silencieusement sur l'écran d'introduction
+  // habituel, jamais une erreur ni un chapitre approximatif.
+  const targetIndex = targetChapterSlug
+    ? cours.chapitres.findIndex(ch => ch.titre.replace(/\s+/g, '-') === targetChapterSlug)
+    : -1;
+  if(targetIndex >= 0){
+    chapIndex = targetIndex;
     renderChapterStep();
-  });
+  } else {
+    renderCourseIntro(elId, cours, startIndex => {
+      if(startIndex > 0 && startIndex < chapitres.length) chapIndex = startIndex;
+      renderChapterStep();
+    });
+  }
 }
 
 // Écran de fin d'un cours enrichi : jamais un simple "Bravo", toujours les
@@ -4772,7 +4802,7 @@ function paginateCoursTerms(items, maxPages){
 // Lecture découpée en 2-3 écrans courts (bouton "Suivant") avant le quiz de
 // validation, plutôt qu'un seul bloc de texte — plus digeste, surtout pour
 // les cours qui regroupent plusieurs notions.
-function renderCoursDetail(elId, coursId, onComplete){
+function renderCoursDetail(elId, coursId, onComplete, targetChapterSlug){
   const el = document.getElementById(elId);
   if(!el) return;
   const cours = COURS_CATALOG.find(c=>c.id===coursId);
@@ -4781,7 +4811,7 @@ function renderCoursDetail(elId, coursId, onComplete){
     return;
   }
   if(Array.isArray(cours.chapitres) && cours.chapitres.length > 0){
-    renderCoursRich(elId, cours, onComplete);
+    renderCoursRich(elId, cours, onComplete, targetChapterSlug);
     return;
   }
   const termItems = cours.libraryTermes.map(t=>LIBRARY.find(l=>l.terme===t)).filter(Boolean);
