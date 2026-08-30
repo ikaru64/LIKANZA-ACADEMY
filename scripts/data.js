@@ -652,17 +652,14 @@ function renderTodayDashboardWidget(elId){
 function renderMistakesDashboardWidget(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const unresolved = getMistakes().filter(m => !m.resolved);
-  if(unresolved.length === 0){
+  const top = pickTopUnresolvedMistakeCategory();
+  if(!top){
     el.innerHTML = `<span class="smallcaps">🧠 Notions à revoir</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Rien en attente — continue comme ça !</p>`;
     return;
   }
-  const counts = {};
-  unresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie] || 0) + 1; });
-  const top = Object.entries(counts).sort((a, b) => b[1] - a[1])[0][0];
   el.innerHTML = `
     <span class="smallcaps">🧠 Notions à revoir</span>
-    <p style="font-size:13px;color:var(--text-dim);margin:8px 0 10px;">${unresolved.length} notion${unresolved.length > 1 ? 's' : ''} à revoir, surtout en ${top}.</p>
+    <p style="font-size:13px;color:var(--text-dim);margin:8px 0 10px;">${top.total} notion${top.total > 1 ? 's' : ''} à revoir, surtout en ${top.categorie}.</p>
     <a href="revisions.html" class="btn btn-sm">Réviser →</a>`;
 }
 
@@ -1365,15 +1362,12 @@ function getNextStepSuggestion(ctx){
     }
   }
 
-  const unresolved = getMistakes().filter(m => !m.resolved);
-  if(unresolved.length){
-    const counts = {};
-    unresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie] || 0) + 1; });
-    const [cat] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  const topMistake = pickTopUnresolvedMistakeCategory();
+  if(topMistake){
     return {
-      label: `Revoir ${cat} →`,
-      url: `defis.html?cat=${encodeURIComponent(cat)}`,
-      reason: `Des notions en attente de révision, surtout en ${cat}.`
+      label: `Revoir ${topMistake.categorie} →`,
+      url: `defis.html?cat=${encodeURIComponent(topMistake.categorie)}`,
+      reason: `Des notions en attente de révision, surtout en ${topMistake.categorie}.`
     };
   }
 
@@ -2283,6 +2277,20 @@ function getSkillMastery(){
     .sort((a, b) => a.pct - b.pct);
 }
 
+// Extrait la catégorie la plus faible ("niveau" === 'faible', pct le plus bas
+// puisque getSkillMastery() est déjà trié croissant) — logique auparavant
+// dupliquée indépendamment dans renderRecommandePourToi et
+// renderBusinessCasRecommande (chantier Continuité, phase 1, 30/08/2026).
+// `candidateCategories` optionnel restreint la recherche (ex: aux catégories
+// Business) sans dupliquer le calcul de mastery lui-même.
+function pickWeakestMasteryCategory(candidateCategories){
+  const mastery = candidateCategories
+    ? getSkillMastery().filter(m => candidateCategories.includes(m.categorie))
+    : getSkillMastery();
+  const weakest = mastery.find(m => m.niveau === 'faible');
+  return weakest ? {categorie: weakest.categorie, pct: weakest.pct} : null;
+}
+
 // ---------- Financial IQ : score de maîtrise composite par domaine, séparé
 // de l'XP (sections 19-20 du plan Défis). L'XP (levelFromXP/LEVEL_TITLES)
 // mesure la régularité/participation ; le Financial IQ mesure la vraie
@@ -2449,6 +2457,20 @@ function getAllConceptMastery(){
 // moteurs de quiz du site, pour alimenter une vraie recommandation de révision.
 function getMistakes(){ return safeGetJSON('fzr-mistakes', []); }
 function saveMistakes(list){ safeSetJSON('fzr-mistakes', list); }
+
+// Catégorie avec le plus d'erreurs non résolues (tri par nombre décroissant)
+// — logique auparavant dupliquée indépendamment dans getNextStepSuggestion,
+// renderDefisARevoir et renderMistakesDashboardWidget (chantier Continuité,
+// phase 1, 30/08/2026). Retourne null s'il n'y a aucune erreur non résolue,
+// jamais une catégorie fabriquée.
+function pickTopUnresolvedMistakeCategory(){
+  const unresolved = getMistakes().filter(m => !m.resolved);
+  if(!unresolved.length) return null;
+  const counts = {};
+  unresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie] || 0) + 1; });
+  const [categorie, count] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return {categorie, count, total: unresolved.length};
+}
 
 function recordMistake(item){
   const list = getMistakes();
@@ -3650,13 +3672,13 @@ function renderDefiDuJour(elId){
 function renderRecommandePourToi(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const mastery = getSkillMastery();
-  const weakest = mastery.find(m => m.niveau === 'faible');
+  const weakest = pickWeakestMasteryCategory();
   let categorie, reason;
   if(weakest){
     categorie = weakest.categorie;
     reason = `Tu as récemment eu du mal avec ${categorie} (${weakest.pct}% de bonnes réponses).`;
   } else {
+    const mastery = getSkillMastery();
     const profile = getProfile();
     const knownInterests = Object.keys(profile.interests || {}).filter(k => profile.interests[k]);
     const candidateCats = knownInterests.flatMap(k => INTEREST_QUIZ_CATEGORIES[k] || []);
@@ -3687,21 +3709,18 @@ function renderRecommandePourToi(elId){
 function renderDefisARevoir(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const unresolved = getMistakes().filter(m => !m.resolved);
-  if(unresolved.length === 0){
+  const top = pickTopUnresolvedMistakeCategory();
+  if(!top){
     el.innerHTML = `<span class="smallcaps">🧠 À revoir</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">Aucune notion en attente de révision pour le moment : continue comme ça !</p>`;
     return;
   }
-  const counts = {};
-  unresolved.forEach(m => { counts[m.categorie] = (counts[m.categorie] || 0) + 1; });
-  const [topCategorie, topCount] = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
   el.innerHTML = `
     <span class="smallcaps">🧠 À revoir</span>
-    <p style="font-size:13px;color:var(--text-dim);margin:6px 0 12px;">${unresolved.length} notion${unresolved.length > 1 ? 's' : ''} à revoir, surtout en ${topCategorie} (${topCount} erreur${topCount > 1 ? 's' : ''}).</p>
-    <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ${topCategorie} →</button>`;
+    <p style="font-size:13px;color:var(--text-dim);margin:6px 0 12px;">${top.total} notion${top.total > 1 ? 's' : ''} à revoir, surtout en ${top.categorie} (${top.count} erreur${top.count > 1 ? 's' : ''}).</p>
+    <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ${top.categorie} →</button>`;
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
-    const pool = defisFullPool().filter(i => i.categorie === topCategorie);
-    startMixedSession(elId, pickAdaptivePool(pool, topCategorie, 5), {livePool: pool, onRestart: () => renderDefisARevoir(elId)});
+    const pool = defisFullPool().filter(i => i.categorie === top.categorie);
+    startMixedSession(elId, pickAdaptivePool(pool, top.categorie, 5), {livePool: pool, onRestart: () => renderDefisARevoir(elId)});
   });
 }
 
@@ -5089,14 +5108,13 @@ function renderBusinessCasRecommande(elId){
   if(!el) return;
   const pool = defisFullPool().filter(i => BUSINESS_SKILL_CATEGORIES.includes(i.categorie));
   if(pool.length === 0){ el.style.display = 'none'; return; }
-  const mastery = getSkillMastery().filter(m => BUSINESS_SKILL_CATEGORIES.includes(m.categorie));
-  const weakest = mastery.find(m => m.niveau === 'faible');
+  const weakest = pickWeakestMasteryCategory(BUSINESS_SKILL_CATEGORIES);
   let categorie, reason;
   if(weakest){
     categorie = weakest.categorie;
     reason = `Tu as récemment eu du mal avec ${categorie} (${weakest.pct}% de bonnes réponses).`;
   } else {
-    const exploredCats = new Set(mastery.map(m => m.categorie));
+    const exploredCats = new Set(getSkillMastery().filter(m => BUSINESS_SKILL_CATEGORIES.includes(m.categorie)).map(m => m.categorie));
     const poolCats = [...new Set(pool.map(i => i.categorie))];
     const unexplored = poolCats.filter(c => !exploredCats.has(c));
     if(unexplored.length > 0){
