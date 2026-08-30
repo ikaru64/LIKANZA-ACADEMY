@@ -67,6 +67,25 @@ function safeSetJSON(key, val){
   try{ localStorage.setItem(key, JSON.stringify(val)); return true; }catch(e){ warnStorageFailureOnce(key, e); return false; }
 }
 
+// ---------- Context Engine minimal (chantier Continuité, phase 5,
+// 30/08/2026, sections 41-44 du prompt d'origine) : généralise le motif déjà
+// prouvé en production par l'ancien fzr-business-strategy-transfer (écrire
+// un contexte -> naviguer -> le lire une seule fois -> le supprimer) en une
+// paire réutilisable, plutôt que de réinventer ce motif à chaque nouveau
+// besoin de continuité inter-pages. Toujours "lu une seule fois puis
+// supprimé" : jamais un contexte périmé qui pré-remplirait une page sans
+// rapport si l'utilisateur y revient plus tard sans repasser par la
+// source. ----------
+function writeContext(key, payload){
+  safeSetJSON('fzr-context-' + key, payload);
+}
+function consumeContext(key){
+  const fullKey = 'fzr-context-' + key;
+  const data = safeGetJSON(fullKey, null);
+  if(data) safeSetJSON(fullKey, null);
+  return data;
+}
+
 // ---------- Échappement HTML (texte libre saisi par l'utilisateur, ex. "Construis ton projet") ----------
 // À utiliser systématiquement avant d'interpoler une réponse libre dans un
 // template innerHTML : le texte reste local à l'appareil (jamais envoyé à un
@@ -4415,7 +4434,7 @@ function renderCourseBlock(bloc){
     return `<div class="card" style="margin-top:14px;border-color:var(--gold);">
       <span class="smallcaps">🧰 Essaie avec le vrai outil</span>
       ${textHtml}
-      <a href="${bloc.url}" class="btn btn-sm btn-gold" style="margin-top:10px;">${bloc.label} →</a>
+      <a href="${bloc.url}" class="btn btn-sm btn-gold" style="margin-top:10px;" data-course-outil-link="1">${bloc.label} →</a>
     </div>`;
   }
   const meta = COURSE_BLOCK_META[bloc.type];
@@ -4606,6 +4625,19 @@ function renderCoursRich(elId, cours, onComplete){
     });
     const prevBtn = document.getElementById(`${elId}-prev`);
     if(prevBtn) prevBtn.addEventListener('click', () => { chapIndex--; renderChapterStep(); });
+    // Continuité chapitre -> outil (chantier Continuité, phase 5, 30/08/2026,
+    // sections 13 et 43 du prompt d'origine) : avant de suivre le lien vers le
+    // vrai calculateur, écrit un contexte de retour consommé par
+    // initCourseReturnBanner() sur la page de destination, quelle qu'elle
+    // soit — jamais besoin de modifier chaque page de Lab individuellement.
+    el.querySelectorAll('[data-course-outil-link]').forEach(link => {
+      link.addEventListener('click', () => {
+        writeContext('course-return', {
+          url: `cours.html#${encodeURIComponent(cours.id)}`,
+          label: `Retour au cours « ${cours.titre} »`
+        });
+      });
+    });
     if(isLast) renderClarityFeedback(`${elId}-clarity`, cours.id);
   }
 
@@ -7980,7 +8012,14 @@ function progressSyncApiUrl(){
 // Whitelist explicite : seule une vraie progression est synchronisée, jamais
 // des préférences d'affichage locales (thème, langue) ni des données
 // sensibles (session admin) ou de contenu éditorial (brouillons admin) — voir
-// le plan de ce chantier pour le détail de chaque exclusion.
+// le plan de ce chantier pour le détail de chaque exclusion. Depuis le
+// chantier Continuité (phase 5, 30/08/2026) : aucune clé fzr-context-*
+// (Context Engine, writeContext/consumeContext) n'est jamais ajoutée ici —
+// ce sont des contextes éphémères "écrire -> naviguer -> lire une fois ->
+// supprimer" au sein d'une même session de navigation, jamais destinés à
+// survivre à un rechargement ni à traverser plusieurs appareils. L'ancienne
+// clé fzr-business-strategy-transfer (migrée vers fzr-context-business-strategy)
+// était présente ici par le passé ; retirée pour la même raison.
 const PROGRESS_SYNC_KEYS = [
   'fzr-profile', 'fzr-investor-profile', 'fzr-followed-stocks', 'fzr-gamification',
   'fzr-level', 'fzr-progress', 'fzr-xp-repeat-counts', 'fzr-quiz-points-ledger',
@@ -7988,7 +8027,7 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-cours-progress', 'fzr-defis-parcours-progress', 'fzr-daily-missions-log',
   'fzr-weekly-missions-log', 'fzr-activity-log', 'fzr-positioning-result',
   'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
-  'fzr-business-strategy-transfer', 'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
+  'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
   'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
   'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
   'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries', 'fzr-net-worth-history',
@@ -10321,6 +10360,24 @@ function safeRun(label, fn){
   catch(err){ console.error(`Likanza Academy — échec dans "${label}" :`, err); }
 }
 
+// Bandeau "Retour au cours" (chantier Continuité, phase 5, 30/08/2026) :
+// universel, exécuté sur CHAQUE page via le DOMContentLoaded partagé — la
+// page de destination d'un lien "outil" n'a jamais besoin de savoir d'où
+// vient le contexte, seulement de l'afficher s'il existe. Ne rend rien si
+// aucun contexte n'a été écrit (jamais un bandeau vide). Style entièrement
+// en ligne (jamais de dépendance à une classe CSS partagée non vérifiée) :
+// remonté au-dessus de la nav mobile basse quand elle existe.
+function initCourseReturnBanner(){
+  const ctx = consumeContext('course-return');
+  if(!ctx || !ctx.url || !ctx.label) return;
+  const banner = document.createElement('a');
+  banner.href = ctx.url;
+  banner.textContent = `← ${ctx.label}`;
+  const bottomOffset = document.body.classList.contains('has-bottom-nav') ? '84px' : '20px';
+  banner.style.cssText = `position:fixed;bottom:${bottomOffset};left:50%;transform:translateX(-50%);z-index:9999;background:var(--onyx);color:var(--gold-bright);padding:10px 18px;border-radius:100px;font-size:13px;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,.35);border:1px solid var(--gold);white-space:nowrap;max-width:calc(100vw - 32px);overflow:hidden;text-overflow:ellipsis;`;
+  document.body.appendChild(banner);
+}
+
 document.addEventListener('DOMContentLoaded', ()=>{
   safeRun('theme', initTheme);
   safeRun('navigation', initNav);
@@ -10330,6 +10387,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   safeRun('série quotidienne', checkDailyStreak);
   safeRun('synchronisation du compte', syncProgressWithAccount);
   safeRun('synchronisation du compte (relances périodiques)', initProgressSyncHeartbeat);
+  safeRun('bandeau retour au cours', initCourseReturnBanner);
   // Laisse le temps aux scripts de page de peupler les cartes avant d'observer
   setTimeout(()=>safeRun('animations au scroll', initReveal), 60);
 });

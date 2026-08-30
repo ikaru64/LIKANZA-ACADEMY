@@ -508,7 +508,7 @@ function renderFinalStep(a){
   const testBtn = document.getElementById('wizardTestBtn');
   if(testBtn){
     testBtn.addEventListener('click', ()=>{
-      safeSetJSON('fzr-business-strategy-transfer', {
+      writeContext('business-strategy', {
         sectorKey: gameKey,
         clientCible: a.clientDetail || '',
         budgetInitial: Number(a.budgetInitial) || 0,

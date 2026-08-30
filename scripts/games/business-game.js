@@ -33,12 +33,13 @@ function saveBusinessGameResult(entry){
 }
 // Transfert en provenance de Business Strategy (construire-son-projet.js) :
 // { sectorKey, clientCible, budgetInitial, businessModel, strategieChoisie }.
-// Lu ici, jamais réécrit par ce fichier ; supprimé après lecture pour ne pas
-// pré-remplir une partie suivante sans rapport.
+// Lu ici, jamais réécrit par ce fichier. Depuis le chantier Continuité
+// (phase 5, 30/08/2026), passe par le Context Engine partagé
+// (writeContext/consumeContext, data.js) plutôt que par un couple
+// safeGetJSON/safeSetJSON dédié — même garantie "lu une seule fois puis
+// supprimé", généralisée pour être réutilisable ailleurs sur le site.
 function readBusinessStrategyTransfer(){
-  const data = safeGetJSON('fzr-business-strategy-transfer', null);
-  if(data) safeSetJSON('fzr-business-strategy-transfer', null);
-  return data;
+  return consumeContext('business-strategy');
 }
 
 // ---------- Sélection d'événement : filtrée par l'état réel, jamais du hasard pur ----------
