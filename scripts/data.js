@@ -9812,19 +9812,71 @@ function deriveStrengthsWeaknesses(fields){
 // Généralise le lien en dur qui n'existait auparavant que pour la catégorie
 // "Économie" (actualites.js) — mêmes vraies catégories Bibliothèque que
 // DOMAINS (app.js), pas une nouvelle taxonomie inventée. Une catégorie sans
-// équivalent réel en Bibliothèque (Géopolitique) ne force aucun lien.
+// équivalent réel en Bibliothèque (Géopolitique, Technologie, Matières
+// premières) ne force aucun lien. Corrigé pendant le chantier Continuité
+// (phase 7, 30/08/2026) : "Entreprises" (pluriel) et "Technologie"/"Matières
+// premières" ne correspondaient à AUCUNE vraie catégorie LIBRARY
+// (["Bourse","Fiscalité","Épargne","Investissement","Analyse fondamentale",
+// "Économie","Forex","Gestion du risque","Psychologie de l'investisseur",
+// "Crypto","Immobilier","Finances personnelles","Entreprise","Business"]) —
+// le lien "Voir le concept dans la Bibliothèque" pour ces 3 catégories ne
+// faisait donc silencieusement rien au clic (bibliotheque.js n'ouvre le
+// thème que si `LIBRARY.some(l => l.categorie === wantedTheme)`).
 const NEWS_CATEGORY_LINKS = {
-  'Entreprises': 'Entreprises',
-  'Technologie': 'Technologie',
+  'Entreprises': 'Entreprise',
   'Bourse': 'Bourse',
   'Crypto': 'Crypto',
-  'Matières premières': 'Matières premières',
   'Économie': 'Économie'
 };
 function renderNewsApprofondirLink(categorie){
   const theme = NEWS_CATEGORY_LINKS[categorie];
   if(!theme) return '';
   return `<p style="font-size:12.5px;margin-bottom:14px;"><a href="bibliotheque.html#theme:${encodeURIComponent(theme)}" style="color:var(--gold-bright);">Voir le concept dans la Bibliothèque →</a></p>`;
+}
+// Concepts LIBRARY réellement mentionnés dans le texte d'un article
+// (chantier Continuité, phase 7, 30/08/2026, section 17 du prompt d'origine)
+// — jamais un tag assigné à la main : les articles proviennent d'un flux
+// dynamique (/api/weekly-news), impossible à pré-tagger comme LIBRARY.
+// Détection textuelle par mot entier (jamais une sous-chaîne au milieu d'un
+// autre mot), sur le vrai texte de l'article seulement — même discipline
+// que le seeding des prérequis LIBRARY (jamais inféré du seul intitulé de
+// catégorie). Un terme LIBRARY avec un intitulé complet entre parenthèses
+// (ex: "PER (Price Earning Ratio)") est recherché sous sa forme courte
+// (avant la parenthèse), la forme réellement utilisée dans un article de
+// presse.
+function findArticleConcepts(article){
+  if(!article) return [];
+  const haystack = [article.resume, article.titre, (article.points||[]).join(' '), article.pourquoi, (article.impact||[]).join(' ')].filter(Boolean).join(' ');
+  if(!haystack) return [];
+  const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return LIBRARY.filter(l => {
+    const core = l.terme.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    if(core.length < 3) return false;
+    return new RegExp('\\b' + escapeRegex(core) + '\\b', 'i').test(haystack);
+  }).map(l => l.terme).slice(0, 4);
+}
+// Pourquoi un article concerne CET utilisateur en particulier (section 18-19
+// du prompt d'origine, "Pour vous") — jamais une justification générique :
+// soit un concept réellement mentionné dans l'article correspond à une
+// catégorie où l'utilisateur a une vraie faiblesse mesurée (getSkillMastery),
+// soit à un centre d'intérêt réellement déclaré (getProfile().interests).
+// Retourne un tableau vide si aucun signal réel n'existe -> jamais affiché
+// comme personnalisé dans ce cas (cohérent avec renderPourquoiToggle,
+// phase 2 de ce même chantier).
+function computeArticleRelevanceSignals(article){
+  const concepts = findArticleConcepts(article);
+  if(!concepts.length) return [];
+  const signals = [];
+  const weakCats = new Set(getSkillMastery().filter(m => m.niveau === 'faible').map(m => m.categorie));
+  concepts.forEach(terme => { if(weakCats.has(terme)) signals.push(`Tu as récemment eu du mal avec « ${terme} ».`); });
+  const profile = getProfile();
+  const interestKeys = Object.keys(profile.interests || {}).filter(k => profile.interests[k]);
+  const interestLibCats = new Set(interestKeys.flatMap(k => (DOMAINS.find(d => d.key === k) || {}).libraryCategories || []));
+  concepts.forEach(terme => {
+    const entry = LIBRARY.find(l => l.terme === terme);
+    if(entry && interestLibCats.has(entry.categorie) && !signals.some(s => s.includes(terme))) signals.push(`En lien avec un centre d'intérêt que tu as déclaré (${entry.categorie}).`);
+  });
+  return signals;
 }
 
 // ---------- Impact potentiel (v1, volontairement modeste) : proximité thématique

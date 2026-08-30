@@ -103,6 +103,7 @@ function renderFull(cat){
       <ul style="color:var(--text-dim);font-size:13px;margin:0 0 14px 18px;">${a.aSurveiller.map(p=>`<li style="margin-bottom:4px;">${p}</li>`).join('')}</ul>` : ''}
       ${a.accordSources ? `<p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('analyse')} ${a.accordSources}</p>` : ''}
       ${renderNewsApprofondirLink(a.categorie)}
+      ${renderCourseLibraryLinks(findArticleConcepts(a))}
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px;">
         <span style="font-size:12px;color:var(--text-dim);">${a.lecture} de lecture · semaine du ${new Date(a.weekStart).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})}</span>
         ${renderCorroborationBadge(Array.isArray(a.sources) ? new Set(a.sources.map(s=>s.source)).size : 0)}
@@ -114,6 +115,30 @@ function renderFull(cat){
       </div>
     </div>`).join('');
   initFavButtons();
+}
+
+// ---------- "Pour vous" (chantier Continuité, phase 7, 30/08/2026, sections
+// 18-19 du prompt d'origine) : ne remplace JAMAIS la liste "Actualités"
+// complète en dessous (section 77 : interconnexion ≠ duplication, mais ici
+// c'est l'inverse — jamais de bulle qui cacherait l'information générale).
+// Masquée entièrement si aucun article n'a de vrai signal de pertinence —
+// jamais une section "Pour vous" vide ou remplie par défaut. ----------
+function renderPourVous(){
+  const section = document.getElementById('pourVousSection');
+  const grid = document.getElementById('pourVousGrid');
+  if(!section || !grid) return;
+  const picks = weeklyArticles
+    .map(a => ({article: a, signals: computeArticleRelevanceSignals(a)}))
+    .filter(p => p.signals.length > 0)
+    .slice(0, 3);
+  if(!picks.length){ section.style.display = 'none'; return; }
+  section.style.display = 'block';
+  grid.innerHTML = picks.map(({article: a, signals}) => `
+    <a href="#${a.slug}" class="card" style="text-decoration:none;color:inherit;display:block;">
+      <span class="smallcaps">${a.categorie}</span>
+      <h4 style="margin:8px 0 4px;font-size:16px;">${a.titre}</h4>
+      <p style="font-size:12.5px;color:var(--text-dim);">${signals[0]}</p>
+    </a>`).join('');
 }
 
 async function initWeeklyNews(){
@@ -137,6 +162,7 @@ async function initWeeklyNews(){
       renderFull(e.target.dataset.cat);
     });
     renderFull('Toutes');
+    renderPourVous();
 
     // Ouvre directement la bonne carte si on arrive via une ancre (#slug)
     if(location.hash){
