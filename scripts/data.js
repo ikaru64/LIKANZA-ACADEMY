@@ -983,6 +983,7 @@ const DASHBOARD_WIDGETS = [
   {id: 'alerts', title: null, mode: 'personal', selfCard: false, render: renderAlertsDashboardWidget},
   {id: 'health-score', title: null, mode: 'personal', selfCard: false, render: renderHealthScoreDashboardWidget},
   {id: 'life-projects', title: null, mode: 'personal', selfCard: false, render: renderLifeProjectsDashboardWidget},
+  {id: 'project-skill-gap', title: null, mode: 'personal', selfCard: false, render: renderProjectSkillGapWidget},
   {id: 'business-snapshot', title: null, mode: 'professional', selfCard: false, render: renderBusinessSnapshotDashboardWidget},
   {id: 'business-alerts', title: null, mode: 'professional', selfCard: false, render: renderBusinessAlertsDashboardWidget},
   {id: 'stats', title: null, mode: 'both', selfCard: true, render: renderParcoursStats},
@@ -1006,6 +1007,7 @@ const WIDGET_DISPLAY_NAMES = {
   'alerts': '🚨 Likanza détecte',
   'health-score': '🩺 Santé financière',
   'life-projects': '🗺️ Mes Projets de vie',
+  'project-skill-gap': '🧭 Pour ton projet',
   'business-snapshot': '💼 Mon Entreprise',
   'business-alerts': '🚨 Likanza détecte (Pro)',
   'stats': 'En chiffres',
@@ -8867,6 +8869,68 @@ function computeProjectProgress(project){
   if(etapes.length === 0) return {progressionPct: null, etapesTerminees: 0, etapesTotal: 0, depensesEngagees, budgetRestant};
   const etapesTerminees = etapes.filter(e => e.statut === 'termine').length;
   return {progressionPct: Math.round((etapesTerminees / etapes.length) * 100), etapesTerminees, etapesTotal: etapes.length, depensesEngagees, budgetRestant};
+}
+
+// ---- Projet de vie -> écart de compétences (chantier Continuité, phase 4,
+// 30/08/2026, sections 23-26 du prompt d'origine) : table déterministe,
+// jamais une IA pour cette logique (section 49). Restreinte aux 7 vraies
+// catégories de LIFE_PROJECT_CATEGORIES (le prompt d'origine imaginait
+// "voiture"/"investir" comme catégories de projet, mais ces catégories
+// n'existent pas ici — l'épargne/investissement est suivi via un Objectif,
+// fzr-financial-goals, un registre séparé, voir le commentaire au-dessus de
+// LIFE_PROJECT_CATEGORIES). "etudes"/"autre" restent volontairement vides :
+// aucune catégorie de quiz réelle ne correspond à un vrai écart de
+// compétence pour ces types de projet, jamais un lien forcé.
+const PROJECT_REQUIRED_CATEGORIES = {
+  immobilier: ['Crédit', 'Immobilier'],
+  entreprise: ['Startup', "Chiffre d'affaires", 'Marge nette', 'Bilan comptable'],
+  mariage: ['Budget', 'Épargne'],
+  voyage: ['Budget', 'Épargne'],
+  famille: ['Budget', 'Épargne', 'Assurance-vie'],
+  etudes: [],
+  autre: []
+};
+// Catégories requises pour ce projet, pas encore réellement maîtrisées
+// (getSkillMastery, jamais une hypothèse) — ordre de PROJECT_REQUIRED_CATEGORIES
+// conservé (les plus fondamentales d'abord).
+function getProjectSkillGaps(project){
+  const required = PROJECT_REQUIRED_CATEGORIES[project.categorie] || [];
+  if(!required.length) return [];
+  const masteredSet = new Set(getSkillMastery().filter(m => m.niveau === 'maîtrisé').map(m => m.categorie));
+  return required.filter(cat => !masteredSet.has(cat));
+}
+// Widget "Pour ton projet" (section 25) : une seule action, jamais une
+// liste — le premier projet réel avec un vrai écart de compétence gagne.
+// Jamais de contenu vide dans la grille du tableau de bord : un état "rien à
+// signaler" honnête est toujours rendu (aucun projet, ou projet(s) déjà
+// couverts).
+function renderProjectSkillGapWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const projects = getLifeProjects();
+  if(!projects.length){
+    el.innerHTML = `
+      <span class="smallcaps">🧭 Pour ton projet</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Aucun projet de vie enregistré pour l'instant.</p>
+      <a href="parcours.html" class="btn btn-sm" style="margin-top:8px;">Créer un projet →</a>`;
+    return;
+  }
+  let picked = null;
+  for(const project of projects){
+    const gaps = getProjectSkillGaps(project);
+    if(gaps.length){ picked = {project, categorie: gaps[0]}; break; }
+  }
+  if(!picked){
+    el.innerHTML = `
+      <span class="smallcaps">🧭 Pour ton projet</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Les notions clés pour tes projets en cours sont déjà bien maîtrisées.</p>`;
+    return;
+  }
+  const meta = LIFE_PROJECT_CATEGORY_META[picked.project.categorie];
+  el.innerHTML = `
+    <span class="smallcaps">🧭 Pour ton projet</span>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:8px 0 10px;">Pour « ${picked.project.nom} » (${meta.emoji} ${meta.label}), <strong style="color:var(--text);">${picked.categorie}</strong> reste à renforcer.</p>
+    <a href="defis.html?cat=${encodeURIComponent(picked.categorie)}" class="btn btn-sm btn-gold">S'entraîner sur ce thème →</a>`;
 }
 // Ligne du temps PASSÉ ← AUJOURD'HUI → FUTUR : uniquement des points réels
 // (un historique de patrimoine déjà enregistré, ou une date cible que
