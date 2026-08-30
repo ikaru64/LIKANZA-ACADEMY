@@ -160,7 +160,10 @@ chapitre de cours écrit un contexte `course-return` (`{url, label}`) ; le
 bandeau universel `initCourseReturnBanner()` (exécuté sur **chaque page** via
 le `DOMContentLoaded` déjà partagé) l'affiche sur la page de destination,
 quelle qu'elle soit — jamais besoin de modifier chaque page de Lab
-individuellement pour un nouveau cas d'usage futur.
+individuellement pour un nouveau cas d'usage futur. Depuis la réouverture de
+l'adressage par chapitre (voir ci-dessous), ce contexte cible directement le
+chapitre exact quitté (`cours.html#<id>:<chapitre-slug>`), pas seulement le
+cours entier.
 
 **Reprise de position** (phase 6, un système voisin mais distinct — persistant,
 pas éphémère) : `fzr-last-position` (`getLastPosition()`/`saveLastPosition()`),
@@ -168,7 +171,21 @@ mis à jour à chaque chapitre affiché, toujours contre l'index dans le cours
 **entier** (jamais une vue filtrée par format). `renderCourseIntro` propose
 "Reprendre au chapitre N →" quand une position réelle et encore pertinente
 existe (jamais si le cours est déjà terminé). Widget Dashboard `continue`
-("▶ Continuer").
+("▶ Continuer") — pointe directement vers le bon chapitre depuis la
+réouverture de l'adressage par chapitre.
+
+**Adressage par chapitre** (réouvert le 30/08/2026, après avoir été
+explicitement laissé hors scope lors d'un chantier précédent) :
+`cours.html#<coursId>:<chapitre-slug>` ouvre directement ce chapitre —
+`#<coursId>` seul garde son comportement d'avant (écran d'introduction).
+`coursCurrentId()`/`coursCurrentChapterSlug()` (cours.js) séparent le hash
+sur son premier `:` (un id de cours n'en contient jamais). `renderCoursRich`
+prend un paramètre optionnel `targetChapterSlug` : un slug qui ne correspond
+à aucun vrai chapitre retombe silencieusement sur l'écran d'introduction,
+jamais une erreur. `renderRelatedCourseLink(coursId, chapitreLabel)` construit
+une vraie URL de chapitre uniquement quand `chapitreLabel` correspond
+EXACTEMENT à un vrai titre de chapitre — jamais une URL fabriquée sur un
+intitulé approximatif.
 
 ## 6. Journey / Data Flow
 
@@ -215,10 +232,12 @@ sur-engineering (section 79 du prompt d'origine) sans bénéfice mesurable ici.
 
 - Les 4 systèmes de "niveau" (curriculum/déclaré/XP/maîtrise) restent séparés
   — décision de conception documentée dans le code, pas fusionnée ici.
-- `cours.html` n'a toujours aucun adressage par chapitre dans l'URL —
-  déjà tranché hors scope lors d'un chantier précédent (Financial Lab), non
-  rouvert. La reprise de position (phase 6) contourne cette limite via un
-  saut interne (`chapIndex`) plutôt qu'une URL dédiée.
+- ~~`cours.html` n'a aucun adressage par chapitre dans l'URL~~ — **rouvert et
+  implémenté le 30/08/2026** à la demande explicite de l'utilisateur :
+  `cours.html#<coursId>:<chapitre-slug>` ouvre directement ce chapitre,
+  rétrocompatible avec l'ancien format `#<coursId>` seul. Voir §5
+  (`renderCourseIntro`, `renderRelatedCourseLink`) — le bandeau "Retour au
+  cours" et le widget "Continuer" en bénéficient automatiquement.
 - `renderNextStepRecommendation` (widget Dashboard `next-step`) devient
   inerte une fois tous les domaines évalués — connu, non corrigé (nécessiterait
   de revoir sa logique de fond, un chantier à part).
