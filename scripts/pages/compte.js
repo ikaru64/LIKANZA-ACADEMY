@@ -16,6 +16,7 @@ if(manualLevelSelect) manualLevelSelect.addEventListener('change', ()=>{
   refreshProgressCard();
 });
 renderProfileWidget('profileWidget');
+renderPersonalizationPanel('personalizationPanel');
 
 // ================= Watchlist =================
 safeRun('bannière démo watchlist', ()=>renderDemoBanner('watchlistDemoBanner'));

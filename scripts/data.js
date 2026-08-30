@@ -10377,6 +10377,15 @@ function renderProfileWidget(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const p = getProfile();
+  // Note informative de divergence (chantier Continuité, phase 8, 30/08/2026)
+  // — jamais une écriture automatique dans un sens ou l'autre : le profil
+  // investisseur (6 questions ciblées) reste volontairement plus précis que
+  // ce choix unique et alimente déjà profile.risque à sa création
+  // (games/investor-profile.js) ; l'inverse n'a jamais été voulu (voir le
+  // commentaire à cet endroit). On se contente de rendre la divergence
+  // visible si l'utilisateur modifie ce champ-ci après coup.
+  const investorProfile = safeGetJSON('fzr-investor-profile', null);
+  const riskDivergence = investorProfile && investorProfile.riskProfile && investorProfile.riskProfile !== p.risque;
   el.innerHTML = `
     <div class="profile-widget">
       <div class="profile-grid">
@@ -10398,6 +10407,7 @@ function renderProfileWidget(elId){
         </div>
       </div>
       <div id="riskGauge"></div>
+      ${riskDivergence ? `<p style="font-size:12px;color:var(--gold-bright);margin-top:8px;">ℹ️ Ton profil investisseur (calculé à partir de 6 questions ciblées) indique un profil « ${investorProfile.riskProfile} », différent de celui-ci. <a href="bourse-allocation.html" style="color:var(--gold-bright);text-decoration:underline;">Revoir mon profil investisseur →</a></p>` : ''}
       <button class="btn btn-sm btn-gold" id="profSaveBtn">Enregistrer mon profil</button>
       <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">Ce profil pré-remplit les simulateurs et adapte les conseils du site. Stocké sur cet appareil uniquement. Tu peux le modifier à tout moment.</p>
     </div>`;
@@ -10412,9 +10422,89 @@ function renderProfileWidget(elId){
       objectif: document.getElementById('profObjectif').value
     };
     saveProfile(newP);
-    renderRiskGauge('riskGauge', newP.risque);
+    renderProfileWidget(elId);
   });
   document.getElementById('profRisque').addEventListener('change', (e)=>renderRiskGauge('riskGauge', e.target.value));
+}
+
+// ---------- Panneau "Ma personnalisation Likanza" (chantier Continuité,
+// phase 8, 30/08/2026, sections 2-3 et 38-39 du prompt d'origine) : réunit
+// en un seul endroit ce qui était jusqu'ici épars ou invisible depuis Mon
+// compte — objectifs et centres d'intérêt déclarés une seule fois au test
+// de positionnement (jamais modifiables depuis ici auparavant), un résumé
+// (jamais un doublon d'éditeur complet — section 77, interconnexion ≠
+// duplication) du profil investisseur et du profil entreprise s'ils
+// existent réellement, et un vrai contrôle de suppression. ----------
+function renderPersonalizationPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const p = getProfile();
+  const investor = safeGetJSON('fzr-investor-profile', null);
+  const hasBusiness = !!safeGetJSON('fzr-business-profile', null);
+  const business = hasBusiness ? getBusinessProfile() : null;
+
+  const goalLabels = [...new Set(POSITIONING_GOALS.filter(g => (p.goals || {})[g.key]).map(g => g.label))];
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:16px;">
+      <span class="smallcaps">🎯 Mes objectifs</span>
+      ${goalLabels.length ? `<p style="font-size:13px;color:var(--text-dim);margin-top:8px;">${goalLabels.join(' · ')}</p>` : `<p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Aucun objectif déclaré pour l'instant.</p>`}
+      <a href="test-positionnement.html" class="btn btn-sm" style="margin-top:8px;">Revoir mes objectifs →</a>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <span class="smallcaps">💡 Mes centres d'intérêt</span>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        ${POSITIONING_INTERESTS.map(it => `
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" class="perso-interest-cb" data-key="${it.key}" ${p.interests[it.key] ? 'checked' : ''}>
+          <span>${it.label}</span>
+        </label>`).join('')}
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:16px;">
+      <span class="smallcaps">📚 Comment j'apprends le mieux</span>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+        ${POSITIONING_LEARNING_STYLES.map(s => `
+        <label style="display:flex;align-items:center;gap:10px;font-size:13px;cursor:pointer;">
+          <input type="checkbox" class="perso-style-cb" data-key="${s.key}" ${p.learningStyle[s.key] ? 'checked' : ''}>
+          <span>${s.label}</span>
+        </label>`).join('')}
+      </div>
+      <button class="btn btn-sm btn-gold" id="persoSaveBtn" style="margin-top:12px;">Enregistrer mes intérêts et ma manière d'apprendre</button>
+    </div>
+    ${investor ? `
+    <div class="card" style="margin-bottom:16px;">
+      <span class="smallcaps">📈 Mon profil investisseur</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Profil ${investor.riskProfile || '—'}${investor.horizon ? `, horizon ${investor.horizon} ans` : ''}${investor.capital ? `, capital de départ ${fmtEUR(investor.capital)}` : ''}.</p>
+      <a href="bourse-allocation.html" class="btn btn-sm" style="margin-top:8px;">Revoir mon profil investisseur →</a>
+    </div>` : ''}
+    ${business ? `
+    <div class="card" style="margin-bottom:16px;">
+      <span class="smallcaps">💼 Mon profil entreprise</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">${business.nom ? `« ${business.nom} » — ` : ''}${business.ca ? `${fmtEUR(business.ca)} de CA déclaré` : 'Profil entamé, chiffres pas encore renseignés'}${business.effectif ? `, ${business.effectif} personne${business.effectif > 1 ? 's' : ''}` : ''}.</p>
+      <a href="business-lab.html" class="btn btn-sm" style="margin-top:8px;">Revoir mon profil entreprise →</a>
+    </div>` : ''}
+    <div class="card" style="border-color:var(--bordeaux);">
+      <span class="smallcaps">🔒 Vie privée &amp; données</span>
+      <p style="font-size:12.5px;color:var(--text-dim);margin:8px 0 12px;">Tes objectifs, centres d'intérêt et manière d'apprendre servent uniquement à personnaliser tes recommandations sur Likanza (catégories à réviser, actualités, projets) — jamais partagés ni vendus. Ce bouton n'efface jamais ta progression réelle (XP, cours, quiz).</p>
+      <button class="btn btn-sm" id="persoResetBtn">Réinitialiser ma personnalisation</button>
+    </div>`;
+
+  const saveBtn = document.getElementById('persoSaveBtn');
+  if(saveBtn) saveBtn.addEventListener('click', () => {
+    const interests = {};
+    el.querySelectorAll('.perso-interest-cb').forEach(cb => { if(cb.checked) interests[cb.dataset.key] = true; });
+    const learningStyle = {};
+    el.querySelectorAll('.perso-style-cb').forEach(cb => { if(cb.checked) learningStyle[cb.dataset.key] = true; });
+    saveProfile({...getProfile(), interests, learningStyle});
+  });
+  const resetBtn = document.getElementById('persoResetBtn');
+  if(resetBtn) resetBtn.addEventListener('click', () => {
+    if(!confirm("Réinitialiser tes objectifs, centres d'intérêt et manière d'apprendre ? Ta progression (XP, cours, quiz) restera intacte.")) return;
+    saveProfile({...getProfile(), interests:{}, learningStyle:{}, goals:{}, objectif:''});
+    safeSetJSON('fzr-positioning-result', null);
+    renderPersonalizationPanel(elId);
+  });
 }
 
 // ---------- Comparateur "Et si...?" générique ----------
