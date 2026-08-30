@@ -2291,6 +2291,26 @@ function pickWeakestMasteryCategory(candidateCategories){
   return weakest ? {categorie: weakest.categorie, pct: weakest.pct} : null;
 }
 
+// Composant partagé "Pourquoi cette recommandation ?" (chantier Continuité,
+// phase 2, 30/08/2026, section 11 du prompt d'origine) : affiche, sous un
+// lien dépliable, les vrais signaux déjà calculés par l'appelant — jamais
+// une justification générique ou inventée. `signals` vide -> rien n'est
+// rendu (jamais un lien "Pourquoi ?" qui ouvre sur du vide).
+function renderPourquoiToggle(elId, signals){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(!signals || !signals.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <button type="button" id="${elId}-btn" style="background:none;border:none;padding:0;font-size:11.5px;color:var(--text-dim);text-decoration:underline;cursor:pointer;">Pourquoi cette recommandation ?</button>
+    <div id="${elId}-detail" style="display:none;margin-top:6px;">
+      ${signals.map(s => `<p style="font-size:12px;color:var(--text-dim);margin:3px 0;">✓ ${s}</p>`).join('')}
+    </div>`;
+  document.getElementById(`${elId}-btn`).addEventListener('click', () => {
+    const detail = document.getElementById(`${elId}-detail`);
+    detail.style.display = detail.style.display === 'none' ? 'block' : 'none';
+  });
+}
+
 // ---------- Financial IQ : score de maîtrise composite par domaine, séparé
 // de l'XP (sections 19-20 du plan Défis). L'XP (levelFromXP/LEVEL_TITLES)
 // mesure la régularité/participation ; le Financial IQ mesure la vraie
@@ -3673,10 +3693,12 @@ function renderRecommandePourToi(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const weakest = pickWeakestMasteryCategory();
-  let categorie, reason;
+  let categorie, reason, signals, personalized;
   if(weakest){
     categorie = weakest.categorie;
     reason = `Tu as récemment eu du mal avec ${categorie} (${weakest.pct}% de bonnes réponses).`;
+    signals = [`${weakest.pct}% de bonnes réponses récemment sur « ${categorie} » (sous le seuil de 50%).`];
+    personalized = true;
   } else {
     const mastery = getSkillMastery();
     const profile = getProfile();
@@ -3687,17 +3709,26 @@ function renderRecommandePourToi(elId){
     if(unexplored.length > 0){
       categorie = unexplored[dayOfYear() % unexplored.length];
       reason = "Ça correspond à l'un de tes centres d'intérêt, et tu ne l'as pas encore beaucoup exploré.";
+      signals = [`Tu as déclaré un centre d'intérêt lié à « ${categorie} ».`, `Tu n'as pas encore été évalué sur cette catégorie.`];
+      personalized = true;
     } else {
       const allCats = [...new Set(defisFullPool().map(i => i.categorie))];
       categorie = allCats[dayOfYear() % allCats.length];
       reason = "Un thème à découvrir pour varier tes révisions.";
+      // Aucun signal réel derrière ce choix (simple rotation quotidienne) —
+      // jamais présenté comme "recommandé pour toi" (section 70 du prompt
+      // Continuité : pas de fausse personnalisation).
+      signals = [];
+      personalized = false;
     }
   }
   el.innerHTML = `
-    <span class="smallcaps">🎯 Recommandé pour toi</span>
-    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${reason}</p>
+    <span class="smallcaps">${personalized ? '🎯 Recommandé pour toi' : '🔎 À découvrir'}</span>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 6px;">${reason}</p>
+    <div id="${elId}-pourquoi" style="margin-bottom:10px;"></div>
     <h3 style="margin-bottom:10px;font-size:17px;">${categorie}</h3>
     <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
+  renderPourquoiToggle(`${elId}-pourquoi`, signals);
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const pool = defisFullPool().filter(i => i.categorie === categorie);
     startMixedSession(elId, pickAdaptivePool(pool, categorie, 5), {livePool: pool, onRestart: () => renderRecommandePourToi(elId)});
@@ -5109,10 +5140,12 @@ function renderBusinessCasRecommande(elId){
   const pool = defisFullPool().filter(i => BUSINESS_SKILL_CATEGORIES.includes(i.categorie));
   if(pool.length === 0){ el.style.display = 'none'; return; }
   const weakest = pickWeakestMasteryCategory(BUSINESS_SKILL_CATEGORIES);
-  let categorie, reason;
+  let categorie, reason, signals, personalized;
   if(weakest){
     categorie = weakest.categorie;
     reason = `Tu as récemment eu du mal avec ${categorie} (${weakest.pct}% de bonnes réponses).`;
+    signals = [`${weakest.pct}% de bonnes réponses récemment sur « ${categorie} » (sous le seuil de 50%).`];
+    personalized = true;
   } else {
     const exploredCats = new Set(getSkillMastery().filter(m => BUSINESS_SKILL_CATEGORIES.includes(m.categorie)).map(m => m.categorie));
     const poolCats = [...new Set(pool.map(i => i.categorie))];
@@ -5124,12 +5157,18 @@ function renderBusinessCasRecommande(elId){
       categorie = poolCats[dayOfYear() % poolCats.length];
       reason = "Un thème à revoir pour varier tes révisions Business.";
     }
+    // Ni l'un ni l'autre repli ne repose sur une préférence déclarée (contrairement
+    // à renderRecommandePourToi) — jamais présenté comme "recommandé pour toi".
+    signals = [];
+    personalized = false;
   }
   el.innerHTML = `
-    <span class="smallcaps">🎯 Cas recommandé pour toi</span>
-    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${reason}</p>
+    <span class="smallcaps">${personalized ? '🎯 Cas recommandé pour toi' : '🔎 À découvrir'}</span>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 6px;">${reason}</p>
+    <div id="${elId}-pourquoi" style="margin-bottom:10px;"></div>
     <h3 style="margin-bottom:10px;font-size:17px;">${categorie}</h3>
     <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
+  renderPourquoiToggle(`${elId}-pourquoi`, signals);
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const catPool = pool.filter(i => i.categorie === categorie);
     startMixedSession(elId, pickAdaptivePool(catPool, categorie, 5), {level:'business', categorie, livePool: catPool, onRestart: () => renderBusinessCasRecommande(elId)});
