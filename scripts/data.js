@@ -8077,7 +8077,13 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
   'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
   'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries', 'fzr-net-worth-history',
-  'fzr-business-expenses', 'fzr-business-scenarios', 'fzr-last-position'
+  'fzr-business-expenses', 'fzr-business-scenarios', 'fzr-last-position',
+  // Ajoutées pendant le chantier Continuité (phase 9, 30/08/2026) : de la
+  // vraie progression utilisateur, oubliées de la whitelist par le passé —
+  // les Projets de vie et les 4 simulateurs Business n'avaient jusqu'ici
+  // aucune raison de ne PAS être synchronisés (contrairement aux clés
+  // fzr-context-* du Context Engine, phase 5, volontairement exclues).
+  'fzr-life-projects', 'fzr-headcount-sim', 'fzr-pricing-sim', 'fzr-sales-funnel', 'fzr-valorisation-sim'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
