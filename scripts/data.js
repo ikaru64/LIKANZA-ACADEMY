@@ -992,6 +992,7 @@ function renderCombinedWealthDashboardWidget(elId){
 // une décision explicite inverse (défis "sequence", boutons Monter/Descendre
 // choisis pour la fiabilité mobile) — cohérence plutôt que rupture. ----------
 const DASHBOARD_WIDGETS = [
+  {id: 'continue', title: null, mode: 'both', selfCard: false, render: renderContinueWidget},
   {id: 'gamification', title: null, mode: 'both', selfCard: false, render: elId => renderGamificationWidget(elId, false)},
   {id: 'combined-wealth', title: null, mode: 'both', selfCard: false, render: renderCombinedWealthDashboardWidget},
   {id: 'profile-summary', title: null, mode: 'personal', selfCard: true, render: renderParcoursProfileSummary},
@@ -1016,6 +1017,7 @@ const DASHBOARD_WIDGETS = [
   {id: 'domain-dashboard', title: null, mode: 'personal', selfCard: true, render: renderDomainDashboardWidget}
 ];
 const WIDGET_DISPLAY_NAMES = {
+  'continue': '▶ Continuer',
   'gamification': 'Progression (niveau, XP, série)',
   'combined-wealth': '💰 Patrimoine total (personnel + pro)',
   'profile-summary': 'Ton profil Likanza',
@@ -4262,6 +4264,35 @@ function markChapterVisited(coursId, chapitreTitre){
   safeSetJSON('fzr-cours-visited', all);
 }
 
+// ---------- Reprise de position (chantier Continuité, phase 6, 30/08/2026,
+// sections 30-32 et 59 du prompt d'origine) : contrairement aux booléens de
+// fzr-cours-visited (ce qui a été lu), fzr-last-position retient OÙ
+// exactement l'utilisateur s'est arrêté, pour permettre un vrai "Continuer"
+// depuis le tableau de bord. Une seule position à la fois (la plus récente
+// activité de ce type), jamais un historique complet à maintenir. ----------
+const LAST_POSITION_KEY = 'fzr-last-position';
+function getLastPosition(){ return safeGetJSON(LAST_POSITION_KEY, null); }
+function saveLastPosition(position){ safeSetJSON(LAST_POSITION_KEY, position); }
+// Widget "Continuer" (sections 30-32, 59) : une seule action, jamais une
+// liste. Jamais une position périmée : si le cours a été terminé ou
+// supprimé du catalogue depuis, l'état honnête "rien à reprendre" s'affiche
+// à la place plutôt qu'un lien mort ou trompeur.
+function renderContinueWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const pos = getLastPosition();
+  const cours = pos && pos.type === 'cours' ? COURS_CATALOG.find(c => c.id === pos.id) : null;
+  const stillRelevant = cours && !getCoursProgress()[pos.id];
+  if(!stillRelevant){
+    el.innerHTML = `<span class="smallcaps">▶ Continuer</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Aucune activité récente à reprendre.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps">▶ Continuer</span>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${cours.titre} — Chapitre ${pos.chapitreIndex + 1} : ${pos.chapitreTitre}</p>
+    <a href="cours.html#${encodeURIComponent(pos.id)}" class="btn btn-sm btn-gold">Reprendre →</a>`;
+}
+
 // Rattache chaque cours à son domaine réel (DOMAINS, app.js) en comptant le
 // recouvrement entre ses quizCategories et celles de chaque domaine — jamais
 // une catégorie inventée à la main : le domaine avec le plus de catégories en
@@ -4493,6 +4524,13 @@ function renderCourseIntro(elId, cours, onStart){
   const el = document.getElementById(elId);
   if(!el) return;
   const acquis = Array.isArray(cours.acquis) ? cours.acquis : [];
+  // Reprise de position (chantier Continuité, phase 6, 30/08/2026) : si une
+  // position réelle existe pour CE cours précis et qu'il n'est pas déjà
+  // terminé, le bouton propose honnêtement de reprendre plutôt que de
+  // recommencer, cohérent avec le "Continuer" du tableau de bord.
+  const lastPosition = getLastPosition();
+  const canResume = lastPosition && lastPosition.type === 'cours' && lastPosition.id === cours.id
+    && lastPosition.chapitreIndex > 0 && !getCoursProgress()[cours.id];
   el.innerHTML = `
     <h4 style="margin-top:4px;">${cours.titre}</h4>
     ${renderCoursePrerequisites(cours.prerequis)}
@@ -4500,8 +4538,8 @@ function renderCourseIntro(elId, cours, onStart){
       <span class="smallcaps">À la fin de ce cours, tu sauras :</span>
       <ul style="margin:10px 0 0;padding-left:18px;font-size:13.5px;color:var(--text-dim);line-height:1.8;">${acquis.map(a => `<li>${a}</li>`).join('')}</ul>
     </div>` : ''}
-    <button class="btn btn-sm btn-gold" id="${elId}-start-course">Commencer →</button>`;
-  document.getElementById(`${elId}-start-course`).addEventListener('click', onStart);
+    <button class="btn btn-sm btn-gold" id="${elId}-start-course">${canResume ? `Reprendre au chapitre ${lastPosition.chapitreIndex + 1} →` : 'Commencer →'}</button>`;
+  document.getElementById(`${elId}-start-course`).addEventListener('click', () => onStart(canResume ? lastPosition.chapitreIndex : 0));
 }
 
 // ---------- Feedback qualité pédagogique (section 26 du prompt Learning
@@ -4605,6 +4643,11 @@ function renderCoursRich(elId, cours, onComplete){
 
   function renderChapterStep(){
     markChapterVisited(cours.id, chapitres[chapIndex].titre);
+    // Position réelle dans le cours ENTIER (cours.chapitres), pas dans la vue
+    // filtrée par format actif — reprendre depuis le tableau de bord repart
+    // toujours en format "complet", l'index doit donc rester valide pour lui.
+    const realIndex = cours.chapitres.findIndex(ch => ch.titre === chapitres[chapIndex].titre);
+    saveLastPosition({type: 'cours', id: cours.id, titre: cours.titre, chapitreIndex: realIndex >= 0 ? realIndex : 0, chapitreTitre: chapitres[chapIndex].titre, timestamp: Date.now()});
     const isLast = chapIndex === chapitres.length - 1;
     const pct = Math.round(((chapIndex + 1) / chapitres.length) * 100);
     el.innerHTML = `
@@ -4665,7 +4708,10 @@ function renderCoursRich(elId, cours, onComplete){
     });
   }
 
-  renderCourseIntro(elId, cours, renderChapterStep);
+  renderCourseIntro(elId, cours, startIndex => {
+    if(startIndex > 0 && startIndex < chapitres.length) chapIndex = startIndex;
+    renderChapterStep();
+  });
 }
 
 // Écran de fin d'un cours enrichi : jamais un simple "Bravo", toujours les
@@ -8031,7 +8077,7 @@ const PROGRESS_SYNC_KEYS = [
   'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
   'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
   'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries', 'fzr-net-worth-history',
-  'fzr-business-expenses', 'fzr-business-scenarios'
+  'fzr-business-expenses', 'fzr-business-scenarios', 'fzr-last-position'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
