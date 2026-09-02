@@ -247,7 +247,7 @@ function renderDcfLab(elId){
   if(!el) return;
   el.innerHTML = `
     <p style="color:var(--text-dim);font-size:13.5px;line-height:1.6;margin:0 0 8px;max-width:70ch;">Une valorisation par DCF actualise les flux de trésorerie qu'une entreprise devrait générer sur une période explicite, plus une "valeur terminale" représentant tout ce qui vient après — ajuste les hypothèses ci-dessous pour voir comment chaque paramètre pèse sur le résultat final, jamais une prédiction, seulement le résultat mécanique de ce que tu saisis.</p>
-    <p style="font-size:12px;color:var(--text-dim);margin:0 0 16px;"><strong>Avant de continuer, il peut être utile de connaître :</strong> ${['WACC (coût moyen pondéré du capital)', 'VAN (Valeur Actuelle Nette)'].map(t => `<a href="bibliotheque.html#${encodeURIComponent(t.replace(/\s+/g,'-'))}" class="badge">${t}</a>`).join(' ')}</p>
+    ${renderPrerequisNudge(['WACC (coût moyen pondéré du capital)', 'VAN (Valeur Actuelle Nette)'], {style: 'font-size:12px;color:var(--text-dim);margin:0 0 16px;'})}
     <div class="card-grid" style="grid-template-columns:1fr 1fr;">
       <div class="card">
         <div class="field"><label for="dcfCA1">Flux de trésorerie généré la 1ère année (€)</label><input type="number" id="dcfCA1" min="0" step="10000" value="1000000"></div>

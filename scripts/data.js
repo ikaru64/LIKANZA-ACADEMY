@@ -2829,6 +2829,31 @@ function matchQuizCategorieForTerme(terme){
   }
   return null;
 }
+// Nudge de prérequis (LIBRARY.prerequis) devenu conditionnel (chantier
+// Onboarding intelligent, 31/08/2026, section 26 du prompt d'origine) :
+// jusqu'ici affiché systématiquement, quel que soit ce que l'utilisateur
+// sait déjà. Un prérequis n'est gardé que si (a) aucune vraie donnée de
+// maîtrise n'existe pour lui (jamais supposer "déjà su" sans preuve), ou
+// (b) sa maîtrise réelle (getConceptMastery, via matchQuizCategorieForTerme
+// — jamais une deuxième correspondance inventée) est encore au stade le
+// plus faible ("decouvert"). Dès qu'un vrai "compris" ou mieux existe, le
+// prérequis disparaît silencieusement de la liste. Jamais bloquant : ce
+// n'est qu'une liste de liens informative, pas un écran à valider avant de
+// continuer — rien à débloquer ici.
+function renderPrerequisNudge(prerequisTerms, opts){
+  if(!Array.isArray(prerequisTerms) || !prerequisTerms.length) return '';
+  opts = opts || {};
+  const stillRelevant = prerequisTerms.filter(terme => {
+    const categorie = matchQuizCategorieForTerme(terme);
+    if(!categorie) return true;
+    const mastery = getConceptMastery(categorie);
+    return !mastery || mastery.stage === 'decouvert';
+  });
+  if(!stillRelevant.length) return '';
+  const cls = opts.className ? ` class="${opts.className}"` : '';
+  const style = opts.style || 'font-size:12px;color:var(--text-dim);margin-bottom:8px;';
+  return `<p${cls} style="${style}"><strong>Avant de continuer, il peut être utile de connaître :</strong> ${stillRelevant.map(p => `<a href="bibliotheque.html#${encodeURIComponent(p.replace(/\s+/g,'-'))}" class="badge">${p}</a>`).join(' ')}</p>`;
+}
 // Ligne de liens "Voir aussi" (Bibliothèque -> Cours/Défi) pour un terme
 // donné — omise si aucune vraie correspondance n'existe pour ce terme
 // précis, jamais un lien générique déconnecté de la notion consultée.
