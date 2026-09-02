@@ -10679,13 +10679,41 @@ function renderPersonalizationPanel(elId){
   const business = hasBusiness ? getBusinessProfile() : null;
 
   const goalLabels = [...new Set(POSITIONING_GOALS.filter(g => (p.goals || {})[g.key]).map(g => g.label))];
+  // Objectif principal éditable (chantier Onboarding intelligent, 31/08/2026,
+  // section 38 du prompt d'origine) : ne propose un choix que parmi les
+  // objectifs réellement déclarés — jamais un objectif inventé qui n'a pas
+  // été coché au test. Avec un seul objectif (ou aucun), il n'y a rien à
+  // arbitrer entre plusieurs choix : affichage en lecture seule.
+  const checkedGoals = POSITIONING_GOALS.filter(g => (p.goals || {})[g.key]);
+  const primaryGoalLabel = p.primaryGoal ? (POSITIONING_GOALS.find(g => g.key === p.primaryGoal) || {}).label || p.primaryGoal : null;
+  const lifeProjects = getLifeProjects();
 
   el.innerHTML = `
     <div class="card" style="margin-bottom:16px;">
       <span class="smallcaps">🎯 Mes objectifs</span>
       ${goalLabels.length ? `<p style="font-size:13px;color:var(--text-dim);margin-top:8px;">${goalLabels.join(' · ')}</p>` : `<p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Aucun objectif déclaré pour l'instant.</p>`}
-      <a href="test-positionnement.html" class="btn btn-sm" style="margin-top:8px;">Revoir mes objectifs →</a>
+      ${checkedGoals.length > 1 ? `
+      <div style="margin-top:12px;">
+        <label for="persoPrimaryGoalSelect" style="font-size:12px;color:var(--text-dim);display:block;margin-bottom:4px;">Objectif principal</label>
+        <select id="persoPrimaryGoalSelect" class="mono" style="margin-right:8px;">
+          ${checkedGoals.map(g => `<option value="${g.key}" ${p.primaryGoal === g.key ? 'selected' : ''}>${g.label}</option>`).join('')}
+        </select>
+        <button class="btn btn-sm" id="persoPrimaryGoalSaveBtn">Enregistrer</button>
+      </div>` : (primaryGoalLabel ? `<p style="font-size:12px;color:var(--text-dim);margin-top:6px;"><strong style="color:var(--text);">Objectif principal :</strong> ${primaryGoalLabel}</p>` : '')}
+      <a href="test-positionnement.html" class="btn btn-sm" style="margin-top:12px;">Revoir mes objectifs →</a>
     </div>
+    ${lifeProjects.length ? `
+    <div class="card" style="margin-bottom:16px;">
+      <span class="smallcaps">🗺️ Mes projets de vie</span>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+        ${lifeProjects.map(proj => {
+          const meta = LIFE_PROJECT_CATEGORY_META[proj.categorie];
+          const horizonLabel = proj.horizonApprox ? (LIFE_PROJECT_HORIZONS.find(h => h.value === proj.horizonApprox) || {}).label : null;
+          return `<p style="font-size:13px;color:var(--text-dim);">${meta.emoji} ${proj.nom}${horizonLabel ? ` — ${horizonLabel}` : ''}</p>`;
+        }).join('')}
+      </div>
+      <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Gérer mes projets →</a>
+    </div>` : ''}
     <div class="card" style="margin-bottom:16px;">
       <span class="smallcaps">💡 Mes centres d'intérêt</span>
       <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
@@ -10725,6 +10753,12 @@ function renderPersonalizationPanel(elId){
       <button class="btn btn-sm" id="persoResetBtn">Réinitialiser ma personnalisation</button>
     </div>`;
 
+  const primaryGoalSaveBtn = document.getElementById('persoPrimaryGoalSaveBtn');
+  if(primaryGoalSaveBtn) primaryGoalSaveBtn.addEventListener('click', () => {
+    const select = document.getElementById('persoPrimaryGoalSelect');
+    saveProfile({...getProfile(), primaryGoal: select.value});
+    renderPersonalizationPanel(elId);
+  });
   const saveBtn = document.getElementById('persoSaveBtn');
   if(saveBtn) saveBtn.addEventListener('click', () => {
     const interests = {};
@@ -10736,7 +10770,7 @@ function renderPersonalizationPanel(elId){
   const resetBtn = document.getElementById('persoResetBtn');
   if(resetBtn) resetBtn.addEventListener('click', () => {
     if(!confirm("Réinitialiser tes objectifs, centres d'intérêt et manière d'apprendre ? Ta progression (XP, cours, quiz) restera intacte.")) return;
-    saveProfile({...getProfile(), interests:{}, learningStyle:{}, goals:{}, objectif:''});
+    saveProfile({...getProfile(), interests:{}, learningStyle:{}, goals:{}, objectif:'', primaryGoal:null, subGoal:null});
     safeSetJSON('fzr-positioning-result', null);
     renderPersonalizationPanel(elId);
   });
