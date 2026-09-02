@@ -931,7 +931,7 @@ function renderLifeProjectsDashboardWidget(elId){
         const progress = computeProjectProgress(p);
         return `<div style="font-size:12.5px;">
           <span>${meta.emoji} ${p.nom}</span>
-          <span style="color:var(--text-dim);margin-left:6px;">${progress.progressionPct !== null ? `${progress.progressionPct}%` : `${fmtEUR(progress.depensesEngagees)}/${fmtEUR(p.budgetTotal)}`}</span>
+          <span style="color:var(--text-dim);margin-left:6px;">${progress.progressionPct !== null ? `${progress.progressionPct}%` : (p.budgetTotal > 0 ? `${fmtEUR(progress.depensesEngagees)}/${fmtEUR(p.budgetTotal)}` : 'à compléter')}</span>
         </div>`;
       }).join('')}
     </div>
@@ -8925,11 +8925,26 @@ function getLifeProjects(){
     return Array.isArray(raw) ? raw : [];
   } catch(e){ return []; }
 }
+// horizonApprox (chantier Onboarding intelligent, 31/08/2026, section 7 du
+// prompt d'origine) : un horizon large ("6-12 mois"), jamais une date
+// précise fabriquée à partir d'une simple fourchette déclarée à
+// l'onboarding — dateCible reste null tant que l'utilisateur n'a pas
+// lui-même donné une vraie date (dans Mon Univers). Champ optionnel,
+// rétrocompatible : un projet créé avant ce chantier n'en a simplement pas.
+const LIFE_PROJECT_HORIZONS = [
+  {value:'moins-6-mois', label:'Dans moins de 6 mois'},
+  {value:'6-12-mois', label:'6 à 12 mois'},
+  {value:'1-2-ans', label:'1 à 2 ans'},
+  {value:'2-5-ans', label:'2 à 5 ans'},
+  {value:'plus-tard', label:'Plus tard'},
+  {value:'inconnu', label:'Je ne sais pas encore'}
+];
 function saveLifeProject(project){
   if(!project || typeof project.nom !== 'string' || !project.nom.trim()) return null;
   if(!LIFE_PROJECT_CATEGORIES.includes(project.categorie)) return null;
   if(!(project.budgetTotal >= 0)) return null;
   if(project.dateCible !== null && project.dateCible !== undefined && (typeof project.dateCible !== 'string' || isNaN(Date.parse(project.dateCible)))) return null;
+  if(project.horizonApprox !== undefined && project.horizonApprox !== null && !LIFE_PROJECT_HORIZONS.some(h => h.value === project.horizonApprox)) return null;
   const list = getLifeProjects();
   const entry = {
     id: 'project-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
@@ -8937,6 +8952,7 @@ function saveLifeProject(project){
     categorie: project.categorie,
     budgetTotal: project.budgetTotal,
     dateCible: (typeof project.dateCible === 'string' && project.dateCible) ? project.dateCible : null,
+    horizonApprox: (typeof project.horizonApprox === 'string' && project.horizonApprox) ? project.horizonApprox : null,
     etapes: [],
     dateCreation: new Date().toISOString()
   };

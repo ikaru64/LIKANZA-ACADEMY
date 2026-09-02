@@ -8,15 +8,16 @@
    (levels/interests/learningStyle/risque/goals/primaryGoal/subGoal) et
    fzr-positioning-result (marqueur de complétion + onboardingVersion).
 
-   Chantier "Onboarding intelligent" (31/08/2026, section 1 du prompt
-   d'origine) : ajoute deux étapes CONDITIONNELLES entre l'objectif et les
-   centres d'intérêt — objectif principal (seulement si plusieurs objectifs
-   cochés) et question adaptative (seulement si l'objectif principal a un
-   vrai jeu de sous-questions, POSITIONING_SUBGOALS, app.js). Toutes les
-   étapes restent skippables (chaque écran garde un bouton "Continuer" même
-   sans rien cocher) — comportement inchangé pour un utilisateur qui ne coche
-   qu'un seul objectif sans correspondance adaptative : toujours le même
-   parcours à 4 étapes qu'avant ce chantier.
+   Chantier "Onboarding intelligent" (31/08/2026, sections 1, 6-7 du prompt
+   d'origine) : ajoute jusqu'à 3 étapes CONDITIONNELLES entre l'objectif et
+   les centres d'intérêt, jamais imposées quand elles n'ont pas de sens —
+   objectif principal (seulement si plusieurs objectifs cochés), question
+   adaptative (seulement si l'objectif principal a un vrai jeu de
+   sous-questions, POSITIONING_SUBGOALS, app.js), et projet concret +
+   horizon large (le budget/la date exacte se complètent plus tard, dans Mon
+   Univers Financier — jamais demandés ici). Toutes les étapes restent
+   skippables (chaque écran garde un bouton "Continuer" même sans rien
+   cocher, et le projet a son propre "Pas de projet pour l'instant").
    ============================================================ */
 
 const ONBOARDING_VERSION = 2;
@@ -31,13 +32,16 @@ let primaryGoal = null;
 let primaryGoalLabel = null;
 let subGoalKey = null;
 let subGoalLabel = null;
+let selectedProjectCategory = null;
+let createdProject = null;
 
 function computeTotalSteps(){
-  let total = 4; // objectif, centres d'intérêt, niveaux, manière d'apprendre — toujours présentes
+  let total = 5; // objectif, projet, centres d'intérêt, niveaux, manière d'apprendre — toujours présentes
   const goalKeys = Object.keys(checkedGoals);
   if(goalKeys.length > 1) total += 1; // étape "objectif principal"
   const resolvedPrimary = goalKeys.length === 1 ? goalKeys[0] : primaryGoal;
   if(resolvedPrimary && POSITIONING_SUBGOALS[resolvedPrimary]) total += 1; // étape adaptative
+  if(selectedProjectCategory) total += 1; // étape "horizon" (seulement si un projet a été choisi)
   return total;
 }
 function setStepBadge(elId, suffix){
@@ -121,7 +125,7 @@ function proceedAfterPrimaryGoal(){
   if(subgoalDef){
     startSubGoal(subgoalDef);
   } else {
-    startInterests();
+    startProject();
   }
 }
 
@@ -142,6 +146,62 @@ document.getElementById('posSubGoalNext').addEventListener('click', () => {
   subGoalKey = checked ? checked.dataset.key : null;
   subGoalLabel = (checked && subgoalDef) ? subgoalDef.options[+checked.dataset.idx].label : null;
   document.getElementById('posSubGoal').style.display = 'none';
+  currentStepNumber++;
+  startProject();
+});
+
+// ---------- Étape : projet concret (chantier Onboarding intelligent,
+// 31/08/2026, sections 6-7 du prompt d'origine) : comprendre l'INTENTION
+// seulement — jamais un montant demandé ici (voir LIFE_PROJECT_HORIZONS,
+// data.js, pour la raison). Toujours skippable ("Pas de projet pour
+// l'instant"), toujours restreinte aux 7 vraies catégories de
+// LIFE_PROJECT_CATEGORIES — jamais une catégorie fabriquée (ex. "voiture",
+// suggérée par le prompt d'origine, n'a pas de vraie catégorie dédiée dans
+// le modèle de données réel et tombe donc honnêtement sous "Autre"). ----------
+function startProject(){
+  document.getElementById('posProject').style.display = 'block';
+  setStepBadge('posProjectBadge', 'ton projet');
+  const options = LIFE_PROJECT_CATEGORIES.map(cat => ({cat, meta: LIFE_PROJECT_CATEGORY_META[cat]}));
+  document.getElementById('posProjectList').innerHTML = options.map(({cat, meta}) => `
+    <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;">
+      <input type="radio" name="posProjectRadio" class="pos-project-radio" data-cat="${cat}" value="${cat}" style="width:15px;height:15px;flex-shrink:0;">
+      <span>${meta.emoji} ${meta.label}</span>
+    </label>`).join('') + `
+    <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;border-top:1px solid var(--hairline);padding-top:10px;margin-top:4px;">
+      <input type="radio" name="posProjectRadio" class="pos-project-radio" data-cat="" value="" checked style="width:15px;height:15px;flex-shrink:0;">
+      <span style="color:var(--text-dim);">Pas de projet pour l'instant</span>
+    </label>`;
+}
+document.getElementById('posProjectNext').addEventListener('click', () => {
+  const checked = document.querySelector('.pos-project-radio:checked');
+  selectedProjectCategory = (checked && checked.dataset.cat) ? checked.dataset.cat : null;
+  document.getElementById('posProject').style.display = 'none';
+  currentStepNumber++;
+  if(selectedProjectCategory){
+    startProjectHorizon();
+  } else {
+    startInterests();
+  }
+});
+
+// ---------- Étape conditionnelle : horizon (seulement si un projet a été choisi) ----------
+function startProjectHorizon(){
+  document.getElementById('posProjectHorizon').style.display = 'block';
+  setStepBadge('posProjectHorizonBadge', 'horizon du projet');
+  document.getElementById('posProjectHorizonList').innerHTML = LIFE_PROJECT_HORIZONS.map((h, i) => `
+    <label style="display:flex;align-items:center;gap:10px;font-size:13.5px;cursor:pointer;">
+      <input type="radio" name="posProjectHorizonRadio" class="pos-projecthorizon-radio" data-value="${h.value}" value="${h.value}" style="width:15px;height:15px;flex-shrink:0;">
+      <span>${h.label}</span>
+    </label>`).join('');
+}
+document.getElementById('posProjectHorizonNext').addEventListener('click', () => {
+  const checked = document.querySelector('.pos-projecthorizon-radio:checked');
+  const horizonApprox = checked ? checked.dataset.value : null;
+  const meta = LIFE_PROJECT_CATEGORY_META[selectedProjectCategory];
+  // Nom générique honnête (jamais demandé à l'utilisateur ici) — modifiable
+  // ensuite dans Mon Univers, comme le budget et la date exacte.
+  createdProject = saveLifeProject({nom: `Mon projet ${meta.label}`, categorie: selectedProjectCategory, budgetTotal: 0, dateCible: null, horizonApprox});
+  document.getElementById('posProjectHorizon').style.display = 'none';
   currentStepNumber++;
   startInterests();
 });
@@ -260,6 +320,8 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
   const primaryGoalDomain = primaryGoal ? DOMAINS.find(d => d.key === primaryGoal) : null;
   const primaryGoalHtml = primaryGoalLabel ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Ton objectif principal :</strong> ${primaryGoalDomain ? primaryGoalDomain.icon + ' ' : ''}${primaryGoalLabel}${subGoalLabel ? ` — ${subGoalLabel}` : ''}</p>` : '';
 
+  const projectHtml = createdProject ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Ton projet :</strong> ${LIFE_PROJECT_CATEGORY_META[createdProject.categorie].emoji} ${LIFE_PROJECT_CATEGORY_META[createdProject.categorie].label}${createdProject.horizonApprox ? ` — ${LIFE_PROJECT_HORIZONS.find(h => h.value === createdProject.horizonApprox).label}` : ''}</p>` : '';
+
   resEl.innerHTML = `
     <div class="card" style="max-width:640px;margin:0 auto;">
       <span class="smallcaps">C'est noté</span>
@@ -268,6 +330,7 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
       <div class="panel">${declaredRows}</div>
       ${goalLabels.length ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:14px;"><strong style="color:var(--text);">Tu cherches à :</strong> ${goalLabels.join(' · ')}</p>` : ''}
       ${primaryGoalHtml}
+      ${projectHtml}
       ${pathsHtml}
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
         <a href="parcours.html" class="btn btn-gold">Voir Mon Parcours</a>
