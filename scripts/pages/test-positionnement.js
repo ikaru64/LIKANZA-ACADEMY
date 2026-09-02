@@ -20,7 +20,8 @@
    cocher, et le projet a son propre "Pas de projet pour l'instant").
    ============================================================ */
 
-const ONBOARDING_VERSION = 2;
+// ONBOARDING_VERSION vit dans data.js (chargé sur chaque page, pas seulement
+// ici) — voir le commentaire à côté de sa déclaration pour le pourquoi.
 const LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
 
 // ---------- Compteur d'étape honnête : jamais un total inventé, toujours le
@@ -322,6 +323,18 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
 
   const projectHtml = createdProject ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;"><strong style="color:var(--text);">Ton projet :</strong> ${LIFE_PROJECT_CATEGORY_META[createdProject.categorie].emoji} ${LIFE_PROJECT_CATEGORY_META[createdProject.categorie].label}${createdProject.horizonApprox ? ` — ${LIFE_PROJECT_HORIZONS.find(h => h.value === createdProject.horizonApprox).label}` : ''}</p>` : '';
 
+  // Pont réel vers le quiz approfondi (chantier Onboarding intelligent,
+  // 31/08/2026, section 9 du prompt d'origine) : jusqu'ici seulement
+  // mentionné en texte, jamais un vrai lien direct vers le domaine de
+  // l'objectif principal. Affiché seulement quand un objectif principal est
+  // résolu (un vrai domaine à cibler) — jamais un lien générique fabriqué.
+  const diagnosticHtml = primaryGoal ? `
+    <div class="card" style="margin-top:16px;background:var(--bg-alt);">
+      <span class="smallcaps">🎯 Envie d'un niveau plus précis ?</span>
+      <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">Un quiz d'environ 8 minutes sur ${primaryGoalDomain ? primaryGoalDomain.displayLabel : primaryGoalLabel}, pour remplacer cette hypothèse par un vrai niveau mesuré.</p>
+      <a href="quiz-approfondi.html?domaine=${encodeURIComponent(primaryGoal)}" class="btn btn-sm btn-gold">Faire le diagnostic →</a>
+    </div>` : '';
+
   resEl.innerHTML = `
     <div class="card" style="max-width:640px;margin:0 auto;">
       <span class="smallcaps">C'est noté</span>
@@ -332,6 +345,7 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
       ${primaryGoalHtml}
       ${projectHtml}
       ${pathsHtml}
+      ${diagnosticHtml}
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
         <a href="parcours.html" class="btn btn-gold">Voir Mon Parcours</a>
         <a href="index.html" class="btn btn-sm">Explorer le site</a>

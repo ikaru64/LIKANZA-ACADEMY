@@ -1464,6 +1464,14 @@ function normalizeNiveau(v){
   return key in NIVEAU_RANK ? NIVEAU_RANK[key] : null;
 }
 function getPositioningResult(){ return safeGetJSON('fzr-positioning-result', null); }
+// Version du questionnaire d'onboarding (chantier Onboarding intelligent,
+// 31/08/2026, section 68 du prompt d'origine) — vit ici (chargé sur CHAQUE
+// page, pas seulement test-positionnement.html) pour que le bandeau "Améliore
+// tes recommandations" (renderDashboardHeader) puisse comparer la version du
+// profil déjà enregistré à la version courante, sans jamais forcer un ancien
+// utilisateur à tout refaire. Incrémenter ici (jamais ailleurs) quand une
+// évolution du questionnaire mérite qu'on resurfe cette invitation.
+const ONBOARDING_VERSION = 2;
 // Historiquement basé sur le score noté de l'ancien test de positionnement
 // (retiré : le premier quiz est désormais 100% déclaratif, sans question
 // notée). Réécrit pour s'appuyer sur la vraie maîtrise en direct
@@ -2132,7 +2140,19 @@ function renderDashboardHeader(elId){
   // repli silencieux (voir getLevel()), pas un niveau réellement déclaré —
   // ce bandeau invite explicitement à combler ça, une seule fois, jusqu'à
   // ce que le test soit fait (jamais réaffiché après, voir getPositioningResult).
-  const showOnboardingNudge = !getPositioningResult();
+  const positioningResult = getPositioningResult();
+  const showOnboardingNudge = !positioningResult;
+  // Bandeau distinct (chantier Onboarding intelligent, 31/08/2026, section 67
+  // du prompt d'origine) : pour un utilisateur qui a DÉJÀ fait le test, mais
+  // avant l'ajout de l'objectif principal/projet (onboardingVersion plus
+  // ancienne que ONBOARDING_VERSION) — jamais un onboarding complet reforcé,
+  // juste une invitation légère, explicitement remise à plus tard possible
+  // ("Plus tard" mémorise la version pour ne plus la réafficher tant qu'elle
+  // ne change pas encore).
+  const dismissedReonboardingVersion = safeGetJSON('fzr-reonboarding-dismissed-version', null);
+  const showReonboardingNudge = !showOnboardingNudge
+    && (positioningResult.onboardingVersion || 0) < ONBOARDING_VERSION
+    && dismissedReonboardingVersion !== ONBOARDING_VERSION;
   el.innerHTML = `
     <div class="dash-header">
       <div class="dash-greeting">
@@ -2157,10 +2177,28 @@ function renderDashboardHeader(elId){
         <p style="font-size:13.5px;margin-top:4px;max-width:52ch;">2 minutes pour indiquer ce qui t'intéresse, ton niveau et tes objectifs — Likanza personnalise ensuite ses recommandations à partir de ça, jamais au hasard.</p>
       </div>
       <a href="test-positionnement.html" class="btn btn-sm btn-gold" style="white-space:nowrap;">Faire le test →</a>
+    </div>` : ''}
+    ${showReonboardingNudge ? `
+    <div class="today-card" style="margin-top:4px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;" id="${elId}-reonboarding">
+      <div>
+        <span class="eyebrow">Nouveau : objectif principal &amp; projets</span>
+        <p style="font-size:13.5px;margin-top:4px;max-width:52ch;">Améliore tes recommandations en 30 secondes en précisant ton objectif principal.</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <a href="test-positionnement.html" class="btn btn-sm btn-gold" style="white-space:nowrap;">Personnaliser →</a>
+        <button type="button" class="btn btn-sm" id="${elId}-reonboarding-later" style="white-space:nowrap;">Plus tard</button>
+      </div>
     </div>` : ''}`;
   animateNumber(document.getElementById('dashNumXP'), g.xp, {suffix:' XP'});
   animateNumber(document.getElementById('dashNumFP'), g.financePoints);
   animateWidthIn(document.getElementById('dashWeekFill'), weekPct);
+  if(showReonboardingNudge){
+    document.getElementById(`${elId}-reonboarding-later`).addEventListener('click', () => {
+      safeSetJSON('fzr-reonboarding-dismissed-version', ONBOARDING_VERSION);
+      const banner = document.getElementById(`${elId}-reonboarding`);
+      if(banner) banner.remove();
+    });
+  }
 }
 
 // ================================================================
