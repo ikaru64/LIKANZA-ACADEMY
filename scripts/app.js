@@ -1493,6 +1493,50 @@ const POSITIONING_GOALS = [
   {key:'general', label:"J'ai simplement envie d'apprendre plusieurs choses"}
 ];
 
+// Question adaptative posée SEULEMENT quand l'objectif principal (résolu à
+// l'étape suivante) a un vrai jeu de sous-questions pertinent — chantier
+// Onboarding intelligent du 31/08/2026, section 5 du prompt d'origine. Un
+// domaine sans entrée ici (crypto, realEstate, economics, general,
+// marketing) ne pose jamais de question adaptative fabriquée : l'onboarding
+// passe directement à l'étape suivante pour ces objectifs. Chaque `key` est
+// scopée à son domaine, jamais un identifiant global partagé entre domaines.
+const POSITIONING_SUBGOALS = {
+  stockMarket: {
+    title: 'Quel est ton objectif principal ?',
+    options: [
+      {key:'comprendre-avant', label:'Comprendre avant de commencer'},
+      {key:'long-terme', label:'Investir à long terme'},
+      {key:'portefeuille', label:'Construire un portefeuille'},
+      {key:'actions', label:'Comprendre les actions'},
+      {key:'etf', label:'Comprendre les ETF'},
+      {key:'analyser', label:'Analyser des entreprises'},
+      {key:'risque', label:'Comprendre le risque'}
+    ]
+  },
+  business: {
+    title: 'Où en es-tu ?',
+    options: [
+      {key:'explore', label:"J'explore l'entrepreneuriat"},
+      {key:'idee', label:"J'ai une idée"},
+      {key:'lancement', label:'Je prépare un lancement'},
+      {key:'activite', label:"J'ai déjà une activité"},
+      {key:'developper', label:'Je veux développer mon entreprise'},
+      {key:'apprendre', label:'Je veux simplement apprendre'}
+    ]
+  },
+  personalFinance: {
+    title: "Qu'aimerais-tu améliorer ?",
+    options: [
+      {key:'budget', label:'Budget'},
+      {key:'epargne', label:'Épargne'},
+      {key:'dettes', label:'Dettes'},
+      {key:'organisation', label:'Organisation financière'},
+      {key:'achat', label:'Préparer un achat'},
+      {key:'patrimoine', label:'Construire mon patrimoine'}
+    ]
+  }
+};
+
 // Centres d'intérêt : choix multiples, un intérêt peut être coché via
 // plusieurs libellés proches (ex. "investir" et "comprendre la bourse"
 // pointent tous deux vers stockMarket). Le champ "marketing" est une

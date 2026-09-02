@@ -94,15 +94,31 @@
   </div>
 
   <div id="posGoals" class="card" style="max-width:640px;margin:0 auto;display:none;">
-    <span class="smallcaps">1 / 4 · ton objectif</span>
+    <span class="smallcaps" id="posGoalsBadge">1 / 4 · ton objectif</span>
     <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Pourquoi es-tu sur Likanza ?</h3>
     <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Coche tout ce qui te correspond.</p>
     <div id="posGoalsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
     <button class="btn btn-gold" id="posGoalsNext">Continuer →</button>
   </div>
 
+  <div id="posPrimaryGoal" class="card" style="max-width:640px;margin:0 auto;display:none;">
+    <span class="smallcaps" id="posPrimaryGoalBadge"></span>
+    <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Lequel est ton objectif principal actuellement ?</h3>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Tu as coché plusieurs objectifs — les autres restent explorables, celui-ci guidera juste ce qu'on te propose en premier.</p>
+    <div id="posPrimaryGoalList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <button class="btn btn-gold" id="posPrimaryGoalNext">Continuer →</button>
+  </div>
+
+  <div id="posSubGoal" class="card" style="max-width:640px;margin:0 auto;display:none;">
+    <span class="smallcaps" id="posSubGoalBadge"></span>
+    <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;" id="posSubGoalTitle"></h3>
+    <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Une seule réponse suffit — c'est juste pour affiner, tu pourras explorer librement ensuite.</p>
+    <div id="posSubGoalList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
+    <button class="btn btn-gold" id="posSubGoalNext">Continuer →</button>
+  </div>
+
   <div id="posInterests" class="card" style="max-width:640px;margin:0 auto;display:none;">
-    <span class="smallcaps">2 / 4 · centres d'intérêt</span>
+    <span class="smallcaps" id="posInterestsBadge">2 / 4 · centres d'intérêt</span>
     <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Qu'as-tu envie d'apprendre ?</h3>
     <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Coche tout ce qui t'intéresse, plusieurs réponses possibles.</p>
     <div id="posInterestsList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;"></div>
@@ -110,7 +126,7 @@
   </div>
 
   <div id="posLevels" class="card" style="max-width:640px;margin:0 auto;display:none;">
-    <span class="smallcaps">3 / 4 · niveau déclaré</span>
+    <span class="smallcaps" id="posLevelsBadge">3 / 4 · niveau déclaré</span>
     <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Dans quels domaines penses-tu déjà avoir des connaissances ?</h3>
     <p style="color:var(--text-dim);font-size:13px;margin-bottom:6px;">Fie-toi à ton ressenti — ce n'est pas un test.</p>
     <p class="disclaimer-box" style="margin-bottom:14px;">Ce niveau est déclaré par toi, pas encore vérifié. Tu pourras le confirmer ou le corriger avec un quiz approfondi dans Mon Univers Financier.</p>
@@ -119,7 +135,7 @@
   </div>
 
   <div id="posStyle" class="card" style="max-width:640px;margin:0 auto;display:none;">
-    <span class="smallcaps">4 / 4 · manière d'apprendre</span>
+    <span class="smallcaps" id="posStyleBadge">4 / 4 · manière d'apprendre</span>
     <h3 class="display" style="font-size:20px;font-weight:600;margin:8px 0 6px;">Tu comprends mieux avec…</h3>
     <p style="color:var(--text-dim);font-size:13px;margin-bottom:14px;">Coche ce qui te correspond, plusieurs réponses possibles.</p>
     <div id="posStylesList" style="display:flex;flex-direction:column;gap:8px;margin-bottom:20px;"></div>
