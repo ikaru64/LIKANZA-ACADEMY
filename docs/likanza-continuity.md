@@ -254,3 +254,10 @@ Voir aussi `docs/content-relationship-map.md` pour la cartographie complète
 des relations entre types de contenu (Concept, Cours, Bibliothèque, Défi, Jeu,
 Lab, Actualité, Business, Marchés) — utile avant d'ajouter un nouveau type de
 contenu ou une nouvelle règle de recommandation.
+
+Le chantier suivant, "Onboarding intelligent + Adaptive Journey"
+(31/08-01/09/2026), a construit directement sur cette base — voir
+`docs/onboarding.md` (questionnaire de positionnement), `docs/journey-engine.md`
+(continuité de mission, absence honnête, prérequis conditionnels, profilage
+progressif) et `docs/recommendation-engine.md` (parcours prioritaire sur le
+bilan, panneau de personnalisation étendu).
