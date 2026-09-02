@@ -1638,17 +1638,25 @@ const LEVEL_TITLES = [
 ];
 // Phrases d'accueil du tableau de bord : une piochée au hasard à chaque
 // ouverture (plus de logique liée à l'heure de la journée), + un slogan fixe.
-const WELCOME_PHRASES = [
+// Scindé en deux (chantier Onboarding intelligent, 31/08/2026, section 6 du
+// prompt d'origine) : avant, "Ravi de te revoir"/"De retour pour apprendre"
+// pouvaient tomber au hasard même pour un utilisateur venu la veille — un
+// faux signal de retour après absence. Désormais, seul WELCOME_PHRASES_RETOUR
+// est utilisé quand une vraie absence (gapDays >= 2, voir checkDailyStreak)
+// est détectée ; WELCOME_PHRASES_DEFAULT sert le reste du temps.
+const WELCOME_PHRASES_DEFAULT = [
   "Bienvenue dans ton aventure",
   "Prêt à progresser aujourd'hui ?",
-  "Ravi de te revoir",
   "Ton argent, tes règles",
   "La finance, enfin claire",
   "Chaque jour compte",
-  "De retour pour apprendre",
   "Construisons ton avenir",
   "Bienvenue chez toi",
   "En route vers l'indépendance"
+];
+const WELCOME_PHRASES_RETOUR = [
+  "Ravi de te revoir",
+  "De retour pour apprendre"
 ];
 const BRAND_SLOGAN = "Apprends la finance. À ton rythme.";
 
@@ -1758,6 +1766,12 @@ function checkDailyStreak(){
   if(g.lastVisit === today){ logActivity(); return g; }
   const yesterday = new Date(Date.now() - 86400000).toDateString();
   const twoDaysAgo = new Date(Date.now() - 2*86400000).toDateString();
+  // Écart réel en jours depuis la dernière visite (chantier Onboarding
+  // intelligent, 31/08/2026, section 6 du prompt d'origine) : permet au
+  // bandeau d'accueil de distinguer honnêtement une vraie absence d'une
+  // simple journée normale, plutôt qu'un message de "retour" tiré au hasard.
+  // Calculé une seule fois ici, avant d'écraser g.lastVisit plus bas.
+  g.lastGapDays = g.lastVisit ? Math.round((new Date(today) - new Date(g.lastVisit)) / 86400000) : null;
   if(g.lastVisit === yesterday){
     g.streak += 1;
   } else if(g.lastVisit === twoDaysAgo && g.streakFreezes > 0){
@@ -1930,6 +1944,19 @@ const MISSION_TEMPLATES = [
   }},
   {id:'terminer-lecon', xp:10, build(){
     const progress = getCoursProgress();
+    // Priorité de continuité (chantier Onboarding intelligent, 31/08/2026,
+    // section 37 du prompt d'origine) : si l'utilisateur a un cours en cours
+    // (fzr-last-position, chantier Continuité phase 6) encore pertinent
+    // (pas déjà terminé), la mission du jour propose de le reprendre
+    // exactement où il s'est arrêté, plutôt que de retomber sur le premier
+    // cours non terminé de COURS_CATALOG sans lien avec l'activité réelle.
+    const pos = getLastPosition();
+    if(pos && pos.type === 'cours' && !progress[pos.id]){
+      const coursEnCours = COURS_CATALOG.find(c => c.id === pos.id);
+      if(coursEnCours){
+        return {title:'Reprendre ta leçon', desc:`Continue « ${coursEnCours.titre} », chapitre « ${pos.chapitreTitre} ».`, href:`cours.html#${encodeURIComponent(pos.id)}:${encodeURIComponent(pos.chapitreTitre.replace(/\s+/g,'-'))}`};
+      }
+    }
     const next = COURS_CATALOG.find(c=>!progress[c.id]);
     if(!next) return null;
     return {title:'Terminer une leçon', desc:`Termine le cours « ${next.titre} » et son quiz de validation.`, href:`cours.html#${encodeURIComponent(next.id)}`};
@@ -2117,7 +2144,8 @@ function renderDashboardHeader(elId){
   if(!el) return;
   const g = getGamification();
   const lvl = levelFromXP(g.xp);
-  let greeting = WELCOME_PHRASES[Math.floor(Math.random() * WELCOME_PHRASES.length)];
+  const pool = g.lastGapDays >= 2 ? WELCOME_PHRASES_RETOUR : WELCOME_PHRASES_DEFAULT;
+  let greeting = pool[Math.floor(Math.random() * pool.length)];
   const profile = getProfile();
   const profileInterests = profile.interests || {};
   const interests = Object.keys(profileInterests).filter(k => profileInterests[k]);
@@ -2133,6 +2161,14 @@ function renderDashboardHeader(elId){
   if(goalKeys.length){
     const labels = goalKeys.slice(0,2).map(k => (DOMAINS.find(d => d.key === k) || {}).displayLabel || k);
     greeting = `Tu es ici avant tout pour progresser sur ${labels.join(' et sur ')}.`;
+  }
+  // Retour après une vraie absence prolongée (chantier Onboarding
+  // intelligent, 31/08/2026, section 6 du prompt d'origine) : prime même sur
+  // la personnalisation habituelle — c'est le signal le plus pertinent à ce
+  // moment précis. Toujours neutre et honnête sur le nombre réel de jours,
+  // jamais culpabilisant ("tu as raté X jours", "où étais-tu passé ?").
+  if(g.lastGapDays >= 7){
+    greeting = `Ça faisait ${g.lastGapDays} jours — reprenons tranquillement, à ton rythme.`;
   }
   const weekDays = getWeeklyActivityDays();
   const weekPct = Math.min(100, Math.round((weekDays/WEEKLY_GOAL_DAYS)*100));
