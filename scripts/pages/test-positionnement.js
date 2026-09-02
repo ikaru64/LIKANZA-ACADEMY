@@ -310,12 +310,45 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
   // "general" n'a pas de domaine réel, donc jamais de parcours inventé pour
   // lui, seulement le lien "Explorer le site" déjà présent plus bas.
   const matchedPaths = Object.keys(goals).map(key => LEARNING_PATHS.find(p => p.id === key && p.type === 'objectif')).filter(Boolean);
-  const pathsHtml = matchedPaths.length ? `
+
+  // Une seule action prioritaire, au plus 2 alternatives repliées (chantier
+  // Onboarding intelligent, 31/08/2026, section 33 du prompt d'origine) :
+  // jusqu'ici TOUS les parcours correspondants s'affichaient à plat, sans
+  // hiérarchie, jamais une vraie priorisation. Réutilise l'ordre de
+  // priorité déjà établi par getProfileTopDomainKeys (objectifs puis
+  // intérêts, dans data.js) plutôt que d'inventer une seconde logique —
+  // seule différence : l'objectif principal explicitement désigné passe
+  // toujours devant, quand il existe.
+  const priorityDomainKeys = (primaryGoal ? [primaryGoal] : []).concat(getProfileTopDomainKeys());
+  let primaryPath = null;
+  let primaryPathByGoal = false;
+  for(const key of priorityDomainKeys){
+    const found = matchedPaths.find(p => p.id === key);
+    if(found){ primaryPath = found; primaryPathByGoal = key === primaryGoal; break; }
+  }
+  if(!primaryPath) primaryPath = matchedPaths[0] || null;
+  const alternativePaths = primaryPath ? matchedPaths.filter(p => p !== primaryPath).slice(0, 2) : [];
+
+  const pathSignals = [];
+  if(primaryPath){
+    pathSignals.push(primaryPathByGoal
+      ? `Tu as désigné "${primaryGoalLabel}" comme ton objectif principal.`
+      : `Cet objectif fait partie de ceux que tu as cochés lors du test.`);
+    if(matchedPaths.length > 1) pathSignals.push(`${matchedPaths.length} parcours correspondent à tes objectifs déclarés — les autres restent disponibles ci-dessous.`);
+  }
+
+  const pathsHtml = primaryPath ? `
     <div style="margin-top:16px;">
       <span class="smallcaps">Le parcours qu'on te recommande</span>
-      <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
-        ${matchedPaths.map(p => `<a href="formations.html?parcours=${encodeURIComponent(p.id)}" class="card play-tile" style="text-decoration:none;"><span class="icon">${p.icon}</span><h4 style="margin:8px 0 4px;">${p.titre}</h4><p style="font-size:12.5px;color:var(--text-dim);">${p.description}</p></a>`).join('')}
-      </div>
+      <a href="formations.html?parcours=${encodeURIComponent(primaryPath.id)}" class="card play-tile" style="text-decoration:none;display:block;margin-top:8px;"><span class="icon">${primaryPath.icon}</span><h4 style="margin:8px 0 4px;">${primaryPath.titre}</h4><p style="font-size:12.5px;color:var(--text-dim);">${primaryPath.description}</p></a>
+      <div id="posPathPourquoi" style="margin-top:6px;"></div>
+      ${alternativePaths.length ? `
+      <details style="margin-top:10px;">
+        <summary class="smallcaps" style="cursor:pointer;">Autres parcours possibles</summary>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          ${alternativePaths.map(p => `<a href="formations.html?parcours=${encodeURIComponent(p.id)}" class="card play-tile" style="text-decoration:none;"><span class="icon">${p.icon}</span><h4 style="margin:8px 0 4px;">${p.titre}</h4><p style="font-size:12.5px;color:var(--text-dim);">${p.description}</p></a>`).join('')}
+        </div>
+      </details>` : ''}
     </div>` : '';
 
   const primaryGoalDomain = primaryGoal ? DOMAINS.find(d => d.key === primaryGoal) : null;
@@ -351,6 +384,8 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
         <a href="index.html" class="btn btn-sm">Explorer le site</a>
       </div>
     </div>`;
+
+  if(primaryPath) renderPourquoiToggle('posPathPourquoi', pathSignals);
 
   tryAwardQuizPoints('positioning-test-completed', 15, {positioningTestDone: true});
 }
