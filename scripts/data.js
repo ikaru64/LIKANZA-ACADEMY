@@ -2189,6 +2189,11 @@ function renderDashboardHeader(elId){
   const showReonboardingNudge = !showOnboardingNudge
     && (positioningResult.onboardingVersion || 0) < ONBOARDING_VERSION
     && dismissedReonboardingVersion !== ONBOARDING_VERSION;
+  // Profilage progressif (section 19-23) : une suggestion à la fois,
+  // uniquement une fois le seuil de confiance franchi (voir
+  // getPendingInterestSuggestion), toujours avec confirmation explicite —
+  // jamais ajouté silencieusement au profil.
+  const interestSuggestion = getPendingInterestSuggestion();
   el.innerHTML = `
     <div class="dash-header">
       <div class="dash-greeting">
@@ -2224,6 +2229,17 @@ function renderDashboardHeader(elId){
         <a href="test-positionnement.html" class="btn btn-sm btn-gold" style="white-space:nowrap;">Personnaliser →</a>
         <button type="button" class="btn btn-sm" id="${elId}-reonboarding-later" style="white-space:nowrap;">Plus tard</button>
       </div>
+    </div>` : ''}
+    ${interestSuggestion ? `
+    <div class="today-card" style="margin-top:4px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;" id="${elId}-interest-suggestion">
+      <div>
+        <span class="eyebrow">On dirait que ça t'intéresse</span>
+        <p style="font-size:13.5px;margin-top:4px;max-width:52ch;">Tu as fait plusieurs défis en ${interestSuggestion.displayLabel} sans l'avoir indiqué comme centre d'intérêt. L'ajouter à ton profil ?</p>
+      </div>
+      <div style="display:flex;gap:8px;flex-shrink:0;">
+        <button type="button" class="btn btn-sm btn-gold" id="${elId}-interest-yes" style="white-space:nowrap;">Oui, ajouter</button>
+        <button type="button" class="btn btn-sm" id="${elId}-interest-no" style="white-space:nowrap;">Non merci</button>
+      </div>
     </div>` : ''}`;
   animateNumber(document.getElementById('dashNumXP'), g.xp, {suffix:' XP'});
   animateNumber(document.getElementById('dashNumFP'), g.financePoints);
@@ -2233,6 +2249,20 @@ function renderDashboardHeader(elId){
       safeSetJSON('fzr-reonboarding-dismissed-version', ONBOARDING_VERSION);
       const banner = document.getElementById(`${elId}-reonboarding`);
       if(banner) banner.remove();
+    });
+  }
+  if(interestSuggestion){
+    const removeSuggestionBanner = () => {
+      const banner = document.getElementById(`${elId}-interest-suggestion`);
+      if(banner) banner.remove();
+    };
+    document.getElementById(`${elId}-interest-yes`).addEventListener('click', () => {
+      confirmInferredInterest(interestSuggestion.key, true);
+      removeSuggestionBanner();
+    });
+    document.getElementById(`${elId}-interest-no`).addEventListener('click', () => {
+      confirmInferredInterest(interestSuggestion.key, false);
+      removeSuggestionBanner();
     });
   }
 }
@@ -2349,8 +2379,62 @@ function recordQuizCompletion(level, categorie, length, score){
   // vient tout juste d'atteindre "maîtrisé".
   advanceSpacedReviewIfDue(categorie, score);
   scheduleSpacedReviewIfNewlyMastered(categorie);
+  recordDomainEngagementSignal(categorie);
 }
 function getPassedDefisSessionsCount(){ return getQuizStats().totalPassedSessions || 0; }
+
+// ---------- Profilage progressif (chantier Onboarding intelligent,
+// 31/08/2026, sections 19-23 du prompt d'origine) : un seul point d'ancrage
+// comportemental (une session de Défis terminée dans un domaine réel non
+// déclaré), jamais un système d'événements générique. Un compteur discret
+// par domaine, jamais surfacé avant un vrai seuil de confiance ; même une
+// fois le seuil atteint, jamais ajouté silencieusement — une confirmation
+// explicite est toujours requise (voir getPendingInterestSuggestion /
+// confirmInferredInterest ci-dessous). L'explicite prime toujours : un
+// domaine déjà déclaré (intérêt ou objectif) n'est jamais compté, et un
+// refus explicite est mémorisé à vie (jamais reproposé). ----------
+const INFERRED_INTEREST_CONFIRM_THRESHOLD = 3;
+function getInferredInterestSignals(){ return safeGetJSON('fzr-inferred-interest-signals', {}); }
+function saveInferredInterestSignals(s){ safeSetJSON('fzr-inferred-interest-signals', s); }
+function getDismissedInferredInterests(){ return safeGetJSON('fzr-inferred-interest-dismissed', []); }
+function isDomainAlreadyExplicit(domainKey){
+  const profile = getProfile();
+  return !!((profile.interests || {})[domainKey] || (profile.goals || {})[domainKey]);
+}
+function recordDomainEngagementSignal(categorie){
+  const domainKey = categorieDomainKey(categorie);
+  if(!domainKey || isDomainAlreadyExplicit(domainKey)) return;
+  if(getDismissedInferredInterests().includes(domainKey)) return;
+  const signals = getInferredInterestSignals();
+  signals[domainKey] = (signals[domainKey] || 0) + 1;
+  saveInferredInterestSignals(signals);
+}
+// Une seule suggestion à la fois (jamais une liste) : le domaine le plus
+// engagé qui a franchi le seuil, encore non déclaré, encore non refusé.
+function getPendingInterestSuggestion(){
+  const signals = getInferredInterestSignals();
+  const dismissed = getDismissedInferredInterests();
+  const candidateKey = Object.keys(signals)
+    .filter(k => signals[k] >= INFERRED_INTEREST_CONFIRM_THRESHOLD && !isDomainAlreadyExplicit(k) && !dismissed.includes(k))
+    .sort((a, b) => signals[b] - signals[a])[0];
+  if(!candidateKey) return null;
+  return DOMAINS.find(d => d.key === candidateKey) || null;
+}
+// Confirmation explicite (jamais silencieuse) : accept -> devient un vrai
+// intérêt déclaré (même mécanisme que test-positionnement.html/compte.html,
+// jamais un second champ "intérêt inféré" séparé) ; decline -> mémorisé à
+// vie, jamais reproposé pour ce domaine.
+function confirmInferredInterest(domainKey, accepted){
+  const signals = getInferredInterestSignals();
+  delete signals[domainKey];
+  saveInferredInterestSignals(signals);
+  if(accepted){
+    saveProfile({...getProfile(), interests: {...(getProfile().interests || {}), [domainKey]: true}});
+  } else {
+    const dismissed = getDismissedInferredInterests();
+    if(!dismissed.includes(domainKey)) safeSetJSON('fzr-inferred-interest-dismissed', dismissed.concat(domainKey));
+  }
+}
 // Score de maîtrise continu par catégorie, dérivé de fzr-quiz-stats (aucune
 // donnée inventée — uniquement de vraies réponses aux quiz). Seule mesure de
 // maîtrise du site (l'ancienne version à double seuil silencieux, avec son
