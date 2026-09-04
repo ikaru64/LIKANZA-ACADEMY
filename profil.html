@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Mon Univers Financier · Likanza Academy</title>
-<meta name="description" content="Ton centre de pilotage financier personnel : patrimoine, objectifs, alertes, projection de ton futur et ta progression Likanza, réunis en un seul tableau de bord personnalisable.">
-<meta property="og:title" content="Mon Univers Financier · Likanza Academy">
-<meta property="og:description" content="Ton centre de pilotage financier personnel : patrimoine, objectifs, alertes, projection de ton futur et ta progression Likanza, réunis en un seul tableau de bord personnalisable.">
+<title>Ton profil Likanza · Likanza Academy</title>
+<meta name="description" content="Qui tu es et ce que tu veux apprendre : tes objectifs, tes centres d'intérêt, ton niveau par domaine et tes projets de vie, réunis en un seul endroit.">
+<meta property="og:title" content="Ton profil Likanza · Likanza Academy">
+<meta property="og:description" content="Qui tu es et ce que tu veux apprendre : tes objectifs, tes centres d'intérêt, ton niveau par domaine et tes projets de vie, réunis en un seul endroit.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://likanza-academy.vercel.app/parcours.html">
+<meta property="og:url" content="https://likanza-academy.vercel.app/profil.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -21,7 +21,7 @@
   <span class="sidebar-group-label">Apprendre</span>
   <a href="defis.html"><span class="icon" data-icon="target"></span><span>Défis</span></a>
   <a href="formations.html"><span class="icon" data-icon="book-open"></span><span>Formations</span></a>
-  <a href="parcours.html" class="active"><span class="icon" data-icon="compass"></span><span>Mon Univers Financier</span></a>
+  <a href="parcours.html"><span class="icon" data-icon="compass"></span><span>Mon Univers Financier</span></a>
   <a href="bibliotheque.html"><span class="icon" data-icon="library"></span><span>Bibliothèque</span></a>
   <a href="labo-financier.html"><span class="icon" data-icon="calculator"></span><span>Laboratoire financier</span></a>
   <a href="play.html"><span class="icon" data-icon="gamepad-2"></span><span>Play</span></a>
@@ -78,29 +78,33 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Mon Univers Financier</div>
-<h1 class="visually-hidden">Mon Univers Financier</h1>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / Ton profil Likanza</div>
+<h1 class="visually-hidden">Ton profil Likanza</h1>
 
-<section class="section" id="parcoursGateSection" style="display:none;">
-  <div id="parcoursGate"></div>
-</section>
-
-<section class="section" id="parcoursMainSection" style="display:none;">
-  <div id="dashboardHeader"></div>
-  <div id="dashboardShell"></div>
+<section class="section">
+  <div class="section-head"><h2>Ma personnalisation Likanza</h2><span class="meta-line">objectifs, centres d'intérêt, et ce qui alimente tes recommandations</span></div>
+  <div id="personalizationPanel" style="max-width:520px;"></div>
 </section>
 
 <section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Mon profil de simulation</h2><span class="meta-line">pré-remplit les outils du site</span></div>
-  <div id="profileWidget" style="max-width:520px;"></div>
+  <div class="section-head"><h2>Mon niveau par domaine</h2><span class="meta-line">déclaré vs réellement évalué</span></div>
+  <div id="domainDashboard"></div>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="card" style="max-width:640px;background:var(--bg-alt);border:1px solid var(--hairline);">
+    <span class="smallcaps">Envie de tout reprendre depuis le début ?</span>
+    <p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">Le test complet (objectifs, intérêts, niveaux déclarés, manière d'apprendre) prend environ 2 minutes.</p>
+    <a href="test-positionnement.html" class="btn btn-sm btn-gold">Refaire le test complet →</a>
+  </div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
     <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
-    <div><h4>Compte</h4><ul><li><a href="compte.html">Mon compte</a></li><li><a href="profil.html">Ton profil Likanza</a></li></ul></div>
-    <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
+    <div><h4>Compte</h4><ul><li><a href="parcours.html">Mon Univers Financier</a></li><li><a href="compte.html">Mon compte</a></li></ul></div>
+    <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#confidentialite">Confidentialité</a></li></ul></div>
   </div>
   <div class="footer-bottom"><span>© 2026 Likanza Academy</span><span>Contenu pédagogique, ne constitue pas un conseil personnalisé.</span></div>
 </footer>
@@ -108,8 +112,7 @@
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
-<script src="scripts/historical-data.js"></script>
-<script src="scripts/pages/parcours.js"></script>
+<script src="scripts/pages/profil.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>
