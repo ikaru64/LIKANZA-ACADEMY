@@ -4,9 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Mon compte · Likanza Academy</title>
-<meta name="description" content="Niveau, progression et favoris — synchronisés sur ton compte une fois connecté, sinon enregistrés localement sur cet appareil.">
+<meta name="description" content="Connexion, favoris et confidentialité — ta progression se synchronise sur ton compte une fois connecté, sinon reste enregistrée localement sur cet appareil.">
 <meta property="og:title" content="Mon compte · Likanza Academy">
-<meta property="og:description" content="Niveau, progression et favoris — synchronisés sur ton compte une fois connecté, sinon enregistrés localement sur cet appareil.">
+<meta property="og:description" content="Connexion, favoris et confidentialité — ta progression se synchronise sur ton compte une fois connecté, sinon reste enregistrée localement sur cet appareil.">
 <meta property="og:type" content="website">
 <meta property="og:url" content="https://likanza-academy.vercel.app/compte.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -88,66 +88,21 @@
       <h3>Connexion</h3>
       <div id="authCardBody"><p style="font-size:13px;color:var(--text-dim);">Chargement…</p></div>
     </div>
-    <div class="card">
-      <h3>Progression Academy</h3>
-      <p>Niveau actuel : <strong id="profLevel"></strong></p>
-      <div id="profProgress"></div>
-      <div class="field" style="margin-top:12px;max-width:280px;"><label for="manualLevelSelect">Quel niveau te correspond le mieux ?</label>
-        <select id="manualLevelSelect">
-          <option value="debutant">Je découvre complètement la finance</option>
-          <option value="intermediaire">Je connais quelques bases</option>
-          <option value="avance">J'ai déjà commencé à investir</option>
-          <option value="expert">Je maîtrise déjà plusieurs notions</option>
-        </select>
-      </div>
-      <p style="font-size:11px;color:var(--text-dim);margin-top:6px;">Ce choix adapte le parcours Academy. Pour une personnalisation plus fine par domaine (Bourse, Business, Immobilier...), remplis <a href="test-positionnement.html" style="color:var(--gold-bright);">ton profil Likanza</a> — facultatif, environ 2 minutes.</p>
-      <a href="formations.html" class="btn btn-sm" style="margin-top:12px;">Continuer la formation</a>
-      <p style="font-size:12px;color:var(--text-dim);margin-top:10px;">Connecté, la progression ci-dessous se synchronise avec ton compte (voir le statut dans la carte Connexion) — non connecté, elle reste uniquement locale à cet appareil.</p>
-    </div>
   </div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Progression & récompenses</h2><span class="meta-line">XP, Finance Points, série, badges</span></div>
-  <div class="dual-grid">
-    <div id="gamiWidget"></div>
-    <div id="leagueWidget"></div>
-  </div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Mon profil de simulation</h2><span class="meta-line">pré-remplit les outils du site</span></div>
-  <div id="profileWidget" style="max-width:520px;"></div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Ma personnalisation Likanza</h2><span class="meta-line">objectifs, centres d'intérêt, et ce qui alimente tes recommandations</span></div>
-  <div id="personalizationPanel" style="max-width:520px;"></div>
-</section>
-
-<section class="section" style="padding-top:0;">
-  <div class="section-head"><h2>Ma watchlist</h2><span class="meta-line">seuils d'alerte, en local</span></div>
-  <div id="watchlistDemoBanner"></div>
-  <div class="card" style="max-width:640px;margin-bottom:20px;">
-    <div class="field"><label for="wlAsset">Actif à suivre</label>
-      <select id="wlAsset"></select>
-    </div>
-    <div class="field"><label for="wlThreshold">Seuil d'alerte (optionnel : te prévient visuellement si la valeur le franchit)</label>
-      <input type="number" id="wlThreshold" placeholder="Ex : 8000">
-    </div>
-    <div class="field"><label for="wlNote">Note personnelle (optionnel)</label>
-      <input type="text" id="wlNote" placeholder="Pourquoi tu suis cet actif...">
-    </div>
-    <button class="btn btn-gold btn-sm" id="wlAddBtn">Ajouter à la watchlist</button>
-  </div>
-  <div class="card-grid" id="watchlistGrid" style="display:none;"></div>
-  <p class="empty-note" id="watchlistEmpty">Ta watchlist est vide pour l'instant.</p>
 </section>
 
 <section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);">
   <div class="section-head"><h2>Mes favoris</h2><span class="meta-line" id="favCount"></span></div>
   <div class="card-grid" id="favGrid"></div>
   <p class="empty-note" id="favEmpty">Aucun favori pour l'instant. Clique sur l'étoile Favoris sur une actualité ou une action pour l'ajouter ici.</p>
+</section>
+
+<section class="section" style="padding-top:0;">
+  <div class="section-head"><h2>Vie privée &amp; données</h2></div>
+  <div class="card" style="max-width:640px;">
+    <p style="font-size:13px;color:var(--text-dim);">Tant que tu n'es pas connecté, tout reste local à cet appareil. Une fois connecté, ta progression (niveau, objectifs, quiz, projets, données financières que tu as renseignées, watchlist) se synchronise avec ton compte pour que tu la retrouves ailleurs.</p>
+    <a href="legal.html#confidentialite" class="btn btn-sm" style="margin-top:10px;">Voir le détail complet →</a>
+  </div>
 </section>
 
 <footer class="site-footer">

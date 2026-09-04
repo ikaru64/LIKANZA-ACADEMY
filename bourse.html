@@ -311,6 +311,26 @@
     <button class="btn btn-sm" id="ptReset" style="margin-top:16px;">Réinitialiser la simulation</button>
   </div>
 
+  <div class="home-tab-panel" id="tab-watchlist">
+    <div class="section-head"><h2>Ma watchlist</h2><span class="meta-line">seuils d'alerte, en local</span></div>
+    <p class="disclaimer-box" style="max-width:70ch;">Distincte des "valeurs suivies" ci-dessus (celles affichées dans Fiches actions/Comparateur) : ici, une liste d'actifs — actions, crypto, indices — avec un seuil d'alerte visuel optionnel et une note personnelle.</p>
+    <div id="watchlistDemoBanner"></div>
+    <div class="card" style="max-width:640px;margin:16px 0 20px;">
+      <div class="field"><label for="wlAsset">Actif à suivre</label>
+        <select id="wlAsset"></select>
+      </div>
+      <div class="field"><label for="wlThreshold">Seuil d'alerte (optionnel : te prévient visuellement si la valeur le franchit)</label>
+        <input type="number" id="wlThreshold" placeholder="Ex : 8000">
+      </div>
+      <div class="field"><label for="wlNote">Note personnelle (optionnel)</label>
+        <input type="text" id="wlNote" placeholder="Pourquoi tu suis cet actif...">
+      </div>
+      <button class="btn btn-gold btn-sm" id="wlAddBtn">Ajouter à la watchlist</button>
+    </div>
+    <div class="card-grid" id="watchlistGrid" style="display:none;"></div>
+    <p class="empty-note" id="watchlistEmpty">Ta watchlist est vide pour l'instant.</p>
+  </div>
+
 </section>
 
 <footer class="site-footer">

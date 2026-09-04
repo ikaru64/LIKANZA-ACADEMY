@@ -33,3 +33,11 @@ function initParcoursHero(){
 }
 
 initParcoursHero();
+
+// Profil de simulation (âge/épargne/horizon/risque/objectif — pré-remplit
+// les outils du site) : relocalisé depuis Mon Compte (sprint de fermeture
+// des écarts, 04/09/2026, phase 6). Ce sont de vraies données financières,
+// leur place est ici plutôt que dans les paramètres de compte. Toujours
+// visible, jamais gaté derrière le test de positionnement (comme sur son
+// ancien emplacement).
+renderProfileWidget('profileWidget');

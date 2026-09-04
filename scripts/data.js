@@ -1001,6 +1001,7 @@ function renderCombinedWealthDashboardWidget(elId){
 const DASHBOARD_WIDGETS = [
   {id: 'continue', title: null, mode: 'both', selfCard: false, render: renderContinueWidget},
   {id: 'gamification', title: null, mode: 'both', selfCard: false, render: elId => renderGamificationWidget(elId, false)},
+  {id: 'gamification-full', title: 'Progression & récompenses', mode: 'both', selfCard: false, render: renderGamificationLeagueDashboardWidget},
   {id: 'combined-wealth', title: null, mode: 'both', selfCard: false, render: renderCombinedWealthDashboardWidget},
   {id: 'profile-summary', title: null, mode: 'personal', selfCard: true, render: renderParcoursProfileSummary},
   {id: 'net-worth', title: null, mode: 'personal', selfCard: false, render: renderNetWorthDashboardWidget},
@@ -1905,6 +1906,17 @@ function renderGamificationWidget(elId, full){
         }).join('')}</div>` : `<p style="font-size:12px;color:var(--text-dim);margin-top:10px;">${earnedCount} badge${earnedCount>1?'s':''} débloqué${earnedCount>1?'s':''} sur ${BADGES.length}</p>`}
     </div>`;
   animateWidthIn(document.getElementById('gamiXpFill-'+elId), lvl.xpInLevel);
+}
+// Vue complète Progression & récompenses (sprint de fermeture des écarts,
+// 04/09/2026, phase 6) : relocalisée depuis Mon Compte vers le Dashboard —
+// réutilise renderGamificationWidget(full=true) et renderLeagueBoard tels
+// quels, jamais un second calcul de la même donnée.
+function renderGamificationLeagueDashboardWidget(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<div id="${elId}-gami"></div><div id="${elId}-league" style="margin-top:16px;"></div>`;
+  renderGamificationWidget(`${elId}-gami`, true);
+  renderLeagueBoard(`${elId}-league`);
 }
 
 // ---------- Quiz réutilisable ----------

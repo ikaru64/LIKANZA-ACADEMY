@@ -9,7 +9,8 @@ const BOURSE_TABS = [
   {id:'tab-portefeuille', title:'Portefeuille', desc:'Déclaratif, tes transactions', icon:'wallet'},
   {id:'tab-marches', title:'Autres marchés', desc:'ETF, Forex, matières premières, taux', icon:'landmark'},
   {id:'tab-options', title:'Options', desc:'Call/Put, payoff à l\'échéance', icon:'swords'},
-  {id:'tab-paper-trading', title:'Paper Trading', desc:'Argent fictif, vrais cours', icon:'flame'}
+  {id:'tab-paper-trading', title:'Paper Trading', desc:'Argent fictif, vrais cours', icon:'flame'},
+  {id:'tab-watchlist', title:'Ma watchlist', desc:'Seuils d\'alerte, en local', icon:'triangle-alert'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
@@ -1546,3 +1547,81 @@ document.addEventListener('fzr:quotes-updated', () => {
   if(bourseActiveTab === 'tab-paper-trading') safeRun('Paper Trading (cotations)', refreshPaperTradingViews);
 });
 safeRun('Paper Trading', renderPaperTrading);
+
+// ================= Ma watchlist (sprint de fermeture des écarts,
+// 04/09/2026, phase 6) : relocalisée depuis Mon Compte, code inchangé —
+// distincte des "valeurs suivies" (STOCKS_DEMO + recherche libre) utilisées
+// par les autres onglets de cette page. =================
+safeRun('bannière démo watchlist', ()=>renderDemoBanner('watchlistDemoBanner'));
+
+const WATCHLIST_ASSETS = [
+  ...MARKET_DATA.filter(m=>m.statut!=='indisponible').map(m=>({symbol:m.symbol, nom:m.nom, type:m.assetType})),
+  ...STOCKS_DEMO.map(s=>({symbol:s.ticker, nom:s.nom, type:'stock'}))
+];
+const wlAssetSelect = document.getElementById('wlAsset');
+if(wlAssetSelect) wlAssetSelect.innerHTML = WATCHLIST_ASSETS.map(a=>`<option value="${a.symbol}">${a.nom} (${a.symbol})</option>`).join('');
+
+function currentValueFor(symbol){
+  const m = MARKET_DATA.find(x=>x.symbol===symbol);
+  if(m) return parseNumericValue(m.valeur);
+  const s = STOCKS_DEMO.find(x=>x.ticker===symbol);
+  if(s) return s.prix;
+  return null;
+}
+function renderWatchlist(){
+  const list = getWatchlist();
+  const grid = document.getElementById('watchlistGrid');
+  const empty = document.getElementById('watchlistEmpty');
+  if(!grid || !empty) return;
+  if(list.length === 0){
+    grid.style.display = 'none';
+    empty.style.display = 'block';
+    return;
+  }
+  grid.style.display = 'grid';
+  empty.style.display = 'none';
+  grid.innerHTML = list.map(item=>{
+    const value = currentValueFor(item.symbol);
+    const crossed = item.threshold && value !== null && (
+      (item.direction === 'above' && value >= item.threshold) ||
+      (item.direction === 'below' && value <= item.threshold)
+    );
+    return `
+    <div class="card">
+      <span class="smallcaps">${item.type}</span>
+      <h3 style="font-size:19px;">${item.nom} <span class="mono" style="font-size:12px;color:var(--text-dim);">${item.symbol}</span></h3>
+      <p>Valeur actuelle (démo) : <strong>${value !== null ? value : 'non disponible'}</strong>${item.threshold ? ` · seuil : ${item.threshold}` : ''}</p>
+      ${item.note ? `<p style="font-size:12.5px;color:var(--text-dim);">${item.note}</p>` : ''}
+      ${crossed ? `<p style="font-size:12.5px;color:var(--gold-bright);">${ICONS['triangle-alert']} Seuil franchi (donnée de démonstration, pas une alerte réelle en direct)</p>` : ''}
+      <div class="card-footer"><span>Ajouté le ${item.date}</span><button class="del-btn" data-symbol="${item.symbol}">Retirer</button></div>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('.del-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      saveWatchlist(getWatchlist().filter(x=>x.symbol!==btn.dataset.symbol));
+      renderWatchlist();
+    });
+  });
+}
+const wlAddBtn = document.getElementById('wlAddBtn');
+if(wlAddBtn) wlAddBtn.addEventListener('click', ()=>{
+  const symbol = wlAssetSelect.value;
+  const asset = WATCHLIST_ASSETS.find(a=>a.symbol===symbol);
+  if(!asset) return;
+  const thresholdRaw = document.getElementById('wlThreshold').value;
+  const threshold = thresholdRaw ? Number(thresholdRaw) : null;
+  const currentVal = currentValueFor(symbol);
+  const direction = (threshold !== null && currentVal !== null) ? (threshold >= currentVal ? 'above' : 'below') : null;
+  const list = getWatchlist().filter(x=>x.symbol!==symbol);
+  list.unshift({
+    symbol, nom: asset.nom, type: asset.type,
+    threshold, direction,
+    note: document.getElementById('wlNote').value.trim(),
+    date: new Date().toLocaleDateString('fr-FR')
+  });
+  saveWatchlist(list);
+  document.getElementById('wlThreshold').value = '';
+  document.getElementById('wlNote').value = '';
+  renderWatchlist();
+});
+safeRun('watchlist (init)', renderWatchlist);
