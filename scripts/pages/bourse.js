@@ -948,7 +948,13 @@ function renderMarketOfDay(){
   }
   const tip = document.getElementById('marketLevelTip');
   if(tip){
-    const lvl = getLevel();
+    // Corrige une fuite inter-domaines (sprint de fermeture des écarts,
+    // 04/09/2026) : lisait le palier curriculum global (getLevel()) au lieu
+    // du niveau réel du domaine Bourse — un utilisateur expert en Bourse
+    // mais jamais passé par le sélecteur de niveau global recevait un
+    // conseil "débutant" ici, contrairement au reste du site qui utilise
+    // déjà getDomainLevel (voir renderLevelTip).
+    const lvl = getDomainLevel('stockMarket');
     tip.innerHTML = `<div class="coach-panel"><span class="smallcaps">Pour toi, niveau ${BOURSE_LEVEL_LABELS[lvl] || lvl}</span><p class="coach-msg" style="margin-top:8px;">→ ${MARKET_TIPS[lvl] || MARKET_TIPS.debutant}</p></div>`;
   }
 }

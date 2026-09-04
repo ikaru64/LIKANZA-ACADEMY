@@ -652,7 +652,13 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       ? computeLivretASeries(slice.map(p => p.period), +capitalEl.value || 0, +monthlyEl.value || 0)
       : null;
 
-    const level = getLevel();
+    // Corrige une fuite inter-domaines (sprint de fermeture des écarts,
+    // 04/09/2026) : la jauge de complexité de cet onglet lisait le palier
+    // curriculum global, alors que le conseil affiché juste au-dessus sur
+    // cette même page (renderLevelTip('levelTip','personalFinance')) est
+    // déjà correctement scopé au domaine — deux signaux différents sur la
+    // même page, un seul correctement domain-aware.
+    const level = getDomainLevel('personalFinance');
     const chartSeries = [
       {data: result.investedSeries, color: 'var(--text-dim)', dashed: true, width: 1.5},
       {data: result.valueSeries, color: 'var(--gold-bright)', width: 2.5}

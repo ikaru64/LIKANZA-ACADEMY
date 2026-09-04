@@ -476,19 +476,26 @@ function getEvaluatedLevel(domainKey){
   }
 
   const stats = getQuizStats().categoryStats;
-  let correct = 0, total = 0, weightedCorrect = 0, weightedTotal = 0;
+  let correct = 0, total = 0, weightedCorrect = 0, weightedTotal = 0, lastEvidenceDate = null;
   domain.quizCategories.forEach(cat => {
     const s = stats[cat];
     if(!s) return;
     correct += s.correct; total += s.total;
     weightedCorrect += s.weightedCorrect !== undefined ? s.weightedCorrect : s.correct;
     weightedTotal += s.weightedTotal !== undefined ? s.weightedTotal : s.total;
+    // lastEvidence (sprint de fermeture des écarts, 04/09/2026) : la branche
+    // quiz-approfondi ci-dessus porte déjà une date, cette branche par
+    // activité n'en portait aucune — la plus récente bonne réponse réelle
+    // parmi les catégories du domaine (correctDates[0], le plus récent
+    // premier) sert de repli honnête, jamais une date inventée.
+    const catDate = s.correctDates && s.correctDates[0];
+    if(catDate && (!lastEvidenceDate || new Date(catDate) > new Date(lastEvidenceDate))) lastEvidenceDate = catDate;
   });
   if(total < 10) return null;
   // pct pondéré par difficulté (section 6) ; confiance basée sur le nombre
   // RÉEL de réponses (total brut), jamais gonflé par la pondération.
   const pct = Math.round((weightedCorrect / weightedTotal) * 100);
-  return {niveau: levelFromPct(pct), pct, confiance: total >= 20 ? 'moyenne' : 'faible', source: 'activité récente (Défis, cours)', correct, total};
+  return {niveau: levelFromPct(pct), pct, confiance: total >= 20 ? 'moyenne' : 'faible', source: 'activité récente (Défis, cours)', correct, total, date: lastEvidenceDate};
 }
 
 const DOMAIN_LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
@@ -1157,8 +1164,13 @@ function renderDomainDashboard(elId){
       : `<span style="color:var(--text-dim);">non déclaré</span>`;
 
     const evaluated = getEvaluatedLevel(domain.key);
+    // lastEvidence (sprint de fermeture des écarts, 04/09/2026) : evaluated.date
+    // existe maintenant sur les deux branches de getEvaluatedLevel (quiz
+    // approfondi et activité récente) — affichée ici quand elle existe,
+    // jamais une date inventée pour l'ancienne branche qui n'en portait pas.
+    const evidenceDateHtml = evaluated && evaluated.date ? ` · vérifié le ${new Date(evaluated.date).toLocaleDateString('fr-FR')}` : '';
     const evaluatedHtml = evaluated
-      ? `${DOMAIN_LEVEL_LABELS[evaluated.niveau] || evaluated.niveau} <span style="color:var(--text-dim);font-size:10px;">· confiance ${evaluated.confiance}</span>`
+      ? `${DOMAIN_LEVEL_LABELS[evaluated.niveau] || evaluated.niveau} <span style="color:var(--text-dim);font-size:10px;">· confiance ${evaluated.confiance}${evidenceDateHtml}</span>`
       : `<span style="color:var(--text-dim);">pas encore assez de données</span>`;
 
     let divergenceHtml = '';
@@ -1488,7 +1500,14 @@ function getWeakCategoryLabel(categorieOuTerme){
 function pickConseilMessage(itemNiveau, opts){
   opts = opts || {};
   const itemRank = normalizeNiveau(itemNiveau);
-  const userRank = normalizeNiveau(getLevel());
+  // Corrige une fuite inter-domaines (sprint de fermeture des écarts,
+  // 04/09/2026) : comparait auparavant TOUS les termes de la Bibliothèque,
+  // quel que soit leur domaine, au seul palier curriculum global — un
+  // utilisateur expert en Bourse mais débutant en Business recevait le même
+  // conseil de niveau sur des termes des deux domaines. opts.categorie
+  // (LIBRARY.categorie de l'appelant) résout maintenant le vrai domaine.
+  const domainKey = opts.categorie ? domainKeyForLibraryCategorie(opts.categorie) : null;
+  const userRank = normalizeNiveau(getDomainLevel(domainKey));
   if(itemRank === null || userRank === null) return null;
 
   if(opts.weakCategory){
@@ -2505,6 +2524,16 @@ function renderPourquoiToggle(elId, signals){
 // avec CHAQUE réponse donnée, dans Défis comme ailleurs sur le site. ----------
 function categorieDomainKey(categorie){
   const domain = DOMAINS.find(d => (d.quizCategories || []).includes(categorie));
+  return domain ? domain.key : null;
+}
+// Même principe que categorieDomainKey, mais depuis la catégorie propre à la
+// Bibliothèque (LIBRARY.categorie, ex. "Bourse"/"Entreprise"/"Crypto" — un
+// regroupement plus large que les catégories de quiz) plutôt qu'une
+// catégorie de quiz — réutilise DOMAINS.libraryCategories, déjà la table de
+// correspondance existante (voir INTEREST_LIBRARY_CATEGORIES), jamais une
+// deuxième table inventée.
+function domainKeyForLibraryCategorie(categorie){
+  const domain = DOMAINS.find(d => (d.libraryCategories || []).includes(categorie));
   return domain ? domain.key : null;
 }
 // pct pondéré par difficulté (section 6) ; total/correct restent des

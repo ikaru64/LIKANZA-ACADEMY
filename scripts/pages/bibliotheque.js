@@ -44,7 +44,7 @@ function renderLeafCards(container, items){
     head.addEventListener('click', () => head.closest('.kt-leaf-card').classList.toggle('open'));
   });
   items.forEach((l,i) => {
-    const conseil = pickConseilMessage(l.niveau, {weakCategory: getWeakCategoryLabel(l.categorie)});
+    const conseil = pickConseilMessage(l.niveau, {weakCategory: getWeakCategoryLabel(l.categorie), categorie: l.categorie});
     renderConseilBadge(`ktConseil-${i}`, conseil);
   });
 }
