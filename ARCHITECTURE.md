@@ -1,16 +1,26 @@
 # ARCHITECTURE.md — Likanza Academy
 
-Ce document décrit l'architecture actuelle (statique) et l'architecture
-future (avec backend) de Likanza Academy. La section marché/données financières
-en direct, plus détaillée, est traitée à part dans la dernière section.
+Ce document décrit l'architecture actuelle de Likanza Academy et ce qui reste
+à construire pour une version pleinement connectée. Mise à jour le 04/09/2026 :
+le site n'est plus purement statique — un vrai backend existe déjà pour trois
+usages précis (données de marché/macro en direct, authentification +
+synchronisation de la progression, génération des actualités), documentés
+dans la section dédiée plus bas. Tout ce qui reste décrit comme "futur" dans
+ce document (compte email/mot de passe classique, migration complète de
+`data.js` vers une base, paiements, professeur IA, newsletter) n'existe
+vraiment pas encore.
 
 ---
 
-## Version statique actuelle
+## Version statique actuelle (front-end)
 
-Likanza Academy est aujourd'hui un site **100% statique** : 13 fichiers `.html`
-autonomes (CSS et JS intégrés dans chaque page), aucun serveur applicatif,
-aucune base de données.
+Le front-end de Likanza Academy reste un site **majoritairement statique** :
+fichiers `.html` autonomes (CSS et JS intégrés dans chaque page), pas de
+framework applicatif côté serveur pour le rendu des pages. Il s'appuie
+cependant déjà sur de vraies fonctions serverless (Vercel) et une vraie base
+de données pour les usages listés dans "Ce que cette architecture ne permet
+pas" ci-dessous — voir "Focus : données de marché en direct" et "Ce qui
+existe déjà (au-delà du front statique)".
 
 ### Composants
 
@@ -39,30 +49,55 @@ aucune base de données.
 - Fonctionnement hors ligne une fois la page chargée (sauf polices Google
   Fonts).
 
-### Ce que cette architecture ne permet pas
+### Ce que cette architecture ne permet toujours pas
 
-- Aucune donnée partagée entre visiteurs (chacun a sa propre progression,
-  invisible des autres).
 - Aucune vraie sécurité de l'espace admin (le mot de passe est visible dans
   le code source, voir `README.md` section 11).
-- Aucune donnée de marché réellement en direct.
-- Aucun compte utilisateur réel, aucune synchronisation multi-appareils.
 - Aucun paiement réel possible.
+- Pas de migration des contenus manuels (`data.js` : missions, banque de
+  questions...) vers une vraie base de données — ils restent des tableaux
+  JavaScript édités à la main.
+
+### Ce qui existe déjà (au-delà du front statique)
+
+Contrairement à la version précédente de ce document, ces trois usages ne
+sont plus hypothétiques :
+
+- **Données de marché et macro en direct** — voir "Focus : données de marché
+  en direct" ci-dessous pour la liste complète des routes serverless réelles
+  (Yahoo Finance, CoinGecko, BCE, Eurostat).
+- **Compte utilisateur réel et synchronisation multi-appareils** — via une
+  application d'authentification séparée (Google OAuth, `likanza-auth.vercel.app`)
+  et l'endpoint `/api/progress` (voir `docs/likanza-continuity.md` §1 et
+  `legal.html#confidentialite` pour le détail de ce qui est synchronisé).
+  Cette progression est bien partagée entre appareils pour un même compte —
+  seule la progression entre visiteurs distincts reste invisible les uns des
+  autres, comme avant.
+- **Génération des actualités** — stockée dans une vraie base (Postgres/Neon),
+  régénérée périodiquement, distincte de la base de données applicative
+  complète décrite comme future ci-dessous (comptes, FinPoints, badges, cours,
+  banque de questions restent dans `data.js`/`localStorage`).
 
 ---
 
 ## Version future avec backend
 
-Passer à une version connectée nécessiterait, dans les grandes lignes :
+Le reste de cette section décrit ce qui manque encore pour une version
+pleinement connectée. L'authentification via fournisseur OAuth (Google) et
+la synchronisation de la progression sont déjà réelles (voir "Ce qui existe
+déjà" plus haut) — ce qui suit reste vrai pour tout le reste (espace admin,
+comptes email/mot de passe classiques, migration complète des données).
 
 ### Authentification
 
 - Un service d'authentification réel (ex. e-mail + mot de passe haché avec
-  bcrypt/argon2, ou fournisseur OAuth).
+  bcrypt/argon2, ou fournisseur OAuth — déjà en place pour Google, voir
+  ci-dessus).
 - Des sessions sécurisées (cookies HttpOnly + Secure, ou JWT à courte durée
   de vie avec rotation).
 - Une protection des routes d'administration côté serveur (jamais seulement
-  côté client).
+  côté client — reste à faire, voir "Ce que cette architecture ne permet
+  toujours pas").
 
 ### Base de données
 
@@ -131,13 +166,29 @@ backend Likanza Academy, seul dépositaire des clés (en variables d'environneme
 Navigateur (Likanza Academy) → Backend Likanza Academy → Fournisseurs de données
 ```
 
-Une première implémentation minimale de ce principe existe : la fonction
-serverless Vercel `api/quotes.js` alimente le bandeau de marché (indices,
-matières premières, crypto) en données différées, avec cache CDN de 5 minutes
-et repli automatique sur les valeurs `LAST_CLOSE` de `scripts/app.js` si un
-fournisseur est injoignable. Elle n'utilise aucune clé API (endpoints publics
-gratuits uniquement) — brancher un fournisseur sous contrat (Twelve Data, etc.)
-se fera dans cette même fonction, avec la clé en variable d'environnement.
+Ce principe est déjà appliqué par plusieurs fonctions serverless Vercel
+réelles, pas seulement une implémentation minimale :
+
+- `api/quotes.js` — bandeau de marché (indices, matières premières, crypto),
+  Yahoo Finance + CoinGecko, cache CDN 5 minutes, repli sur les valeurs
+  `LAST_CLOSE` de `scripts/app.js` si un fournisseur est injoignable.
+- `api/stock-quotes.js` — cours des valeurs vedettes affichées par défaut sur
+  la page Bourse.
+- `api/custom-quotes.js` — cours des tickers ajoutés par recherche libre
+  (jusqu'à 20).
+- `api/company-profile.js` / `api/etf-profile.js` — fondamentaux réels (PER,
+  rendement du dividende, ROE, marges, capitalisation, prévisions
+  d'analystes, historiques), Yahoo Finance `quoteSummary`, cache 6h/24h ; un
+  champ absent reste `null`, jamais une valeur inventée.
+- `api/eco-rate.js` — indicateurs macro (taux BCE, inflation/chômage/PIB/dette
+  publique Eurostat), cache 6h/24h, retourne une erreur explicite (502) en
+  cas d'échec plutôt qu'une valeur approchée.
+- `api/stock-search.js` — recherche de tickers.
+
+Aucune de ces routes n'utilise de clé API payante à ce jour (endpoints
+publics gratuits uniquement) — brancher un fournisseur sous contrat (Twelve
+Data, etc.) se ferait dans ces mêmes fonctions, avec la clé en variable
+d'environnement.
 
 Voir `DATA_PROVIDERS.md` pour la liste des fournisseurs envisagés (actions,
 indices, crypto, devises, matières premières, actualités) avec leurs
@@ -208,6 +259,11 @@ LOG_LEVEL=info
 7. N'introduire un système de paiement qu'une fois tout le reste audité et
    stable.
 
-Tant que ces étapes ne sont pas réalisées, Likanza Academy doit rester présenté
-comme une démonstration statique, sans jamais prétendre à une sécurité ou une
-donnée temps réel qu'il ne peut pas réellement fournir.
+Les étapes ci-dessus restent à faire pour le reste de l'application (comptes
+email/mot de passe, migration complète de `data.js`, paiements). Elles ne
+concernent plus les données de marché/macro en direct ni la synchronisation
+de compte, déjà réelles (voir "Ce qui existe déjà" plus haut) — mais tant que
+l'espace admin et le reste de ces étapes ne sont pas réalisés, Likanza
+Academy doit continuer à présenter honnêtement ce qui est réellement
+sécurisé ou synchronisé, sans jamais prétendre à plus que ce que le code
+fournit réellement.

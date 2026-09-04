@@ -102,8 +102,9 @@
 
   <div class="legal-section" id="confidentialite">
     <h3>Politique de confidentialité</h3>
-    <p>Dans cette version statique, aucune donnée personnelle n'est transmise à un serveur : le niveau choisi, la progression, les favoris et les brouillons sont stockés uniquement dans le navigateur de chaque visiteur, via le stockage local de l'appareil.</p>
-    <p>Aucune donnée n'est partagée avec des tiers, car aucune donnée n'est actuellement collectée côté serveur.</p>
+    <p>Tant que tu ne connectes pas de compte, Likanza Academy ne transmet aucune donnée personnelle à un serveur : ton niveau, ta progression, tes favoris et toutes tes données financières restent uniquement dans le stockage local de ton navigateur, sur cet appareil.</p>
+    <p>Si tu choisis de te connecter avec un compte Google, la connexion passe par une application d'authentification séparée (likanza-auth.vercel.app). Une fois connecté, ton nom, ton adresse e-mail et ta photo de profil transmis par Google sont conservés dans ton navigateur, et un instantané de ta progression est envoyé à cette application pour que tu puisses la retrouver sur un autre appareil : niveau et objectifs, quiz et compétences, projets de vie, données financières que tu as renseignées (budget, patrimoine, dettes, portefeuille suivi) et ta liste de suivi. Cette synchronisation ne fusionne jamais tes données champ par champ : à chaque connexion, l'état le plus récent (local ou distant) remplace l'autre.</p>
+    <p>Aucune donnée n'est partagée avec un tiers autre que cette application d'authentification, strictement nécessaire au fonctionnement de la connexion. Sans compte connecté, cette section ne s'applique pas : le site fonctionne alors entièrement en local, comme décrit au premier paragraphe.</p>
   </div>
 
   <div class="legal-section" id="cookies">
@@ -118,7 +119,14 @@
 
   <div class="legal-section" id="sources">
     <h3>Sources et méthodologie</h3>
-    <p>Les résumés d'actualité sont rédigés avec des mots originaux à partir de sources identifiées, elles-mêmes citées avec un lien vers l'article d'origine. Les cotations de marché indiquent leur source et leur date de mise à jour. Les fiches actions et le comparateur de la section Bourse utilisent des données fictives de démonstration, clairement signalées.</p>
+    <p><span class="smallcaps">Marchés</span><br>Le bandeau de marché (indices, matières premières, crypto) et les cotations de la section Bourse proviennent de Yahoo Finance et de CoinGecko, avec un délai annoncé sur chaque fiche (environ 15 minutes pour les actions, 5 minutes pour les cryptomonnaies) — jamais présentées comme du temps réel. Si la récupération échoue, le site l'indique et retombe sur une dernière valeur connue, datée.</p>
+    <p><span class="smallcaps">Actions, fondamentaux &amp; dividendes</span><br>Les fiches actions détaillées (cours, PER, rendement du dividende, rentabilité des capitaux propres, marges, capitalisation, prévisions d'analystes, historique de résultats) viennent de Yahoo Finance en temps différé. Un champ manquant ou indisponible reste vide plutôt que d'être estimé ou inventé. Seules quelques informations de repère (secteur, pays, éligibilité PEA) sont renseignées manuellement.</p>
+    <p><span class="smallcaps">Actualités</span><br>Les résumés d'actualité sont rédigés avec des mots originaux à partir de sources identifiées, elles-mêmes citées avec un lien vers l'article d'origine, puis stockés et rafraîchis périodiquement.</p>
+    <p><span class="smallcaps">Macro (Économie)</span><br>Les indicateurs de la section Économie (taux directeur, inflation, chômage, croissance, dette publique) proviennent de la Banque centrale européenne et d'Eurostat. En cas d'échec de récupération, le site affiche une erreur explicite plutôt qu'une valeur approchée.</p>
+    <p><span class="smallcaps">Business</span><br>Les outils de la section Business (profils d'entreprise, analyse guidée) réutilisent les mêmes données réelles que la section Actions lorsqu'ils affichent des chiffres d'une entreprise cotée. Les jeux de simulation (Business Game, cas d'entreprise) restent des exercices pédagogiques.</p>
+    <p><span class="smallcaps">Crypto</span><br>Les cours affichés sur la page Crypto viennent du même bandeau de marché que ci-dessus (CoinGecko, différé) ; le glossaire et les outils pédagogiques de la page restent des contenus de démonstration.</p>
+    <p><span class="smallcaps">Simulations &amp; Paper Trading</span><br>Les calculateurs du Laboratoire, le Business Game et le Portfolio Game sont des exercices pédagogiques : leurs résultats sont mécaniques (calculés à partir de ce que tu saisis), jamais un conseil réel. Le Paper Trading utilise un capital entièrement fictif, mais exécute chaque ordre au vrai cours du moment fourni par Yahoo Finance — jamais un carnet d'ordres ni un spread modélisé.</p>
+    <p><span class="smallcaps">Données utilisateur</span><br>Voir la section Confidentialité ci-dessus pour le détail de ce qui reste local et de ce qui est synchronisé lorsqu'un compte est connecté.</p>
   </div>
 
   <div class="legal-section" id="risques">
@@ -139,7 +147,7 @@
 
   <div class="legal-section" id="contact">
     <h3>Contact</h3>
-    <p>Pour toute question sur le contenu de Likanza Academy, un formulaire ou une adresse de contact sera ajouté lors du passage à une version connectée à un vrai back-end.</p>
+    <p>Aucun formulaire ni adresse de contact public n'existe encore pour Likanza Academy — un moyen de nous contacter sera ajouté avant toute mise en ligne publique définitive, au même titre que l'identité complète de l'éditeur (voir Mentions légales ci-dessus).</p>
   </div>
 </section>
 
