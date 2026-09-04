@@ -81,6 +81,28 @@
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Formations</div>
 <h1 class="visually-hidden">Formations</h1>
 
+<section class="section" style="padding-bottom:0;">
+  <div class="level-box">
+    <div>
+      <h3 class="display" style="font-size:22px;font-weight:600;margin-bottom:4px;">Quel est ton niveau ?</h3>
+      <p style="font-size:13.5px;color:var(--text-dim);">Choisis directement, ou lance le test rapide ci-dessous. Mémorisé sur cet appareil.</p>
+    </div>
+    <div class="level-pills" style="display:flex;gap:8px;flex-wrap:wrap;">
+      <button class="pill" data-lvl="debutant">Débutant</button>
+      <button class="pill" data-lvl="intermediaire">Intermédiaire</button>
+      <button class="pill" data-lvl="avance">Avancé</button>
+      <button class="pill" data-lvl="expert">Expert</button>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="section-head"><h2>Parcours actuel · <span id="levelLabel"></span></h2><span class="meta-line" id="progressLabel"></span></div>
+  <div id="formationsConseil" style="margin-bottom:14px;"></div>
+  <div id="levelCompleteBanner" style="margin-bottom:14px;"></div>
+  <div id="courseList"></div>
+</section>
+
 <section class="section">
   <div class="section-head"><h2>Parcours guidés</h2><span class="meta-line">une séquence de cours pensée pour un objectif ou un métier</span></div>
   <div class="mode-toggle" id="parcoursTypeToggle" style="margin-bottom:14px;">
