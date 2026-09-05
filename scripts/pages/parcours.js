@@ -339,7 +339,7 @@ function renderCockpitDonut(elId){
     </div>
     <div class="cockpit-donut-legend" id="${elId}-legend">
       ${segs.map(s => `
-        <button type="button" class="cockpit-donut-legend-row" data-key="${s.key}">
+        <button type="button" class="cockpit-donut-legend-row ${s.key === cockpitAccountsFilter ? 'active' : ''}" data-key="${s.key}">
           <span class="cockpit-donut-legend-dot" style="background:${s.color};"></span>
           <span class="cockpit-donut-legend-label">${s.label}</span>
           <span class="cockpit-donut-legend-value mono">${fmtEUR(s.value)} · ${Math.round(s.pct)} %</span>
@@ -505,7 +505,35 @@ function initCockpitProjectionModal(){
   dialog.addEventListener('close', () => { if(cockpitProjectionLastFocus && cockpitProjectionLastFocus.focus) cockpitProjectionLastFocus.focus(); });
 }
 
+// ============================================================
+// Synchronisation thème clair/sombre (Phase 8) — Chart.js lit les couleurs
+// une seule fois à la construction (cockpitCSSVar) : sans ce câblage, un
+// changement de thème après coup laisserait les graphiques dans les
+// anciennes couleurs. N'ajoute PAS de logique dans initTheme (data.js,
+// partagée par tout le site) — un 2e écouteur sur le même bouton, réservé
+// à cette page, reconstruit simplement les graphiques avec les nouvelles
+// variables CSS. setTimeout(...,0) : le clic déclenche AUSSI le
+// gestionnaire de initTheme sur le même événement — celui-ci doit avoir
+// fini d'appliquer le nouvel attribut data-theme avant qu'on relise les
+// couleurs, d'où le report d'un tick.
+function initCockpitThemeSync(){
+  const themeBtn = document.getElementById('themeToggle');
+  if(!themeBtn) return;
+  themeBtn.addEventListener('click', () => {
+    setTimeout(() => {
+      const savedView = cockpitActiveView;
+      const savedFilter = cockpitAccountsFilter;
+      renderCockpitChart('cockpitChart');
+      setCockpitView(savedView);
+      cockpitAccountsFilter = savedFilter;
+      renderCockpitDonut('cockpitSide-donut');
+      renderCockpitAccounts('cockpitSide-accounts');
+    }, 0);
+  });
+}
+
 initCockpitProjectionModal();
+initCockpitThemeSync();
 initParcoursHero();
 
 // Profil de simulation (âge/épargne/horizon/risque/objectif — pré-remplit
