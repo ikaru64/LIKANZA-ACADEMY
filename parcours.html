@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="styles/design-system.css">
 <link rel="stylesheet" href="styles/pages/parcours.css">
 </head>
-<body class="has-bottom-nav">
+<body class="has-bottom-nav cockpit-page">
 <aside class="app-sidebar" aria-label="Navigation principale">
   <a href="index.html" class="sidebar-brand"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
@@ -96,12 +96,14 @@
     <div class="cockpit-kpis" id="cockpitKPIs"></div>
     <div class="cockpit-chart" id="cockpitChart"></div>
     <div class="cockpit-side" id="cockpitSide"></div>
+    <div class="cockpit-panels-row" id="cockpitPanelsRow"></div>
   </div>
 
   <div class="wrap" style="padding:24px 24px 52px;">
     <details class="learning-suite-collapse">
       <summary class="section-head collapse-trigger" style="cursor:pointer;list-style:none;"><h2>Suite de l'apprentissage</h2><span class="meta-line">missions, révisions, progression, parcours guidés...</span></summary>
       <div id="dashboardHeader" style="margin-top:14px;"></div>
+      <div class="card" id="cockpitHealthScore" style="margin-bottom:16px;"></div>
       <div id="dashboardShell"></div>
     </details>
   </div>
@@ -120,6 +122,18 @@
       <button type="button" class="btn btn-sm" id="cpCloseBtn">Fermer</button>
     </div>
   </dialog>
+
+  <div class="cockpit-drawer-backdrop" id="onboardingDrawerBackdrop" hidden></div>
+  <aside class="cockpit-drawer" id="onboardingDrawer" aria-label="Configurer mes finances" hidden>
+    <div class="cockpit-drawer-head">
+      <div>
+        <span class="panel-title">Configurer mes finances</span>
+        <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-top:4px;">Quelques minutes suffisent</h3>
+      </div>
+      <button type="button" class="icon-btn" id="onboardingDrawerClose" aria-label="Fermer">✕</button>
+    </div>
+    <div class="cockpit-drawer-body" id="onboardingDrawerBody"></div>
+  </aside>
 </section>
 
 <section class="section" style="padding-top:0;">

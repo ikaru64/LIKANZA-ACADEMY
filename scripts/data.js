@@ -561,10 +561,12 @@ function renderNetWorthDashboardWidget(elId){
     <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Voir le détail →</a>`;
 }
 const GOAL_STATUS_META = {atteint: {emoji: '🏆', label: 'Atteint'}, ontrack: {emoji: '🟢', label: 'Dans les temps'}, atrisk: {emoji: '🟠', label: 'À risque'}, impossible: {emoji: '🔴', label: "Hors d'atteinte au rythme actuel"}};
-function renderGoalsDashboardWidget(elId){
+// goalsOverride optionnel (cockpit v2, 05/09/2026) : mode Aperçu/Démo,
+// même motif que computeCockpitKPIs ci-dessus.
+function renderGoalsDashboardWidget(elId, goalsOverride){
   const el = document.getElementById(elId);
   if(!el) return;
-  const goals = getFinancialGoals();
+  const goals = goalsOverride || getFinancialGoals();
   if(goals.length === 0){
     el.innerHTML = `
       <span class="smallcaps">🎯 Mes Objectifs</span>
@@ -976,10 +978,12 @@ function renderBusinessAlertsDashboardWidget(elId){
     </div>
     <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;">Voir le Business Lab →</a>`;
 }
-function renderLifeProjectsDashboardWidget(elId){
+// projectsOverride optionnel (cockpit v2, 05/09/2026) : mode Aperçu/Démo,
+// même motif que ci-dessus.
+function renderLifeProjectsDashboardWidget(elId, projectsOverride){
   const el = document.getElementById(elId);
   if(!el) return;
-  const projects = getLifeProjects();
+  const projects = projectsOverride || getLifeProjects();
   if(projects.length === 0){
     el.innerHTML = `
       <span class="smallcaps">🗺️ Mes Projets de vie</span>
@@ -9768,8 +9772,13 @@ const NET_WORTH_CATEGORY_COLORS = {
   cto: '#D9BC7C', crypto: '#8B6FB0', actions: '#7FA6C9', immobilier: '#C9A66B',
   vehicule: '#8C8C8C', autre: '#5A5C57'
 };
-function getWealthAllocationSegments(){
-  const net = computeNetWorth(getNetWorthAssets(), getPersonalDebts());
+// assetsOverride/debtsOverride ajoutés (cockpit v2, 05/09/2026) : optionnels,
+// rétrocompatibles — permettent au mode Aperçu/Démo du cockpit (aucune
+// vraie donnée saisie) de réutiliser cette même fonction sur un jeu de
+// données d'exemple explicitement labellisé, sans jamais écrire ce jeu
+// d'exemple dans le vrai localStorage de l'utilisateur.
+function getWealthAllocationSegments(assetsOverride, debtsOverride){
+  const net = computeNetWorth(assetsOverride || getNetWorthAssets(), debtsOverride || getPersonalDebts());
   const total = net.totalActifs;
   if(total <= 0) return [];
   return NET_WORTH_ASSET_CATEGORIES
@@ -9781,11 +9790,13 @@ function getWealthAllocationSegments(){
 // Composition légère des 5 KPI du cockpit — un seul point de calcul
 // (computeNetWorth + computeBudgetSummary), pas 5 recalculs dispersés dans
 // le rendu de chaque carte.
-function computeCockpitKPIs(){
-  const assets = getNetWorthAssets();
-  const debts = getPersonalDebts();
+// Overrides optionnels — voir getWealthAllocationSegments ci-dessus (même
+// motif, même raison : mode Aperçu/Démo du cockpit).
+function computeCockpitKPIs(assetsOverride, debtsOverride, budgetEntriesOverride){
+  const assets = assetsOverride || getNetWorthAssets();
+  const debts = debtsOverride || getPersonalDebts();
   const net = computeNetWorth(assets, debts);
-  const budgetSummary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+  const budgetSummary = computeBudgetSummary(budgetEntriesOverride || getBudgetEntries(), currentMonthKey());
   return {
     patrimoineNet: net.patrimoineNet,
     liquidites: net.parCategorie.cash || 0,
@@ -9804,11 +9815,12 @@ function computeCockpitKPIs(){
 // (data.js, "Aujourd'hui/1/3/5/10 ans") plutôt qu'un chiffre "déjà perçu"
 // qui n'existe nulle part. Isole la part "rendement" de la croissance à 1 an
 // (hors les versements eux-mêmes) pour obtenir un ordre de grandeur mensuel.
-function computeCapitalIncomeEstimate(){
-  const assets = getNetWorthAssets();
-  const debts = getPersonalDebts();
+// Overrides optionnels — même motif que ci-dessus (mode Aperçu/Démo).
+function computeCapitalIncomeEstimate(assetsOverride, debtsOverride, budgetEntriesOverride){
+  const assets = assetsOverride || getNetWorthAssets();
+  const debts = debtsOverride || getPersonalDebts();
   const patrimoineInitial = computeNetWorth(assets, debts).patrimoineNet;
-  const budgetSummary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+  const budgetSummary = computeBudgetSummary(budgetEntriesOverride || getBudgetEntries(), currentMonthKey());
   const epargneMensuelle = Math.max(0, budgetSummary.solde || 0);
   if(patrimoineInitial <= 0) return null;
   const scenarios = computeWealthProjectionScenarios({patrimoineInitial, epargneMensuelle, inflationPct: 0, augmentationAnnuellePct: 0});
