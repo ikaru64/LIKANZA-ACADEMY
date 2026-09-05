@@ -264,9 +264,13 @@ function renderGuideBlock(bloc, index, guide){
 // construire une carte (section 64, performance).
 
 // ---------- Rendu complet d'une page Guide : réutilise
-// renderCourseLibraryLinks (Bibliothèque), renderMethodologyPanel (sources &
-// méthodologie), renderGuideSources (bibliographie) — jamais un doublon de
-// ces composants déjà réels. ----------
+// renderCourseLibraryLinks (Bibliothèque), renderRelatedCourseLink (Cours,
+// data.js — ferme l'étape "Cours" de la Boucle Likanza appliquée aux Guides),
+// renderMethodologyPanel (sources & méthodologie), renderGuideSources
+// (bibliographie) — jamais un doublon de ces composants déjà réels.
+// guide.relatedCourse est optionnel ({id, chapitre}) : silencieux si absent
+// ou si l'id/le chapitre ne correspond à rien de réel dans COURS_CATALOG
+// (même discipline que renderRelatedCourseLink lui-même). ----------
 function renderGuidePage(elId, guide){
   const el = document.getElementById(elId);
   if(!el || !guide) return;
@@ -282,6 +286,7 @@ function renderGuidePage(elId, guide){
     <div style="max-width:720px;margin:24px auto 0;">
       ${sectionsHtml}
       ${renderCourseLibraryLinks(validConcepts)}
+      ${guide.relatedCourse ? renderRelatedCourseLink(guide.relatedCourse.id, guide.relatedCourse.chapitre) : ''}
       ${renderMethodologyPanel(guide.methodology)}
       ${renderGuideSources(guide.sources)}
     </div>`;
