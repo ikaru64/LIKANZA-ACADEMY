@@ -94,9 +94,7 @@
   <div class="cockpit wrap" id="cockpit">
     <div class="cockpit-header" id="cockpitHeader"></div>
     <div class="cockpit-kpis" id="cockpitKPIs"></div>
-    <div class="cockpit-chart" id="cockpitChart">
-      <!-- Phase 5 : graphique combiné (Chart.js) -->
-    </div>
+    <div class="cockpit-chart" id="cockpitChart"></div>
     <div class="cockpit-side" id="cockpitSide">
       <!-- Phases 6-7 : donut, comptes, objectifs, allocation, revenus, score, insights -->
     </div>
@@ -130,6 +128,12 @@
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/historical-data.js"></script>
+<!-- Chart.js — seule librairie externe du site, réservée à cette page :
+     aucune fonction de graphique existante (renderMultiLineChart en SVG
+     maison, renderPieChart en CSS conic-gradient) ne gère de vraie
+     interactivité au survol, nécessaire pour le graphique combiné et le
+     donut du cockpit. Version figée + intégrité vérifiée, pas @latest. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="scripts/pages/parcours.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">

@@ -38,6 +38,7 @@ function initParcoursHero(){
   renderDashboardShell('dashboardShell');
   renderCockpitHeader('cockpitHeader');
   renderCockpitKPIs('cockpitKPIs');
+  renderCockpitChart('cockpitChart');
 }
 
 // ============================================================
@@ -73,11 +74,24 @@ function renderCockpitHeader(elId){
     </div>`;
 }
 
-// Vue active du futur graphique combiné (câblée en Phase 5) — les clics KPI
-// mettent déjà à jour cet état et l'affichage "actif", prêts à piloter le
-// changement d'onglet du graphique une fois celui-ci construit.
+// Vue active partagée entre les KPI et les onglets du graphique combiné
+// (Phase 5) : un seul état, deux points d'entrée (clic KPI ou clic onglet),
+// setCockpitView synchronise les deux et met à jour le graphique.
+// 'liquidites' pointe vers 'global' (aucun onglet dédié aux liquidités
+// seules dans le graphique — GLOBAL/ÉPARGNE/INVESTISSEMENTS/REVENUS
+// seulement), jamais un onglet fabriqué pour combler l'écart.
 let cockpitActiveView = 'global';
-const COCKPIT_KPI_VIEWS = {patrimoine: 'global', liquidites: 'epargne', epargne: 'epargne', investissements: 'investissements', solde: 'revenus'};
+const COCKPIT_KPI_VIEWS = {patrimoine: 'global', liquidites: 'global', epargne: 'epargne', investissements: 'investissements', solde: 'revenus'};
+function setCockpitView(view){
+  cockpitActiveView = view;
+  document.querySelectorAll('.cockpit-kpi').forEach(btn => {
+    btn.classList.toggle('active', (COCKPIT_KPI_VIEWS[btn.dataset.key] || 'global') === view);
+  });
+  document.querySelectorAll('.cockpit-chart-tab').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.view === view);
+  });
+  updateCockpitChartView(view);
+}
 function renderCockpitKPIs(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -100,10 +114,173 @@ function renderCockpitKPIs(elId){
     animateNumber(document.getElementById(`${elId}-${c.key}-value`), c.value, {format: fmtEUR});
   });
   el.querySelectorAll('.cockpit-kpi').forEach(btn => {
-    btn.addEventListener('click', () => {
-      el.querySelectorAll('.cockpit-kpi').forEach(b => b.classList.toggle('active', b === btn));
-      cockpitActiveView = COCKPIT_KPI_VIEWS[btn.dataset.key] || 'global';
+    btn.addEventListener('click', () => setCockpitView(COCKPIT_KPI_VIEWS[btn.dataset.key] || 'global'));
+  });
+}
+
+// ============================================================
+// Graphique combiné "Évolution du patrimoine" (Phase 5) — Chart.js, seule
+// librairie externe du site (justifiée : aucune fonction de graphique
+// existante ne gère de vraie interactivité au survol). Barres empilées
+// (liquidités/épargne/investissements/autres) + courbe dorée (total réel).
+// Enregistre lui-même un point d'historique catégorisé au chargement (même
+// garde-fou idempotent qu'dans laboratoire.js), pour que l'historique
+// s'alimente même si l'utilisateur ne visite jamais le Laboratoire.
+// ============================================================
+const COCKPIT_CHART_RANGES = [
+  {key:'6m', label:'6 mois', months:6}, {key:'1a', label:'1 an', months:12},
+  {key:'2a', label:'2 ans', months:24}, {key:'5a', label:'5 ans', months:60},
+  {key:'tout', label:'Toutes les enveloppes', months:null}
+];
+let cockpitChartRangeKey = 'tout';
+let cockpitChartInstance = null;
+function cockpitCSSVar(name){
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+function cockpitChartDatasets(series){
+  const gold = cockpitCSSVar('--gold-bright') || '#D9BC7C';
+  const emerald = cockpitCSSVar('--emerald') || '#4E9177';
+  const blue = '#438BFF';
+  const grey = cockpitCSSVar('--text-dim') || '#9B968C';
+  return [
+    {key: 'liquidites', type: 'bar', label: 'Liquidités', data: series.liquidites, backgroundColor: grey, stack: 'patrimoine'},
+    {key: 'epargne', type: 'bar', label: 'Épargne', data: series.epargne, backgroundColor: emerald, stack: 'patrimoine'},
+    {key: 'investissements', type: 'bar', label: 'Investissements', data: series.investissements, backgroundColor: blue, stack: 'patrimoine'},
+    {key: 'autres', type: 'bar', label: 'Autres (immobilier, véhicule...)', data: series.autres, backgroundColor: 'rgba(155,150,140,0.35)', stack: 'patrimoine'},
+    {key: 'total', type: 'line', label: 'Patrimoine total', data: series.total, borderColor: gold, backgroundColor: gold, borderWidth: 2.5, pointRadius: 2, tension: 0.15, yAxisID: 'y'}
+  ];
+}
+// Filtre honnête par onglet : GLOBAL montre tout ; ÉPARGNE/INVESTISSEMENTS
+// n'estompent (opacité réduite) que les autres barres — jamais masquées
+// silencieusement, l'utilisateur voit toujours que la donnée existe.
+function cockpitDatasetOpacity(key, view){
+  if(view === 'global' || key === 'total') return 1;
+  if(view === 'epargne') return key === 'epargne' ? 1 : 0.15;
+  if(view === 'investissements') return key === 'investissements' ? 1 : 0.15;
+  return 1;
+}
+function updateCockpitChartView(view){
+  const revenusEl = document.getElementById('cockpitChart-revenus');
+  const canvasWrap = document.getElementById('cockpitChart-canvas-wrap');
+  if(!revenusEl || !canvasWrap) return;
+  if(view === 'revenus'){
+    canvasWrap.style.display = 'none';
+    revenusEl.style.display = '';
+    renderCockpitRevenusPanel('cockpitChart-revenus');
+    return;
+  }
+  canvasWrap.style.display = '';
+  revenusEl.style.display = 'none';
+  if(!cockpitChartInstance) return;
+  cockpitChartInstance.data.datasets.forEach((ds, i) => {
+    const key = cockpitChartInstance.data.datasetKeys[i];
+    const opacity = cockpitDatasetOpacity(key, view);
+    if(ds.type === 'bar') ds.backgroundColor = cockpitApplyOpacity(ds._baseColor || ds.backgroundColor, opacity, ds);
+  });
+  cockpitChartInstance.update();
+}
+function cockpitApplyOpacity(baseColor, opacity, ds){
+  if(!ds._baseColor) ds._baseColor = baseColor;
+  const base = ds._baseColor;
+  if(base.startsWith('rgba')) return base.replace(/[\d.]+\)$/, opacity + ')');
+  if(base.startsWith('#')){
+    const r = parseInt(base.slice(1,3),16), g = parseInt(base.slice(3,5),16), b = parseInt(base.slice(5,7),16);
+    return `rgba(${r},${g},${b},${opacity})`;
+  }
+  return base;
+}
+function renderCockpitRevenusPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const est = computeCapitalIncomeEstimate();
+  if(!est){
+    el.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Renseigne ton patrimoine pour voir apparaître une estimation ici.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps" style="color:var(--gold-bright);">Revenus de capital estimés</span>
+    <div class="result-big" style="font-size:28px;margin-top:8px;">${fmtEUR(est.monthlyEstimate)} <span style="font-size:13px;color:var(--text-dim);font-weight:400;">/ mois</span></div>
+    <p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${fmtEUR(est.annualEstimate)} / an, SCÉNARIO CENTRAL (${est.ratePct} % de rendement annuel supposé).</p>
+    <p class="disclaimer-box" style="margin-top:10px;">Aucun suivi réel de dividendes/intérêts perçus n'existe encore sur Likanza — ceci est une estimation basée sur ton patrimoine actuel et le même moteur de scénario que "Mon Futur", jamais un montant déjà perçu.</p>`;
+}
+function renderCockpitChart(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const assets = getNetWorthAssets();
+  const debts = getPersonalDebts();
+  const net = computeNetWorth(assets, debts);
+  // Écrit lui-même un point d'historique catégorisé (même garde-fou
+  // idempotent que laboratoire.js) — l'historique s'alimente même si
+  // l'utilisateur ne visite jamais le Laboratoire.
+  if(assets.length > 0 || debts.length > 0){
+    recordNetWorthSnapshot(currentMonthKey(), net.patrimoineNet, net.parCategorie);
+  }
+  const fullHistory = getNetWorthHistory();
+  if(fullHistory.length === 0){
+    el.innerHTML = `
+      <span class="smallcaps">Évolution du patrimoine</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:12px;">Renseigne ton patrimoine (actifs/dettes) pour voir apparaître son évolution ici.</p>
+      <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;align-self:flex-start;">Renseigner mes finances →</a>`;
+    return;
+  }
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <span class="smallcaps">Évolution du patrimoine</span>
+      <div class="mode-toggle">
+        <button class="pill cockpit-chart-tab active" data-view="global">GLOBAL</button>
+        <button class="pill cockpit-chart-tab" data-view="epargne">ÉPARGNE</button>
+        <button class="pill cockpit-chart-tab" data-view="investissements">INVESTISSEMENTS</button>
+        <button class="pill cockpit-chart-tab" data-view="revenus">REVENUS</button>
+      </div>
+    </div>
+    <select id="cockpitChartRange" style="margin-top:10px;max-width:200px;">
+      ${COCKPIT_CHART_RANGES.map(r => `<option value="${r.key}" ${r.key === cockpitChartRangeKey ? 'selected' : ''}>${r.label}</option>`).join('')}
+    </select>
+    <div id="cockpitChart-canvas-wrap" style="position:relative;flex:1;margin-top:14px;min-height:220px;">
+      <canvas id="cockpitChartCanvas"></canvas>
+    </div>
+    <div id="cockpitChart-revenus" class="cockpit-panel" style="display:none;margin-top:14px;"></div>`;
+
+  function buildOrUpdateChart(){
+    const range = COCKPIT_CHART_RANGES.find(r => r.key === cockpitChartRangeKey) || COCKPIT_CHART_RANGES[COCKPIT_CHART_RANGES.length - 1];
+    const sliced = range.months ? fullHistory.slice(-range.months) : fullHistory;
+    const series = buildWealthEvolutionSeries(sliced);
+    const datasets = cockpitChartDatasets(series);
+    const canvas = document.getElementById('cockpitChartCanvas');
+    if(!canvas || typeof Chart === 'undefined') return;
+    if(cockpitChartInstance) cockpitChartInstance.destroy();
+    const hairline = cockpitCSSVar('--hairline') || 'rgba(184,151,78,0.22)';
+    const textDim = cockpitCSSVar('--text-dim') || '#9B968C';
+    cockpitChartInstance = new Chart(canvas.getContext('2d'), {
+      data: {labels: series.labels, datasets: datasets.map(({key, ...d}) => d)},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: {mode: 'index', intersect: false},
+        scales: {
+          x: {stacked: true, grid: {color: hairline}, ticks: {color: textDim, font: {family: "'IBM Plex Mono', monospace", size: 10.5}}},
+          y: {stacked: true, grid: {color: hairline}, ticks: {color: textDim, callback: v => fmtEUR(v)}}
+        },
+        plugins: {
+          legend: {labels: {color: textDim, boxWidth: 10, font: {size: 11}}},
+          tooltip: {
+            callbacks: {
+              label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y === null ? 'donnée non disponible' : fmtEUR(ctx.parsed.y)}`
+            }
+          }
+        }
+      }
     });
+    cockpitChartInstance.data.datasetKeys = datasets.map(d => d.key);
+    updateCockpitChartView(cockpitActiveView);
+  }
+  buildOrUpdateChart();
+
+  document.getElementById('cockpitChartRange').addEventListener('change', e => {
+    cockpitChartRangeKey = e.target.value;
+    buildOrUpdateChart();
+  });
+  el.querySelectorAll('.cockpit-chart-tab').forEach(btn => {
+    btn.addEventListener('click', () => setCockpitView(btn.dataset.view));
   });
 }
 
