@@ -9163,12 +9163,32 @@ const LIFE_PROJECT_HORIZONS = [
   {value:'plus-tard', label:'Plus tard'},
   {value:'inconnu', label:'Je ne sais pas encore'}
 ];
+// Priorité, statut, notes libres et simulations liées (sprint de fermeture
+// des écarts, 04/09/2026, section "PROJETS" du prompt d'origine) : complète
+// le modèle réel existant plutôt que de le remplacer — les 7 vraies
+// catégories françaises restent la source de vérité du "type", jamais
+// renommées vers la taxonomie anglaise du prompt d'origine (casserait les
+// projets déjà enregistrés sans bénéfice réel). Tous optionnels à la
+// création, rétrocompatibles : un projet créé avant cette phase n'a
+// simplement pas ces champs tant qu'ils ne sont pas explicitement définis.
+const LIFE_PROJECT_PRIORITIES = [
+  {value:'haute', label:'Haute'},
+  {value:'moyenne', label:'Moyenne'},
+  {value:'basse', label:'Basse'}
+];
+const LIFE_PROJECT_STATUSES = [
+  {value:'actif', label:'Actif'},
+  {value:'en-pause', label:'En pause'},
+  {value:'termine', label:'Terminé'},
+  {value:'abandonne', label:'Abandonné'}
+];
 function saveLifeProject(project){
   if(!project || typeof project.nom !== 'string' || !project.nom.trim()) return null;
   if(!LIFE_PROJECT_CATEGORIES.includes(project.categorie)) return null;
   if(!(project.budgetTotal >= 0)) return null;
   if(project.dateCible !== null && project.dateCible !== undefined && (typeof project.dateCible !== 'string' || isNaN(Date.parse(project.dateCible)))) return null;
   if(project.horizonApprox !== undefined && project.horizonApprox !== null && !LIFE_PROJECT_HORIZONS.some(h => h.value === project.horizonApprox)) return null;
+  if(project.priority !== undefined && project.priority !== null && !LIFE_PROJECT_PRIORITIES.some(p => p.value === project.priority)) return null;
   const list = getLifeProjects();
   const entry = {
     id: 'project-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
@@ -9177,10 +9197,56 @@ function saveLifeProject(project){
     budgetTotal: project.budgetTotal,
     dateCible: (typeof project.dateCible === 'string' && project.dateCible) ? project.dateCible : null,
     horizonApprox: (typeof project.horizonApprox === 'string' && project.horizonApprox) ? project.horizonApprox : null,
+    priority: (typeof project.priority === 'string' && project.priority) ? project.priority : null,
+    status: 'actif',
+    notes: '',
+    linkedSimulations: [],
     etapes: [],
     dateCreation: new Date().toISOString()
   };
   list.push(entry);
+  localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(list));
+  return entry;
+}
+// Édition après création (priorité/statut/notes) — jamais exigés à la
+// création elle-même. Retourne null sur une valeur invalide, sans jamais
+// écrire un état partiel.
+function updateLifeProjectMeta(projectId, updates){
+  updates = updates || {};
+  const list = getLifeProjects();
+  const project = list.find(p => p.id === projectId);
+  if(!project) return null;
+  if(updates.priority !== undefined){
+    if(updates.priority !== null && !LIFE_PROJECT_PRIORITIES.some(p => p.value === updates.priority)) return null;
+    project.priority = updates.priority;
+  }
+  if(updates.status !== undefined){
+    if(!LIFE_PROJECT_STATUSES.some(s => s.value === updates.status)) return null;
+    project.status = updates.status;
+  }
+  if(updates.notes !== undefined){
+    if(typeof updates.notes !== 'string') return null;
+    project.notes = updates.notes.trim().slice(0, 500);
+  }
+  localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(list));
+  return project;
+}
+// Rattache un vrai résultat de simulation du Laboratoire à un projet
+// (consommé par le pont Mon Univers ↔ Lab, phase 10) — jamais plus de 10
+// par projet (les plus récents), jamais une simulation fabriquée.
+function linkLifeProjectSimulation(projectId, simulation){
+  if(!simulation || typeof simulation.label !== 'string' || !simulation.label.trim()) return null;
+  const list = getLifeProjects();
+  const project = list.find(p => p.id === projectId);
+  if(!project) return null;
+  if(!Array.isArray(project.linkedSimulations)) project.linkedSimulations = [];
+  const entry = {
+    label: simulation.label.trim().slice(0, 80),
+    url: typeof simulation.url === 'string' ? simulation.url : null,
+    date: new Date().toISOString()
+  };
+  project.linkedSimulations.unshift(entry);
+  project.linkedSimulations = project.linkedSimulations.slice(0, 10);
   localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(list));
   return entry;
 }

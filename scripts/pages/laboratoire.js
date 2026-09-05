@@ -2304,6 +2304,14 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
 
   const STATUT_LABELS = {'a-faire': 'À faire', 'en-cours': 'En cours', 'termine': 'Terminée'};
   const STATUT_NEXT = {'a-faire': 'en-cours', 'en-cours': 'termine', 'termine': 'a-faire'};
+  // Priorité/statut/notes (sprint de fermeture des écarts, 04/09/2026) :
+  // jamais exigés à la création (voir le formulaire projectMgrAdd, inchangé
+  // plus bas) — modifiables ensuite ici, un clic pour faire tourner
+  // priorité/statut, même motif que le cycle de statut d'étape ci-dessus.
+  const PRIORITY_CYCLE = [null, 'haute', 'moyenne', 'basse'];
+  const PRIORITY_LABELS = {haute: 'Priorité : Haute', moyenne: 'Priorité : Moyenne', basse: 'Priorité : Basse'};
+  const STATUS_CYCLE = ['actif', 'en-pause', 'termine', 'abandonne'];
+  const STATUS_LABELS = {actif: 'Actif', 'en-pause': 'En pause', termine: 'Terminé', abandonne: 'Abandonné'};
 
   function render(){
     const projects = getLifeProjects();
@@ -2322,7 +2330,13 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
             </div>
             <button type="button" class="btn btn-sm project-remove" data-id="${p.id}" aria-label="Supprimer le projet">✕</button>
           </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            <button type="button" class="btn btn-sm project-priority-cycle" data-project="${p.id}" data-priority="${p.priority || ''}">${p.priority ? PRIORITY_LABELS[p.priority] : 'Priorité : —'}</button>
+            <button type="button" class="btn btn-sm project-status-cycle" data-project="${p.id}" data-status="${p.status || 'actif'}">${STATUS_LABELS[p.status || 'actif']}</button>
+            ${p.linkedSimulations && p.linkedSimulations.length ? `<span class="badge" title="${p.linkedSimulations.map(s => s.label).join(' · ')}">${p.linkedSimulations.length} scénario${p.linkedSimulations.length > 1 ? 's' : ''} enregistré${p.linkedSimulations.length > 1 ? 's' : ''}</span>` : ''}
+          </div>
           <p style="font-size:12.5px;margin-top:8px;">${progress.progressionPct !== null ? `${progress.progressionPct}% (${progress.etapesTerminees}/${progress.etapesTotal} étapes)` : "Pas encore d'étape ajoutée"} · ${fmtEUR(progress.depensesEngagees)} dépensés sur ${fmtEUR(p.budgetTotal)} (reste ${fmtEUR(progress.budgetRestant)})</p>
+          <textarea class="project-notes-input" data-project="${p.id}" placeholder="Notes (optionnel)" style="width:100%;margin-top:8px;min-height:44px;font-size:12.5px;font-family:inherit;">${p.notes || ''}</textarea>
           <div style="margin-top:10px;display:flex;flex-direction:column;gap:6px;">
             ${p.etapes.map(e => `
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:12.5px;gap:8px;flex-wrap:wrap;">
@@ -2358,6 +2372,20 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
         const dateInput = listEl.querySelector(`.etape-date-input[data-project="${btn.dataset.project}"]`);
         const entry = saveProjectEtape(btn.dataset.project, {nom: nomInput.value, dateCible: dateInput.value || null});
         if(entry) render();
+      }));
+      listEl.querySelectorAll('.project-priority-cycle').forEach(btn => btn.addEventListener('click', () => {
+        const current = btn.dataset.priority || null;
+        const next = PRIORITY_CYCLE[(PRIORITY_CYCLE.indexOf(current) + 1) % PRIORITY_CYCLE.length];
+        updateLifeProjectMeta(btn.dataset.project, {priority: next});
+        render();
+      }));
+      listEl.querySelectorAll('.project-status-cycle').forEach(btn => btn.addEventListener('click', () => {
+        const next = STATUS_CYCLE[(STATUS_CYCLE.indexOf(btn.dataset.status) + 1) % STATUS_CYCLE.length];
+        updateLifeProjectMeta(btn.dataset.project, {status: next});
+        render();
+      }));
+      listEl.querySelectorAll('.project-notes-input').forEach(ta => ta.addEventListener('change', () => {
+        updateLifeProjectMeta(ta.dataset.project, {notes: ta.value});
       }));
     }
     renderLifeTimeline('lifeTimeline');
