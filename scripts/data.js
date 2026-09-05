@@ -2212,17 +2212,22 @@ function animateWidthIn(el, targetPct){
   el.style.width = '0%';
   requestAnimationFrame(()=>requestAnimationFrame(()=>{ el.style.width = targetPct + '%'; }));
 }
+// format ajouté (cockpit Mon Univers Financier, 05/09/2026), optionnel et
+// rétrocompatible : par défaut Math.round tel quel (comportement d'origine,
+// XP/Finance Points) ; le cockpit passe fmtEUR pour des montants avec
+// séparateur de milliers pendant l'animation, pas seulement à la fin.
 function animateNumber(el, target, opts){
   if(!el) return;
   const prefix = (opts && opts.prefix) || '';
   const suffix = (opts && opts.suffix) || '';
-  if(prefersReducedMotion()){ el.textContent = prefix + target + suffix; return; }
+  const format = (opts && opts.format) || (n => Math.round(n));
+  if(prefersReducedMotion()){ el.textContent = prefix + format(target) + suffix; return; }
   const duration = (opts && opts.duration) || 700;
   const start = performance.now();
   function tick(now){
     const p = Math.min(1, (now-start)/duration);
     const eased = 1 - Math.pow(1-p, 3);
-    el.textContent = prefix + Math.round(target*eased) + suffix;
+    el.textContent = prefix + format(target*eased) + suffix;
     if(p < 1) requestAnimationFrame(tick);
   }
   requestAnimationFrame(tick);

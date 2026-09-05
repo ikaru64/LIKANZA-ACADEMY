@@ -1,0 +1,146 @@
+/* ============================================================
+   LIKANZA ACADEMY — Mon Univers Financier : cockpit financier
+   Refonte 05/09/2026. Toutes les couleurs viennent des tokens existants
+   de design-system.css (--onyx/--gold/--gold-bright/--emerald/--bordeaux/
+   --hairline) — déjà noir & or, thème clair déjà pris en charge puisque
+   tout dérive de ces variables. Angles nets (--radius:3px), pas de coins
+   arrondis, cohérent avec le reste du site.
+
+   Interprétation du "pas de scroll de page" : le corps de la page ne
+   défile pas sur desktop, mais la colonne de droite (.cockpit-side) peut
+   défiler EN INTERNE si son contenu réel dépasse le viewport — jamais de
+   données réelles tronquées pour forcer un remplissage exact d'écran.
+
+   Hauteur de chrome (sticky header + utility-bar + breadcrumb) estimée à
+   ~140px sur ce site (mesurée sur styles/design-system.css : utility-bar
+   ~30px, nav-row ~60px, breadcrumb ~28px, + marge) — min-height plutôt que
+   height stricte : si un bandeau de nudge réel s'affiche au-dessus (onboarding,
+   ré-onboarding...), un léger scroll de page reste acceptable plutôt que de
+   couper ce bandeau, qui n'est jamais du contenu cosmétique.
+   ============================================================ */
+
+.cockpit{
+  display:grid;
+  gap:14px;
+  padding:20px 0 24px;
+}
+
+/* ---------- En-tête compact ---------- */
+.cockpit-header{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:12px;
+  padding-bottom:4px;
+  border-bottom:1px solid var(--hairline);
+}
+.cockpit-header .cockpit-title h2{
+  font-family:'Cormorant Garamond',serif;
+  font-size:26px;
+  font-weight:600;
+}
+.cockpit-header .cockpit-title h2::before{content:'◆';color:var(--gold);font-size:11px;margin-right:10px;vertical-align:middle;position:relative;top:-3px;}
+.cockpit-header .cockpit-subtitle{font-size:12.5px;color:var(--text-dim);margin-top:2px;}
+.cockpit-header .cockpit-meta{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:11px;
+  color:var(--text-dim);
+  text-align:right;
+}
+.cockpit-header .cockpit-meta .cockpit-meta-value{color:var(--gold-bright);}
+
+/* ---------- Rangée de KPI ---------- */
+.cockpit-kpis{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:10px;
+}
+.cockpit-kpi{
+  background:var(--bg-alt);
+  border:1px solid var(--hairline);
+  border-radius:var(--radius);
+  padding:14px 16px;
+  cursor:pointer;
+  text-align:left;
+  font:inherit;
+  color:inherit;
+  transition:border-color .2s ease, background .2s ease, transform .2s ease;
+  display:flex;
+  flex-direction:column;
+  gap:4px;
+}
+.cockpit-kpi:hover{border-color:var(--gold);transform:translateY(-2px);}
+.cockpit-kpi.active{border-color:var(--gold);background:rgba(184,151,78,0.08);box-shadow:0 0 0 1px rgba(184,151,78,0.18) inset;}
+.cockpit-kpi .kpi-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
+.cockpit-kpi .kpi-value{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:600;color:var(--text);font-variant-numeric:tabular-nums;}
+.cockpit-kpi .kpi-sub{font-size:11px;color:var(--text-dim);}
+.cockpit-kpi .kpi-sub.positive{color:var(--emerald);}
+.cockpit-kpi .kpi-sub.negative{color:var(--bordeaux);}
+
+/* ---------- Corps : graphique + colonne latérale ---------- */
+.cockpit-chart{
+  background:var(--bg-alt);
+  border:1px solid var(--hairline);
+  border-radius:var(--radius);
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  min-height:340px;
+}
+.cockpit-side{
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+.cockpit-panel{
+  background:var(--bg-alt);
+  border:1px solid var(--hairline);
+  border-radius:var(--radius);
+  padding:14px 16px;
+}
+.cockpit-panel .panel-title{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:10.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--gold-bright);
+}
+
+/* ---------- Desktop (≥1180px, sidebar pleine largeur) ---------- */
+@media (min-width:1180px){
+  .cockpit{
+    grid-template-columns:2fr 1fr;
+    grid-template-rows:auto auto 1fr;
+    grid-template-areas:
+      "header header"
+      "kpis   kpis"
+      "chart  side";
+    min-height:calc(100vh - 140px);
+  }
+  .cockpit-header{grid-area:header;}
+  .cockpit-kpis{grid-area:kpis;}
+  .cockpit-chart{grid-area:chart;}
+  .cockpit-side{grid-area:side;overflow-y:auto;}
+}
+
+/* ---------- Tablette (1024-1180px, rail icône) : 1 colonne, KPI 2×3 ---------- */
+@media (min-width:760px) and (max-width:1179px){
+  .cockpit-kpis{grid-template-columns:repeat(2,1fr);}
+}
+
+/* ---------- Mobile (<760px, mobile-bottom-nav) : empilé, KPI en scroll horizontal ---------- */
+@media (max-width:759px){
+  .cockpit{padding:14px 0 20px;}
+  .cockpit-kpis{
+    display:flex;
+    overflow-x:auto;
+    scroll-snap-type:x mandatory;
+    gap:10px;
+    padding-bottom:4px;
+  }
+  .cockpit-kpis .cockpit-kpi{flex:0 0 68%;scroll-snap-align:start;}
+}
+
+/* ---------- Section repliable "Suite de l'apprentissage" ---------- */
+details.learning-suite-collapse{margin-top:0;}
