@@ -69,10 +69,15 @@ function renderCockpitHeader(elId){
       <h2>Mon Univers Financier</h2>
       <p class="cockpit-subtitle">Une vision globale de ton capital, aujourd'hui et demain.</p>
     </div>
-    <div class="cockpit-meta">
-      <div>Dernière mise à jour</div>
-      <div class="cockpit-meta-value">${lastUpdate || 'Aucune donnée enregistrée'}</div>
+    <div style="display:flex;align-items:center;gap:16px;">
+      <button type="button" class="btn btn-sm btn-gold" id="cockpitProjectBtn">Projeter mon capital</button>
+      <div class="cockpit-meta">
+        <div>Dernière mise à jour</div>
+        <div class="cockpit-meta-value">${lastUpdate || 'Aucune donnée enregistrée'}</div>
+      </div>
     </div>`;
+  const projectBtn = document.getElementById('cockpitProjectBtn');
+  if(projectBtn) projectBtn.addEventListener('click', openCockpitProjectionModal);
 }
 
 // Vue active partagée entre les KPI et les onglets du graphique combiné
@@ -297,11 +302,18 @@ function renderCockpitSide(elId){
     <div class="cockpit-panel" id="${elId}-donut"></div>
     <div class="cockpit-panel" id="${elId}-accounts"></div>
     <div class="cockpit-panel" id="${elId}-objectifs"></div>
-    <div class="cockpit-panel" id="${elId}-allocation"></div>`;
+    <div class="cockpit-panel" id="${elId}-allocation"></div>
+    <div class="cockpit-panel" id="${elId}-score"></div>
+    <div class="cockpit-panel" id="${elId}-insights"></div>`;
   renderCockpitDonut(`${elId}-donut`);
   renderCockpitAccounts(`${elId}-accounts`);
   renderCockpitObjectifs(`${elId}-objectifs`);
   renderCockpitAllocation(`${elId}-allocation`);
+  // Score financier et Insights (Phase 7) réutilisent verbatim les widgets
+  // déjà réels et testés — mêmes fonctions que l'ancien DASHBOARD_WIDGETS
+  // (health-score/alerts, retirés du registre en Phase 3), jamais réécrits.
+  renderHealthScoreDashboardWidget(`${elId}-score`);
+  renderAlertsDashboardWidget(`${elId}-insights`);
 }
 
 // ---------- Donut interactif ----------
@@ -447,6 +459,53 @@ function renderCockpitAllocation(elId){
     </div>`;
 }
 
+// ============================================================
+// Modal "Projeter mon capital" (Phase 7) — <dialog> natif, aucune
+// librairie : focus trap + fermeture Esc/backdrop natifs. Recalcul en
+// direct via le vrai moteur computeWealthProjection (data.js, déjà utilisé
+// par "Mon Futur"/Trajectoire), jamais un 2e calcul divergent. Champs
+// pré-remplis avec le vrai patrimoine/solde de l'utilisateur au moment de
+// l'ouverture, jamais une valeur d'exemple fabriquée.
+const COCKPIT_PROJECTION_HORIZONS = [1, 5, 10, 20];
+let cockpitProjectionLastFocus = null;
+function computeCockpitProjectionResults(){
+  const capital = +document.getElementById('cpCapital').value || 0;
+  const versement = +document.getElementById('cpVersement').value || 0;
+  const rendement = +document.getElementById('cpRendement').value || 0;
+  const result = computeWealthProjection({patrimoineInitial: capital, epargneMensuelle: versement, rendementAnnuelPct: rendement, inflationPct: 0, augmentationAnnuellePct: 0});
+  const resultsEl = document.getElementById('cpResults');
+  if(!resultsEl) return;
+  resultsEl.innerHTML = `
+    <div class="result-row"><span class="result-horizon">Aujourd'hui</span><span class="result-value mono">${fmtEUR(capital)}</span></div>
+    ${COCKPIT_PROJECTION_HORIZONS.map(h => `
+      <div class="result-row"><span class="result-horizon">${h} an${h > 1 ? 's' : ''}</span><span class="result-value mono">${fmtEUR(result.atHorizon[h].patrimoineNominal)}</span></div>`).join('')}`;
+}
+function openCockpitProjectionModal(){
+  const dialog = document.getElementById('cockpitProjectionModal');
+  if(!dialog || typeof dialog.showModal !== 'function') return;
+  const k = computeCockpitKPIs();
+  document.getElementById('cpCapital').value = Math.round(k.patrimoineNet);
+  document.getElementById('cpVersement').value = Math.round(Math.max(0, k.soldeMensuel));
+  computeCockpitProjectionResults();
+  cockpitProjectionLastFocus = document.activeElement;
+  dialog.showModal();
+}
+function initCockpitProjectionModal(){
+  const dialog = document.getElementById('cockpitProjectionModal');
+  if(!dialog) return;
+  ['cpCapital', 'cpVersement', 'cpRendement'].forEach(id => {
+    const input = document.getElementById(id);
+    if(input) input.addEventListener('input', computeCockpitProjectionResults);
+  });
+  const closeBtn = document.getElementById('cpCloseBtn');
+  if(closeBtn) closeBtn.addEventListener('click', () => dialog.close());
+  // Clic sur le ::backdrop natif : remonte comme un clic sur le <dialog>
+  // lui-même (motif standard), jamais sur son contenu interne.
+  dialog.addEventListener('click', e => { if(e.target === dialog) dialog.close(); });
+  dialog.addEventListener('close', () => { if(cockpitProjectionLastFocus && cockpitProjectionLastFocus.focus) cockpitProjectionLastFocus.focus(); });
+}
+
+initCockpitProjectionModal();
 initParcoursHero();
 
 // Profil de simulation (âge/épargne/horizon/risque/objectif — pré-remplit
