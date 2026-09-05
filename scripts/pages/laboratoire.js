@@ -1307,7 +1307,10 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   const nomEl = document.getElementById('assetMgrNom');
   const valeurEl = document.getElementById('assetMgrValeur');
   const categorieEl = document.getElementById('assetMgrCategorie');
-  const CATEGORY_LABELS = {cash:'Épargne / cash', pea:'PEA', cto:'Compte-titres (CTO)', crypto:'Crypto', actions:'Actions / placements', immobilier:'Immobilier', vehicule:'Véhicule', autre:'Autre'};
+  // Libellés remontés dans data.js (NET_WORTH_CATEGORY_LABELS, refonte
+  // cockpit 05/09/2026) — une seule source de vérité pour ce sélecteur ET
+  // le cockpit de Mon Univers Financier.
+  const CATEGORY_LABELS = NET_WORTH_CATEGORY_LABELS;
   // Plages disponibles pour le graphique d'évolution — un point par mois
   // (recordNetWorthSnapshot), donc pas de plage plus courte que le mois :
   // jamais une plage "1 mois" qui n'afficherait qu'un seul point.
@@ -1353,7 +1356,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
         <div class="panel-row"><span>${CATEGORY_LABELS[cat] || cat}</span><span class="val mono">${fmtEUR(val)} <span style="color:var(--text-dim);">(${Math.round(val / net.totalActifs * 100)}%)</span></span></div>`).join('')}</div>`;
 
     if(assets.length > 0 || debts.length > 0){
-      recordNetWorthSnapshot(currentMonthKey(), net.patrimoineNet);
+      recordNetWorthSnapshot(currentMonthKey(), net.patrimoineNet, net.parCategorie);
     }
     renderNetWorthHistory();
   }

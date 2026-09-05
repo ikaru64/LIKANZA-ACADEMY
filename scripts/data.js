@@ -851,7 +851,12 @@ function computeHealthScore(){
   axes.investissement = {label: 'Investissement'};
   if(assets.length > 0){
     const total = assets.reduce((s, a) => s + a.valeur, 0);
-    const investi = assets.filter(a => a.categorie !== 'cash').reduce((s, a) => s + a.valeur, 0);
+    // 'epargne'/'assurancevie' comptent comme du cash-like au même titre que
+    // 'cash' pour cet axe (refonte cockpit, 05/09/2026) : un livret ou une
+    // assurance-vie en fonds euros n'est pas un "investissement" au sens où
+    // cet axe l'entend (exposition au risque de marché), même s'ils
+    // comptent bien dans le patrimoine et l'allocation globale ailleurs.
+    const investi = assets.filter(a => a.categorie !== 'cash' && a.categorie !== 'epargne' && a.categorie !== 'assurancevie').reduce((s, a) => s + a.valeur, 0);
     if(total > 0){
       const pct = (investi / total) * 100;
       const niveau = pct >= 40 ? 'ok' : pct >= 15 ? 'attention' : 'alerte';
@@ -9605,7 +9610,18 @@ const NET_WORTH_ASSETS_KEY = 'fzr-net-worth-assets';
 // chez un utilisateur existant (audit Dashboard du 28/08/2026 : les
 // enveloppes PEA/CTO/crypto sont assez distinctes fiscalement et en risque
 // pour mériter leur propre ligne plutôt que de rester noyées dans "actions").
-const NET_WORTH_ASSET_CATEGORIES = ['cash', 'pea', 'cto', 'crypto', 'actions', 'immobilier', 'vehicule', 'autre'];
+// 'epargne' et 'assurancevie' ajoutées (refonte cockpit Mon Univers
+// Financier, 05/09/2026) : 'cash' mélangeait jusqu'ici compte courant ET
+// livrets, alors que le cockpit doit distinguer liquidités immédiates et
+// épargne — ajout additif, aucune catégorie existante renommée ni migrée.
+const NET_WORTH_ASSET_CATEGORIES = ['cash', 'epargne', 'assurancevie', 'pea', 'cto', 'crypto', 'actions', 'immobilier', 'vehicule', 'autre'];
+// Libellés partagés (avant : dupliqués localement dans laboratoire.js) —
+// une seule source de vérité pour le sélecteur d'actif ET le cockpit.
+const NET_WORTH_CATEGORY_LABELS = {
+  cash: 'Compte courant / cash', epargne: 'Livrets (Livret A, LDDS...)', assurancevie: 'Assurance-vie',
+  pea: 'PEA', cto: 'Compte-titres (CTO)', crypto: 'Crypto', actions: 'Actions / placements',
+  immobilier: 'Immobilier', vehicule: 'Véhicule', autre: 'Autre'
+};
 function getNetWorthAssets(){
   try {
     const raw = JSON.parse(localStorage.getItem(NET_WORTH_ASSETS_KEY) || '[]');
@@ -9651,14 +9667,108 @@ function getNetWorthHistory(){
     return Array.isArray(raw) ? raw : [];
   } catch(e){ return []; }
 }
-function recordNetWorthSnapshot(mois, patrimoineNet){
+// parCategorie ajouté en 3e paramètre, optionnel (refonte cockpit,
+// 05/09/2026) : nécessaire pour le graphique barres empilées + courbe du
+// cockpit (répartition cash/épargne/investissements par mois), pas
+// seulement le total. Rétrocompatible : les points déjà enregistrés sans
+// répartition restent valides (le total continue de s'afficher), seule la
+// répartition par catégorie manque pour ces mois-là — jamais reconstituée
+// artificiellement après coup.
+function recordNetWorthSnapshot(mois, patrimoineNet, parCategorie){
   if(typeof mois !== 'string' || !/^\d{4}-\d{2}$/.test(mois) || typeof patrimoineNet !== 'number' || !isFinite(patrimoineNet)) return null;
   const list = getNetWorthHistory().filter(p => p.mois !== mois);
   const point = {mois, patrimoineNet, dateAjout: new Date().toISOString()};
+  if(parCategorie && typeof parCategorie === 'object') point.parCategorie = {...parCategorie};
   list.push(point);
   list.sort((a, b) => a.mois.localeCompare(b.mois));
   localStorage.setItem(NET_WORTH_HISTORY_KEY, JSON.stringify(list));
   return point;
+}
+// ---------- Fonctions de mise en forme pour le cockpit "Mon Univers
+// Financier" (refonte 05/09/2026) — aucune nouvelle clé localStorage,
+// uniquement de la composition/mise en forme au-dessus des fonctions
+// réelles ci-dessus. ----------
+
+// Séries prêtes pour un graphique combiné barres empilées + courbe totale.
+// Un mois sans répartition catégorielle (points enregistrés avant cet ajout)
+// garde `null` sur les 4 buckets — jamais une répartition inventée — mais
+// conserve toujours son vrai total dans `total`.
+function buildWealthEvolutionSeries(history){
+  const points = (history || []).slice().sort((a, b) => a.mois.localeCompare(b.mois));
+  const labels = points.map(p => p.mois);
+  const total = points.map(p => p.patrimoineNet);
+  const liquidites = [], epargne = [], investissements = [], autres = [];
+  points.forEach(p => {
+    const cat = p.parCategorie;
+    if(!cat){ liquidites.push(null); epargne.push(null); investissements.push(null); autres.push(null); return; }
+    liquidites.push(cat.cash || 0);
+    epargne.push((cat.epargne || 0) + (cat.assurancevie || 0));
+    investissements.push((cat.pea || 0) + (cat.cto || 0) + (cat.crypto || 0) + (cat.actions || 0));
+    autres.push((cat.immobilier || 0) + (cat.vehicule || 0) + (cat.autre || 0));
+  });
+  return {labels, liquidites, epargne, investissements, autres, total};
+}
+
+// Ventilation ACTUELLE (pas historique) du patrimoine, pour le donut. Ne
+// retient que les catégories réellement non nulles — jamais un segment à 0%
+// affiché pour combler la liste des catégories possibles.
+const NET_WORTH_CATEGORY_COLORS = {
+  cash: '#9B968C', epargne: '#4E9177', assurancevie: '#6B8FB0', pea: '#B8974E',
+  cto: '#D9BC7C', crypto: '#8B6FB0', actions: '#7FA6C9', immobilier: '#C9A66B',
+  vehicule: '#8C8C8C', autre: '#5A5C57'
+};
+function getWealthAllocationSegments(){
+  const net = computeNetWorth(getNetWorthAssets(), getPersonalDebts());
+  const total = net.totalActifs;
+  if(total <= 0) return [];
+  return NET_WORTH_ASSET_CATEGORIES
+    .map(key => ({key, label: NET_WORTH_CATEGORY_LABELS[key] || key, value: net.parCategorie[key] || 0, color: NET_WORTH_CATEGORY_COLORS[key] || '#5A5C57'}))
+    .filter(seg => seg.value > 0)
+    .map(seg => ({...seg, pct: (seg.value / total) * 100}));
+}
+
+// Composition légère des 5 KPI du cockpit — un seul point de calcul
+// (computeNetWorth + computeBudgetSummary), pas 5 recalculs dispersés dans
+// le rendu de chaque carte.
+function computeCockpitKPIs(){
+  const assets = getNetWorthAssets();
+  const debts = getPersonalDebts();
+  const net = computeNetWorth(assets, debts);
+  const budgetSummary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+  return {
+    patrimoineNet: net.patrimoineNet,
+    liquidites: net.parCategorie.cash || 0,
+    epargne: (net.parCategorie.epargne || 0) + (net.parCategorie.assurancevie || 0),
+    investissements: (net.parCategorie.pea || 0) + (net.parCategorie.cto || 0) + (net.parCategorie.crypto || 0) + (net.parCategorie.actions || 0),
+    soldeMensuel: budgetSummary.solde || 0,
+    tauxEpargnePct: budgetSummary.tauxEpargnePct || 0
+  };
+}
+
+// "Revenus de capital" honnête : AUCUN tracker réel de dividendes/intérêts
+// perçus n'existe sur le site (vérifié, refonte cockpit 05/09/2026) — jamais
+// fabriquer une répartition dividendes/intérêts/crypto qui n'a aucune base
+// réelle. Cette fonction reformule le panneau en projection assumée,
+// réutilisant le même moteur/étiquetage SCÉNARIO que renderWealthTrajectory
+// (data.js, "Aujourd'hui/1/3/5/10 ans") plutôt qu'un chiffre "déjà perçu"
+// qui n'existe nulle part. Isole la part "rendement" de la croissance à 1 an
+// (hors les versements eux-mêmes) pour obtenir un ordre de grandeur mensuel.
+function computeCapitalIncomeEstimate(){
+  const assets = getNetWorthAssets();
+  const debts = getPersonalDebts();
+  const patrimoineInitial = computeNetWorth(assets, debts).patrimoineNet;
+  const budgetSummary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+  const epargneMensuelle = Math.max(0, budgetSummary.solde || 0);
+  if(patrimoineInitial <= 0) return null;
+  const scenarios = computeWealthProjectionScenarios({patrimoineInitial, epargneMensuelle, inflationPct: 0, augmentationAnnuellePct: 0});
+  const an1 = scenarios.central.atHorizon[1].patrimoineNominal;
+  const rendementAnnuelEstime = an1 - patrimoineInitial - epargneMensuelle * 12;
+  return {
+    monthlyEstimate: rendementAnnuelEstime / 12,
+    annualEstimate: rendementAnnuelEstime,
+    scenario: 'central',
+    ratePct: RETURN_ASSUMPTIONS.central.rate
+  };
 }
 
 // ============================================================
@@ -9768,7 +9878,12 @@ function computeFinancialDiagnostics(ctx){
   }
 
   if(budgetSummary && budgetSummary.depenses > 0 && assets.length > 0){
-    const cash = assets.filter(a => a.categorie === 'cash').reduce((s, a) => s + a.valeur, 0);
+    // 'epargne' inclus ici (refonte cockpit, 05/09/2026) : un Livret A/LDDS
+    // est le support type du fonds d'urgence en France, tout aussi
+    // mobilisable qu'un compte courant en cas de coup dur. 'assurancevie'
+    // volontairement exclu : moins immédiatement disponible (délai de
+    // rachat), pas assez liquide pour compter comme fonds d'urgence ici.
+    const cash = assets.filter(a => a.categorie === 'cash' || a.categorie === 'epargne').reduce((s, a) => s + a.valeur, 0);
     const moisCouverts = cash / budgetSummary.depenses;
     if(moisCouverts < 1){
       diagnostics.push({id:'urgence-faible', niveau:'alerte', message:`Ton épargne disponible (${fmtEUR(cash)}) couvre moins d'1 mois de dépenses au rythme actuel.`});
