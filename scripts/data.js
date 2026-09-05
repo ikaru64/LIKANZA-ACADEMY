@@ -1055,20 +1055,25 @@ function renderCombinedWealthDashboardWidget(elId){
 // décision documentée dans l'audit du 28/08/2026 : le code contenait déjà
 // une décision explicite inverse (défis "sequence", boutons Monter/Descendre
 // choisis pour la fiabilité mobile) — cohérence plutôt que rupture. ----------
+// Réduit à 16 entrées (refonte cockpit Mon Univers Financier, 05/09/2026) :
+// les 9 widgets de patrimoine financier réel (combined-wealth, net-worth,
+// goals, future, trajectory, alerts, health-score, life-projects,
+// domain-dashboard) sont remplacés par l'UI de cockpit bespoke de
+// scripts/pages/parcours.js — retirés d'ici plutôt que dupliqués. Leurs
+// fonctions render* restent définies (aucun autre appelant), volontairement
+// non supprimées dans cette passe pour garder ce diff réversible ; une
+// suppression de code mort est un nettoyage séparé, pas ce chantier-ci.
+// Les 16 restants (pédagogie/gamification) vivent désormais dans la
+// section repliée "Suite de l'apprentissage" de parcours.html — aucun
+// changement à renderDashboardShell lui-même, qui ne fait qu'itérer ce
+// tableau ; getDashboardLayout migre déjà silencieusement les id disparus
+// d'un ancien fzr-dashboard-layout enregistré.
 const DASHBOARD_WIDGETS = [
   {id: 'continue', title: null, mode: 'both', selfCard: false, render: renderContinueWidget},
   {id: 'gamification', title: null, mode: 'both', selfCard: false, render: elId => renderGamificationWidget(elId, false)},
   {id: 'gamification-full', title: 'Progression & récompenses', mode: 'both', selfCard: false, render: renderGamificationLeagueDashboardWidget},
-  {id: 'combined-wealth', title: null, mode: 'both', selfCard: false, render: renderCombinedWealthDashboardWidget},
   {id: 'profile-summary', title: null, mode: 'personal', selfCard: true, render: renderParcoursProfileSummary},
-  {id: 'net-worth', title: null, mode: 'personal', selfCard: false, render: renderNetWorthDashboardWidget},
-  {id: 'goals', title: null, mode: 'personal', selfCard: false, render: renderGoalsDashboardWidget},
-  {id: 'future', title: null, mode: 'personal', selfCard: false, render: renderFutureDashboardWidget},
-  {id: 'trajectory', title: null, mode: 'personal', selfCard: false, render: renderWealthTrajectory},
   {id: 'today', title: null, mode: 'personal', selfCard: false, render: renderTodayDashboardWidget},
-  {id: 'alerts', title: null, mode: 'personal', selfCard: false, render: renderAlertsDashboardWidget},
-  {id: 'health-score', title: null, mode: 'personal', selfCard: false, render: renderHealthScoreDashboardWidget},
-  {id: 'life-projects', title: null, mode: 'personal', selfCard: false, render: renderLifeProjectsDashboardWidget},
   {id: 'project-skill-gap', title: null, mode: 'personal', selfCard: false, render: renderProjectSkillGapWidget},
   {id: 'business-snapshot', title: null, mode: 'professional', selfCard: false, render: renderBusinessSnapshotDashboardWidget},
   {id: 'business-alerts', title: null, mode: 'professional', selfCard: false, render: renderBusinessAlertsDashboardWidget},
@@ -1079,8 +1084,7 @@ const DASHBOARD_WIDGETS = [
   {id: 'missions-daily', title: 'Missions du jour', mode: 'both', selfCard: false, render: renderDailyMissions},
   {id: 'missions-weekly', title: 'Missions de la semaine', mode: 'both', selfCard: false, render: renderWeeklyMissions},
   {id: 'spaced-review', title: "À repasser aujourd'hui", mode: 'both', selfCard: false, render: renderSpacedReviewList},
-  {id: 'mistakes', title: null, mode: 'both', selfCard: false, render: renderMistakesDashboardWidget},
-  {id: 'domain-dashboard', title: null, mode: 'personal', selfCard: true, render: renderDomainDashboardWidget}
+  {id: 'mistakes', title: null, mode: 'both', selfCard: false, render: renderMistakesDashboardWidget}
 ];
 const WIDGET_DISPLAY_NAMES = {
   'continue': '▶ Continuer',
