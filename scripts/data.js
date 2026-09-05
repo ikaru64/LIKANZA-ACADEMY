@@ -648,6 +648,58 @@ function renderFutureDashboardWidget(elId){
     </div>
     <a href="laboratoire.html#tab-planification" class="btn btn-sm" style="margin-top:10px;">Simuler mes hypothèses →</a>`;
 }
+// ---- Trajectoire (sprint de fermeture des écarts, 04/09/2026, section
+// "TRAJECTOIRE" du prompt d'origine) : Aujourd'hui / 1 / 3 / 5 / 10 ans,
+// réutilise computeWealthProjectionScenarios (même moteur que "Mon Futur"
+// ci-dessus et l'onglet Planification du Laboratoire, aucun second calcul).
+// "Aujourd'hui" est un fait réel (patrimoine net actuel) ; chaque horizon
+// futur est explicitement étiqueté SCÉNARIO et jamais présenté comme une
+// certitude — les hypothèses (taux de rendement, épargne supposée
+// constante, inflation) sont toujours affichées à côté du chiffre. ----
+function renderWealthTrajectory(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const assets = getNetWorthAssets();
+  const debts = getPersonalDebts();
+  const patrimoineInitial = computeNetWorth(assets, debts).patrimoineNet;
+  const budgetSummary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+  const epargneMensuelle = Math.max(0, budgetSummary.solde || 0);
+
+  // Jamais un calcul utile sans donnée réelle derrière : sans patrimoine ni
+  // épargne détectée, une trajectoire resterait plate à 0 pour toujours —
+  // un vrai état vide plutôt qu'un graphique vide qui ressemblerait à un
+  // résultat.
+  if(patrimoineInitial === 0 && epargneMensuelle === 0){
+    el.innerHTML = `
+      <span class="smallcaps">📈 Trajectoire</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Renseigne ton patrimoine (actifs/dettes) ou ton budget mensuel pour voir apparaître ta trajectoire ici.</p>
+      <a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Renseigner mes finances →</a>`;
+    return;
+  }
+
+  const inflationPct = 2.1;
+  const scenarios = computeWealthProjectionScenarios({patrimoineInitial, epargneMensuelle, inflationPct, augmentationAnnuellePct: 0});
+  const horizons = [1, 3, 5, 10];
+
+  el.innerHTML = `
+    <span class="smallcaps">📈 Trajectoire</span>
+    <p style="font-size:11.5px;color:var(--text-dim);margin:8px 0 12px;">À partir de ton patrimoine actuel (${fmtEUR(patrimoineInitial)}) et de ${epargneMensuelle > 0 ? `${fmtEUR(epargneMensuelle)}/mois d'épargne détectée` : 'aucune épargne mensuelle détectée'}.</p>
+    <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(110px,1fr));">
+      <div class="card">
+        <span class="smallcaps">Aujourd'hui</span>
+        <div class="result-big" style="font-size:17px;margin-top:6px;">${fmtEUR(patrimoineInitial)}</div>
+        <p style="font-size:10.5px;color:var(--text-dim);margin-top:4px;">Ta situation réelle, pas une projection</p>
+      </div>
+      ${horizons.map(h => `
+      <div class="card">
+        <span class="smallcaps" style="color:var(--gold-bright);">${h} an${h>1?'s':''} · SCÉNARIO</span>
+        <div class="result-big" style="font-size:17px;margin-top:6px;">${fmtEUR(scenarios.central.atHorizon[h].patrimoineNominal)}</div>
+        <p style="font-size:10.5px;color:var(--text-dim);margin-top:4px;">${fmtEUR(scenarios.prudent.atHorizon[h].patrimoineNominal)} à ${fmtEUR(scenarios.optimiste.atHorizon[h].patrimoineNominal)}</p>
+      </div>`).join('')}
+    </div>
+    <p class="disclaimer-box" style="margin-top:12px;">SCÉNARIO, jamais une certitude : hypothèses de rendement annuel ${RETURN_ASSUMPTIONS.prudent.rate}% (prudent) à ${RETURN_ASSUMPTIONS.optimiste.rate}% (optimiste), épargne mensuelle supposée constante, inflation ${inflationPct}%/an. Un imprévu (perte de revenu, dépense exceptionnelle) n'est jamais pris en compte ici.</p>
+    <a href="laboratoire.html#tab-planification" class="btn btn-sm" style="margin-top:10px;">Ajuster mes hypothèses →</a>`;
+}
 // Aperçu compact du calendrier financier (Chantier 5) : uniquement les
 // échéances réelles à venir sous 7 jours (computeUpcomingReminders) — jamais
 // une date inventée, jamais un rappel de "salaire" (aucune donnée de date de
@@ -1007,6 +1059,7 @@ const DASHBOARD_WIDGETS = [
   {id: 'net-worth', title: null, mode: 'personal', selfCard: false, render: renderNetWorthDashboardWidget},
   {id: 'goals', title: null, mode: 'personal', selfCard: false, render: renderGoalsDashboardWidget},
   {id: 'future', title: null, mode: 'personal', selfCard: false, render: renderFutureDashboardWidget},
+  {id: 'trajectory', title: null, mode: 'personal', selfCard: false, render: renderWealthTrajectory},
   {id: 'today', title: null, mode: 'personal', selfCard: false, render: renderTodayDashboardWidget},
   {id: 'alerts', title: null, mode: 'personal', selfCard: false, render: renderAlertsDashboardWidget},
   {id: 'health-score', title: null, mode: 'personal', selfCard: false, render: renderHealthScoreDashboardWidget},
@@ -1032,6 +1085,7 @@ const WIDGET_DISPLAY_NAMES = {
   'net-worth': '💎 Mon Patrimoine',
   'goals': '🎯 Mes Objectifs',
   'future': '🔮 Mon Futur',
+  'trajectory': '📈 Trajectoire',
   'today': "📅 Aujourd'hui",
   'alerts': '🚨 Likanza détecte',
   'health-score': '🩺 Santé financière',
@@ -9414,7 +9468,11 @@ function renderLifeTimeline(elId){
 // le nominal par l'inflation cumulée, jamais présenté comme une garantie —
 // voir le disclaimer obligatoire dans le rendu (initMonFuturSimulator,
 // laboratoire.js). ----
-const WEALTH_PROJECTION_HORIZONS = [1, 5, 10, 20];
+// 3 ajouté (sprint de fermeture des écarts, 04/09/2026) pour la vue
+// Trajectoire de Mon Univers Financier (Aujourd'hui/1/3/5/10 ans, section
+// "TRAJECTOIRE" du prompt d'origine) — n'affecte ni les points déjà
+// consommés ailleurs (1/5/10/20, Laboratoire) ni leur calcul.
+const WEALTH_PROJECTION_HORIZONS = [1, 3, 5, 10, 20];
 function computeWealthProjection(params){
   const patrimoineInitial = params.patrimoineInitial || 0;
   const epargneMensuelle = params.epargneMensuelle || 0;
