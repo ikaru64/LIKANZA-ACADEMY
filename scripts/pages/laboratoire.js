@@ -772,6 +772,29 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
 
   let currentHistory = null;
 
+  // ---- Pont Guide ↔ Laboratoire (chantier Guides & Décryptages,
+  // 05/09/2026, phase 2) : consomme le contexte écrit par le CTA "Simuler"
+  // d'un Guide (motif business-strategy — une vraie navigation de page a eu
+  // lieu, donc lire le contexte une fois au chargement suffit, contrairement
+  // au pont same-page vers Mon Univers Financier qui doit rappeler sa
+  // fonction de lecture manuellement). Seule la mensualité est réellement
+  // préremplie : cet outil n'a pas de notion de "capital"/"horizon" séparée
+  // (l'horizon vient implicitement de la période historique choisie) —
+  // jamais un champ fabriqué pour coller à l'exemple générique du prompt
+  // d'origine, seulement ce que cet outil précis sait vraiment faire. ----
+  const guideContext = consumeContext('guide-simulation');
+  const guideContextEl = document.getElementById('dcaGuideContext');
+  if(guideContext && guideContextEl){
+    if(guideContext.mensualite > 0) monthlyEl.value = guideContext.mensualite;
+    setLabTab('tab-investissement');
+    openLabWidget('tab-investissement', 'widget-invest-dca');
+    guideContextEl.innerHTML = `
+      <div class="today-card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <p style="font-size:13px;margin:0;">Simulation liée au guide « ${guideContext.guideTitle} ».</p>
+        ${guideContext.guideSlug ? `<a href="guide-${encodeURIComponent(guideContext.guideSlug)}.html" class="btn btn-sm">← Revenir au guide</a>` : ''}
+      </div>`;
+  }
+
   function renderOutput(){
     if(!currentHistory) return;
     const startIdx = currentHistory.findIndex(p => p.period === startEl.value);
