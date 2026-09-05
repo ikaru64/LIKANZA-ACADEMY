@@ -21,14 +21,11 @@
    FAQ, interaction, appel à simulation, sources) sont gérés ici.
    ============================================================ */
 
-// ---------- Catégories & fraîcheur (sections 42 et 27 du prompt d'origine) ----------
-const GUIDE_CATEGORIES = [
-  {key: 'debuter', label: 'Débuter'},
-  {key: 'choisir', label: 'Choisir'},
-  {key: 'budget', label: 'Petit budget'},
-  {key: 'decider', label: 'Marchés & décisions'}
-];
-// evergreen (ex. diversification) / semi-dynamic (ex. fiscalité du PEA,
+// ---------- Fraîcheur (section 27 du prompt d'origine) — GUIDE_CATEGORIES et
+// GUIDES (index léger) vivent désormais dans app.js, pas ici : app.js charge
+// avant ce fichier sur TOUTES les pages, et SEARCH_INDEX (app.js) doit
+// pouvoir indexer les Guides même sur une page qui ne charge jamais
+// guides-data.js. evergreen (ex. diversification) / semi-dynamic (ex. fiscalité du PEA,
 // change avec la loi) / dynamic (ex. comparaison basée sur des valorisations
 // actuelles) — sert uniquement à signaler qu'un Guide peut nécessiter une
 // révision, jamais un score de qualité inventé.
@@ -259,15 +256,12 @@ function renderGuideBlock(bloc, index, guide){
 // est toujours validé contre la vraie LIBRARY au rendu (même discipline que
 // renderCourseLibraryLinks) — un concept qui n'existe pas dans LIBRARY
 // disparaît silencieusement du lien, jamais un lien cassé ni une entrée
-// fabriquée. GUIDES démarre vide : aucun contenu éditorial n'est encore
-// écrit à cette phase (fondations uniquement). ----------
-const GUIDES = [];
-function getGuideBySlug(slug){
-  return GUIDES.find(g => g.slug === slug) || null;
-}
-function getGuidesByCategory(categoryKey){
-  return GUIDES.filter(g => g.category === categoryKey);
-}
+// fabriquée. GUIDES (index léger de métadonnées) et getGuideBySlug/
+// getGuidesByCategory vivent dans app.js (voir plus haut) — chaque guide réel
+// vit dans son propre script (ex. scripts/pages/guide-<slug>.js, chargé
+// uniquement par SA page) qui définit l'objet complet consommé par
+// renderGuidePage ci-dessous — jamais chargé sur la landing juste pour
+// construire une carte (section 64, performance).
 
 // ---------- Rendu complet d'une page Guide : réutilise
 // renderCourseLibraryLinks (Bibliothèque), renderMethodologyPanel (sources &
@@ -295,4 +289,34 @@ function renderGuidePage(elId, guide){
   (guide.sections || []).forEach((bloc, i) => {
     if(bloc.type === 'simulationCTA') wireGuideSimulationCTA(`guide-block-${i}`, bloc, guide);
   });
+}
+
+// ---------- Landing (Phase 4) : carte + grille, construites uniquement à
+// partir de l'index léger GUIDES (jamais du contenu complet d'un guide).
+// difficulty reprend le même vocabulaire que LIBRARY.niveau
+// (debutant/intermediaire/avance) — jamais un nouveau référentiel. ----------
+const GUIDE_DIFFICULTY_LABELS = {
+  debutant: 'Débutant',
+  intermediaire: 'Intermédiaire',
+  avance: 'Avancé'
+};
+function renderGuideCard(guide){
+  const catLabel = (GUIDE_CATEGORIES.find(c => c.key === guide.category) || {}).label || guide.category;
+  return `<a class="card" href="${guide.url}">
+    <span class="smallcaps">${catLabel}</span>
+    <h3 style="font-size:17px;margin:10px 0 8px;">${guide.question}</h3>
+    <p style="font-size:13px;color:var(--text-dim);flex:1;">${guide.shortAnswer}</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;font-size:11.5px;color:var(--text-dim);align-items:center;">
+      ${guide.difficulty && GUIDE_DIFFICULTY_LABELS[guide.difficulty] ? `<span class="data-quality-badge">${GUIDE_DIFFICULTY_LABELS[guide.difficulty]}</span>` : ''}
+      <span>${guide.readingTime || ''}</span>
+      ${guide.hasSimulation ? '<span>🧪 Simulation liée</span>' : ''}
+    </div>
+  </a>`;
+}
+function renderGuidesGrid(elId, guides){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = guides.length
+    ? guides.map(renderGuideCard).join('')
+    : '<p style="padding:12px 4px;color:var(--text-dim);">Aucun guide ne correspond à ta recherche.</p>';
 }

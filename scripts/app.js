@@ -5922,6 +5922,42 @@ const LIBRARY = [
   }
 ];
 
+// ---------- Guides & Décryptages : index léger (métadonnées de carte
+// uniquement, jamais sections/sources complets — voir scripts/guides-data.js
+// pour le rendu). Vit ici, comme LIBRARY/NEWS_DATA, car app.js charge avant
+// guides-data.js sur TOUTES les pages et SEARCH_INDEX (ci-dessous) doit
+// pouvoir indexer les Guides même sur une page qui ne charge jamais
+// guides-data.js (ex. bourse.html). Chaque guide réel ajoute une entrée ici
+// au moment de sa publication — jamais généré, jamais oublié en silence. ----------
+const GUIDE_CATEGORIES = [
+  {key: 'debuter', label: 'Débuter'},
+  {key: 'choisir', label: 'Choisir'},
+  {key: 'budget', label: 'Petit budget'},
+  {key: 'decider', label: 'Marchés & décisions'}
+];
+const GUIDES = [
+  {
+    slug: 'dca-ou-lump-sum',
+    url: 'guide-dca-ou-lump-sum.html',
+    question: "DCA ou investir tout d'un coup ?",
+    title: "DCA ou investir tout d'un coup ? Ce que montrent vraiment les données",
+    shortAnswer: "Investir en une fois a historiquement mieux performé en moyenne, mais un versement progressif réduit le risque d'un très mauvais point d'entrée.",
+    category: 'choisir',
+    difficulty: 'intermediaire',
+    readingTime: '9 min',
+    publishedAt: '2026-09-05',
+    updatedAt: '2026-09-05',
+    freshness: 'semi-dynamic',
+    hasSimulation: true
+  }
+];
+function getGuideBySlug(slug){
+  return GUIDES.find(g => g.slug === slug) || null;
+}
+function getGuidesByCategory(categoryKey){
+  return GUIDES.filter(g => g.category === categoryKey);
+}
+
 // ---------- Index de recherche (pages + bibliothèque + actualités) ----------
 const SEARCH_INDEX = [
   {title:"Accueil", url:"index.html", type:"Page"},
@@ -5939,6 +5975,7 @@ const SEARCH_INDEX = [
   ...NEWS_DATA.map(n=>({title:n.titre, url:`actualites.html#${n.id}`, type:"Actualité"})),
   ...LIBRARY.map(l=>({title:l.terme, url:`bibliotheque.html#${l.terme.replace(/\s+/g,'-')}`, type:"Définition"})),
   ...STOCKS_DEMO.map(s=>({title:s.nom+" ("+s.ticker+")", url:`bourse.html#${s.ticker}`, type:"Action"})),
-  ...MARKET_DATA.map(m=>({title:m.nom, url:`marche.html#${encodeURIComponent(m.symbol)}`, type:"Marché"}))
+  ...MARKET_DATA.map(m=>({title:m.nom, url:`marche.html#${encodeURIComponent(m.symbol)}`, type:"Marché"})),
+  ...GUIDES.map(g=>({title:g.question, url:g.url, type:"Guide"}))
 ];
 
