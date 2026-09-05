@@ -2228,10 +2228,16 @@ function animateNumber(el, target, opts){
 // nulle part ailleurs comme identifiant technique, uniquement pour l'affichage.
 const INTEREST_DISPLAY_LABELS = Object.fromEntries(DOMAINS.map(d => [d.key, d.displayLabel]));
 INTEREST_DISPLAY_LABELS.marketing = 'le marketing';
-// ---------- En-tête de tableau de bord (salutation, rang, FinPoints, série, activité hebdo) ----------
-function renderDashboardHeader(elId){
-  const el = document.getElementById(elId);
-  if(!el) return;
+// ---------- En-tête de tableau de bord — scindé en 2 blocs composables
+// (refonte cockpit Mon Univers Financier, 05/09/2026) : le bloc salutation/
+// XP/série/activité hebdo (gamification, contenu "pédagogique" au sens du
+// nouveau cockpit) et les 3 bandeaux de nudge (onboarding/ré-onboarding/
+// suggestion d'intérêt, qui pilotent de vrais flux UX et doivent rester
+// visibles au-dessus du pli sur Mon Univers Financier, jamais enterrés dans
+// une section repliée). renderDashboardHeader (ci-dessous) reste inchangé
+// pour index.js, seul autre appelant réel — c'est un simple assemblage des
+// deux, jamais une 2e copie de la logique. ----------
+function buildGamificationHeaderHTML(){
   const g = getGamification();
   const lvl = levelFromXP(g.xp);
   const pool = g.lastGapDays >= 2 ? WELCOME_PHRASES_RETOUR : WELCOME_PHRASES_DEFAULT;
@@ -2262,10 +2268,39 @@ function renderDashboardHeader(elId){
   }
   const weekDays = getWeeklyActivityDays();
   const weekPct = Math.min(100, Math.round((weekDays/WEEKLY_GOAL_DAYS)*100));
-  // Sans test de positionnement complété, "Débutant" ci-dessus n'est qu'un
-  // repli silencieux (voir getLevel()), pas un niveau réellement déclaré —
-  // ce bandeau invite explicitement à combler ça, une seule fois, jusqu'à
-  // ce que le test soit fait (jamais réaffiché après, voir getPositioningResult).
+  return {g, weekPct, html: `
+    <div class="dash-header">
+      <div class="dash-greeting">
+        <span class="smallcaps">${BRAND_SLOGAN}</span>
+        <h1 class="display" style="font-size:26px;font-weight:600;margin-top:4px;">${lvl.title}</h1>
+        <p style="font-size:12px;color:var(--text);font-style:italic;margin-top:2px;" id="dashGreeting">${greeting}</p>
+      </div>
+      <div class="dash-stats">
+        <div class="dash-stat"><span class="num" id="dashNumXP">0 XP</span><span class="lab">niveau ${lvl.level}</span></div>
+        <div class="dash-stat"><span class="num">${ICONS.coins} <span id="dashNumFP">0</span></span><span class="lab">Finance Points</span></div>
+        <div class="dash-stat"><span class="num">${ICONS.flame} ${g.streak}</span><span class="lab">série</span></div>
+        <div class="dash-stat">
+          <span class="num">${weekDays}/${WEEKLY_GOAL_DAYS}</span><span class="lab">jours actifs</span>
+          <div class="dash-weekbar"><div class="dash-weekfill" id="dashWeekFill" style="width:0%;"></div></div>
+        </div>
+      </div>
+    </div>`};
+}
+function renderGamificationHeader(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const {g, weekPct, html} = buildGamificationHeaderHTML();
+  el.innerHTML = html;
+  animateNumber(document.getElementById('dashNumXP'), g.xp, {suffix:' XP'});
+  animateNumber(document.getElementById('dashNumFP'), g.financePoints);
+  animateWidthIn(document.getElementById('dashWeekFill'), weekPct);
+}
+
+function buildParcoursNudgesHTML(elId){
+  // Sans test de positionnement complété, "Débutant" n'est qu'un repli
+  // silencieux (voir getLevel()), pas un niveau réellement déclaré — ce
+  // bandeau invite explicitement à combler ça, une seule fois, jusqu'à ce
+  // que le test soit fait (jamais réaffiché après, voir getPositioningResult).
   const positioningResult = getPositioningResult();
   const showOnboardingNudge = !positioningResult;
   // Bandeau distinct (chantier Onboarding intelligent, 31/08/2026, section 67
@@ -2284,23 +2319,7 @@ function renderDashboardHeader(elId){
   // getPendingInterestSuggestion), toujours avec confirmation explicite —
   // jamais ajouté silencieusement au profil.
   const interestSuggestion = getPendingInterestSuggestion();
-  el.innerHTML = `
-    <div class="dash-header">
-      <div class="dash-greeting">
-        <span class="smallcaps">${BRAND_SLOGAN}</span>
-        <h1 class="display" style="font-size:26px;font-weight:600;margin-top:4px;">${lvl.title}</h1>
-        <p style="font-size:12px;color:var(--text);font-style:italic;margin-top:2px;" id="dashGreeting">${greeting}</p>
-      </div>
-      <div class="dash-stats">
-        <div class="dash-stat"><span class="num" id="dashNumXP">0 XP</span><span class="lab">niveau ${lvl.level}</span></div>
-        <div class="dash-stat"><span class="num">${ICONS.coins} <span id="dashNumFP">0</span></span><span class="lab">Finance Points</span></div>
-        <div class="dash-stat"><span class="num">${ICONS.flame} ${g.streak}</span><span class="lab">série</span></div>
-        <div class="dash-stat">
-          <span class="num">${weekDays}/${WEEKLY_GOAL_DAYS}</span><span class="lab">jours actifs</span>
-          <div class="dash-weekbar"><div class="dash-weekfill" id="dashWeekFill" style="width:0%;"></div></div>
-        </div>
-      </div>
-    </div>
+  const html = `
     ${showOnboardingNudge ? `
     <div class="today-card" style="margin-top:4px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;">
       <div>
@@ -2331,9 +2350,9 @@ function renderDashboardHeader(elId){
         <button type="button" class="btn btn-sm" id="${elId}-interest-no" style="white-space:nowrap;">Non merci</button>
       </div>
     </div>` : ''}`;
-  animateNumber(document.getElementById('dashNumXP'), g.xp, {suffix:' XP'});
-  animateNumber(document.getElementById('dashNumFP'), g.financePoints);
-  animateWidthIn(document.getElementById('dashWeekFill'), weekPct);
+  return {showReonboardingNudge, interestSuggestion, html};
+}
+function wireParcoursNudges(elId, showReonboardingNudge, interestSuggestion){
   if(showReonboardingNudge){
     document.getElementById(`${elId}-reonboarding-later`).addEventListener('click', () => {
       safeSetJSON('fzr-reonboarding-dismissed-version', ONBOARDING_VERSION);
@@ -2355,6 +2374,29 @@ function renderDashboardHeader(elId){
       removeSuggestionBanner();
     });
   }
+}
+function renderParcoursNudges(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const {showReonboardingNudge, interestSuggestion, html} = buildParcoursNudgesHTML(elId);
+  el.innerHTML = html;
+  wireParcoursNudges(elId, showReonboardingNudge, interestSuggestion);
+}
+
+// Conservée telle quelle pour son seul autre appelant réel (index.js) —
+// assemble les 2 blocs ci-dessus dans UN conteneur, exactement le rendu
+// combiné qui existait avant ce découpage (aucun changement de comportement
+// pour l'Accueil).
+function renderDashboardHeader(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const gamif = buildGamificationHeaderHTML();
+  const nudges = buildParcoursNudgesHTML(elId);
+  el.innerHTML = gamif.html + nudges.html;
+  animateNumber(document.getElementById('dashNumXP'), gamif.g.xp, {suffix:' XP'});
+  animateNumber(document.getElementById('dashNumFP'), gamif.g.financePoints);
+  animateWidthIn(document.getElementById('dashWeekFill'), gamif.weekPct);
+  wireParcoursNudges(elId, nudges.showReonboardingNudge, nudges.interestSuggestion);
 }
 
 // ================================================================

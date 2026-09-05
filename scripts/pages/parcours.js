@@ -28,7 +28,13 @@ function initParcoursHero(){
     return;
   }
   document.getElementById('parcoursMainSection').style.display = 'block';
-  renderDashboardHeader('dashboardHeader');
+  // En-tête scindé (refonte cockpit, 05/09/2026) : les 3 bandeaux de nudge
+  // (onboarding/ré-onboarding/suggestion d'intérêt) restent au-dessus du
+  // pli, toujours visibles ; le bloc gamification (XP/niveau/série) est
+  // du contenu pédagogique au sens du nouveau cockpit — voir Phase 3 pour
+  // son déplacement dans la section repliée "Suite de l'apprentissage".
+  renderParcoursNudges('parcoursNudges');
+  renderGamificationHeader('dashboardHeader');
   renderDashboardShell('dashboardShell');
 }
 
