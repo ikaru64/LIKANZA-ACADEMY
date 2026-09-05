@@ -43,10 +43,17 @@ function renderLabTabs(){
     btn.addEventListener('click', ()=>setLabTab(btn.dataset.tab));
   });
 }
+// Assignée par initLifeProjectsManager plus bas (sa fonction render() interne)
+// — permet à setLabTab de rafraîchir la liste des projets en revenant sur
+// cet onglet après un aller-retour vers "Simuler →" (pont Mon Univers ↔ Lab,
+// sprint de fermeture des écarts, 04/09/2026), sans dupliquer sa logique de
+// rendu ici.
+let refreshLifeProjectsList = null;
 function setLabTab(tabId){
   labActiveTab = tabId;
   document.querySelectorAll('#labTabsGrid .quick-access-card').forEach(c=>c.classList.toggle('active', c.dataset.tab===tabId));
   document.querySelectorAll('.home-tab-panel').forEach(p=>p.classList.toggle('active', p.id===tabId));
+  if(tabId === 'tab-budget-epargne' && typeof refreshLifeProjectsList === 'function') refreshLifeProjectsList();
 }
 renderLabTabs();
 setLabTab(labActiveTab);
@@ -2211,7 +2218,54 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
   update();
   document.getElementById('futurLinks').innerHTML = renderCourseLibraryLinks(['Intérêts composés', 'Valeur nette', 'Inflation']);
   renderNextStepCard('nextstep-mon-futur', {domainKey: 'personalFinance'});
+
+  // Pont Mon Univers ↔ Lab : voir checkLifeProjectSimulationContext()
+  // ci-dessous — appelée ici pour couvrir une arrivée directe sur cet onglet
+  // (lien externe, rechargement), et à nouveau par le bouton "Simuler →" du
+  // gestionnaire de projets, qui change seulement d'onglet sans recharger la
+  // page (un simple chargement de script une fois au chargement de la page
+  // ne suffirait donc pas à couvrir ce second cas).
+  checkLifeProjectSimulationContext();
 })();
+// ---- Pont Mon Univers ↔ Lab (sprint de fermeture des écarts, 04/09/2026,
+// section "MON UNIVERS ↔ LAB" du prompt d'origine) : réutilise le moteur de
+// contexte existant (writeContext/consumeContext, même motif que le
+// transfert business-plan → Business Game déjà en place), jamais un second
+// mécanisme. Un projet de vie envoie ici via "Simuler →" ; une fois le
+// scénario ajusté sur l'onglet Planification, il peut être rattaché au
+// projet — toujours le vrai scénario affiché à l'écran au moment du clic
+// (relu depuis les champs, jamais mis en cache), jamais un résultat
+// fabriqué. Fonction autonome (pas seulement interne à
+// initMonFuturSimulator) : "Simuler →" ne recharge pas la page (simple
+// changement d'onglet), donc doit pouvoir la rappeler directement après
+// avoir écrit le contexte, sans attendre un rechargement qui n'aura jamais
+// lieu. ----
+function checkLifeProjectSimulationContext(){
+  const projectContextEl = document.getElementById('futurProjectContext');
+  if(!projectContextEl) return;
+  const projectContext = consumeContext('life-project-simulation');
+  if(!projectContext) return;
+  projectContextEl.innerHTML = `
+    <div class="today-card" style="display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+      <p style="font-size:13px;margin:0;">Tu simules pour ton projet « ${projectContext.projectNom} ».</p>
+      <button type="button" class="btn btn-sm btn-gold" id="futurSaveToProject">Enregistrer ce scénario dans mon projet →</button>
+    </div>`;
+  document.getElementById('futurSaveToProject').addEventListener('click', () => {
+    const activePill = document.querySelector('#futurHorizonToggle .pill.active');
+    const horizon = activePill ? +activePill.dataset.horizon : 10;
+    const patrimoineInitial = computeNetWorth(getNetWorthAssets(), getPersonalDebts()).patrimoineNet;
+    const scenarios = computeWealthProjectionScenarios({
+      patrimoineInitial,
+      epargneMensuelle: +document.getElementById('futurEpargne').value || 0,
+      inflationPct: +document.getElementById('futurInflation').value || 0,
+      augmentationAnnuellePct: +document.getElementById('futurAugmentation').value || 0
+    });
+    const centralPoint = scenarios.central.atHorizon[horizon];
+    const label = `Trajectoire à ${horizon} an${horizon > 1 ? 's' : ''} (hypothèse centrale : ${fmtEUR(centralPoint.patrimoineNominal)})`;
+    linkLifeProjectSimulation(projectContext.projectId, {label, url: 'laboratoire.html#tab-budget-epargne'});
+    projectContextEl.innerHTML = `<p style="font-size:12.5px;color:var(--emerald);">${ICONS.check || '✓'} Scénario enregistré dans ton projet « ${projectContext.projectNom} ».</p>`;
+  });
+}
 
 // ---------- Calendrier financier (Dashboard "Mon Univers Financier", Chantier
 // 5) : uniquement des échéances réelles — un abonnement/facture avec un jour
@@ -2333,6 +2387,7 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
           <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
             <button type="button" class="btn btn-sm project-priority-cycle" data-project="${p.id}" data-priority="${p.priority || ''}">${p.priority ? PRIORITY_LABELS[p.priority] : 'Priorité : —'}</button>
             <button type="button" class="btn btn-sm project-status-cycle" data-project="${p.id}" data-status="${p.status || 'actif'}">${STATUS_LABELS[p.status || 'actif']}</button>
+            <button type="button" class="btn btn-sm project-simulate" data-project="${p.id}" data-nom="${p.nom.replace(/"/g, '&quot;')}">Simuler →</button>
             ${p.linkedSimulations && p.linkedSimulations.length ? `<span class="badge" title="${p.linkedSimulations.map(s => s.label).join(' · ')}">${p.linkedSimulations.length} scénario${p.linkedSimulations.length > 1 ? 's' : ''} enregistré${p.linkedSimulations.length > 1 ? 's' : ''}</span>` : ''}
           </div>
           <p style="font-size:12.5px;margin-top:8px;">${progress.progressionPct !== null ? `${progress.progressionPct}% (${progress.etapesTerminees}/${progress.etapesTotal} étapes)` : "Pas encore d'étape ajoutée"} · ${fmtEUR(progress.depensesEngagees)} dépensés sur ${fmtEUR(p.budgetTotal)} (reste ${fmtEUR(progress.budgetRestant)})</p>
@@ -2387,6 +2442,17 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
       listEl.querySelectorAll('.project-notes-input').forEach(ta => ta.addEventListener('change', () => {
         updateLifeProjectMeta(ta.dataset.project, {notes: ta.value});
       }));
+      listEl.querySelectorAll('.project-simulate').forEach(btn => btn.addEventListener('click', () => {
+        writeContext('life-project-simulation', {projectId: btn.dataset.project, projectNom: btn.dataset.nom});
+        location.hash = 'tab-planification';
+        setLabTab('tab-planification');
+        openLabWidget('tab-planification', 'widget-mon-futur');
+        // Un simple changement d'onglet, jamais un rechargement de page : le
+        // contexte qu'on vient d'écrire ne serait donc jamais lu par le
+        // chargement initial de checkLifeProjectSimulationContext() plus
+        // haut dans ce fichier — on la rappelle ici explicitement.
+        checkLifeProjectSimulationContext();
+      }));
     }
     renderLifeTimeline('lifeTimeline');
   }
@@ -2397,6 +2463,7 @@ renderNextStepCard('nextstep-invest-position', {domainKey: 'stockMarket'});
   });
 
   render();
+  refreshLifeProjectsList = render;
   document.getElementById('projectLinks').innerHTML = renderCourseLibraryLinks(['Budget', 'Épargne', 'Patrimoine']);
   renderNextStepCard('nextstep-life-projects', {domainKey: 'personalFinance'});
 })();
