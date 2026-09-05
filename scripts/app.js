@@ -5949,6 +5949,20 @@ const GUIDES = [
     updatedAt: '2026-09-05',
     freshness: 'semi-dynamic',
     hasSimulation: true
+  },
+  {
+    slug: 'pea-ou-cto',
+    url: 'guide-pea-ou-cto.html',
+    question: 'PEA ou compte-titres (CTO) ?',
+    title: 'PEA ou compte-titres (CTO) ? Ce qui change vraiment entre les deux enveloppes',
+    shortAnswer: "Le PEA offre une fiscalité avantageuse après 5 ans mais reste plafonné aux actions/fonds européens ; le compte-titres n'a aucune limite mais impose chaque gain dès sa réalisation. La plupart des investisseurs combinent les deux plutôt que de choisir.",
+    category: 'choisir',
+    difficulty: 'intermediaire',
+    readingTime: '8 min',
+    publishedAt: '2026-09-05',
+    updatedAt: '2026-09-05',
+    freshness: 'dynamic',
+    hasSimulation: false
   }
 ];
 function getGuideBySlug(slug){
