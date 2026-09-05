@@ -372,7 +372,7 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
     <div class="card" style="max-width:640px;margin:0 auto;">
       <span class="smallcaps">C'est noté</span>
       <h2 class="display" style="font-size:24px;font-weight:600;margin:8px 0;">Ton profil est enregistré</h2>
-      <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Ces niveaux sont <strong style="color:var(--text);">déclarés par toi</strong> — une hypothèse de départ, pas encore vérifiée. Fais un quiz approfondi dans Mon Parcours (environ 8 minutes) quand tu veux vraiment savoir où tu en es dans un domaine.</p>
+      <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Ces niveaux sont <strong style="color:var(--text);">déclarés par toi</strong> — une hypothèse de départ, pas encore vérifiée. Fais un quiz approfondi dans Mon Univers Financier (environ 8 minutes) quand tu veux vraiment savoir où tu en es dans un domaine.</p>
       <div class="panel">${declaredRows}</div>
       ${goalLabels.length ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:14px;"><strong style="color:var(--text);">Tu cherches à :</strong> ${goalLabels.join(' · ')}</p>` : ''}
       ${primaryGoalHtml}
@@ -380,7 +380,7 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
       ${pathsHtml}
       ${diagnosticHtml}
       <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;">
-        <a href="parcours.html" class="btn btn-gold">Voir Mon Parcours</a>
+        <a href="parcours.html" class="btn btn-gold">Voir Mon Univers Financier</a>
         <a href="index.html" class="btn btn-sm">Explorer le site</a>
       </div>
     </div>`;

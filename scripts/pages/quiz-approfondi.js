@@ -42,7 +42,7 @@ if(!domain){
     <p style="color:var(--text-dim);font-size:14px;line-height:1.6;margin-bottom:8px;">${hook.subtitle}</p>
     <p class="mono" style="font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.04em;">${pool.length} situation${pool.length > 1 ? 's' : ''} · à ton rythme (~${estMinutes} min)</p>
     ${isShort ? `<p class="disclaimer-box">Le contenu réel pour ${domain.displayLabel} est encore limité sur Likanza : ce quiz est volontairement plus court, plutôt que rempli de répétitions pour atteindre un chiffre rond.</p>` : ''}
-    <p class="disclaimer-box">Facultatif. Le résultat remplace ton niveau déclaré par un niveau réellement évalué pour ${domain.displayLabel} — visible dans Mon Parcours.</p>
+    <p class="disclaimer-box">Facultatif. Le résultat remplace ton niveau déclaré par un niveau réellement évalué pour ${domain.displayLabel} — visible dans Mon Univers Financier.</p>
     <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:16px;">
       <button class="btn btn-gold" id="deepQuizStart" ${pool.length === 0 ? 'disabled' : ''}>Commencer</button>
       <a href="parcours.html" class="btn btn-sm">Annuler</a>

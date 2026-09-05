@@ -2712,7 +2712,7 @@ function renderFinancialIQDetail(elId){
     ${renderMethodologyPanel({
       calcul: "Financial IQ = (total des bonnes réponses ÷ total des réponses données) × 100, tous domaines confondus — une vraie moyenne pondérée par le nombre de réponses, jamais une simple moyenne des pourcentages par domaine (qui donnerait autant de poids à un domaine testé 2 fois qu'à un domaine testé 50 fois).",
       donnees: "Toutes tes réponses réellement enregistrées sur le site (Défis, quiz de cours, missions) qui appartiennent à une catégorie rattachée à l'un des 6 domaines Likanza.",
-      limites: `Un score n'est affiché qu'à partir de ${FINANCIAL_IQ_MIN_ANSWERS} réponses au total, pour éviter un chiffre trompeur sur un trop petit échantillon. Distinct du "niveau évalué" par domaine sur Mon Parcours, qui vient d'un quiz approfondi ponctuel, pas d'un score qui évolue en continu.`,
+      limites: `Un score n'est affiché qu'à partir de ${FINANCIAL_IQ_MIN_ANSWERS} réponses au total, pour éviter un chiffre trompeur sur un trop petit échantillon. Distinct du "niveau évalué" par domaine sur Mon Univers Financier, qui vient d'un quiz approfondi ponctuel, pas d'un score qui évolue en continu.`,
       comprendre: "Contrairement à l'XP (qui récompense la régularité, quelle que soit la réussite), le Financial IQ ne progresse que si tes réponses sont réellement correctes — répondre 100 fois à des questions faciles sans être juste ne le fait pas progresser."
     })}`;
 }
