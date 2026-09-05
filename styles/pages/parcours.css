@@ -137,6 +137,12 @@
   display:flex;
   flex-direction:column;
   min-height:300px;
+  /* Filet de sécurité : si le contenu réel (onglets + sélecteur de
+     période + canvas) dépasse malgré tout la hauteur allouée par la
+     grille, on le contient ici plutôt que de le laisser peindre par-dessus
+     la rangée de panneaux en dessous (bug constaté : chiffres/courbes qui
+     se chevauchaient avec "Mes comptes"/"Mes objectifs"). */
+  overflow:hidden;
 }
 .cockpit-side{
   display:flex;
@@ -272,7 +278,12 @@
 @media (min-width:1180px){
   .cockpit{
     grid-template-columns:2fr 1fr;
-    grid-template-rows:auto auto minmax(220px,1fr) minmax(0,auto);
+    /* Le plancher du graphique (300px) correspond à son besoin réel
+       minimal (onglets ~30px + sélecteur de période ~44px + zone de
+       canvas ~180px + padding ~28px) — un plancher plus bas que ça
+       garantissait un débordement visuel, quelle que soit la hauteur
+       d'écran disponible. */
+    grid-template-rows:auto auto minmax(300px,1fr) minmax(0,auto);
     grid-template-areas:
       "header header"
       "kpis   kpis"
@@ -285,6 +296,14 @@
   .cockpit-chart{grid-area:chart;min-height:0;}
   .cockpit-side{grid-area:side;overflow-y:auto;min-height:0;}
   .cockpit-panels-row{grid-area:panels;overflow-y:auto;min-height:0;}
+  /* Chaque panneau (comptes/objectifs/allocation) est borné à une hauteur
+     fixe et défile EN INTERNE au-delà — sans ce plafond, un compte réel
+     avec beaucoup de lignes (comptes, objectifs...) gonflait la hauteur
+     "auto" de toute la rangée bien au-delà de l'espace réellement
+     disponible, provoquant le même chevauchement visuel que le graphique
+     ci-dessus. Aucune donnée réelle n'est jamais tronquée, seulement
+     rendue défilante dans sa propre carte. */
+  .cockpit-panels-row .cockpit-panel{max-height:210px;overflow-y:auto;}
 }
 
 /* ---------- Tablette (1024-1180px, rail icône) : 1 colonne, KPI 2×3 ---------- */
