@@ -230,7 +230,15 @@ function wireGuideSimulationCTA(blocId, bloc, guide){
   btn.addEventListener('click', () => {
     const payload = {guideSlug: guide.slug, guideTitle: guide.title};
     bloc.fields.forEach(f => { payload[f.key] = +document.getElementById(`${blocId}-${f.key}`).value || 0; });
-    writeContext('guide-simulation', payload);
+    // Clé de contexte par guide (guide-simulation-<slug>), pas une clé
+    // générique partagée : laboratoire.html héberge maintenant plusieurs
+    // widgets pontés (DCA, Acheter ou louer), sur des onglets différents.
+    // consumeContext supprime la clé dès sa première lecture — avec une
+    // clé générique unique, le widget dont l'init tourne en premier volerait
+    // le contexte destiné à l'autre (mauvais onglet ouvert, mauvais champ
+    // prérempli). Le slug du guide est déjà réel et unique, donc réutilisé
+    // tel quel comme suffixe de clé.
+    writeContext('guide-simulation-' + guide.slug, payload);
     window.location.href = bloc.targetUrl;
   });
 }

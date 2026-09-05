@@ -5963,6 +5963,34 @@ const GUIDES = [
     updatedAt: '2026-09-05',
     freshness: 'dynamic',
     hasSimulation: false
+  },
+  {
+    slug: 'etf-ou-stock-picking',
+    url: 'guide-etf-ou-stock-picking.html',
+    question: 'ETF ou stock-picking ?',
+    title: 'ETF ou stock-picking ? Ce que montrent les données sur la sélection de titres',
+    shortAnswer: "Un ETF réplique automatiquement un indice pour des frais très faibles ; le stock-picking consiste à choisir soi-même ses actions. Les rapports SPIVA montrent qu'une large majorité de gérants professionnels ne bat déjà pas durablement son indice, ce qui n'exclut pas de réussir mais en fait un pari structurellement difficile.",
+    category: 'choisir',
+    difficulty: 'debutant',
+    readingTime: '7 min',
+    publishedAt: '2026-09-05',
+    updatedAt: '2026-09-05',
+    freshness: 'semi-dynamic',
+    hasSimulation: false
+  },
+  {
+    slug: 'acheter-ou-louer',
+    url: 'guide-acheter-ou-louer.html',
+    question: 'Acheter ou louer son logement ?',
+    title: "Acheter ou louer son logement ? Ce qu'il faut comparer avant de décider",
+    shortAnswer: "Acheter devient généralement plus avantageux au-delà d'un certain nombre d'années de détention, une fois les frais d'achat amortis — mais ce seuil dépend entièrement du prix, du loyer équivalent, du taux de crédit et du coût d'opportunité de l'apport. Aucun chiffre générique ne s'applique à toutes les situations.",
+    category: 'choisir',
+    difficulty: 'intermediaire',
+    readingTime: '9 min',
+    publishedAt: '2026-09-05',
+    updatedAt: '2026-09-05',
+    freshness: 'semi-dynamic',
+    hasSimulation: true
   }
 ];
 function getGuideBySlug(slug){

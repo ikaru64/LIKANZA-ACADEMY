@@ -782,7 +782,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   // (l'horizon vient implicitement de la période historique choisie) —
   // jamais un champ fabriqué pour coller à l'exemple générique du prompt
   // d'origine, seulement ce que cet outil précis sait vraiment faire. ----
-  const guideContext = consumeContext('guide-simulation');
+  const guideContext = consumeContext('guide-simulation-dca-ou-lump-sum');
   const guideContextEl = document.getElementById('dcaGuideContext');
   if(guideContext && guideContextEl){
     if(guideContext.mensualite > 0) monthlyEl.value = guideContext.mensualite;
@@ -1469,6 +1469,30 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   if(!els.labBrPrice || !outputEl) return;
 
   let appreciationAnnualPct = null; // rempli par la vraie série RESR si disponible
+
+  // ---------- Pont Guide -> Laboratoire (chantier Guides & Décryptages,
+  // guide "Acheter ou louer son logement ?") : même motif exact que le pont
+  // DCA ci-dessus (business-strategy, cross-page, lu une seule fois au
+  // chargement), sur une clé de contexte propre à ce guide
+  // (guide-simulation-acheter-ou-louer) — laboratoire.html héberge
+  // maintenant 2 widgets pontés sur des onglets différents, une clé
+  // générique partagée serait volée par celui dont l'init tourne en premier.
+  // Seuls price/loyer sont transmis : les deux seules valeurs qu'un lecteur
+  // connaît d'emblée en lisant le guide, jamais un champ fabriqué pour
+  // préremplir le formulaire entier. ----------
+  const buyRentGuideContext = consumeContext('guide-simulation-acheter-ou-louer');
+  const buyRentGuideContextEl = document.getElementById('labBuyRentGuideContext');
+  if(buyRentGuideContext && buyRentGuideContextEl){
+    if(buyRentGuideContext.price > 0) els.labBrPrice.value = buyRentGuideContext.price;
+    if(buyRentGuideContext.loyer > 0) els.labBrLoyer.value = buyRentGuideContext.loyer;
+    setLabTab('tab-logement');
+    openLabWidget('tab-logement', 'labBuyRentCard');
+    buyRentGuideContextEl.innerHTML = `
+      <div class="today-card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <p style="font-size:13px;margin:0;">Simulation liée au guide « ${buyRentGuideContext.guideTitle} ».</p>
+        ${buyRentGuideContext.guideSlug ? `<a href="guide-${encodeURIComponent(buyRentGuideContext.guideSlug)}.html" class="btn btn-sm">← Revenir au guide</a>` : ''}
+      </div>`;
+  }
 
   function currentInputs(){
     const scenario = scenarioEl.value;
