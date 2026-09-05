@@ -39,6 +39,7 @@ function initParcoursHero(){
   renderCockpitHeader('cockpitHeader');
   renderCockpitKPIs('cockpitKPIs');
   renderCockpitChart('cockpitChart');
+  renderCockpitSide('cockpitSide');
 }
 
 // ============================================================
@@ -282,6 +283,168 @@ function renderCockpitChart(elId){
   el.querySelectorAll('.cockpit-chart-tab').forEach(btn => {
     btn.addEventListener('click', () => setCockpitView(btn.dataset.view));
   });
+}
+
+// ============================================================
+// Colonne latérale (Phase 6) — donut interactif, comptes & enveloppes,
+// objectifs (fusion visuelle goals + projets de vie, jamais un vrai
+// merge : deux registres réellement différents), allocation globale.
+// ============================================================
+function renderCockpitSide(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <div class="cockpit-panel" id="${elId}-donut"></div>
+    <div class="cockpit-panel" id="${elId}-accounts"></div>
+    <div class="cockpit-panel" id="${elId}-objectifs"></div>
+    <div class="cockpit-panel" id="${elId}-allocation"></div>`;
+  renderCockpitDonut(`${elId}-donut`);
+  renderCockpitAccounts(`${elId}-accounts`);
+  renderCockpitObjectifs(`${elId}-objectifs`);
+  renderCockpitAllocation(`${elId}-allocation`);
+}
+
+// ---------- Donut interactif ----------
+let cockpitDonutInstance = null;
+let cockpitAccountsFilter = null; // catégorie active pour le filtre comptes (clic donut/légende)
+function renderCockpitDonut(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const segs = getWealthAllocationSegments();
+  if(segs.length === 0){
+    el.innerHTML = `<span class="panel-title">Répartition du patrimoine</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Renseigne ton patrimoine pour voir apparaître sa répartition ici.</p>`;
+    return;
+  }
+  const net = computeNetWorth(getNetWorthAssets(), getPersonalDebts());
+  el.innerHTML = `
+    <span class="panel-title">Répartition du patrimoine</span>
+    <div style="position:relative;margin-top:14px;height:190px;">
+      <canvas id="${elId}-canvas"></canvas>
+      <div class="cockpit-donut-center" id="${elId}-center">
+        <div class="cockpit-donut-total mono">${fmtEUR(net.patrimoineNet)}</div>
+        <div class="cockpit-donut-label">Patrimoine total</div>
+      </div>
+    </div>
+    <div class="cockpit-donut-legend" id="${elId}-legend">
+      ${segs.map(s => `
+        <button type="button" class="cockpit-donut-legend-row" data-key="${s.key}">
+          <span class="cockpit-donut-legend-dot" style="background:${s.color};"></span>
+          <span class="cockpit-donut-legend-label">${s.label}</span>
+          <span class="cockpit-donut-legend-value mono">${fmtEUR(s.value)} · ${Math.round(s.pct)} %</span>
+        </button>`).join('')}
+    </div>`;
+
+  const canvas = document.getElementById(`${elId}-canvas`);
+  const centerTotal = document.getElementById(`${elId}-center`).querySelector('.cockpit-donut-total');
+  const centerLabel = document.getElementById(`${elId}-center`).querySelector('.cockpit-donut-label');
+  if(!canvas || typeof Chart === 'undefined') return;
+  if(cockpitDonutInstance) cockpitDonutInstance.destroy();
+
+  // elId suit toujours le motif "<conteneur>-donut" (voir renderCockpitSide) —
+  // dérive l'id du panneau comptes voisin plutôt que de le coder en dur.
+  const accountsElId = elId.replace(/-donut$/, '-accounts');
+  function selectCategory(key){
+    cockpitAccountsFilter = cockpitAccountsFilter === key ? null : key;
+    document.querySelectorAll(`#${elId}-legend .cockpit-donut-legend-row`).forEach(row => {
+      row.classList.toggle('active', row.dataset.key === cockpitAccountsFilter);
+    });
+    renderCockpitAccounts(accountsElId);
+  }
+
+  cockpitDonutInstance = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: {
+      labels: segs.map(s => s.label),
+      datasets: [{data: segs.map(s => s.value), backgroundColor: segs.map(s => s.color), borderWidth: 0, hoverOffset: 6}]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: {legend: {display: false}, tooltip: {callbacks: {label: ctx => `${ctx.label} : ${fmtEUR(ctx.parsed)}`}}},
+      onHover: (evt, elements) => {
+        if(elements.length){
+          const seg = segs[elements[0].index];
+          centerTotal.textContent = fmtEUR(seg.value);
+          centerLabel.textContent = seg.label;
+        } else {
+          centerTotal.textContent = fmtEUR(net.patrimoineNet);
+          centerLabel.textContent = 'Patrimoine total';
+        }
+      },
+      onClick: (evt, elements) => {
+        if(elements.length) selectCategory(segs[elements[0].index].key);
+      }
+    }
+  });
+
+  document.getElementById(`${elId}-legend`).querySelectorAll('.cockpit-donut-legend-row').forEach(row => {
+    row.addEventListener('click', () => selectCategory(row.dataset.key));
+  });
+}
+
+// ---------- Mes comptes & enveloppes ----------
+function renderCockpitAccounts(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const assets = getNetWorthAssets();
+  if(assets.length === 0){
+    el.innerHTML = `<span class="panel-title">Mes comptes &amp; enveloppes</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Aucun compte enregistré pour l'instant.</p><a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm btn-gold" style="margin-top:10px;">Ajouter un compte →</a>`;
+    return;
+  }
+  const filtered = cockpitAccountsFilter ? assets.filter(a => a.categorie === cockpitAccountsFilter) : assets;
+  const sorted = filtered.slice().sort((a, b) => b.valeur - a.valeur);
+  el.innerHTML = `
+    <span class="panel-title">Mes comptes &amp; enveloppes</span>
+    ${cockpitAccountsFilter ? `<p style="font-size:11.5px;color:var(--gold-bright);margin-top:8px;">Filtré : ${NET_WORTH_CATEGORY_LABELS[cockpitAccountsFilter] || cockpitAccountsFilter} <button type="button" id="${elId}-clear-filter" style="background:none;border:none;color:var(--text-dim);cursor:pointer;text-decoration:underline;margin-left:4px;">retirer ×</button></p>` : ''}
+    <div style="margin-top:8px;">
+      ${sorted.length === 0
+        ? `<p style="font-size:12.5px;color:var(--text-dim);padding:8px 0;">Aucun compte dans cette catégorie.</p>`
+        : sorted.map(a => `
+        <a href="laboratoire.html#tab-budget-epargne" class="cockpit-account-row">
+          <span>${a.nom}<span class="cockpit-account-cat">${NET_WORTH_CATEGORY_LABELS[a.categorie] || a.categorie}</span></span>
+          <span class="mono">${fmtEUR(a.valeur)}</span>
+        </a>`).join('')}
+    </div>`;
+  if(cockpitAccountsFilter){
+    const clearBtn = document.getElementById(`${elId}-clear-filter`);
+    if(clearBtn) clearBtn.addEventListener('click', () => {
+      cockpitAccountsFilter = null;
+      document.querySelectorAll('.cockpit-donut-legend-row').forEach(row => row.classList.remove('active'));
+      renderCockpitAccounts(elId);
+    });
+  }
+}
+
+// ---------- Mes objectifs (goals + projets de vie, 2 sous-listes réelles) ----------
+function renderCockpitObjectifs(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <span class="panel-title">Mes objectifs</span>
+    <div id="${elId}-goals" style="margin-top:10px;"></div>
+    <div id="${elId}-projects" style="margin-top:16px;"></div>`;
+  renderGoalsDashboardWidget(`${elId}-goals`);
+  renderLifeProjectsDashboardWidget(`${elId}-projects`);
+}
+
+// ---------- Allocation globale (barres horizontales) ----------
+function renderCockpitAllocation(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const segs = getWealthAllocationSegments();
+  if(segs.length === 0){
+    el.innerHTML = `<span class="panel-title">Allocation globale</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Aucune donnée pour l'instant.</p>`;
+    return;
+  }
+  const sorted = segs.slice().sort((a, b) => b.pct - a.pct);
+  el.innerHTML = `
+    <span class="panel-title">Allocation globale</span>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:12px;">
+      ${sorted.map(s => `
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;"><span>${s.label}</span><span class="mono">${Math.round(s.pct)} %</span></div>
+          <div class="cockpit-allocation-bar"><div class="cockpit-allocation-fill" style="width:${s.pct}%;background:${s.color};"></div></div>
+        </div>`).join('')}
+    </div>`;
 }
 
 initParcoursHero();
