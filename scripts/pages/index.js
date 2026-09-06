@@ -3,6 +3,13 @@ const I18N = {
   en: {
     todayEyebrow: "FOR YOU TODAY",
     todayTitle: "Your daily dashboard",
+    importantNewsEyebrow: "IMPORTANT TODAY",
+    importantNewsCta: "See all news →",
+    importantNewsEmpty: "No news generated yet — check back soon.",
+    importantNewsUnavailable: "News temporarily unavailable.",
+    universePreviewEyebrow: "MY FINANCIAL UNIVERSE",
+    universePreviewEmpty: "Add your accounts and budget to see your net worth and financial health here.",
+    universePreviewCta: "Open My Financial Universe →",
     learnPreviewLabel: "YOUR MISSIONS",
     learnCta: "Open my missions",
     libraryEyebrow: "LEARN A CONCEPT",
@@ -53,6 +60,13 @@ const I18N = {
   fr: {
     todayEyebrow: "POUR TOI AUJOURD'HUI",
     todayTitle: "Ton tableau de bord du jour",
+    importantNewsEyebrow: "IMPORTANT AUJOURD'HUI",
+    importantNewsCta: "Voir toute l'actualité →",
+    importantNewsEmpty: "Aucune actualité générée pour l'instant — reviens bientôt.",
+    importantNewsUnavailable: "Actualités momentanément indisponibles.",
+    universePreviewEyebrow: "MON UNIVERS FINANCIER",
+    universePreviewEmpty: "Ajoute tes comptes et ton budget pour voir ton patrimoine et ta santé financière ici.",
+    universePreviewCta: "Ouvrir Mon Univers Financier →",
     learnPreviewLabel: "TES MISSIONS",
     learnCta: "Ouvrir mes missions",
     libraryEyebrow: "APPRENDRE UNE NOTION",
@@ -124,6 +138,8 @@ function setLang(lang){
   safeRun('accès rapides (langue)', renderQuickAccess);
   safeRun('simulateurs (langue)', renderSimPreviews);
   safeRun("aujourd'hui (langue)", renderTodayCard);
+  safeRun('actualité importante (langue)', renderImportantNews);
+  safeRun('aperçu Mon Univers (langue)', renderUniversePreview);
 }
 
 const langToggleBtn = document.getElementById('langToggle');
@@ -155,6 +171,64 @@ function renderTodayCard(){
       <p style="font-size:13px;color:var(--text-dim);margin-bottom:6px;">${notion.terme} · ${notion.simple}</p>
       <a href="bibliotheque.html#${notion.terme.replace(/\s+/g,'-')}" class="today-link">${LANG==='en'?'Read more':'En savoir plus'} →</a>`;
   }
+}
+
+// ================= Actualité importante (Gap Closure Sprint, phase 12, 06/09/2026) =================
+// Complète la carte "Pour toi aujourd'hui" : un seul appel réseau vers
+// /api/daily-news (déjà utilisé par actualites.js, pas de cache partagé —
+// voir le commentaire de actualites.js sur ce point), on ne prend que le
+// premier item réel (le plus mis en avant, sourceCount le plus élevé côté
+// génération) — jamais un résumé recomposé ou inventé ici.
+async function renderImportantNews(){
+  const el = document.getElementById('homeImportantNews');
+  if(!el) return;
+  try {
+    const resp = await fetch('/api/daily-news');
+    if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    const item = (data.items && data.items[0]) || null;
+    if(!item){
+      el.innerHTML = `<span class="eyebrow">${t('importantNewsEyebrow')}</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">${t('importantNewsEmpty')}</p>`;
+      return;
+    }
+    el.innerHTML = `
+      <span class="eyebrow">${t('importantNewsEyebrow')}</span>
+      <h3 style="font-size:16px;margin-top:6px;">${item.title}</h3>
+      <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${item.summary}</p>
+      <a href="actualites.html" class="btn btn-sm">${t('importantNewsCta')}</a>`;
+  } catch(err){
+    el.innerHTML = `<span class="eyebrow">${t('importantNewsEyebrow')}</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">${t('importantNewsUnavailable')}</p>`;
+    console.error('Likanza Academy — échec dans "actualité importante (accueil)" :', err);
+  }
+}
+
+// ================= Aperçu Mon Univers Financier (Gap Closure Sprint, phase 12, 06/09/2026) =================
+// Réutilise exactement les mêmes fonctions de calcul que le cockpit réel de
+// parcours.html (computeNetWorth/computeHealthScore/computeUnifiedAlerts) —
+// aucun second moteur de calcul, aucune donnée de démonstration ici
+// (contrairement au cockpit, cette page n'a pas de "mode aperçu" et ne doit
+// jamais laisser croire à un patrimoine réel qui n'existe pas) : un
+// utilisateur sans aucune donnée voit une invitation honnête, jamais un
+// patrimoine fabriqué.
+function renderUniversePreview(){
+  const el = document.getElementById('homeUniversePreview');
+  if(!el) return;
+  const health = computeHealthScore();
+  if(health.axesConnues === 0){
+    el.innerHTML = `
+      <span class="eyebrow">${t('universePreviewEyebrow')}</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:8px;">${t('universePreviewEmpty')}</p>
+      <a href="parcours.html" class="btn btn-sm btn-gold" style="margin-top:10px;">${t('universePreviewCta')}</a>`;
+    return;
+  }
+  const net = computeNetWorth(getNetWorthAssets(), getPersonalDebts());
+  const topAlert = computeUnifiedAlerts()[0] || null;
+  el.innerHTML = `
+    <span class="eyebrow">${t('universePreviewEyebrow')}</span>
+    <div class="result-big" style="font-size:22px;margin-top:6px;">${fmtEUR(net.patrimoineNet)}</div>
+    <p style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">${LANG==='en'?'Financial health':'Santé financière'} : ${health.globalScore !== null ? health.globalScore + '/100' : (LANG==='en'?'not enough data yet':'pas encore assez de données')}</p>
+    ${topAlert ? `<p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${topAlert.message}</p>` : ''}
+    <a href="parcours.html" class="btn btn-sm">${t('universePreviewCta')}</a>`;
 }
 
 // ================= Accès rapides / déclencheurs d'onglets =================
@@ -329,6 +403,8 @@ safeRun('accès rapides (init)', renderQuickAccess);
 setActiveTab(activeTab);
 safeRun('carte du jour (init)', renderTodayCard);
 safeRun('carte du jour - à apprendre (init)', () => renderTodayWeakness('todayWeakness'));
+safeRun('actualité importante (init)', renderImportantNews);
+safeRun('aperçu Mon Univers (init)', renderUniversePreview);
 safeRun('onglet apprendre (init)', renderLearnTab);
 safeRun('professeur IA mini (init)', renderTeacherMini);
 safeRun('défis (aperçu)', ()=>{

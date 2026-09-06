@@ -105,6 +105,7 @@ function initParcoursHero(){
   // dans la section pédagogique repliée, jamais supprimé.
   renderHealthScoreDashboardWidget('cockpitHealthScore');
   renderDashboardShell('dashboardShell');
+  renderDashboardPriorityBanner('dashboardPriority', 'dashboardShell');
   renderCockpitHeader('cockpitHeader');
   renderCockpitKPIs('cockpitKPIs');
   renderCockpitChart('cockpitChart');

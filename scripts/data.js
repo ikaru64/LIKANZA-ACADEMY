@@ -1220,6 +1220,119 @@ function renderDashboardShell(elId){
   render();
 }
 
+// ---------- Priorité du Dashboard (Gap Closure Sprint P1, phase 12, 06/09/2026) :
+// les 6 widgets pédagogiques (continue/next-step/missions-daily/
+// missions-weekly/spaced-review/mistakes) restent TOUS dans DASHBOARD_WIDGETS
+// (aucune personnalisation existante cassée, aucune clé localStorage
+// retirée) mais rivalisaient tous à poids visuel égal, sans aucune priorité
+// (audit du 04/09/2026). Cette fonction se contente d'INTERROGER les mêmes
+// fonctions réelles que chaque widget utilise déjà pour son propre rendu
+// (jamais une nouvelle donnée ni un nouveau calcul) afin de classer lesquels
+// sont réellement actionnables MAINTENANT. Ordre de priorité par poids fixe
+// (reprendre > mémorisation qui s'effrite > erreur non résolue > évaluation
+// manquante > missions) — pas un score composite inventé, un simple ordre
+// éditorial assumé.
+function computeDashboardPriorityQueue(){
+  const candidates = [];
+
+  const pos = getLastPosition();
+  const cours = pos && pos.type === 'cours' ? COURS_CATALOG.find(c => c.id === pos.id) : null;
+  if(cours && !getCoursProgress()[pos.id]){
+    candidates.push({id:'continue', weight:5, label:'Reprendre ta dernière activité', reason:`${cours.titre} — Chapitre ${pos.chapitreIndex + 1}`, href:`cours.html#${encodeURIComponent(pos.id)}:${encodeURIComponent(pos.chapitreTitre.replace(/\s+/g, '-'))}`});
+  }
+
+  const dueReviews = getDueSpacedReviews();
+  if(dueReviews.length > 0){
+    candidates.push({id:'spaced-review', weight:4, label:"Repasser une notion avant de l'oublier", reason:`${dueReviews.length} notion${dueReviews.length > 1 ? 's' : ''} à repasser aujourd'hui`, href:null});
+  }
+
+  const topMistake = pickTopUnresolvedMistakeCategory();
+  if(topMistake){
+    candidates.push({id:'mistakes', weight:3, label:'Revoir une notion mal comprise', reason:`« ${topMistake.categorie} » (${topMistake.count} erreur${topMistake.count > 1 ? 's' : ''} non résolue${topMistake.count > 1 ? 's' : ''})`, href:'revisions.html'});
+  }
+
+  const primaryDomain = pickPrimaryDomainRecommendation();
+  if(primaryDomain){
+    candidates.push({id:'next-step', weight:2, label:'Évaluer un domaine', reason:`${primaryDomain.icon} ${primaryDomain.label}`, href:`quiz-approfondi.html?domaine=${primaryDomain.key}`});
+  }
+
+  const dailyLog = getDailyMissionsLog();
+  const dailyMissions = pickMissions(2, dayOfYear(), []);
+  const dailyLeft = dailyMissions.filter(m => !dailyLog.doneIds.includes(m.id)).length;
+  if(dailyLeft > 0){
+    candidates.push({id:'missions-daily', weight:1, label:'Faire une mission du jour', reason:`${dailyLeft} mission${dailyLeft > 1 ? 's' : ''} restante${dailyLeft > 1 ? 's' : ''} aujourd'hui`, href:null});
+  }
+
+  const weeklyTheme = getWeeklyThemeDomain();
+  const weeklyLog = getWeeklyMissionsLog();
+  const weeklyMissions = pickMissions(3, Math.floor(dayOfYear() / 7), [], weeklyTheme.key);
+  const weeklyLeft = weeklyMissions.filter(m => !weeklyLog.doneIds.includes(m.id)).length;
+  if(weeklyLeft > 0){
+    candidates.push({id:'missions-weekly', weight:1, label:'Faire une mission de la semaine', reason:`${weeklyLeft} mission${weeklyLeft > 1 ? 's' : ''} restante${weeklyLeft > 1 ? 's' : ''} cette semaine`, href:null});
+  }
+
+  candidates.sort((a, b) => b.weight - a.weight);
+  return candidates;
+}
+
+// Bandeau "À faire maintenant" : 1 action primaire + jusqu'à 2 alternatives,
+// calculées en direct par computeDashboardPriorityQueue ci-dessus — les 6
+// widgets d'origine restent visibles et personnalisables tels quels dans la
+// grille de renderDashboardShell (shellElId), ce bandeau n'en supprime ni
+// n'en masque aucun. Les 3 actions avec un lien direct réel (continue/
+// mistakes/next-step) naviguent directement ; les 3 sans lien direct
+// (spaced-review/missions-daily/missions-weekly, qui s'exécutent en ligne
+// dans leur propre widget) déplient la section repliée puis défilent
+// jusqu'au bon widget plutôt que de dupliquer leur logique ici.
+function renderDashboardPriorityBanner(elId, shellElId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const queue = computeDashboardPriorityQueue();
+
+  function scrollToShellTile(id){
+    const detailsEl = document.querySelector('.learning-suite-collapse');
+    if(detailsEl && !detailsEl.open) detailsEl.open = true;
+    const tile = document.getElementById(`${shellElId}-tile-${id}`);
+    if(tile && tile.scrollIntoView) tile.scrollIntoView({behavior:'smooth', block:'center'});
+  }
+
+  function ctaHtml(c, primary){
+    const label = primary ? 'Continuer →' : 'Ouvrir →';
+    return c.href
+      ? `<a href="${c.href}" class="btn btn-sm${primary ? ' btn-gold' : ''}">${label}</a>`
+      : `<button type="button" class="btn btn-sm${primary ? ' btn-gold' : ''}" data-priority-scroll="${c.id}">${label}</button>`;
+  }
+
+  if(queue.length === 0){
+    el.innerHTML = `<div class="card">
+      <span class="smallcaps">🎯 À faire maintenant</span>
+      <p style="font-size:13px;color:var(--text-dim);margin-top:10px;">Tout est à jour — rien d'urgent à faire pour le moment. 🎉</p>
+    </div>`;
+    return;
+  }
+
+  const [primary, ...rest] = queue;
+  const alternates = rest.slice(0, 2);
+  el.innerHTML = `
+    <div class="card" style="border-color:var(--gold);">
+      <span class="smallcaps">🎯 À faire maintenant</span>
+      <h3 style="margin:8px 0 4px;">${primary.label}</h3>
+      <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">${primary.reason}</p>
+      ${ctaHtml(primary, true)}
+    </div>
+    ${alternates.length ? `<div style="display:flex;flex-direction:column;gap:2px;margin-top:10px;">
+      ${alternates.map(c => `
+        <div class="cockpit-account-row" style="border:none;padding:6px 0;">
+          <span>${c.label}<span class="cockpit-account-cat">${c.reason}</span></span>
+          ${ctaHtml(c, false)}
+        </div>`).join('')}
+    </div>` : ''}`;
+
+  el.querySelectorAll('[data-priority-scroll]').forEach(btn => {
+    btn.addEventListener('click', () => scrollToShellTile(btn.dataset.priorityScroll));
+  });
+}
+
 function renderDomainDashboard(elId){
   const el = document.getElementById(elId);
   if(!el) return;
