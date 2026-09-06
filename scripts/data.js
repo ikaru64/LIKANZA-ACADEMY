@@ -8624,8 +8624,15 @@ function applyProgressSnapshot(data){
 function setProgressSyncStatus(text){
   const el = document.getElementById('progressSyncStatus');
   if(el) el.textContent = text;
+  const hasToken = !!getSyncToken();
   const btn = document.getElementById('restoreProgressBtn');
-  if(btn) btn.style.display = getSyncToken() ? '' : 'none';
+  if(btn) btn.style.display = hasToken ? '' : 'none';
+  // Avertissement affiché avec le bouton (Gap Closure Sprint P1, phase 15,
+  // 06/09/2026) : auparavant absent malgré le commentaire de
+  // forceRestoreProgress qui affirmait son existence — corrige le décalage
+  // entre le code et sa propre documentation.
+  const warning = document.getElementById('restoreProgressWarning');
+  if(warning) warning.style.display = hasToken ? '' : 'none';
 }
 
 async function pushProgressSnapshot(token){

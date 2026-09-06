@@ -28,9 +28,10 @@
         </div>
       </div>
       <p id="progressSyncStatus" style="font-size:11.5px;color:var(--text-dim);border-left:2px solid var(--hairline);padding-left:10px;margin-bottom:12px;">Vérification de la synchronisation…</p>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
         <button type="button" class="btn btn-sm" id="restoreProgressBtn" style="display:none;">Restaurer depuis mon compte</button>
       </div>
+      <p id="restoreProgressWarning" style="display:none;font-size:11px;color:var(--text-dim);margin-bottom:12px;">Remplace entièrement la progression de cet appareil par celle de ton compte — jamais une fusion des deux, ce qui est déjà en local et non encore synchronisé sera perdu.</p>
       <a class="btn btn-sm" href="${AUTH_BASE}/?action=signout&callbackUrl=${encodeURIComponent(location.origin + location.pathname)}">Se déconnecter</a>
     `;
     const restoreBtn = document.getElementById('restoreProgressBtn');
@@ -75,6 +76,16 @@
   // 2. Retour tout juste déconnecté.
   if (/[?&]la_signedout=1/.test(location.search)) {
     safeStorageRemove(STORAGE_KEY);
+    // Gap Closure Sprint P1, phase 15 (06/09/2026) : réinitialise aussi le
+    // marqueur "cet appareil a déjà synchronisé" (fzr-sync-last-at,
+    // scripts/data.js PROGRESS_SYNC_MARKER — dupliqué en dur ici plutôt
+    // qu'importé, ce fichier restant volontairement autonome de data.js).
+    // Sans ça, une reconnexion sur CE MÊME appareil après une déconnexion
+    // repoussait toujours son état local (potentiellement périmé si un
+    // autre appareil avait progressé entre-temps) au lieu de re-décider
+    // honnêtement push/pull au prochain login — un vrai risque d'écraser
+    // silencieusement une progression plus récente faite ailleurs.
+    safeStorageRemove('fzr-sync-last-at');
     const cleanSearch = location.search.replace(/[?&]la_signedout=1/, '').replace(/^&/, '?');
     history.replaceState(null, '', location.pathname + (cleanSearch === '?' ? '' : cleanSearch));
     renderDisconnected();
