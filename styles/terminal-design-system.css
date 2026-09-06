@@ -263,6 +263,10 @@ button.terminal-kpi{font:inherit;text-align:left;cursor:pointer;}
   .terminal-shell.has-nav-simple .home-tab-panel{grid-area:content;overflow-y:auto;min-height:0;}
 }
 
+/* ---------- BUY/SELL (Paper Trading, Trading Simulator) ---------- */
+#ptActionToggle .pill[data-pt-action="buy"].active{border-color:var(--term-positive);color:var(--term-positive);background:rgba(50,213,131,0.1);}
+#ptActionToggle .pill[data-pt-action="sell"].active{border-color:var(--term-negative);color:var(--term-negative);background:rgba(240,68,56,0.1);}
+
 /* ---------- Distinction visuelle Watchlist vs Valeurs suivies (brief
    section 12 : deux fonctionnalités réellement distinctes en base —
    fzr-followed-stocks vs fzr-watchlist — à ne jamais fusionner ni

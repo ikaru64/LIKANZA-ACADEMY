@@ -277,18 +277,19 @@
   </div>
 
   <div class="home-tab-panel" id="tab-marches">
-    <div class="section-head"><h2>🌍 Autres marchés</h2><span class="meta-line">ETF, Obligations, Indices, Forex, Matières premières, Taux</span></div>
+    <div class="terminal-panel-title" style="margin-bottom:10px;">🌍 Autres marchés<span style="font-weight:400;text-transform:none;font-size:10.5px;color:var(--term-text-dim);">ETF, Obligations, Indices, Forex, Matières premières, Taux</span></div>
     <p class="disclaimer-box" style="max-width:70ch;">Cotations réelles (Yahoo Finance), chargées uniquement quand tu ouvres cet onglet — jamais au chargement du site. Un champ absent chez notre source de données affiche "Donnée indisponible", jamais une valeur inventée.</p>
     <div class="card-grid" id="marketsHubGrid" style="margin-top:16px;"></div>
     <div id="marketsHubExtra" style="margin-top:22px;"></div>
   </div>
 
   <div class="home-tab-panel" id="tab-options">
-    <div class="section-head"><h2>⚔️ Options</h2><span class="meta-line">Call/Put, payoff à l'échéance — jamais une prédiction de prix</span></div>
+    <div class="terminal-panel-title" style="margin-bottom:10px;">⚔️ Options Payoff Lab<span style="font-weight:400;text-transform:none;font-size:10.5px;color:var(--term-text-dim);">Call/Put, payoff à l'échéance — jamais une prédiction de prix</span></div>
     <p class="disclaimer-box" style="max-width:70ch;">Ceci calcule uniquement le payoff mécanique d'une option à son échéance à partir des hypothèses que tu saisis — jamais un prix théorique d'option avant échéance (qui dépendrait d'une volatilité anticipée invérifiable), ni une prédiction sur l'évolution future du prix de l'actif.</p>
-    <div class="card-grid" style="grid-template-columns:1fr 1fr;margin-top:16px;">
-      <div class="card">
-        <div class="field"><label for="optType">Type d'option</label>
+    <div style="display:grid;grid-template-columns:1fr 1.3fr 1fr;gap:12px;margin-top:16px;">
+      <div class="terminal-panel">
+        <span class="terminal-panel-title">Hypothèses</span>
+        <div class="field" style="margin-top:10px;"><label for="optType">Type d'option</label>
           <select id="optType">
             <option value="call">Call (droit d'acheter)</option>
             <option value="put">Put (droit de vendre)</option>
@@ -303,40 +304,44 @@
         <div class="field"><label for="optStrike">Prix d'exercice / strike (€)</label><input type="number" id="optStrike" min="0" step="1" value="100"></div>
         <div class="field" style="margin-bottom:0;"><label for="optPremium">Prime (€)</label><input type="number" id="optPremium" min="0" step="0.5" value="5"></div>
       </div>
-      <div class="card">
-        <h3>Payoff à l'échéance</h3>
-        <div id="optResult" style="margin-top:12px;"></div>
+      <div class="terminal-panel">
+        <span class="terminal-panel-title">Diagramme de payoff</span>
+        <div id="optChart" style="margin-top:10px;"></div>
       </div>
-    </div>
-    <div class="card" style="margin-top:16px;">
-      <span class="smallcaps">Diagramme de payoff</span>
-      <div id="optChart" style="margin-top:10px;"></div>
+      <div class="terminal-panel">
+        <span class="terminal-panel-title">Résultats</span>
+        <div id="optResult" style="margin-top:8px;"></div>
+      </div>
     </div>
   </div>
 
   <div class="home-tab-panel" id="tab-paper-trading">
-    <div class="section-head"><h2>🔥 Paper Trading</h2><span class="meta-line">Argent fictif — ordres exécutés au dernier cours disponible</span></div>
+    <div class="terminal-panel-title" style="margin-bottom:10px;">🔥 Trading Simulator<span style="font-weight:400;text-transform:none;font-size:10.5px;color:var(--term-text-dim);">Argent fictif — ordres exécutés au dernier cours disponible</span></div>
     <p class="disclaimer-box" style="max-width:70ch;">Argent entièrement fictif, aucune exécution réelle. Le prix d'exécution est le dernier cours connu affiché — jamais un carnet d'ordres ni un spread modélisé : une exécution réelle en conditions de marché diffère toujours légèrement. Aucun frais de courtage simulé.</p>
-    <div class="card-grid" id="paperTradingSummary" style="margin-top:16px;"></div>
-    <div class="card" style="margin-top:16px;">
-      <span class="smallcaps">Passer un ordre</span>
-      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px;">
-        <div class="field" style="flex:2;min-width:200px;"><label for="ptSymbol">Valeur suivie</label><select id="ptSymbol"></select></div>
-        <div class="field" style="flex:1;min-width:140px;"><label for="ptAction">Ordre</label>
-          <select id="ptAction">
-            <option value="buy">Acheter</option>
-            <option value="sell">Vendre</option>
-          </select>
+    <div class="card-grid" id="paperTradingSummary" style="margin-top:14px;"></div>
+    <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:12px;margin-top:14px;">
+      <div class="terminal-panel">
+        <span class="terminal-panel-title">Passer un ordre</span>
+        <div class="field" style="margin-top:10px;"><label for="ptSymbol">Valeur suivie</label><select id="ptSymbol"></select></div>
+        <div style="display:flex;gap:8px;margin:10px 0;" id="ptActionToggle">
+          <button type="button" class="pill" data-pt-action="buy" style="flex:1;text-align:center;">▲ BUY</button>
+          <button type="button" class="pill" data-pt-action="sell" style="flex:1;text-align:center;">▼ SELL</button>
         </div>
-        <div class="field" style="flex:1;min-width:100px;"><label for="ptQty">Quantité</label><input type="number" id="ptQty" min="1" step="1" value="1"></div>
+        <select id="ptAction" style="display:none;">
+          <option value="buy">Acheter</option>
+          <option value="sell">Vendre</option>
+        </select>
+        <div class="field"><label for="ptQty">Quantité</label><input type="number" id="ptQty" min="1" step="1" value="1"></div>
+        <div id="ptQuote" style="margin-top:4px;font-size:12.5px;color:var(--text-dim);"></div>
+        <button class="btn btn-sm btn-gold" id="ptSubmit" style="margin-top:12px;width:100%;">Exécuter l'ordre</button>
+        <p id="ptFeedback" style="font-size:12.5px;margin-top:8px;"></p>
+        <button class="btn btn-sm" id="ptReset" style="margin-top:16px;">Réinitialiser la simulation</button>
       </div>
-      <div id="ptQuote" style="margin-top:6px;font-size:12.5px;color:var(--text-dim);"></div>
-      <button class="btn btn-sm btn-gold" id="ptSubmit" style="margin-top:12px;">Exécuter l'ordre</button>
-      <p id="ptFeedback" style="font-size:12.5px;margin-top:8px;"></p>
+      <div>
+        <div id="paperTradingPositions"></div>
+        <div id="paperTradingHistory" style="margin-top:16px;"></div>
+      </div>
     </div>
-    <div id="paperTradingPositions" style="margin-top:16px;"></div>
-    <div id="paperTradingHistory" style="margin-top:20px;"></div>
-    <button class="btn btn-sm" id="ptReset" style="margin-top:16px;">Réinitialiser la simulation</button>
   </div>
 
   <div class="home-tab-panel" id="tab-watchlist">

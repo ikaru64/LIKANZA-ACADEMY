@@ -1557,6 +1557,7 @@ function renderRatesAndBondsExtra(elId){
 // d'hypothèses saisies par l'utilisateur — jamais un prix théorique d'option
 // avant échéance (qui exigerait une hypothèse de volatilité invérifiable),
 // uniquement la mécanique certaine du payoff contractuel. ----------
+let optChartInstance = null;
 function renderOptionsSimulator(){
   const strikeEl = document.getElementById('optStrike');
   if(!strikeEl) return;
@@ -1600,9 +1601,44 @@ function renderOptionsSimulator(){
         comprendre: "Le seuil de rentabilité (breakeven) est le prix du sous-jacent à partir duquel la position devient profitable une fois la prime prise en compte — toujours décalé du prix d'exercice par le montant de la prime."
       })}`;
 
+    // Migration Chart.js (refonte terminal 06/09/2026) : remplace
+    // renderPayoffDiagramSVG (SVG maison, scripts/data.js) UNIQUEMENT pour
+    // cet appel — la fonction partagée reste disponible pour d'éventuels
+    // autres appelants futurs. Même calcul exact (computeOptionPayoff, 61
+    // points), seul le rendu change.
     const priceMin = Math.max(0, strike * 0.5);
     const priceMax = strike * 1.5 + premium * 2;
-    document.getElementById('optChart').innerHTML = renderPayoffDiagramSVG(optionType, position, strike, premium, priceMin, priceMax);
+    const steps = 60;
+    const points = [];
+    for(let i = 0; i <= steps; i++){
+      const price = priceMin + (i / steps) * (priceMax - priceMin);
+      points.push({price, payoff: computeOptionPayoff(optionType, position, strike, premium, price)});
+    }
+    const chartEl = document.getElementById('optChart');
+    chartEl.innerHTML = '<div style="position:relative;height:220px;"><canvas id="optChartCanvas"></canvas></div>';
+    const canvas = document.getElementById('optChartCanvas');
+    if(optChartInstance){ optChartInstance.destroy(); optChartInstance = null; }
+    if(canvas && typeof Chart !== 'undefined'){
+      const color = position === 'long' ? '#32D583' : '#F04438';
+      optChartInstance = new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {
+          labels: points.map(p => p.price.toFixed(0)),
+          datasets: [{data: points.map(p => p.payoff), borderColor: color, backgroundColor: 'transparent', borderWidth: 2.5, pointRadius: 0, tension: 0}]
+        },
+        options: {
+          responsive: true, maintainAspectRatio: false,
+          scales: {
+            x: {title: {display: true, text: 'Prix du sous-jacent à l\'échéance', color: '#949BA6', font: {size: 10}}, ticks: {color: '#949BA6', maxTicksLimit: 8, font: {size: 10}}, grid: {color: 'rgba(212,175,55,0.1)'}},
+            y: {ticks: {color: '#949BA6', font: {size: 10}, callback: v => fmtEUR(v)}, grid: {color: ctx => ctx.tick.value === 0 ? '#949BA6' : 'rgba(212,175,55,0.1)'}}
+          },
+          plugins: {
+            legend: {display: false},
+            tooltip: {backgroundColor: '#0D1016', titleColor: '#D4AF37', bodyColor: '#F5F5F5', borderColor: 'rgba(212,175,55,0.16)', borderWidth: 1, callbacks: {title: ctx => `Prix : ${ctx[0].label} €`, label: ctx => `Payoff : ${fmtEUR(ctx.parsed.y)}`}}
+          }
+        }
+      });
+    }
   }
 
   ids.forEach(id => document.getElementById(id).addEventListener('input', update));
@@ -1733,6 +1769,20 @@ function renderPaperTrading(){
   renderPaperTradingSymbolOptions();
   renderPaperTradingQuote();
   refreshPaperTradingViews();
+
+  // BUY/SELL en pilules terminal (refonte 06/09/2026) : le vrai <select>
+  // #ptAction (masqué visuellement) reste l'unique source de vérité lue à
+  // l'exécution de l'ordre (ligne ~1777 plus bas, inchangée) — ces boutons
+  // ne font qu'écrire sa valeur et refléter visuellement le choix, jamais
+  // une logique d'ordre parallèle.
+  const ptActionSelect = document.getElementById('ptAction');
+  const ptToggleBtns = document.querySelectorAll('#ptActionToggle .pill');
+  function setPtAction(action){
+    ptActionSelect.value = action;
+    ptToggleBtns.forEach(b => b.classList.toggle('active', b.dataset.ptAction === action));
+  }
+  ptToggleBtns.forEach(btn => btn.addEventListener('click', () => setPtAction(btn.dataset.ptAction)));
+  setPtAction(ptActionSelect.value || 'buy');
 
   document.getElementById('ptSymbol').addEventListener('change', renderPaperTradingQuote);
   document.getElementById('ptSubmit').addEventListener('click', () => {
