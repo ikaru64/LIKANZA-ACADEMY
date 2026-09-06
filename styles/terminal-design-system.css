@@ -239,7 +239,50 @@ button.terminal-kpi{font:inherit;text-align:left;cursor:pointer;}
   .terminal-shell.has-nav .terminal-header{grid-area:header;}
   .terminal-shell.has-nav .terminal-kpis{grid-area:kpis;}
   .terminal-shell.has-nav .terminal-main{grid-area:main;overflow-y:auto;min-height:0;}
+
+  /* Variante "nav simple" (Bourse) : une nav persistante à gauche, un
+     contenu unique à droite qui gère lui-même sa propre densité interne
+     (chaque onglet .home-tab-panel occupe la même zone nommée — un seul
+     visible à la fois via le display:none/block déjà existant, jamais
+     touché). */
+  .terminal-shell.has-nav-simple{
+    grid-template-columns:190px 1fr;
+    grid-template-rows:1fr;
+    grid-template-areas:"nav content";
+    height:calc(100vh - 108px); /* 60px chrome global + ~48px bandeau titre Bourse */
+  }
+  .terminal-shell.has-nav-simple .terminal-nav{grid-area:nav;}
+  .terminal-shell.has-nav-simple .home-tab-panel{grid-area:content;overflow-y:auto;min-height:0;}
 }
+
+/* ---------- Onglet "Marché du jour" (bourse.html), premier onglet à
+   recevoir la densité complète du terminal — KPI row + 3 panneaux
+   compacts, chacun avec son propre défilement interne (jamais un
+   débordement visuel entre panneaux, leçon retenue du bug de
+   chevauchement du cockpit). ---------- */
+#tab-marche-jour.home-tab-panel.active{display:flex !important;flex-direction:column;gap:12px;}
+.terminal-panels-row{display:grid;grid-template-columns:repeat(3, 1fr);gap:10px;flex:1;min-height:0;}
+.terminal-panels-row .terminal-panel{min-height:0;}
+@media (max-width:900px){.terminal-panels-row{grid-template-columns:1fr;}}
+
+/* ---------- Réutilisation du picker d'onglets existant (#bourseTabsGrid,
+   .quick-access-card, JAMAIS renommés) comme nav terminal compacte —
+   pur CSS, aucun changement de renderBourseTabs()/setBourseTab(). ---------- */
+body.terminal-page #bourseTabsGrid.terminal-nav{
+  display:flex;flex-direction:column;gap:2px;
+}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card{
+  display:flex;align-items:center;gap:8px;flex-direction:row;text-align:left;
+  background:none;border:none;border-radius:3px;padding:7px 10px;
+  transition:background .15s ease, color .15s ease;
+}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card:hover{background:var(--term-card-hover);}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card.active{background:rgba(212,175,55,0.1);box-shadow:inset 2px 0 0 var(--term-gold);}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card .icon{color:var(--term-gold-light);flex-shrink:0;}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card .icon svg{width:14px;height:14px;}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card h3{font-size:12.5px;font-weight:500;color:var(--term-text-dim);margin:0;}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card.active h3{color:var(--term-gold-light);}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card p{display:none;} /* description masquée en nav compacte, dispo au survol via title */
 
 /* ---------- Tablette / mobile : empilé, scroll normal de page ---------- */
 @media (max-width:1179px){

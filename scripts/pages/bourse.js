@@ -17,7 +17,7 @@ function renderBourseTabs(){
   const el = document.getElementById('bourseTabsGrid');
   if(!el) return;
   el.innerHTML = BOURSE_TABS.map(t=>`
-    <button class="quick-access-card ${t.id===bourseActiveTab?'active':''}" data-tab="${t.id}">
+    <button class="quick-access-card ${t.id===bourseActiveTab?'active':''}" data-tab="${t.id}" title="${t.desc}">
       <div class="icon">${ICONS[t.icon] || ''}</div>
       <h3>${t.title}</h3>
       <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${t.desc}</p>
@@ -917,6 +917,54 @@ function renderStockRow(s){
     </div>
   </a>`;
 }
+// ============================================================
+// Market Pulse — refonte terminal (06/09/2026). Réutilise MARKET_DATA
+// (scripts/app.js) tel quel : mêmes 5 indices + Bitcoin/Ethereum/Or/Brent
+// déjà interrogés en continu par le bandeau global (/api/quotes, toutes
+// les 5 min, voir initLiveMarketData). Aucune nouvelle donnée créée pour
+// cette refonte — seulement un nouveau rendu compact avec sparkline
+// Chart.js quand l'historique réel est disponible (q.history, déjà
+// renvoyé par /api/quotes — voir applyOneQuoteToMarketItem, data.js).
+// ============================================================
+const MARKET_PULSE_SYMBOLS = ['^FCHI', '^GSPC', '^STOXX50E', '^IXIC', 'BTC-USD', 'BRENT'];
+let marketPulseChartInstances = [];
+function marketPulseFreshnessBadge(statusLabel){
+  const isLive = statusLabel === 'LIVE' || statusLabel === 'TEMPS RÉEL';
+  if(isLive) return `<span class="terminal-badge is-live">Live</span>`;
+  if(statusLabel === 'UNAVAILABLE') return `<span class="terminal-badge is-delayed">Indisponible</span>`;
+  return `<span class="terminal-badge is-delayed">Différé</span>`;
+}
+function renderMarketPulseKpis(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  marketPulseChartInstances.forEach(c => c.destroy());
+  marketPulseChartInstances = [];
+  const items = MARKET_PULSE_SYMBOLS.map(sym => MARKET_DATA.find(m => m.symbol === sym)).filter(Boolean);
+  el.innerHTML = items.map((it, i) => `
+    <button type="button" class="terminal-kpi" id="marketPulseKpi-${i}" title="Source : ${it.source} · ${it.statusLabel}${it.maj !== '—' ? ' · ' + it.maj + (it.heure !== '—' ? ' ' + it.heure : '') : ''}">
+      <span class="terminal-kpi-label">${it.nom}</span>
+      <span class="terminal-kpi-value">${it.valeur === '—' ? 'n.d.' : it.valeur}${it.unite ? ' ' + it.unite : ''}</span>
+      <span class="terminal-kpi-delta ${it.sens === 'up' ? 'up' : it.sens === 'down' ? 'down' : 'flat'}">${it.sens === 'na' ? 'n.d.' : (it.sens === 'up' ? '↑' : '↓') + ' ' + it.variation}</span>
+      <div class="terminal-kpi-spark"><canvas id="marketPulseSpark-${i}"></canvas></div>
+      <span class="terminal-kpi-asof">${marketPulseFreshnessBadge(it.statusLabel)}</span>
+    </button>`).join('');
+
+  items.forEach((it, i) => {
+    const btn = document.getElementById(`marketPulseKpi-${i}`);
+    if(btn) btn.addEventListener('click', () => { location.href = `marche.html#${encodeURIComponent(it.symbol)}`; });
+    if(!Array.isArray(it.history) || it.history.length < 2 || typeof Chart === 'undefined') return;
+    const canvas = document.getElementById(`marketPulseSpark-${i}`);
+    if(!canvas) return;
+    const color = it.sens === 'down' ? '#F04438' : '#32D583';
+    const chart = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {labels: it.history.map(h => h.date), datasets: [{data: it.history.map(h => h.close), borderColor: color, backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0.2}]},
+      options: {responsive: true, maintainAspectRatio: false, animation: false, scales: {x: {display: false}, y: {display: false}}, plugins: {legend: {display: false}, tooltip: {enabled: false}}}
+    });
+    marketPulseChartInstances.push(chart);
+  });
+}
+
 const BOURSE_LEVEL_LABELS = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
 function renderMarketOfDay(){
   const body = document.getElementById('marketOfDayBody');
@@ -1066,6 +1114,11 @@ function loadFundamentalsAndRefresh(){
 refreshAllStockViews();
 updateDcaVsLump();
 renderMarketWatch();
+renderMarketPulseKpis('marketPulseKpis');
+// Le bandeau global (initLiveMarketData, data.js) rafraîchit MARKET_DATA
+// toutes les 5 min et prévient via cet événement déjà existant — jamais
+// un nouvel appel réseau créé pour ce panneau.
+document.addEventListener('fzr:quotes-updated', () => renderMarketPulseKpis('marketPulseKpis'));
 
 // ================= Cotations réelles (dégradation silencieuse si indisponibles) =================
 if(location.protocol !== 'file:'){

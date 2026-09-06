@@ -82,43 +82,48 @@
   </div>
 </header>
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Bourse</div>
-<h1 class="visually-hidden">Bourse & Comparateur d'actions</h1>
+<h1 class="visually-hidden">Bourse — Likanza Equity Intelligence Terminal</h1>
+
+<div class="terminal-header" style="margin:14px 24px 0;">
+  <div>
+    <h2>Equity Intelligence Terminal</h2>
+    <p>Marchés, valeurs suivies, comparateur, portefeuille — cotations différées, jamais présentées comme temps réel.</p>
+  </div>
+  <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <div id="bourseToolsProgress" style="font-size:11.5px;"></div>
+    <a href="bourse-allocation.html" class="btn btn-sm">🧭 Profil &amp; allocation</a>
+    <a href="dividende.html" class="btn btn-sm">💰 Dividend Intelligence</a>
+  </div>
+</div>
 
 <section class="section" style="padding-bottom:0;">
-  <div class="card-grid" style="grid-template-columns:2fr 1fr;margin-bottom:16px;">
-    <a href="bourse-allocation.html" class="card play-tile" style="border-color:var(--gold);">
-      <span class="icon" style="color:var(--gold-bright);">🧭</span>
-      <h3 style="margin:10px 0 6px;">Mon profil &amp; allocation</h3>
-      <p>Ton profil investisseur (capital, horizon, risque), des scénarios d'allocation par niveau de risque à partir de tes valeurs suivies, et un simulateur de portefeuille avec stress-test historique.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Explorer →</span></div>
-    </a>
-    <div class="card" id="bourseToolsProgress"></div>
-  </div>
-  <div class="card-grid" style="margin-bottom:16px;">
-    <a href="dividende.html" class="card play-tile" style="border-color:var(--gold);">
-      <span class="icon" style="color:var(--gold-bright);">💰</span>
-      <h3 style="margin:10px 0 6px;">Dividend Intelligence</h3>
-      <p>Historique réel des versements, soutenabilité décomposable, calendrier, simulation de réinvestissement avec de vrais dividendes — jamais un taux de croissance inventé.</p>
-      <div class="card-footer"><span class="badge status-reel">Disponible</span><span>Explorer →</span></div>
-    </a>
-  </div>
-  <div class="quick-access-grid" id="bourseTabsGrid"></div>
+  <div class="terminal-shell has-nav-simple">
+  <nav class="quick-access-grid terminal-nav" id="bourseTabsGrid" aria-label="Onglets Bourse"></nav>
 
   <div class="home-tab-panel" id="tab-marche-jour">
-    <div class="section-head"><h2>📈 Marchés aujourd'hui</h2><span class="meta-line">cotations différées, Yahoo Finance</span></div>
-    <div class="mode-toggle">
-      <button class="pill active" data-mjtab="hausses"><span data-icon="flame"></span> Hausses du jour</button>
-      <button class="pill" data-mjtab="baisses"><span data-icon="trending-down"></span> Baisses du jour</button>
-      <button class="pill" data-mjtab="selection"><span data-icon="star"></span> Sélection du jour</button>
+    <div class="terminal-kpis" id="marketPulseKpis"></div>
+    <div class="terminal-panels-row">
+      <div class="terminal-panel">
+        <div class="terminal-panel-title">📈 Marchés aujourd'hui</div>
+        <div class="mode-toggle">
+          <button class="pill active" data-mjtab="hausses"><span data-icon="flame"></span> Hausses</button>
+          <button class="pill" data-mjtab="baisses"><span data-icon="trending-down"></span> Baisses</button>
+          <button class="pill" data-mjtab="selection"><span data-icon="star"></span> Sélection</button>
+        </div>
+        <div class="terminal-panel-scroll">
+          <div id="marketOfDayBody" style="margin-top:12px;"></div>
+          <div id="marketLevelTip" style="margin-top:12px;"></div>
+        </div>
+      </div>
+      <div class="terminal-panel">
+        <div class="terminal-panel-title">🔥 Ce qui bouge réellement<span style="font-weight:400;text-transform:none;font-size:10px;color:var(--term-text-dim);">valeurs suivies</span></div>
+        <div class="terminal-panel-scroll" id="marketMoversBody"></div>
+      </div>
+      <div class="terminal-panel">
+        <div class="terminal-panel-title">📅 À surveiller<span style="font-weight:400;text-transform:none;font-size:10px;color:var(--term-text-dim);">types d'événements</span></div>
+        <div class="terminal-panel-scroll" id="marketWatchBody"></div>
+      </div>
     </div>
-    <div id="marketOfDayBody" style="margin-top:16px;"></div>
-    <div id="marketLevelTip" style="margin-top:16px;"></div>
-
-    <div class="section-head" style="margin-top:32px;"><h2>🔥 Ce qui bouge réellement</h2><span class="meta-line">les plus fortes variations parmi tes valeurs suivies</span></div>
-    <div id="marketMoversBody"></div>
-
-    <div class="section-head" style="margin-top:32px;"><h2>📅 À surveiller</h2><span class="meta-line">le type d'événement, pas un calendrier daté</span></div>
-    <div id="marketWatchBody"></div>
   </div>
 
   <div class="home-tab-panel" id="tab-fiches">
@@ -334,6 +339,7 @@
     <p class="empty-note" id="watchlistEmpty">Ta watchlist est vide pour l'instant.</p>
   </div>
 
+  </div>
 </section>
 
 <footer class="site-footer">
