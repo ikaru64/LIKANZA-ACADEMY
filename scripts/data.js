@@ -156,6 +156,30 @@ function initSearch(){
   });
 }
 
+// ---------- Enrichit SEARCH_INDEX avec les vraies actualités en direct
+// (Gap Closure Sprint P1, phase 14, 06/09/2026) — remplace l'ancien
+// NEWS_DATA statique retiré de SEARCH_INDEX (périmé, jamais lu par
+// actualites.js). Un seul appel réseau par chargement de page, comme
+// enrichReturnAssumptionsFromRealHistory ; SEARCH_INDEX est relu à chaque
+// frappe dans initSearch ci-dessus, donc une recherche tapée après la
+// résolution de ce fetch trouve directement les vrais articles de la
+// semaine — jamais un lien vers un article qui n'existe plus.
+let searchIndexNewsEnriched = false;
+async function enrichSearchIndexWithLiveNews(){
+  if(searchIndexNewsEnriched) return;
+  try {
+    const resp = await fetch('/api/weekly-news');
+    if(!resp.ok) return;
+    const data = await resp.json();
+    (data.articles || []).forEach(a => {
+      SEARCH_INDEX.push({title: a.titre, url: `actualites.html#${a.slug}`, type: 'Actualité'});
+    });
+    searchIndexNewsEnriched = true;
+  } catch(err){
+    console.info('Likanza Academy — recherche, actualités en direct indisponibles :', err.message);
+  }
+}
+
 // ---------- Favoris (localStorage — fonctionnel une fois le site hébergé) ----------
 function getFavorites(){ return safeGetJSON('fzr-favorites', []); }
 function isFavorite(id){ return getFavorites().some(f=>f.id===id); }
@@ -11392,6 +11416,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   safeRun('theme', initTheme);
   safeRun('navigation', initNav);
   safeRun('recherche', initSearch);
+  safeRun('recherche (actualités en direct)', enrichSearchIndexWithLiveNews);
   safeRun('ticker', ()=>renderTicker('tickerTrack'));
   safeRun('cotations réelles', initLiveMarketData);
   safeRun('série quotidienne', checkDailyStreak);

@@ -6001,6 +6001,15 @@ function getGuidesByCategory(categoryKey){
 }
 
 // ---------- Index de recherche (pages + bibliothèque + actualités) ----------
+// Gap Closure Sprint P1, phase 14 (06/09/2026) : retire NEWS_DATA (statique,
+// périmé — actualites.js documente lui-même que le vrai contenu vient
+// maintenant de /api/weekly-news, pas de ce tableau, voir
+// enrichSearchIndexWithLiveNews dans data.js pour le remplacement en
+// direct) et ajoute les cours (COURS_CATALOG) et les catégories de défi
+// réellement existantes (QUIZ_BANK_FULL/MENTAL_CHALLENGES), absentes de
+// l'index jusqu'ici — jamais une catégorie inventée : dédoublonnée depuis
+// les vraies données de quiz.
+const DEFI_SEARCH_CATEGORIES = [...new Set(QUIZ_BANK_FULL.concat(MENTAL_CHALLENGES).map(i => i.categorie))];
 const SEARCH_INDEX = [
   {title:"Accueil", url:"index.html", type:"Page"},
   {title:"Actualités", url:"actualites.html", type:"Page"},
@@ -6014,10 +6023,11 @@ const SEARCH_INDEX = [
   {title:"Mentions légales", url:"legal.html", type:"Page"},
   {title:"À propos", url:"apropos.html", type:"Page"},
   {title:"À venir", url:"avenir.html", type:"Page"},
-  ...NEWS_DATA.map(n=>({title:n.titre, url:`actualites.html#${n.id}`, type:"Actualité"})),
   ...LIBRARY.map(l=>({title:l.terme, url:`bibliotheque.html#${l.terme.replace(/\s+/g,'-')}`, type:"Définition"})),
   ...STOCKS_DEMO.map(s=>({title:s.nom+" ("+s.ticker+")", url:`bourse.html#${s.ticker}`, type:"Action"})),
   ...MARKET_DATA.map(m=>({title:m.nom, url:`marche.html#${encodeURIComponent(m.symbol)}`, type:"Marché"})),
-  ...GUIDES.map(g=>({title:g.question, url:g.url, type:"Guide"}))
+  ...GUIDES.map(g=>({title:g.question, url:g.url, type:"Guide"})),
+  ...COURS_CATALOG.map(c=>({title:c.titre, url:`cours.html#${c.id}`, type:"Cours"})),
+  ...DEFI_SEARCH_CATEGORIES.map(cat=>({title:cat, url:`defis.html?cat=${encodeURIComponent(cat)}`, type:"Défi"}))
 ];
 
