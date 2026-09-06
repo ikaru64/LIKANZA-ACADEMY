@@ -59,6 +59,13 @@ function renderTechIndicatorsHtml(history, unite){
 const ASSET_TYPE_LABELS = {stock:'Action', etf:'ETF', index:'Indice', forex:'Forex', commodity:'Matière première', rate:'Taux'};
 
 let stockGridChartInstances = [];
+// Déclaré ici (plutôt que juste avant renderPortfolioAllocationDonut plus
+// bas) : refreshAllStockViews() est appelé tôt dans le flux d'init et
+// invoque renderPortfolioTab -> renderPortfolioAllocationDonut avant que le
+// script n'atteigne la ligne où cette fonction est définie plus bas — une
+// déclaration `let` trop tardive tombe dans le TDZ à cet instant précis
+// (bug constaté et corrigé pendant cette refonte).
+let portfolioDonutInstance = null;
 function renderStockGrid(){
   const list = getFollowedStocks();
   const metaEl = document.getElementById('stockGridMeta');
@@ -1263,7 +1270,7 @@ function loadCustomQuotesForGrid(list){
       let appliedAny = false;
       (payload.quotes || []).forEach(q=>{
         if(typeof q.price === 'number'){
-          followedQuotesCache[q.symbol] = {price: q.price, changePercent: q.changePercent, history: q.history};
+          followedQuotesCache[q.symbol] = {price: q.price, changePercent: q.changePercent, history: q.history, currency: q.currency};
           appliedAny = true;
         }
         const quoteEl = document.getElementById(`quote-${q.symbol}`);
@@ -1320,6 +1327,47 @@ if(resetStocksBtn) resetStocksBtn.addEventListener('click', ()=>{
 let portfolioSelectedSymbol = null;
 let portfolioSelectedName = null;
 
+// Donut de répartition (brief section 15) : réutilise positions/totals
+// DÉJÀ calculés par renderPortfolioTab (currentValue réel par position),
+// jamais un secteur ou une géographie fabriqués — uniquement si TOUTES
+// les positions d'UNE MÊME devise ont un cours actuel connu, sinon un
+// état honnête (jamais un donut qui mélange devises ou invente une part).
+function renderPortfolioAllocationDonut(positions, totals){
+  const el = document.getElementById('portfolioAllocationDonut');
+  if(!el) return;
+  if(portfolioDonutInstance){ portfolioDonutInstance.destroy(); portfolioDonutInstance = null; }
+  if(!positions.length){
+    el.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Ajoute une transaction pour voir la répartition de ton portefeuille.</p>`;
+    return;
+  }
+  if(!totals.isSingleCurrency){
+    el.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Répartition non affichée : positions dans plusieurs devises réelles — jamais mélangées sans taux de change.</p>`;
+    return;
+  }
+  const known = positions.filter(p => p.currentValue !== null);
+  if(known.length !== positions.length){
+    el.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Répartition non affichée : le cours actuel de ${positions.length - known.length} position(s) est indisponible.</p>`;
+    return;
+  }
+  const colors = ['#D4AF37', '#32D583', '#4F8FE8', '#F04438', '#9B7BE0', '#F0D36B', '#949BA6'];
+  el.innerHTML = `<div style="position:relative;height:180px;"><canvas id="portfolioDonutCanvas"></canvas></div>
+    <div style="margin-top:10px;display:flex;flex-direction:column;gap:4px;">
+      ${known.map((p, i) => `<div style="display:flex;align-items:center;gap:6px;font-size:11.5px;"><span style="width:8px;height:8px;border-radius:50%;background:${colors[i % colors.length]};flex-shrink:0;"></span><span style="flex:1;color:var(--text-dim);">${p.name}</span><span class="mono">${Math.round(p.currentValue / totals.totalCurrentValue * 100)} %</span></div>`).join('')}
+    </div>`;
+  const canvas = document.getElementById('portfolioDonutCanvas');
+  if(!canvas || typeof Chart === 'undefined') return;
+  portfolioDonutInstance = new Chart(canvas.getContext('2d'), {
+    type: 'doughnut',
+    data: {labels: known.map(p => p.name), datasets: [{data: known.map(p => p.currentValue), backgroundColor: known.map((_, i) => colors[i % colors.length]), borderWidth: 0, hoverOffset: 6}]},
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '68%',
+      plugins: {
+        legend: {display: false},
+        tooltip: {backgroundColor: '#0D1016', titleColor: '#D4AF37', bodyColor: '#F5F5F5', borderColor: 'rgba(212,175,55,0.16)', borderWidth: 1, callbacks: {label: ctx => `${ctx.label} : ${currencyFmt(ctx.parsed, totals.currency)} (${Math.round(ctx.parsed / totals.totalCurrentValue * 100)} %)`}}
+      }
+    }
+  });
+}
 function renderPortfolioTab(){
   const positionsEl = document.getElementById('portfolioPositions');
   const listEl = document.getElementById('portfolioTransactionsList');
@@ -1333,6 +1381,7 @@ function renderPortfolioTab(){
   const positions = computeRealPortfolioPositions(transactions, livePrices);
   const totals = computeRealPortfolioTotals(positions);
   if(positionsEl) positionsEl.innerHTML = `<h3>Positions</h3>${renderRealPortfolioHTML(positions, totals)}`;
+  renderPortfolioAllocationDonut(positions, totals);
   if(listEl){
     if(transactions.length === 0){
       listEl.innerHTML = '';
@@ -1364,10 +1413,25 @@ function renderPortfolioTab(){
   }
 }
 
+let portfolioSelectedCurrency = 'EUR';
+// Libellé dynamique (refonte terminal 06/09/2026, brief section 16) :
+// affiche la VRAIE devise du titre sélectionné dès qu'elle est connue,
+// jamais un "(€)" trompeur pour un titre coté en USD/GBP/... — sans
+// jamais convertir le montant saisi, seulement l'étiqueter honnêtement.
+function updatePortfolioPriceLabel(){
+  const labelEl = document.getElementById('portfolioPriceLabel');
+  if(labelEl) labelEl.textContent = `Prix d'achat unitaire (${portfolioSelectedCurrency === 'EUR' ? '€' : portfolioSelectedCurrency})`;
+}
 wireStockSearch(document.getElementById('portfolioSearchInput'), document.getElementById('portfolioSearchResults'), (symbol) => {
   portfolioSelectedSymbol = symbol;
   const followed = getFollowedStocks().find(s => s.symbol === symbol);
   portfolioSelectedName = followed ? followed.name : symbol;
+  // La devise réelle (resolveFollowedAsset) n'est connue que si une
+  // cotation a déjà été chargée pour ce symbole — sinon repli honnête sur
+  // EUR (comportement identique à avant cette refonte) jusqu'à ce que la
+  // vraie valeur arrive (loadFundamentalsAndRefresh ci-dessous la déclenche).
+  portfolioSelectedCurrency = resolveFollowedAsset(symbol).devise || 'EUR';
+  updatePortfolioPriceLabel();
   const selEl = document.getElementById('portfolioSelectedStock');
   if(selEl) selEl.textContent = `Action sélectionnée : ${portfolioSelectedName} (${symbol})`;
   loadFundamentalsAndRefresh();
@@ -1387,9 +1451,16 @@ if(portfolioAddBtn) portfolioAddBtn.addEventListener('click', () => {
   if(!(price > 0)){ if(errEl) errEl.textContent = "Renseigne un prix d'achat réel supérieur à 0."; return; }
   if(!date){ if(errEl) errEl.textContent = 'Renseigne la date réelle de la transaction.'; return; }
   if(errEl) errEl.textContent = '';
-  saveRealPortfolioTransaction({ticker: portfolioSelectedSymbol, name: portfolioSelectedName, quantity: qty, buyPrice: price, buyDate: date});
+  // Re-résout la devise juste avant l'enregistrement : une cotation a pu
+  // arriver entre la sélection et le clic (loadFundamentalsAndRefresh est
+  // asynchrone) — toujours la valeur la plus à jour, jamais une devise
+  // figée au moment de la sélection si une meilleure info est arrivée depuis.
+  const finalCurrency = resolveFollowedAsset(portfolioSelectedSymbol).devise || portfolioSelectedCurrency;
+  saveRealPortfolioTransaction({ticker: portfolioSelectedSymbol, name: portfolioSelectedName, quantity: qty, buyPrice: price, buyDate: date, currency: finalCurrency});
   qtyEl.value = ''; priceEl.value = ''; dateEl.value = '';
   portfolioSelectedSymbol = null; portfolioSelectedName = null;
+  portfolioSelectedCurrency = 'EUR';
+  updatePortfolioPriceLabel();
   const selEl = document.getElementById('portfolioSelectedStock');
   if(selEl) selEl.textContent = 'Aucune action sélectionnée.';
   renderPortfolioTab();
