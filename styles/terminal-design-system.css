@@ -69,9 +69,17 @@ body.terminal-page .site-footer{display:none;}
    présentation. ---------- */
 body.terminal-page .card, body.terminal-page .play-tile{
   background:var(--term-card);border:1px solid var(--term-border);border-radius:4px;color:var(--term-text);
+  padding:14px 16px;
 }
 body.terminal-page .card:hover, body.terminal-page .play-tile:hover{border-color:var(--term-gold);background:var(--term-card-hover);}
-body.terminal-page .card h3, body.terminal-page .card h2{color:var(--term-text);}
+body.terminal-page .card h3, body.terminal-page .card h2{color:var(--term-text);font-size:14.5px;}
+/* Densité (section 35 du brief) : cards plus compactes, grilles plus
+   serrées, sans toucher au nombre/contenu des cards générées par les
+   rendus JS existants — uniquement l'espacement. */
+body.terminal-page .card-grid{gap:10px;}
+body.terminal-page .card .smallcaps{font-size:10px;}
+body.terminal-page .card p{font-size:12px;}
+body.terminal-page .result-big{font-size:20px;}
 body.terminal-page .card p, body.terminal-page .text-dim, body.terminal-page .meta-line{color:var(--term-text-dim);}
 body.terminal-page .smallcaps{color:var(--term-gold-light);}
 body.terminal-page .section-head h2{color:var(--term-text);}
@@ -254,6 +262,15 @@ button.terminal-kpi{font:inherit;text-align:left;cursor:pointer;}
   .terminal-shell.has-nav-simple .terminal-nav{grid-area:nav;}
   .terminal-shell.has-nav-simple .home-tab-panel{grid-area:content;overflow-y:auto;min-height:0;}
 }
+
+/* ---------- Distinction visuelle Watchlist vs Valeurs suivies (brief
+   section 12 : deux fonctionnalités réellement distinctes en base —
+   fzr-followed-stocks vs fzr-watchlist — à ne jamais fusionner ni
+   confondre visuellement). Un simple accent de couleur (violet plutôt
+   que l'or par défaut des autres cards) suffit à les distinguer au
+   premier coup d'oeil sans dupliquer davantage de CSS. ---------- */
+body.terminal-page #tab-watchlist .card{border-left:2px solid var(--term-violet);}
+body.terminal-page #tab-watchlist .card:hover{border-color:var(--term-violet);}
 
 /* ---------- Onglet "Marché du jour" (bourse.html), premier onglet à
    recevoir la densité complète du terminal — KPI row + 3 panneaux

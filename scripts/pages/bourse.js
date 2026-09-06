@@ -58,6 +58,7 @@ function renderTechIndicatorsHtml(history, unite){
 }
 const ASSET_TYPE_LABELS = {stock:'Action', etf:'ETF', index:'Indice', forex:'Forex', commodity:'Matière première', rate:'Taux'};
 
+let stockGridChartInstances = [];
 function renderStockGrid(){
   const list = getFollowedStocks();
   const metaEl = document.getElementById('stockGridMeta');
@@ -75,10 +76,11 @@ function renderStockGrid(){
       <div class="card" id="${s.ticker}">
         <span class="smallcaps">${s.secteur} · ${s.pays}</span>
         <h3>${s.nom} <span class="mono" style="font-size:13px;color:var(--text-dim);">${s.ticker}</span></h3>
-        <div class="result-row" style="margin:0 0 10px;">
+        <div class="result-row" style="margin:0 0 6px;">
           <span class="mono" style="font-size:18px;color:var(--text);">${s.prix.toFixed(1)} €</span>
           <span class="mono ${s.variation>=0?'up':'down'}" style="color:${s.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${s.variation>=0?'+':''}${s.variation}%</span>
         </div>
+        <div class="terminal-kpi-spark" style="height:28px;margin-bottom:8px;"><canvas id="stockSpark-${s.ticker}"></canvas></div>
         <p style="font-size:13px;color:var(--text-dim);">${fundLine} ${s.pea ? '· <span style="color:var(--emerald)">Éligible PEA</span>' : ''}</p>
         ${ff ? `<p style="margin-top:2px;">${renderDataBadge('fait')}</p>` : ''}
         ${renderTrendHtml(computeTrendIndicator(s.history))}
@@ -114,6 +116,28 @@ function renderStockGrid(){
         </div>
       </div>`;
   }).join('');
+
+  // Sparkline (refonte terminal, 06/09/2026) : réutilise l'historique déjà
+  // chargé pour computeTrendIndicator/computeTechnicalIndicators ci-dessus
+  // (STOCKS_DEMO[].history) — aucune nouvelle donnée, jamais un point
+  // inventé. Les actions ajoutées par recherche n'ont pas d'historique
+  // synchrone (voir commentaire plus haut) : pas de sparkline pour elles.
+  stockGridChartInstances.forEach(c => c.destroy());
+  stockGridChartInstances = [];
+  if(typeof Chart !== 'undefined'){
+    list.forEach(entry => {
+      const s = STOCKS_DEMO.find(x => x.ticker === entry.symbol);
+      if(!s || !Array.isArray(s.history) || s.history.length < 2) return;
+      const canvas = document.getElementById(`stockSpark-${s.ticker}`);
+      if(!canvas) return;
+      const color = s.variation >= 0 ? '#32D583' : '#F04438';
+      stockGridChartInstances.push(new Chart(canvas.getContext('2d'), {
+        type: 'line',
+        data: {labels: s.history.map(h => h.date), datasets: [{data: s.history.map(h => h.close), borderColor: color, backgroundColor: 'transparent', borderWidth: 1.5, pointRadius: 0, tension: 0.2}]},
+        options: {responsive: true, maintainAspectRatio: false, animation: false, scales: {x: {display: false}, y: {display: false}}, plugins: {legend: {display: false}, tooltip: {enabled: false}}}
+      }));
+    });
+  }
 
   initFavButtons();
   document.querySelectorAll('[data-remove-stock]').forEach(btn=>{
