@@ -181,24 +181,38 @@ function toggleMode(btn){
 // Critères réels : prix/variation viennent de STOCKS_DEMO (cotation live),
 // tous les autres viennent de /api/company-profile (fondamentaux réels,
 // jamais des champs fictifs de STOCKS_DEMO).
+// category : métadonnée purement visuelle (refonte terminal 06/09/2026,
+// workspace Essentiel/Valorisation/Rentabilité/Dividende) — n'affecte ni
+// le calcul ni le surlignage déterministe ci-dessous. Pas de catégorie
+// "Croissance"/"Dette" : aucun critère réel de ce type n'existe
+// aujourd'hui dans ce comparateur, jamais un onglet vide pour faire
+// nombre (voir dividende.html pour une vraie analyse de dette/croissance
+// quand elle existe ailleurs sur le site).
 const CRITERIA_BASIC = [
-  {key:'prix', label:'Cours', source:'stock', unit:' €', higherBetter:null},
-  {key:'variation', label:'Variation du jour', source:'stock', unit:'%', higherBetter:null},
-  {key:'trailingPE', label:'PER', source:'fundamentals', higherBetter:false},
-  {key:'dividendYield', label:'Rendement dividende', source:'fundamentals', higherBetter:true},
-  {key:'marketCap', label:'Capitalisation', source:'fundamentals', higherBetter:null},
-  {key:'totalRevenue', label:"Chiffre d'affaires", source:'fundamentals', higherBetter:null},
+  {key:'prix', label:'Cours', source:'stock', unit:' €', higherBetter:null, category:'essentiel'},
+  {key:'variation', label:'Variation du jour', source:'stock', unit:'%', higherBetter:null, category:'essentiel'},
+  {key:'trailingPE', label:'PER', source:'fundamentals', higherBetter:false, category:'valorisation'},
+  {key:'dividendYield', label:'Rendement dividende', source:'fundamentals', higherBetter:true, category:'dividende'},
+  {key:'marketCap', label:'Capitalisation', source:'fundamentals', higherBetter:null, category:'essentiel'},
+  {key:'totalRevenue', label:"Chiffre d'affaires", source:'fundamentals', higherBetter:null, category:'essentiel'},
 ];
 const CRITERIA_ADV = [
   ...CRITERIA_BASIC,
-  {key:'profitMargins', label:'Marge nette', source:'fundamentals', higherBetter:true},
-  {key:'returnOnEquity', label:'ROE', source:'fundamentals', higherBetter:true},
-  {key:'evToEbitda', label:'EV/EBITDA', source:'fundamentals', higherBetter:false},
+  {key:'profitMargins', label:'Marge nette', source:'fundamentals', higherBetter:true, category:'rentabilite'},
+  {key:'returnOnEquity', label:'ROE', source:'fundamentals', higherBetter:true, category:'rentabilite'},
+  {key:'evToEbitda', label:'EV/EBITDA', source:'fundamentals', higherBetter:false, category:'valorisation'},
   // Dividend Intelligence : un payout ratio plus bas laisse en général plus
   // de marge de manœuvre à l'entreprise pour maintenir ou augmenter son
   // dividende — voir l'analyse complète (dividende.html) pour le détail.
-  {key:'payoutRatio', label:'Payout ratio', source:'fundamentals', higherBetter:false},
+  {key:'payoutRatio', label:'Payout ratio', source:'fundamentals', higherBetter:false, category:'dividende'},
 ];
+const COMPARE_CATEGORIES = [
+  {key:'essentiel', label:'Essentiel'},
+  {key:'valorisation', label:'Valorisation'},
+  {key:'rentabilite', label:'Rentabilité'},
+  {key:'dividende', label:'Dividende'}
+];
+let compareActiveCategory = 'essentiel';
 
 function getFundamentalsFields(ticker){
   const fund = companyFundamentalsCache[ticker];
@@ -225,7 +239,15 @@ function renderCompare(){
   // réellement communs (cours/variation) plutôt que des colonnes fondamentales
   // vides pour certaines lignes, ou pire, une valeur fabriquée.
   const hasNonStock = stocks.some(s => s.assetType !== 'stock');
-  const criteria = hasNonStock ? CRITERIA_BASIC.filter(c=>c.source==='stock') : (advancedMode ? CRITERIA_ADV : CRITERIA_BASIC);
+  const allCriteria = hasNonStock ? CRITERIA_BASIC.filter(c=>c.source==='stock') : (advancedMode ? CRITERIA_ADV : CRITERIA_BASIC);
+  const availableCategories = COMPARE_CATEGORIES.filter(cat => allCriteria.some(c => c.category === cat.key));
+  if(!availableCategories.some(cat => cat.key === compareActiveCategory)) compareActiveCategory = availableCategories[0] ? availableCategories[0].key : 'essentiel';
+  const catTabsEl = document.getElementById('compareCategoryTabs');
+  if(catTabsEl){
+    catTabsEl.innerHTML = availableCategories.map(cat => `<button type="button" class="pill ${cat.key===compareActiveCategory?'active':''}" data-cat="${cat.key}">${cat.label}</button>`).join('');
+    catTabsEl.querySelectorAll('.pill').forEach(btn => btn.addEventListener('click', () => { compareActiveCategory = btn.dataset.cat; renderCompare(); }));
+  }
+  const criteria = allCriteria.filter(c => c.category === compareActiveCategory);
   let html = '<tr><th>Critère</th>' + stocks.map(s=>`<th>${s.nom}</th>`).join('') + '</tr>';
   criteria.forEach(c=>{
     const values = stocks.map(s => c.source === 'stock'
@@ -256,13 +278,17 @@ function renderCompare(){
   // pea/secteur/pays restent des champs curatés (8 valeurs STOCKS_DEMO),
   // sans aucun sens pour un actif de marché (une paire Forex n'a pas de
   // "secteur") : masqués dès qu'un actif non-action est sélectionné, plutôt
-  // que "Non déterminé" partout.
-  if(!hasNonStock){
-    html += '<tr><td>Éligible PEA</td>' + stocks.map(s=>`<td>${s.pea===true?'Oui':s.pea===false?'Non':'Non déterminé'}</td>`).join('') + '</tr>';
-    html += '<tr><td>Secteur</td>' + stocks.map(s=>`<td>${s.secteur || 'Non déterminé'}</td>`).join('') + '</tr>';
-    html += '<tr><td>Pays</td>' + stocks.map(s=>`<td>${s.pays || 'Non déterminé'}</td>`).join('') + '</tr>';
-  } else {
-    html += '<tr><td>Type d\'actif</td>' + stocks.map(s=>`<td>${ASSET_TYPE_LABELS[s.assetType] || 'Non déterminé'}</td>`).join('') + '</tr>';
+  // que "Non déterminé" partout. Affichés uniquement dans l'onglet
+  // "Essentiel" du workspace (refonte terminal) — pas de répétition
+  // identique sur les onglets Valorisation/Rentabilité/Dividende.
+  if(compareActiveCategory === 'essentiel'){
+    if(!hasNonStock){
+      html += '<tr><td>Éligible PEA</td>' + stocks.map(s=>`<td>${s.pea===true?'Oui':s.pea===false?'Non':'Non déterminé'}</td>`).join('') + '</tr>';
+      html += '<tr><td>Secteur</td>' + stocks.map(s=>`<td>${s.secteur || 'Non déterminé'}</td>`).join('') + '</tr>';
+      html += '<tr><td>Pays</td>' + stocks.map(s=>`<td>${s.pays || 'Non déterminé'}</td>`).join('') + '</tr>';
+    } else {
+      html += '<tr><td>Type d\'actif</td>' + stocks.map(s=>`<td>${ASSET_TYPE_LABELS[s.assetType] || 'Non déterminé'}</td>`).join('') + '</tr>';
+    }
   }
   table.innerHTML = html;
   renderCompareTech(stocks);
@@ -297,29 +323,58 @@ function normalizeSeriesToPercentChange(closes){
 // 5 couleurs déjà définies dans la palette du site (var(--gold-bright) etc.),
 // jamais une couleur inventée — au plus 5 valeurs sélectionnables dans le
 // comparateur, une couleur par valeur suffit toujours.
-const COMPARE_CHART_COLORS = ['var(--gold-bright)', 'var(--emerald)', 'var(--bordeaux)', 'var(--text-dim)', 'var(--gold)'];
+const COMPARE_CHART_COLORS = ['#D4AF37', '#32D583', '#F04438', '#949BA6', '#4F8FE8'];
+let compareChartInstance = null;
 function renderCompareChart(stocks){
   const el = document.getElementById('compareChart');
   if(!el) return;
   const withHistory = stocks.filter(s => Array.isArray(s.history) && s.history.length >= 2);
   if(withHistory.length < 2){
     el.innerHTML = '';
+    if(compareChartInstance){ compareChartInstance.destroy(); compareChartInstance = null; }
     return;
   }
   const named = withHistory.map((s, i) => ({
     nom: s.nom,
     color: COMPARE_CHART_COLORS[i % COMPARE_CHART_COLORS.length],
-    data: normalizeSeriesToPercentChange(s.history.map(h => h.close))
+    data: normalizeSeriesToPercentChange(s.history.map(h => h.close)),
+    labels: s.history.map(h => h.date)
   })).filter(s => Array.isArray(s.data));
-  if(named.length < 2){ el.innerHTML = ''; return; }
-  const legend = named.map(s => `<span><span style="display:inline-block;width:10px;height:10px;background:${s.color};border-radius:50%;margin-right:6px;"></span>${s.nom}</span>`).join('');
+  if(named.length < 2){ el.innerHTML = ''; if(compareChartInstance){ compareChartInstance.destroy(); compareChartInstance = null; } return; }
+  // Migration Chart.js (refonte terminal 06/09/2026) : remplace
+  // renderMultiLineChart (SVG maison, scripts/data.js) UNIQUEMENT pour cet
+  // appel — la fonction partagée reste intacte pour ses autres appelants
+  // (Mon Univers Financier, Laboratoire financier). Même préparation de
+  // données (normalizeSeriesToPercentChange), même logique, seul le rendu change.
   el.innerHTML = `
-    <details class="card" style="margin-top:14px;">
-      <summary class="smallcaps" style="cursor:pointer;">📈 Voir le graphique comparé (variation % depuis le début de la période)</summary>
-      <div style="margin-top:10px;">${renderMultiLineChart(named.map(s=>({data:s.data, color:s.color, width:2})), 'Variation depuis le début de la période (%)')}</div>
-      <div style="display:flex;gap:14px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--text-dim);">${legend}</div>
+    <details class="card" open style="margin-top:14px;">
+      <summary class="smallcaps" style="cursor:pointer;">📈 Graphique comparé (variation % depuis le début de la période)</summary>
+      <div style="position:relative;height:220px;margin-top:10px;"><canvas id="compareChartCanvas"></canvas></div>
       <p style="font-size:11.5px;color:var(--text-dim);margin-top:8px;">Chaque série part de 0% pour permettre de comparer des valeurs d'échelles très différentes (ex. une action et un indice) sur le même graphique — jamais le prix brut de chacune.</p>
     </details>`;
+  const canvas = document.getElementById('compareChartCanvas');
+  if(!canvas || typeof Chart === 'undefined') return;
+  if(compareChartInstance) compareChartInstance.destroy();
+  const longest = named.reduce((a, b) => a.labels.length >= b.labels.length ? a : b);
+  compareChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: longest.labels,
+      datasets: named.map(s => ({label: s.nom, data: s.data, borderColor: s.color, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.15}))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: {mode: 'index', intersect: false},
+      scales: {
+        x: {ticks: {color: '#949BA6', maxTicksLimit: 6, font: {size: 10}}, grid: {color: 'rgba(212,175,55,0.16)'}},
+        y: {ticks: {color: '#949BA6', font: {size: 10}, callback: v => v + ' %'}, grid: {color: 'rgba(212,175,55,0.16)'}}
+      },
+      plugins: {
+        legend: {labels: {color: '#949BA6', font: {size: 10.5}}},
+        tooltip: {backgroundColor: '#0D1016', titleColor: '#D4AF37', bodyColor: '#F5F5F5', borderColor: 'rgba(212,175,55,0.16)', borderWidth: 1, callbacks: {label: ctx => `${ctx.dataset.label} : ${ctx.parsed.y >= 0 ? '+' : ''}${ctx.parsed.y.toFixed(1)} %`}}
+      }
+    }
+  });
 }
 
 // ---------- Analyse complète : résumé, business model, croissance/rentabilité/
