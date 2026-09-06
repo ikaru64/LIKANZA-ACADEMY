@@ -286,24 +286,25 @@ body.terminal-page #tab-watchlist .card:hover{border-color:var(--term-violet);}
 .terminal-panels-row .terminal-panel{min-height:0;}
 @media (max-width:900px){.terminal-panels-row{grid-template-columns:1fr;}}
 
-/* ---------- Réutilisation du picker d'onglets existant (#bourseTabsGrid,
-   .quick-access-card, JAMAIS renommés) comme nav terminal compacte —
-   pur CSS, aucun changement de renderBourseTabs()/setBourseTab(). ---------- */
-body.terminal-page #bourseTabsGrid.terminal-nav{
+/* ---------- Réutilisation du picker d'onglets existant (#bourseTabsGrid /
+   #divTabsGrid, .quick-access-card, JAMAIS renommés) comme nav terminal
+   compacte — pur CSS, aucun changement de renderBourseTabs()/setBourseTab()
+   ni de renderDivTabs()/setDivTab(). ---------- */
+body.terminal-page #bourseTabsGrid.terminal-nav, body.terminal-page #divTabsGrid.terminal-nav{
   display:flex;flex-direction:column;gap:2px;
 }
-body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card{
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card, body.terminal-page #divTabsGrid.terminal-nav .quick-access-card{
   display:flex;align-items:center;gap:8px;flex-direction:row;text-align:left;
   background:none;border:none;border-radius:3px;padding:7px 10px;
   transition:background .15s ease, color .15s ease;
 }
-body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card:hover{background:var(--term-card-hover);}
-body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card.active{background:rgba(212,175,55,0.1);box-shadow:inset 2px 0 0 var(--term-gold);}
-body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card .icon{color:var(--term-gold-light);flex-shrink:0;}
-body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card .icon svg{width:14px;height:14px;}
-body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card h3{font-size:12.5px;font-weight:500;color:var(--term-text-dim);margin:0;}
-body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card.active h3{color:var(--term-gold-light);}
-body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card p{display:none;} /* description masquée en nav compacte, dispo au survol via title */
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card:hover, body.terminal-page #divTabsGrid.terminal-nav .quick-access-card:hover{background:var(--term-card-hover);}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card.active, body.terminal-page #divTabsGrid.terminal-nav .quick-access-card.active{background:rgba(212,175,55,0.1);box-shadow:inset 2px 0 0 var(--term-gold);}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card .icon, body.terminal-page #divTabsGrid.terminal-nav .quick-access-card .icon{color:var(--term-gold-light);flex-shrink:0;}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card .icon svg, body.terminal-page #divTabsGrid.terminal-nav .quick-access-card .icon svg{width:14px;height:14px;}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card h3, body.terminal-page #divTabsGrid.terminal-nav .quick-access-card h3{font-size:12.5px;font-weight:500;color:var(--term-text-dim);margin:0;}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card.active h3, body.terminal-page #divTabsGrid.terminal-nav .quick-access-card.active h3{color:var(--term-gold-light);}
+body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card p, body.terminal-page #divTabsGrid.terminal-nav .quick-access-card p{display:none;} /* description masquée en nav compacte, dispo au survol via title */
 
 /* ---------- Tablette / mobile : empilé, scroll normal de page ---------- */
 @media (max-width:1179px){

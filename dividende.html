@@ -13,8 +13,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="styles/design-system.css">
+<link rel="stylesheet" href="styles/terminal-design-system.css">
 </head>
-<body class="has-bottom-nav">
+<body class="has-bottom-nav terminal-page">
 <aside class="app-sidebar" aria-label="Navigation principale">
   <a href="index.html" class="sidebar-brand"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
@@ -98,7 +99,8 @@
   <div id="divNoTicker" style="display:none;"><p style="color:var(--text-dim);font-size:13.5px;">Utilise la recherche ci-dessus pour choisir une première action, ou ajoutes-en depuis la page <a href="bourse.html" style="color:var(--gold-bright);">Bourse</a>.</p></div>
 
   <div id="divContent" style="display:none;">
-    <div class="quick-access-grid" id="divTabsGrid" style="grid-template-columns:repeat(6,1fr);"></div>
+  <div class="terminal-shell has-nav-simple">
+    <nav class="quick-access-grid terminal-nav" id="divTabsGrid" aria-label="Onglets Dividend Intelligence"></nav>
 
     <div class="home-tab-panel" id="dtab-apercu"></div>
     <div class="home-tab-panel" id="dtab-historique"></div>
@@ -106,6 +108,7 @@
     <div class="home-tab-panel" id="dtab-previsions"></div>
     <div class="home-tab-panel" id="dtab-simulation"></div>
     <div class="home-tab-panel" id="dtab-comparer"></div>
+  </div>
   </div>
 </section>
 
@@ -123,6 +126,8 @@
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/historical-data.js"></script>
+<!-- Chart.js — même version/intégrité que bourse.html/action.html/marche.html/economie.html. -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="scripts/pages/dividende-page.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">

@@ -215,6 +215,42 @@ function renderApercuTab(){
 }
 
 // ================= Onglet 2 : Historique =================
+// Migration Chart.js (refonte terminal Bourse, 06/09/2026) : visualise le
+// MÊME historique année par année déjà affiché dans le tableau ci-dessous
+// (h.years, réel, jamais recalculé) — aucune nouvelle métrique, juste une
+// seconde représentation du même chiffre pour repérer une tendance en un
+// coup d'oeil. Couleur par barre = même trend ('hausse'/'gel'/'baisse') que
+// la colonne "Tendance" du tableau.
+let divHistoriqueChartInstance = null;
+function renderHistoriqueChart(h){
+  const bodyEl = document.getElementById('divHistoriqueChartBody');
+  if(!bodyEl) return;
+  if(!h || !Array.isArray(h.years) || h.years.length < 2) return;
+  bodyEl.innerHTML = `<div style="position:relative;height:200px;margin-bottom:14px;"><canvas id="divHistoriqueChartCanvas"></canvas></div>`;
+  const canvas = document.getElementById('divHistoriqueChartCanvas');
+  if(!canvas || typeof Chart === 'undefined') return;
+  if(divHistoriqueChartInstance) divHistoriqueChartInstance.destroy();
+  const TREND_COLOR = {hausse: '#32D583', gel: '#F0D36B', baisse: '#F04438'};
+  divHistoriqueChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: h.years.map(y => y.year + (y.isPartial ? ' (en cours)' : '')),
+      datasets: [{data: h.years.map(y => y.total), backgroundColor: h.years.map(y => TREND_COLOR[y.trend] || '#949BA6')}]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: {ticks: {color: '#949BA6', font: {size: 10}}, grid: {display: false}},
+        y: {ticks: {color: '#949BA6', font: {size: 10}}, grid: {color: 'rgba(212,175,55,0.1)'}}
+      },
+      plugins: {
+        legend: {display: false},
+        tooltip: {backgroundColor: '#0D1016', titleColor: '#D4AF37', bodyColor: '#F5F5F5', borderColor: 'rgba(212,175,55,0.16)', borderWidth: 1,
+          callbacks: {label: ctx => ctx.parsed.y.toFixed(2) + ' € versés'}}
+      }
+    }
+  });
+}
 function renderHistoriqueTab(){
   const el = document.getElementById('dtab-historique');
   if(!el) return;
@@ -241,6 +277,7 @@ function renderHistoriqueTab(){
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;"><h3>Historique année par année</h3>${renderDataBadge('fait')}</div>
       <p style="font-size:12px;color:var(--text-dim);margin:8px 0 12px;">Total réellement versé par année civile — jamais une baisse ou un gel masqué, y compris quand le résultat est négatif.</p>
+      <div id="divHistoriqueChartBody"></div>
       <div style="overflow-x:auto;"><table class="compare-table"><tr><th>Année</th><th>Dividende versé</th><th>Évolution</th><th>Tendance</th></tr>${rows}</table></div>
       <p style="font-size:12.5px;color:var(--text-dim);margin-top:14px;">${renderDataBadge('calcul')} Sur les années complètes : ${h.increases} hausse(s), ${h.freezes} gel(s), ${h.decreases} baisse(s).${typeof h.cagr5y === 'number' ? ` Croissance annuelle moyenne sur 5 ans : ${h.cagr5y >= 0 ? '+' : ''}${h.cagr5y.toFixed(1)}%.` : ''}${typeof h.cagr10y === 'number' ? ` Sur 10 ans : ${h.cagr10y >= 0 ? '+' : ''}${h.cagr10y.toFixed(1)}%.` : ''}</p>
       ${renderCalcNote('Comment ce tableau est construit', `
@@ -249,6 +286,7 @@ function renderHistoriqueTab(){
         <p style="margin-top:6px;"><strong>Tendance</strong> : 🟢 Hausse si l'évolution dépasse +0,5% · 🟡 Gel si elle reste entre −0,5% et +0,5% · 🔴 Baisse si elle descend sous −0,5%. Ces seuils évitent de qualifier d'arrondi de calcul (quelques centimes) une vraie hausse ou une vraie baisse.</p>
         <p style="margin-top:6px;"><strong>Croissance annuelle moyenne (CAGR)</strong> sur N ans = (Dividende de la dernière année complète ÷ Dividende d'il y a N années)^(1 ÷ N) − 1. C'est le taux de croissance constant qui, répété chaque année, aurait produit exactement la même évolution totale sur la période — utile pour comparer des entreprises sur des durées différentes.</p>`)}
     </div>`;
+  renderHistoriqueChart(h);
 }
 
 // ================= Onglet 3 : Soutenabilité =================
