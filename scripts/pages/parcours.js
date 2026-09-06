@@ -66,9 +66,23 @@ const COCKPIT_DEMO_DATA = (function(){
 })();
 
 let cockpitDemoMode = false;
+// Gap Closure Sprint P2, phase 17 (06/09/2026) : un utilisateur au profil
+// business réel (Business Lab) mais sans aucune donnée financière
+// personnelle déclenchait ce mode démo — il voyait un salaire/Livret A/PEA
+// entièrement fabriqués sur SA page "Mon Univers Financier", sans aucun
+// rapport avec son vrai profil business, potentiellement pris pour de
+// vraies données. Un vrai profil business existant est un signal réel
+// suffisant pour préférer l'état vide honnête ("Ajoute tes premiers
+// actifs...") à une démo personnelle non pertinente.
 function cockpitDetectDemoMode(){
+  // getBusinessProfile() retourne toujours un objet complet (defaults
+  // fusionnés), jamais null — safeGetJSON(...,null) directement sur la
+  // clé brute est le seul moyen de savoir si un profil a RÉELLEMENT été
+  // enregistré (même motif que renderPersonalizationPanel, data.js).
+  const hasRealBusinessProfile = !!safeGetJSON('fzr-business-profile', null);
   return getNetWorthAssets().length === 0 && getNetWorthHistory().length === 0
-    && getFinancialGoals().length === 0 && getLifeProjects().length === 0;
+    && getFinancialGoals().length === 0 && getLifeProjects().length === 0
+    && !hasRealBusinessProfile;
 }
 function cockpitAssets(){ return cockpitDemoMode ? COCKPIT_DEMO_DATA.assets : getNetWorthAssets(); }
 function cockpitDebts(){ return cockpitDemoMode ? COCKPIT_DEMO_DATA.debts : getPersonalDebts(); }
