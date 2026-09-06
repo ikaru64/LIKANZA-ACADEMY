@@ -50,6 +50,7 @@ const ECO_VIEWS = {
   overview: {label: "Vue d'ensemble", icon: 'compass'},
   map: {label: 'Carte mondiale', icon: 'globe'},
   compare: {label: 'Comparateur', icon: 'list'},
+  'graph-lab': {label: 'Graph Lab', icon: 'telescope'},
   'central-banks': {label: 'Banques centrales', icon: 'landmark'},
   debt: {label: 'Dette & déficit', icon: 'scale'},
   'public-finance': {label: 'Finances publiques', icon: 'coins'}
@@ -209,6 +210,8 @@ function renderEcoBody(){
     renderMapView();
   } else if(ecoActiveView === 'compare'){
     renderCompareView();
+  } else if(ecoActiveView === 'graph-lab'){
+    renderGraphLabView();
   } else if(ecoActiveView === 'central-banks'){
     renderCentralBanksView();
   } else if(ecoActiveView === 'debt'){
@@ -381,6 +384,131 @@ async function renderMapMain(){
     path.insertBefore(titleEl, path.firstChild);
     path.addEventListener('click', () => renderMapCountryDetail(code, entry));
   });
+}
+
+// ============================================================
+// Module "Graph Lab" (06/09/2026) — superpose 2 vraies séries au choix
+// (n'importe quel pays × indicateur déjà réel, ou l'un des 2 taux
+// directeurs) sur une fenêtre calendaire commune. Aucune nouvelle donnée :
+// réutilise exactement ecoFetchRealSeries, déjà partagé avec le
+// Comparateur. Jamais un coefficient de corrélation calculé : superposer
+// deux courbes réelles est déjà utile pour l'oeil, mais un vrai chiffre
+// de corrélation nécessiterait un ré-échantillonnage (mensuel vs annuel)
+// qui friserait l'invention de points n'ayant jamais existé — un
+// disclaimer explicite rappelle qu'une ressemblance visuelle n'est
+// jamais une causalité.
+// ============================================================
+function ecoGraphLabSeriesOptions(){
+  const options = [];
+  Object.entries(ECO_COUNTRIES).forEach(([code, c]) => {
+    ['gdp-growth', 'inflation', 'unemployment', 'gov-debt', 'gov-deficit', 'consumer-confidence'].forEach(k => {
+      if(c.kpis.includes(k)) options.push({value: `${code}:${k}`, label: `${c.flag} ${c.label} — ${ECO_KPI_META[k].label}`});
+    });
+  });
+  // Taux directeurs ajoutés une seule fois chacun (jamais un doublon par
+  // pays de la zone euro pour le même vrai taux BCE unique) — "FR"/"US"
+  // servent juste de porte d'entrée réelle vers ecoComparePolicyRateKey,
+  // pas une prétention que le taux serait spécifique à ce pays.
+  options.push({value: 'FR:policy-rate', label: '🏦 BCE — Taux de dépôt (zone euro)'});
+  options.push({value: 'US:policy-rate', label: '🏦 Fed — Taux des fonds fédéraux'});
+  return options;
+}
+let ecoGraphLabA = 'FR:inflation';
+let ecoGraphLabB = 'FR:policy-rate';
+let ecoGraphLabChartA = null;
+let ecoGraphLabChartB = null;
+
+function ecoGraphLabYear(period){ return parseInt(String(period).slice(0, 4), 10); }
+
+function renderGraphLabPicker(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const options = ecoGraphLabSeriesOptions();
+  const selectHtml = (id, current) => `<select id="${id}">${options.map(o => `<option value="${o.value}" ${o.value === current ? 'selected' : ''}>${o.label}</option>`).join('')}</select>`;
+  el.innerHTML = `
+    <div style="grid-column:1/-1;display:flex;gap:16px;flex-wrap:wrap;align-items:flex-end;">
+      <div class="field" style="margin-bottom:0;"><label for="ecoGraphLabSelectA">Série A</label>${selectHtml('ecoGraphLabSelectA', ecoGraphLabA)}</div>
+      <div class="field" style="margin-bottom:0;"><label for="ecoGraphLabSelectB">Série B</label>${selectHtml('ecoGraphLabSelectB', ecoGraphLabB)}</div>
+    </div>`;
+  document.getElementById('ecoGraphLabSelectA').addEventListener('change', e => { ecoGraphLabA = e.target.value; renderGraphLabMain(); });
+  document.getElementById('ecoGraphLabSelectB').addEventListener('change', e => { ecoGraphLabB = e.target.value; renderGraphLabMain(); });
+}
+
+async function renderGraphLabView(){
+  renderGraphLabPicker('ecoKpis');
+  await renderGraphLabMain();
+}
+
+function renderGraphLabChart(canvasId, series, color){
+  const canvas = document.getElementById(canvasId);
+  if(!canvas || typeof Chart === 'undefined') return null;
+  const textDim = ecoCssVar('--term-text-dim') || '#9198A3';
+  const hairline = ecoCssVar('--term-border') || 'rgba(212,175,55,0.16)';
+  return new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {labels: series.points.map(p => p.period), datasets: [{label: series.label, data: series.points.map(p => p.value), borderColor: color, backgroundColor: 'transparent', borderWidth: 2, pointRadius: 0, tension: 0.1}]},
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: {mode: 'index', intersect: false},
+      scales: {
+        x: {ticks: {color: textDim, maxTicksLimit: 8, font: {size: 10}}, grid: {color: hairline}},
+        y: {ticks: {color: textDim, font: {size: 10}, callback: v => series.meta.fmt(v)}, grid: {color: hairline}}
+      },
+      plugins: {
+        legend: {display: false},
+        tooltip: {backgroundColor: '#0D1016', titleColor: '#D4AF37', bodyColor: '#F5F5F5', borderColor: hairline, borderWidth: 1, callbacks: {label: ctx => series.meta.fmt(ctx.parsed.y)}}
+      }
+    }
+  });
+}
+
+async function renderGraphLabMain(){
+  const mainEl = document.getElementById('ecoMain');
+  if(!mainEl) return;
+  mainEl.innerHTML = `<p class="eco-panel-note">Chargement des deux séries…</p>`;
+  const [descA, descB] = [ecoGraphLabA, ecoGraphLabB].map(d => { const [country, key] = d.split(':'); return {country, key}; });
+  const [seriesA, seriesB] = await Promise.all([
+    ecoFetchRealSeries(descA.country, descA.key),
+    ecoFetchRealSeries(descB.country, descB.key)
+  ]);
+  if(!seriesA || !seriesB){
+    mainEl.innerHTML = `<p class="eco-panel-note">${!seriesA ? 'Série A' : 'Série B'} indisponible pour le moment.</p>`;
+    return;
+  }
+  // Fenêtre calendaire commune (par année, seule granularité comparable
+  // entre une série mensuelle et une série annuelle) — jamais une
+  // superposition qui laisserait croire que les deux courbes couvrent la
+  // même période si ce n'est pas réellement le cas.
+  const yearsA = seriesA.points.map(p => ecoGraphLabYear(p.period));
+  const yearsB = seriesB.points.map(p => ecoGraphLabYear(p.period));
+  const start = Math.max(Math.min(...yearsA), Math.min(...yearsB));
+  const end = Math.min(Math.max(...yearsA), Math.max(...yearsB));
+  if(start > end){
+    mainEl.innerHTML = `<p class="eco-panel-note">Ces deux séries n'ont aucune période réelle commune — impossible de les superposer honnêtement.</p>`;
+    return;
+  }
+  const clip = points => points.filter(p => { const y = ecoGraphLabYear(p.period); return y >= start && y <= end; });
+  const labelA = ecoGraphLabSeriesOptions().find(o => o.value === ecoGraphLabA).label;
+  const labelB = ecoGraphLabSeriesOptions().find(o => o.value === ecoGraphLabB).label;
+  const clippedA = {points: clip(seriesA.points), meta: seriesA.meta, label: labelA};
+  const clippedB = {points: clip(seriesB.points), meta: seriesB.meta, label: labelB};
+
+  mainEl.innerHTML = `
+    <p class="eco-panel-note">Fenêtre commune réelle : ${start}–${end}. Chaque série garde sa propre fréquence réelle (mensuelle/trimestrielle/annuelle) — jamais ré-échantillonnée pour se faire correspondre artificiellement.</p>
+    <div class="eco-panel" style="margin-top:8px;">
+      <span class="eco-panel-title">${labelA}</span>
+      <div style="position:relative;height:150px;margin-top:8px;"><canvas id="ecoGraphLabCanvasA"></canvas></div>
+    </div>
+    <div class="eco-panel" style="margin-top:10px;">
+      <span class="eco-panel-title">${labelB}</span>
+      <div style="position:relative;height:150px;margin-top:8px;"><canvas id="ecoGraphLabCanvasB"></canvas></div>
+    </div>
+    <p class="eco-panel-note">Superposition visuelle de deux séries réelles, jamais un coefficient de corrélation calculé (les fréquences réelles diffèrent souvent, un ré-échantillonnage inventerait des points qui n'existent pas). Une ressemblance d'évolution entre les deux courbes n'est jamais une preuve de causalité — une coïncidence de calendrier reste toujours possible.</p>`;
+
+  if(ecoGraphLabChartA){ ecoGraphLabChartA.destroy(); ecoGraphLabChartA = null; }
+  if(ecoGraphLabChartB){ ecoGraphLabChartB.destroy(); ecoGraphLabChartB = null; }
+  ecoGraphLabChartA = renderGraphLabChart('ecoGraphLabCanvasA', clippedA, ecoCssVar('--term-gold-light') || '#F0D36B');
+  ecoGraphLabChartB = renderGraphLabChart('ecoGraphLabCanvasB', clippedB, ecoCssVar('--term-blue') || '#4F8FE8');
 }
 
 function renderEcoHeader(elId){
@@ -594,7 +722,13 @@ function ecoComparePolicyRateKey(country){
   return null;
 }
 
-async function ecoFetchLatest(country, rowKey){
+// Extrait de ecoFetchLatest (Graph Lab, 06/09/2026) : la logique de
+// résolution de clé réelle + conversion indice->taux d'inflation est
+// désormais partagée entre "dernière valeur" (Comparateur) et "série
+// complète" (Graph Lab) — un seul endroit qui décide ce qu'est une vraie
+// donnée pour ce pays/indicateur, jamais deux logiques qui pourraient
+// diverger.
+async function ecoFetchRealSeries(country, rowKey){
   const key = rowKey === 'policy-rate' ? ecoComparePolicyRateKey(country) : (ECO_COUNTRIES[country].kpis.includes(rowKey) ? rowKey : null);
   if(!key) return null; // pas de vraie source pour ce pays -> jamais une case vide fabriquée, juste absente
   const meta = ECO_KPI_META[key];
@@ -609,11 +743,16 @@ async function ecoFetchLatest(country, rowKey){
       }).filter(Boolean);
       if(points.length === 0) return null;
     }
-    const last = points[points.length - 1];
-    return {value: last.value, period: last.period, meta};
+    return {points, meta};
   } catch(err){
     return null;
   }
+}
+async function ecoFetchLatest(country, rowKey){
+  const series = await ecoFetchRealSeries(country, rowKey);
+  if(!series || series.points.length === 0) return null;
+  const last = series.points[series.points.length - 1];
+  return {value: last.value, period: last.period, meta: series.meta};
 }
 
 async function renderCompareView(){
