@@ -182,30 +182,33 @@
   </div>
 
   <div class="home-tab-panel" id="tab-scenarios">
-    <div class="section-head"><h2>Analyse & scénarios</h2><span class="meta-line">cibles réelles des analystes, pas une prédiction</span></div>
-    <div class="card" style="max-width:420px;margin-bottom:20px;">
+    <div class="terminal-panel-title" style="margin-bottom:10px;">🎯 Analyse &amp; scénarios<span style="font-weight:400;text-transform:none;font-size:10.5px;color:var(--term-text-dim);">cibles réelles des analystes, pas une prédiction</span></div>
+    <div class="card" style="max-width:420px;margin-bottom:16px;">
       <div class="field"><label for="scenStock">Action de référence</label><select id="scenStock"></select></div>
       <div class="field" style="margin-bottom:0;"><label for="scenInvestAmount">Montant investi aujourd'hui (€)</label><input type="number" id="scenInvestAmount" min="1" step="1" value="300"></div>
     </div>
-    <div id="scenTechContext" style="margin-bottom:18px;"></div>
-    <div id="scenConsensus" style="margin-bottom:18px;"></div>
+    <div id="scenTechContext" style="margin-bottom:14px;"></div>
+    <div id="scenConsensus" style="margin-bottom:14px;"></div>
     <div class="card-grid" id="scenCasesGrid"></div>
     <p class="disclaimer-box" id="scenDisclaimer" style="margin-top:16px;"></p>
 
-    <details style="margin-top:28px;">
-      <summary class="smallcaps" style="cursor:pointer;">Explorer mes propres hypothèses (plutôt que les cibles des analystes)</summary>
-      <div class="card-grid" style="margin-top:14px;">
-        <div class="card">
-          <h3>Paramètres</h3>
-          <div class="slider-row field"><label for="scenGrowth">Croissance annuelle du bénéfice <span class="v mono" id="valGrowth">6 %</span></label><input type="range" id="scenGrowth" min="-10" max="25" step="1" value="6"></div>
+    <details style="margin-top:24px;">
+      <summary class="smallcaps" style="cursor:pointer;">Explorer mes propres hypothèses (plutôt que les cibles des analystes) — Scenario Lab</summary>
+      <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;margin-top:14px;">
+        <div class="terminal-panel">
+          <span class="terminal-panel-title">Hypothèses</span>
+          <div class="slider-row field" style="margin-top:10px;"><label for="scenGrowth">Croissance annuelle du bénéfice <span class="v mono" id="valGrowth">6 %</span></label><input type="range" id="scenGrowth" min="-10" max="25" step="1" value="6"></div>
           <div class="slider-row field"><label for="scenPer">PER cible dans le scénario central <span class="v mono" id="valPer">18×</span></label><input type="range" id="scenPer" min="5" max="40" step="1" value="18"></div>
           <div class="slider-row field"><label for="scenHorizon">Horizon <span class="v mono" id="valHorizon">5 ans</span></label><input type="range" id="scenHorizon" min="1" max="15" step="1" value="5"></div>
         </div>
-        <div class="card">
-          <h3>Résultats estimés</h3>
-          <div id="scenResults"></div>
-          <div class="bar-chart" id="scenChart"></div>
+        <div class="terminal-panel">
+          <span class="terminal-panel-title">Graphique</span>
+          <div class="bar-chart" id="scenChart" style="margin-top:10px;"></div>
           <div class="bar-labels" id="scenChartLabels"></div>
+        </div>
+        <div class="terminal-panel">
+          <span class="terminal-panel-title">Résultats</span>
+          <div id="scenResults" style="margin-top:8px;"></div>
           <p class="disclaimer-box">Simulation basée uniquement sur les hypothèses que tu as saisies ci-contre — pas les cibles des analystes. Les marchés financiers sont imprévisibles : cette estimation ne constitue pas une recommandation d'achat ou de vente.</p>
         </div>
       </div>
@@ -213,16 +216,21 @@
   </div>
 
   <div class="home-tab-panel" id="tab-dca">
-    <div class="section-head"><h2>DCA vs investissement en une fois</h2><span class="meta-line">impact du timing</span></div>
-    <div class="card-grid">
-      <div class="card">
-        <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;">Renseigne le prix de l'actif à 4 dates régulières pour comparer les deux stratégies sur un même montant total.</p>
+    <div class="terminal-panel-title" style="margin-bottom:10px;">⏱️ DCA Lab<span style="font-weight:400;text-transform:none;font-size:10.5px;color:var(--term-text-dim);">DCA vs investissement en une fois — impact du timing</span></div>
+    <div style="display:grid;grid-template-columns:1fr 1.2fr 1fr;gap:12px;">
+      <div class="terminal-panel">
+        <span class="terminal-panel-title">Hypothèses</span>
+        <p style="color:var(--text-dim);font-size:12.5px;margin:8px 0 12px;">Renseigne le prix de l'actif à 4 dates régulières pour comparer les deux stratégies sur un même montant total.</p>
         <div class="field"><label for="dcaTotal">Montant total à investir (€)</label><input type="number" id="dcaTotal" value="4000"></div>
         <div id="dcaPriceRows"></div>
       </div>
-      <div class="card">
-        <h3>Résultat</h3>
-        <div id="dcaVsLumpResult"></div>
+      <div class="terminal-panel">
+        <span class="terminal-panel-title">Graphique</span>
+        <div style="position:relative;height:200px;margin-top:10px;"><canvas id="dcaChartCanvas"></canvas></div>
+      </div>
+      <div class="terminal-panel">
+        <span class="terminal-panel-title">Résultats</span>
+        <div id="dcaVsLumpResult" style="margin-top:8px;"></div>
         <p class="disclaimer-box">Le DCA (investissement programmé) lisse le prix d'achat mais ne garantit ni surperformance ni sous-performance par rapport à un investissement unique : tout dépend de l'évolution réelle des prix, imprévisible à l'avance.</p>
       </div>
     </div>

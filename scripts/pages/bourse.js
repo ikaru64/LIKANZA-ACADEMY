@@ -934,6 +934,7 @@ const defaultPrices = [100, 92, 108, 97];
 dcaPricesRowsEl.innerHTML = dcaPeriods.map((p,i)=>`
   <div class="field"><label>${p} : prix (€) <input type="number" class="dcaPrice" data-idx="${i}" value="${defaultPrices[i]}"></label></div>`).join('');
 
+let dcaChartInstance = null;
 function updateDcaVsLump(){
   const total = +dcaTotalEl.value;
   const prices = Array.from(document.querySelectorAll('.dcaPrice')).map(i=>+i.value);
@@ -951,6 +952,32 @@ function updateDcaVsLump(){
       <div class="whatif-col"><div class="lab">Tout en une fois</div><div class="val" style="color:${best==='lump'?'var(--emerald)':'var(--text)'}">${fmtEUR(lumpValue)}</div></div>
     </div>
     <p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">Avec ces prix, la stratégie ${best==='dca'?'DCA':'investissement unique'} aurait donné le meilleur résultat sur cette période précise, un résultat qui dépend entièrement des prix saisis, pas d'une règle générale.</p>`;
+  // Graphique (refonte terminal 06/09/2026) : visualise les 2 MÊMES valeurs
+  // déjà calculées ci-dessus (dcaValue/lumpValue) — jamais un point de
+  // donnée supplémentaire, purement une représentation visuelle du calcul
+  // existant. Barres des prix saisis en second axe pour montrer le "timing".
+  const canvas = document.getElementById('dcaChartCanvas');
+  if(canvas && typeof Chart !== 'undefined'){
+    if(dcaChartInstance) dcaChartInstance.destroy();
+    dcaChartInstance = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ['DCA (réparti)', 'Tout en une fois'],
+        datasets: [{data: [dcaValue, lumpValue], backgroundColor: [best === 'dca' ? '#32D583' : '#949BA6', best === 'lump' ? '#32D583' : '#949BA6'], borderRadius: 3}]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: {ticks: {color: '#949BA6', font: {size: 11}}, grid: {display: false}},
+          y: {ticks: {color: '#949BA6', font: {size: 10}, callback: v => fmtEUR(v)}, grid: {color: 'rgba(212,175,55,0.16)'}}
+        },
+        plugins: {
+          legend: {display: false},
+          tooltip: {backgroundColor: '#0D1016', titleColor: '#D4AF37', bodyColor: '#F5F5F5', borderColor: 'rgba(212,175,55,0.16)', borderWidth: 1, callbacks: {label: ctx => fmtEUR(ctx.parsed.y)}}
+        }
+      }
+    });
+  }
   tryAwardQuizPoints(`bourse-dca-${new Date().toDateString()}`, 5, {usedDCA:true});
 }
 [dcaTotalEl].forEach(el=>el.addEventListener('input', updateDcaVsLump));
