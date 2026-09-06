@@ -103,7 +103,7 @@ function renderFull(cat){
       <ul style="color:var(--text-dim);font-size:13px;margin:0 0 14px 18px;">${a.aSurveiller.map(p=>`<li style="margin-bottom:4px;">${p}</li>`).join('')}</ul>` : ''}
       ${a.accordSources ? `<p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('analyse')} ${a.accordSources}</p>` : ''}
       ${renderNewsApprofondirLink(a.categorie)}
-      ${renderCourseLibraryLinks(findArticleConcepts(a))}
+      ${renderArticleConceptLinks(a)}
       <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;margin-top:14px;">
         <span style="font-size:12px;color:var(--text-dim);">${a.lecture} de lecture · semaine du ${new Date(a.weekStart).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})}</span>
         ${renderCorroborationBadge(Array.isArray(a.sources) ? new Set(a.sources.map(s=>s.source)).size : 0)}

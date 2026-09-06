@@ -10602,6 +10602,47 @@ function findArticleConcepts(article){
     return new RegExp('\\b' + escapeRegex(core) + '\\b', 'i').test(haystack);
   }).map(l => l.terme).slice(0, 4);
 }
+
+// ---------- Étend la chaîne article → concept jusqu'à un vrai cours/défi
+// (Gap Closure Sprint P1, phase 13, 06/09/2026) — auparavant, un article ne
+// menait jamais qu'à la Bibliothèque (renderCourseLibraryLinks ci-dessus et
+// renderNewsApprofondirLink). Cherche une correspondance EXACTE (jamais une
+// déduction approximative) entre un terme LIBRARY réellement détecté dans
+// l'article et : un vrai cours qui le couvre (COURS_CATALOG[i].libraryTermes,
+// déjà utilisé par renderCourseLibraryLinks sur les fiches cours elles-
+// mêmes), et une vraie catégorie de défi (QUIZ_BANK_FULL/MENTAL_CHALLENGES
+// .categorie) portant EXACTEMENT le même nom. Retourne null si aucune
+// correspondance exacte n'existe pour aucun des concepts détectés — jamais
+// un lien fabriqué ou approximatif.
+function findArticleCourseLink(concepts){
+  for(const terme of (concepts || [])){
+    const cours = COURS_CATALOG.find(c => Array.isArray(c.libraryTermes) && c.libraryTermes.includes(terme));
+    if(cours) return {cours, terme};
+  }
+  return null;
+}
+function findArticleDefiCategorie(concepts){
+  const pool = defisFullPool();
+  for(const terme of (concepts || [])){
+    if(pool.some(i => i.categorie === terme)) return terme;
+  }
+  return null;
+}
+// Remplace l'appel direct à renderCourseLibraryLinks(findArticleConcepts(a))
+// dans actualites.js : garde le même lien Bibliothèque qu'avant (comportement
+// inchangé), ajoute un lien cours et/ou un lien défi seulement quand une
+// vraie correspondance existe.
+function renderArticleConceptLinks(article){
+  const concepts = findArticleConcepts(article);
+  const libraryHtml = renderCourseLibraryLinks(concepts);
+  const courseLink = findArticleCourseLink(concepts);
+  const defiCategorie = findArticleDefiCategorie(concepts);
+  const extraLinks = [];
+  if(courseLink) extraLinks.push(`<a href="cours.html#${encodeURIComponent(courseLink.cours.id)}" style="color:var(--gold-bright);">📖 Suivre le cours « ${courseLink.cours.titre} »</a>`);
+  if(defiCategorie) extraLinks.push(`<a href="defis.html?cat=${encodeURIComponent(defiCategorie)}" style="color:var(--gold-bright);">🎯 S'entraîner sur « ${defiCategorie} »</a>`);
+  return libraryHtml + (extraLinks.length ? `<p style="font-size:12px;color:var(--text-dim);margin-top:8px;">${extraLinks.join(' · ')}</p>` : '');
+}
+
 // Pourquoi un article concerne CET utilisateur en particulier (section 18-19
 // du prompt d'origine, "Pour vous") — jamais une justification générique :
 // soit un concept réellement mentionné dans l'article correspond à une
