@@ -224,13 +224,53 @@ async function renderActionDetail(){
   // Yahoo chart (voir api/custom-quotes.js) — un intervalle plus large pour
   // les longues périodes (1sem/1mois) pour ne pas imposer un payload
   // quotidien énorme, même convention que le Laboratoire financier.
+  // Migration Chart.js (refonte terminal 06/09/2026) : remplace
+  // renderSparklineHTML (SVG maison, scripts/data.js) UNIQUEMENT pour cette
+  // page — la fonction partagée reste utilisée telle quelle par les autres
+  // pages (Market Pulse de bourse.html, etc.). Même historique réel, seul
+  // le rendu change.
+  let actionChartInstance = null;
+  function renderActionChart(hist){
+    const bodyEl = document.getElementById('actionChartBody');
+    if(!bodyEl) return;
+    if(!Array.isArray(hist) || hist.length < 2){
+      bodyEl.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Graphique indisponible pour le moment.</p>`;
+      return;
+    }
+    bodyEl.innerHTML = `<div style="position:relative;height:260px;"><canvas id="actionChartCanvas"></canvas></div>`;
+    const canvas = document.getElementById('actionChartCanvas');
+    if(!canvas || typeof Chart === 'undefined') return;
+    if(actionChartInstance) actionChartInstance.destroy();
+    const closes = hist.map(h => h.close);
+    const up = closes[closes.length - 1] >= closes[0];
+    const color = up ? '#32D583' : '#F04438';
+    actionChartInstance = new Chart(canvas.getContext('2d'), {
+      type: 'line',
+      data: {
+        labels: hist.map(h => h.date),
+        datasets: [{data: closes, borderColor: color, backgroundColor: up ? 'rgba(50,213,131,0.08)' : 'rgba(240,68,56,0.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.15}]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: {mode: 'index', intersect: false},
+        scales: {
+          x: {ticks: {color: '#949BA6', maxTicksLimit: 8, font: {size: 10}}, grid: {display: false}},
+          y: {ticks: {color: '#949BA6', font: {size: 10}}, grid: {color: 'rgba(212,175,55,0.1)'}}
+        },
+        plugins: {
+          legend: {display: false},
+          tooltip: {backgroundColor: '#0D1016', titleColor: '#D4AF37', bodyColor: '#F5F5F5', borderColor: 'rgba(212,175,55,0.16)', borderWidth: 1}
+        }
+      }
+    });
+  }
   const chartHtml = `
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
         <h3>Cours et historique</h3>
         <div id="actionPeriodPills" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
       </div>
-      <div id="actionChartBody">${history ? renderSparklineHTML(history, {source: 'Yahoo Finance'}) : `<p style="font-size:12.5px;color:var(--text-dim);">Graphique indisponible pour le moment.</p>`}</div>
+      <div id="actionChartBody"></div>
     </div>`;
 
   // Fondamentaux tentés pour toute valeur (plus seulement les 8 curatées) :
@@ -253,27 +293,63 @@ async function renderActionDetail(){
       <p style="font-size:13px;color:var(--text-dim);line-height:1.6;margin-top:10px;">${editorial.businessModel}</p>
     </div>` : '';
 
+  // Onglets (refonte terminal, 06/09/2026, brief section 19) : réorganise
+  // uniquement l'AFFICHAGE du contenu déjà existant ci-dessus — chaque id
+  // (fundCard/thesisCard/scoreVerdictCard/etc.) reste strictement identique
+  // et continue d'être rempli par exactement le même code asynchrone plus
+  // bas dans cette fonction (document.getElementById fonctionne quel que
+  // soit l'endroit du DOM où vit l'élément). Aucune nouvelle métrique.
+  const ACTION_TABS = [
+    {id: 'apercu', label: 'Aperçu'}, {id: 'financiers', label: 'Financiers'},
+    {id: 'valorisation', label: 'Valorisation'}, {id: 'dividendes', label: 'Dividendes'},
+    {id: 'risques', label: 'Risques'}, {id: 'actualites', label: 'Actualités'}
+  ];
   el.innerHTML = `
-    <div class="card-grid">
-      ${headerHtml}
+    ${headerHtml}
+    <div class="terminal-tabs" id="actionTabs" style="margin:14px 0 12px;">
+      ${ACTION_TABS.map((t, i) => `<button type="button" class="pill ${i === 0 ? 'active' : ''}" data-action-tab="${t.id}">${t.label}</button>`).join('')}
+    </div>
+    <div class="action-tab-panel" id="actionPanel-apercu" data-action-panel="apercu">
       ${chartHtml}
+      <div class="card" id="technicalCard" style="margin-top:16px;"></div>
+      ${editorialHtml}
+      <div class="card" id="companyProfileCard" style="margin-top:16px;display:none;"></div>
     </div>
-    ${editorialHtml}
-    <div class="card-grid" style="margin-top:16px;">
+    <div class="action-tab-panel" id="actionPanel-financiers" data-action-panel="financiers" hidden>
+      <div class="card" id="financialHistoryCard"><h3>Historique financier</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement…</p></div>
+    </div>
+    <div class="action-tab-panel" id="actionPanel-valorisation" data-action-panel="valorisation" hidden>
       ${fundamentalsHtml}
-      <div class="card" id="companyProfileCard" style="display:none;"></div>
     </div>
-    <div class="card-grid" style="margin-top:16px;">
-      <div class="card" id="thesisCard" style="display:none;"></div>
-      <div class="card" id="consensusCard" style="display:none;"></div>
+    <div class="action-tab-panel" id="actionPanel-dividendes" data-action-panel="dividendes" hidden>
+      <div class="card" id="actionDividendPreview"><h3>Dividende</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement des données réelles…</p></div>
     </div>
-    <div class="card" id="scoreVerdictCard" style="margin-top:16px;display:none;"></div>
-    <div class="card" id="technicalCard" style="margin-top:16px;"></div>
-    <div class="card" id="conceptExposureCard" style="margin-top:16px;display:none;"></div>
-    <div class="card" id="thematicNewsCard" style="margin-top:16px;display:none;"></div>
-    <div class="card" id="financialHistoryCard" style="margin-top:16px;"><h3>Historique financier</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement…</p></div>
+    <div class="action-tab-panel" id="actionPanel-risques" data-action-panel="risques" hidden>
+      <div class="card-grid">
+        <div class="card" id="thesisCard" style="display:none;"></div>
+        <div class="card" id="consensusCard" style="display:none;"></div>
+      </div>
+      <div class="card" id="scoreVerdictCard" style="margin-top:16px;display:none;"></div>
+      <div class="card" id="conceptExposureCard" style="margin-top:16px;display:none;"></div>
+    </div>
+    <div class="action-tab-panel" id="actionPanel-actualites" data-action-panel="actualites" hidden>
+      <div class="card" id="thematicNewsCard" style="display:none;"></div>
+    </div>
     <div class="card" id="timelineCard" style="margin-top:16px;"><h3>Chronologie</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Chargement…</p></div>
     <p class="disclaimer-box" style="margin-top:16px;">Ces informations sont fournies à titre pédagogique, en différé. Elles ne constituent ni un conseil en investissement, ni une incitation à acheter ou vendre.</p>`;
+
+  document.querySelectorAll('#actionTabs .pill').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#actionTabs .pill').forEach(b => b.classList.toggle('active', b === btn));
+      // Chaque panneau a désormais son propre id stable (actionPanel-<tab.id>) :
+      // adressage direct plutôt qu'un balayage querySelectorAll(classe) sur
+      // tout le document, plus simple à vérifier et légèrement plus rapide.
+      ACTION_TABS.forEach(t => {
+        const panel = document.getElementById(`actionPanel-${t.id}`);
+        if(panel) panel.hidden = t.id !== btn.dataset.actionTab;
+      });
+    });
+  });
 
   initFavButtons();
 
@@ -290,6 +366,7 @@ async function renderActionDetail(){
     }
   }
   renderTechnicalCard(history);
+  renderActionChart(history);
 
   // ---------- Sélecteur de période : 1j/5j/1m/3m/6m/1a/2a/5a/max, tous
   // vérifiés en direct sur l'endpoint Yahoo réel (voir api/custom-quotes.js).
@@ -328,7 +405,7 @@ async function renderActionDetail(){
       .then(payload => {
         const q = (payload.quotes || [])[0];
         const hist = q && Array.isArray(q.history) ? q.history : null;
-        if(bodyEl) bodyEl.innerHTML = hist ? renderSparklineHTML(hist, {source: 'Yahoo Finance'}) : `<p style="font-size:12.5px;color:var(--text-dim);">Graphique indisponible pour cette période.</p>`;
+        renderActionChart(hist);
         renderTechnicalCard(hist);
       })
       .catch(err => {
@@ -369,6 +446,19 @@ async function renderActionDetail(){
           if(sectorLine) sectorLine.textContent = [profile.sector, profile.industry].filter(Boolean).join(' · ');
         }
         const ff = profile.fundamentals ? profile.fundamentals.fields : null;
+        // Onglet Dividendes (refonte terminal 06/09/2026) : réutilise
+        // exactement le même ff.dividendYield déjà chargé ci-dessus pour le
+        // panneau Valorisation — aucun second appel réseau, aucune nouvelle
+        // métrique, seulement un second affichage compact.
+        const dividendPreviewEl = document.getElementById('actionDividendPreview');
+        if(dividendPreviewEl){
+          const hasDividend = ff && typeof ff.dividendYield === 'number' && ff.dividendYield > 0;
+          dividendPreviewEl.innerHTML = hasDividend
+            ? `<h3>Dividende</h3><p style="font-size:22px;margin-top:8px;" class="mono">${formatFundamentalValue('dividendYield', ff.dividendYield)}</p><p style="font-size:12px;color:var(--text-dim);margin-top:4px;">Rendement réel, calculé à partir du cours actuel et du dernier dividende versé connu.</p><a href="dividende.html#${encodeURIComponent(ticker)}" class="btn btn-sm btn-gold" style="margin-top:12px;">💰 Voir l'analyse complète des dividendes →</a>`
+            : ff
+              ? `<h3>Dividende</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">Aucun dividende connu pour cette valeur.</p>`
+              : `<h3>Dividende</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+        }
         if(fundCard){
           if(!ff){
             fundCard.innerHTML = `<h3>Données fondamentales</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
@@ -520,6 +610,8 @@ async function renderActionDetail(){
         if(timelineCardEl) timelineCardEl.innerHTML = `<h3>Chronologie</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
         const financialHistoryCardEl = document.getElementById('financialHistoryCard');
         if(financialHistoryCardEl) financialHistoryCardEl.innerHTML = `<h3>Historique financier</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
+        const dividendPreviewEl = document.getElementById('actionDividendPreview');
+        if(dividendPreviewEl) dividendPreviewEl.innerHTML = `<h3>Dividende</h3><p style="color:var(--text-dim);font-size:13px;margin-top:8px;">${FUNDAMENTALS_UNAVAILABLE_TEXT}</p>`;
       });
   }
 
