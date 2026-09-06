@@ -1,0 +1,217 @@
+/* ============================================================
+   LIKANZA ACADEMY — economie.html : Likanza Economic Intelligence
+   Terminal. Refonte du 06/09/2026, Phase 1 (socle) — cf. mémoire
+   project_economie_terminal_status pour le détail des décisions.
+
+   Palette dédiée "terminal", volontairement distincte du noir & or chaud
+   du reste de Likanza (décision actée avec l'utilisateur) — isolée sous
+   .terminal-page pour ne jamais affecter les autres pages. Cette page
+   reste sombre en permanence, y compris si l'utilisateur bascule le
+   thème clair ailleurs sur le site (choix assumé, pas un oubli — un
+   terminal financier n'a pas de variante "claire").
+
+   "Pas de scroll principal" : même philosophie que parcours.html v2 —
+   le tableau de bord essentiel (nav/en-tête/KPI/contenu principal) tient
+   dans calc(100vh - chrome) à ≥1180px ; le glossaire pédagogique (contenu
+   secondaire) reste en dessous, atteignable en scrollant. LEÇON RETENUE
+   du bug de chevauchement du cockpit (corrigé le 05/09/2026) : chaque
+   zone de grille pouvant être compressée reçoit dès le départ
+   min-height:0 ET overflow:hidden/auto — jamais ajouté après coup.
+   ============================================================ */
+
+body.terminal-page{
+  --term-bg:#050608;
+  --term-sidebar:#07090D;
+  --term-card:#0D1016;
+  --term-card-hover:#121721;
+  --term-border:rgba(212,175,55,0.16);
+  --term-gold:#D4AF37;
+  --term-gold-light:#F0D36B;
+  --term-text:#F5F5F5;
+  --term-text-dim:#9198A3;
+  --term-positive:#32D583;
+  --term-negative:#F04438;
+  --term-blue:#4F8FE8;
+  --term-violet:#9B7BE0;
+  background:var(--term-bg);
+}
+
+/* ---------- Reskin du chrome partagé, réservé à cette page ---------- */
+body.terminal-page .app-sidebar{background:var(--term-sidebar);border-right-color:var(--term-border);}
+body.terminal-page .app-sidebar a{color:var(--term-text-dim);}
+body.terminal-page .app-sidebar a:hover{color:var(--term-text);background:var(--term-card);}
+body.terminal-page .app-sidebar a.active{color:var(--term-gold-light);background:var(--term-card);box-shadow:inset 3px 0 0 var(--term-gold);}
+body.terminal-page .sidebar-group-label{color:var(--term-text-dim);opacity:0.7;}
+body.terminal-page .site-header{background:var(--term-bg);border-bottom-color:var(--term-border);}
+body.terminal-page .main-nav a, body.terminal-page .nav-dropdown-toggle{color:var(--term-text-dim);}
+body.terminal-page .main-nav a:hover, body.terminal-page .logo-text{color:var(--term-text);}
+body.terminal-page .nav-dropdown-panel{background:var(--term-card);border-color:var(--term-border);}
+body.terminal-page .utility-bar{display:none;}
+body.terminal-page .nav-row{padding:8px 24px;}
+body.terminal-page .breadcrumb{display:none;}
+body.terminal-page .site-footer{display:none;}
+
+/* ---------- Grille du terminal ---------- */
+.eco-terminal{
+  display:grid;
+  gap:12px;
+  padding:14px 24px 20px;
+}
+.eco-nav{
+  background:var(--term-card);
+  border:1px solid var(--term-border);
+  border-radius:3px;
+  padding:14px 10px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  overflow-y:auto;
+  min-height:0;
+}
+.eco-nav-label{
+  font-family:'IBM Plex Mono',monospace;
+  font-size:9.5px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--term-text-dim);
+  padding:10px 10px 6px;
+}
+.eco-nav-label:first-child{padding-top:2px;}
+.eco-nav button{
+  display:flex;align-items:center;gap:8px;
+  background:none;border:none;width:100%;text-align:left;
+  font:inherit;font-size:12.5px;color:var(--term-text-dim);
+  padding:7px 10px;border-radius:3px;cursor:pointer;
+  transition:background .15s ease, color .15s ease;
+}
+.eco-nav button:hover{background:var(--term-card-hover);color:var(--term-text);}
+.eco-nav button.active{background:rgba(212,175,55,0.1);color:var(--term-gold-light);box-shadow:inset 2px 0 0 var(--term-gold);}
+.eco-nav button .eco-nav-flag{font-size:14px;}
+
+.eco-header{
+  background:var(--term-card);
+  border:1px solid var(--term-border);
+  border-radius:3px;
+  padding:14px 18px;
+  display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;
+}
+.eco-header h2{
+  font-family:'Cormorant Garamond',serif;
+  font-size:22px;font-weight:600;color:var(--term-text);
+  letter-spacing:.02em;
+}
+.eco-header h2::before{content:'◆';color:var(--term-gold);font-size:9px;margin-right:8px;position:relative;top:-3px;}
+.eco-header p{font-size:12px;color:var(--term-text-dim);margin-top:3px;max-width:56ch;}
+.eco-header-meta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--term-text-dim);text-align:right;}
+.eco-header-meta strong{color:var(--term-gold-light);font-weight:600;}
+
+/* Badge de fraîcheur (section 5/33 du brief) : jamais "LIVE" pour une
+   donnée trimestrielle/annuelle. */
+.eco-freshness{
+  display:inline-flex;align-items:center;gap:4px;
+  font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:.06em;text-transform:uppercase;
+  padding:2px 7px;border-radius:10px;
+}
+.eco-freshness.is-live{background:rgba(50,213,131,0.14);color:var(--term-positive);}
+.eco-freshness.is-live::before{content:'●';font-size:7px;animation:ecoPulse 1.6s ease-in-out infinite;}
+.eco-freshness.is-periodic{background:rgba(145,152,163,0.14);color:var(--term-text-dim);}
+@keyframes ecoPulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+@media (prefers-reduced-motion: reduce){.eco-freshness.is-live::before{animation:none;}}
+
+.eco-kpis{
+  display:grid;
+  grid-template-columns:repeat(auto-fit, minmax(150px, 1fr));
+  gap:10px;
+}
+.eco-kpi{
+  background:var(--term-card);
+  border:1px solid var(--term-border);
+  border-radius:3px;
+  padding:12px 14px;
+  display:flex;flex-direction:column;gap:4px;
+  transition:border-color .15s ease, background .15s ease;
+}
+.eco-kpi:hover{border-color:var(--term-gold);background:var(--term-card-hover);}
+.eco-kpi-label{
+  display:flex;align-items:center;gap:6px;
+  font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--term-text-dim);
+}
+.eco-kpi-label svg{width:12px;height:12px;color:var(--term-gold-light);flex-shrink:0;}
+.eco-kpi-value{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--term-text);font-variant-numeric:tabular-nums;}
+.eco-kpi-delta{font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.eco-kpi-delta.up{color:var(--term-positive);}
+.eco-kpi-delta.down{color:var(--term-negative);}
+.eco-kpi-delta.flat{color:var(--term-text-dim);}
+.eco-kpi-spark{margin-top:2px;height:26px;}
+.eco-kpi-spark svg{width:100%;height:100%;display:block;}
+.eco-kpi-asof{font-size:9.5px;color:var(--term-text-dim);margin-top:2px;}
+.eco-kpi.is-loading .eco-kpi-value{color:var(--term-text-dim);font-size:13px;font-weight:400;}
+.eco-kpi.is-unavailable{opacity:0.55;}
+
+.eco-main{
+  background:var(--term-card);
+  border:1px solid var(--term-border);
+  border-radius:3px;
+  padding:14px 16px;
+  overflow:hidden;
+  min-height:0;
+  display:flex;flex-direction:column;
+}
+
+/* ---------- Panneaux compacts (banques centrales, dette, finances
+   publiques...) réutilisés dans .eco-main ou en dessous ---------- */
+.eco-panel{
+  background:var(--term-card);
+  border:1px solid var(--term-border);
+  border-radius:3px;
+  padding:14px 16px;
+}
+.eco-panel-title{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;
+  color:var(--term-gold-light);
+  display:flex;justify-content:space-between;align-items:center;
+}
+.eco-panel-title a, .eco-panel-title button.eco-link{color:var(--term-text-dim);font-size:10.5px;text-transform:none;letter-spacing:0;text-decoration:none;background:none;border:none;font:inherit;cursor:pointer;}
+.eco-panel-title a:hover, .eco-panel-title button.eco-link:hover{color:var(--term-gold-light);}
+.eco-panel-note{font-size:11.5px;color:var(--term-text-dim);margin-top:8px;}
+
+/* ---------- Reskin des composants partagés (pill/select) réutilisés
+   dans le terminal, réservé à .terminal-page ---------- */
+body.terminal-page .pill{border-color:var(--term-border);color:var(--term-text-dim);}
+body.terminal-page .pill:hover{border-color:var(--term-gold);color:var(--term-gold-light);}
+body.terminal-page .pill.active{border-color:var(--term-gold);color:var(--term-gold-light);background:rgba(212,175,55,0.1);}
+body.terminal-page select{background:var(--term-card-hover);color:var(--term-text);border:1px solid var(--term-border);border-radius:3px;padding:6px 10px;font-size:12px;}
+
+/* ---------- Section secondaire (glossaire) : scroll normal, jamais dans
+   le cockpit sans-scroll ---------- */
+.eco-secondary{padding:20px 24px 8px;}
+.eco-secondary h3{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--term-text);margin-bottom:10px;}
+body.terminal-page .glossary-item{background:var(--term-card);border:1px solid var(--term-border);}
+body.terminal-page .glossary-item .head h4{color:var(--term-text);}
+body.terminal-page .glossary-item .idx{color:var(--term-text-dim);}
+body.terminal-page .glossary-body{color:var(--term-text-dim);}
+
+/* ---------- Desktop (≥1180px) : nav + header/kpis + contenu, sans
+   scroll principal pour le socle. ---------- */
+@media (min-width:1180px){
+  .eco-terminal{
+    grid-template-columns:190px 1fr;
+    grid-template-rows:auto auto minmax(0,1fr);
+    grid-template-areas:
+      "nav header"
+      "nav kpis"
+      "nav main";
+    height:calc(100vh - 60px);
+  }
+  .eco-nav{grid-area:nav;}
+  .eco-header{grid-area:header;}
+  .eco-kpis{grid-area:kpis;}
+  .eco-main{grid-area:main;overflow-y:auto;}
+}
+
+/* ---------- Tablette / mobile : empilé, scroll normal de page ---------- */
+@media (max-width:1179px){
+  .eco-terminal{padding:14px 16px 20px;}
+  .eco-nav{flex-direction:row;flex-wrap:wrap;overflow-x:auto;}
+  .eco-nav-label{width:100%;}
+}

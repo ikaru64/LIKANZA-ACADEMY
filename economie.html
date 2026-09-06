@@ -13,8 +13,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="styles/design-system.css">
+<link rel="stylesheet" href="styles/pages/economie.css">
 </head>
-<body class="has-bottom-nav">
+<body class="has-bottom-nav terminal-page">
 <aside class="app-sidebar" aria-label="Navigation principale">
   <a href="index.html" class="sidebar-brand"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
@@ -80,26 +81,32 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Économie</div>
-<h1 class="visually-hidden">Économie</h1>
+<h1 class="visually-hidden">Économie — Likanza Economic Intelligence Terminal</h1>
 
-<section class="section">
-  <div class="section-head"><h2>Indicateurs macroéconomiques</h2><span class="meta-line">France, données réelles</span></div>
-  <p style="font-size:13px;color:var(--text-dim);margin-bottom:16px;max-width:70ch;">Chaque indicateur vient d'une source officielle (BCE, Eurostat), avec sa vraie fréquence de publication et ses limites — jamais une valeur inventée pour combler une case vide.</p>
-  <div class="card-grid" id="ecoIndicators"></div>
-</section>
+<div class="eco-terminal" id="ecoTerminal">
+  <nav class="eco-nav" id="ecoNav" aria-label="Navigation économie"></nav>
 
-<section class="section" style="background:var(--bg-alt);border-top:1px solid var(--hairline);border-bottom:1px solid var(--hairline);">
-  <div class="card" style="max-width:640px;">
-    <span class="smallcaps">🧪 Aller plus loin</span>
-    <h3 style="margin:8px 0 6px;">Laboratoire économique</h3>
-    <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Que se passe-t-il sur les obligations, les actions, l'immobilier ou le crédit quand un choc macro survient ? Des scénarios qualitatifs, avec le mécanisme expliqué — jamais une prédiction.</p>
+  <div class="eco-header" id="ecoHeader">
+    <div>
+      <h2>Économie mondiale</h2>
+      <p>Comprendre en temps réel les forces qui façonnent l'économie, les marchés et ton quotidien.</p>
+    </div>
+    <div class="eco-header-meta" id="ecoHeaderMeta"></div>
+  </div>
+
+  <div class="eco-kpis" id="ecoKpis"></div>
+
+  <div class="eco-main" id="ecoMain"></div>
+</div>
+
+<section class="eco-secondary">
+  <div class="card" style="max-width:640px;margin-bottom:20px;background:var(--term-card);border-color:var(--term-border);">
+    <span class="smallcaps" style="color:var(--term-gold-light);">🧪 Aller plus loin</span>
+    <h3 style="margin:8px 0 6px;color:var(--term-text);">Laboratoire économique</h3>
+    <p style="font-size:13px;color:var(--term-text-dim);margin-bottom:14px;">Que se passe-t-il sur les obligations, les actions, l'immobilier ou le crédit quand un choc macro survient ? Des scénarios qualitatifs, avec le mécanisme expliqué — jamais une prédiction.</p>
     <a href="laboratoire.html#tab-economie" class="btn btn-sm btn-gold">Explorer les scénarios →</a>
   </div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Comprendre les concepts clés</h2></div>
+  <h3>Comprendre les concepts clés</h3>
   <div class="glossary-list" id="ecoGlossary"></div>
 </section>
 
@@ -117,6 +124,9 @@
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/historical-data.js"></script>
+<!-- Chart.js — même version/intégrité que parcours.html, pour le
+     graphique "Macro Trend" (voir ce fichier pour le contexte complet). -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="scripts/pages/economie.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
