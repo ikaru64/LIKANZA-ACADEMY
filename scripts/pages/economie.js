@@ -7,10 +7,13 @@
    affiche honnêtement "Donnée indisponible".
 
    Portée volontairement limitée à un socle réel plutôt qu'aux 40
-   sections du brief d'origine — carte interactive, comparateur de pays,
-   Graph Lab, mode enseignant, crisis replay et impact engine sont
-   reportés à des chantiers futurs (décision actée avec l'utilisateur,
-   cf. mémoire project_economie_terminal_status).
+   sections du brief d'origine — carte interactive, Graph Lab, mode
+   enseignant, crisis replay et impact engine restent reportés à des
+   chantiers futurs (décision actée avec l'utilisateur, cf. mémoire
+   project_economie_terminal_status). Le comparateur de pays (section 26
+   du brief) a été ajouté ensuite : aucune nouvelle donnée nécessaire,
+   il ne fait que réutiliser les séries déjà réelles et déjà branchées
+   pour les 8 pays ci-dessous.
    ============================================================ */
 
 // ---------- Pays couverts : seulement des pays réels, jamais un agrégat
@@ -41,6 +44,7 @@ let ecoActiveCountry = 'FR';
 // replay/impact engine restent des chantiers futurs (cf. en-tête). ----------
 const ECO_VIEWS = {
   overview: {label: "Vue d'ensemble", icon: 'compass'},
+  compare: {label: 'Comparateur', icon: 'list'},
   'central-banks': {label: 'Banques centrales', icon: 'landmark'},
   debt: {label: 'Dette & déficit', icon: 'scale'},
   'public-finance': {label: 'Finances publiques', icon: 'coins'}
@@ -175,6 +179,8 @@ function renderEcoBody(){
   if(ecoActiveView === 'overview'){
     renderEcoKpis('ecoKpis');
     rerenderEcoMain();
+  } else if(ecoActiveView === 'compare'){
+    renderCompareView();
   } else if(ecoActiveView === 'central-banks'){
     renderCentralBanksView();
   } else if(ecoActiveView === 'debt'){
@@ -371,6 +377,143 @@ async function renderEcoMainChart(elId){
 }
 
 function rerenderEcoMain(){ renderEcoMainChart('ecoMain'); }
+
+// ============================================================
+// Module "Comparateur" (section 26 du brief) — réutilise entièrement
+// les vraies séries déjà branchées pour les 8 pays de la navigation,
+// aucune nouvelle source de données. Volontairement PAS de radar
+// multi-indicateurs normalisé : mélanger des unités différentes (%,
+// % PIB, points d'indice) sur un même axe 0-100 donnerait l'impression
+// d'un score composite alors que ce serait une normalisation inventée —
+// un graphique en barres par indicateur + un tableau comparatif complet
+// couvrent le même besoin honnêtement.
+// ============================================================
+const ECO_COMPARE_ROWS = ['gdp-growth', 'inflation', 'unemployment', 'gov-debt', 'gov-deficit', 'policy-rate'];
+let ecoCompareCountries = ['FR', 'DE', 'US'];
+let ecoCompareVariable = 'gdp-growth';
+
+// Le taux directeur n'a pas de clé KPI unique par pays (BCE pour la zone
+// euro, Fed pour les États-Unis, aucune source pour GB/JP/CN) — résolu
+// ici plutôt que fabriqué comme un indicateur générique.
+function ecoComparePolicyRateKey(country){
+  if(ECO_COUNTRIES[country].kpis.includes('policy-rate-ecb')) return 'policy-rate-ecb';
+  if(ECO_COUNTRIES[country].kpis.includes('policy-rate-fed')) return 'policy-rate-fed';
+  return null;
+}
+
+async function ecoFetchLatest(country, rowKey){
+  const key = rowKey === 'policy-rate' ? ecoComparePolicyRateKey(country) : (ECO_COUNTRIES[country].kpis.includes(rowKey) ? rowKey : null);
+  if(!key) return null; // pas de vraie source pour ce pays -> jamais une case vide fabriquée, juste absente
+  const meta = ECO_KPI_META[key];
+  try {
+    const data = await fetchEcoSeries(meta.seriesKey(country));
+    let points = data.points;
+    if(meta.isIndex && meta.isIndex(country)){
+      points = points.map((p, i) => {
+        if(i < 12) return null;
+        const rate = computeRealInflationRate(points.slice(0, i + 1));
+        return typeof rate === 'number' ? {period: p.period, value: rate} : null;
+      }).filter(Boolean);
+      if(points.length === 0) return null;
+    }
+    const last = points[points.length - 1];
+    return {value: last.value, period: last.period, meta};
+  } catch(err){
+    return null;
+  }
+}
+
+async function renderCompareView(){
+  const kpisEl = document.getElementById('ecoKpis');
+  const mainEl = document.getElementById('ecoMain');
+  if(!kpisEl || !mainEl) return;
+
+  kpisEl.innerHTML = `
+    <div style="grid-column:1/-1;display:flex;flex-wrap:wrap;gap:8px;align-items:center;">
+      ${Object.entries(ECO_COUNTRIES).map(([code, c]) => `<button type="button" class="pill ${ecoCompareCountries.includes(code) ? 'active' : ''}" data-country="${code}">${c.flag} ${c.label}</button>`).join('')}
+    </div>`;
+  kpisEl.querySelectorAll('button[data-country]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.dataset.country;
+      if(ecoCompareCountries.includes(code)){
+        if(ecoCompareCountries.length > 1) ecoCompareCountries = ecoCompareCountries.filter(c => c !== code); // au moins 1 pays affiché
+      } else if(ecoCompareCountries.length < 5){ // 5 max, lisibilité du graphique/tableau
+        ecoCompareCountries = [...ecoCompareCountries, code];
+      }
+      renderCompareView();
+    });
+  });
+
+  mainEl.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+      <span class="eco-panel-title">Comparateur international</span>
+      <div class="mode-toggle" id="ecoCompareTabs">
+        ${ECO_COMPARE_ROWS.map(v => `<button type="button" class="pill ${v === ecoCompareVariable ? 'active' : ''}" data-var="${v}">${v === 'policy-rate' ? 'Taux directeur' : ECO_KPI_META[v].label}</button>`).join('')}
+      </div>
+    </div>
+    <div style="position:relative;flex:1;min-height:180px;margin-top:14px;" id="ecoCompareChartWrap"><canvas id="ecoCompareChart"></canvas></div>
+    <div style="overflow-x:auto;margin-top:16px;">
+      <table id="ecoCompareTable" style="width:100%;border-collapse:collapse;font-size:11.5px;">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 8px;color:var(--term-text-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;">Indicateur</th>
+          ${ecoCompareCountries.map(c => `<th style="text-align:right;padding:6px 8px;color:var(--term-gold-light);">${ECO_COUNTRIES[c].flag} ${ECO_COUNTRIES[c].label}</th>`).join('')}
+        </tr></thead>
+        <tbody id="ecoCompareTableBody"></tbody>
+      </table>
+    </div>
+    <p class="eco-panel-note">"N/D" = aucune source réelle intégrée à ce jour pour ce pays sur cet indicateur — jamais une valeur estimée pour combler la case.</p>`;
+
+  document.querySelectorAll('#ecoCompareTabs .pill').forEach(btn => {
+    btn.addEventListener('click', () => { ecoCompareVariable = btn.dataset.var; renderCompareView(); });
+  });
+
+  const tableResults = {};
+  await Promise.all(ECO_COMPARE_ROWS.map(async row => {
+    tableResults[row] = {};
+    await Promise.all(ecoCompareCountries.map(async country => {
+      tableResults[row][country] = await ecoFetchLatest(country, row);
+    }));
+  }));
+
+  document.getElementById('ecoCompareTableBody').innerHTML = ECO_COMPARE_ROWS.map(row => `
+    <tr style="border-top:1px solid var(--term-border);">
+      <td style="padding:6px 8px;color:var(--term-text-dim);">${row === 'policy-rate' ? 'Taux directeur' : ECO_KPI_META[row].label}</td>
+      ${ecoCompareCountries.map(country => {
+        const r = tableResults[row][country];
+        return `<td style="text-align:right;padding:6px 8px;" class="mono">${r ? r.meta.fmt(r.value) : '<span style="color:var(--term-text-dim);">N/D</span>'}</td>`;
+      }).join('')}
+    </tr>`).join('');
+
+  const canvas = document.getElementById('ecoCompareChart');
+  if(canvas && typeof Chart !== 'undefined'){
+    if(ecoChartInstance){ ecoChartInstance.destroy(); ecoChartInstance = null; }
+    const barData = ecoCompareCountries.map(c => tableResults[ecoCompareVariable][c]);
+    const gold = ecoCssVar('--term-gold-light') || '#F0D36B';
+    const hairline = ecoCssVar('--term-border') || 'rgba(212,175,55,0.16)';
+    const textDim = ecoCssVar('--term-text-dim') || '#9198A3';
+    ecoChartInstance = new Chart(canvas.getContext('2d'), {
+      type: 'bar',
+      data: {
+        labels: ecoCompareCountries.map(c => `${ECO_COUNTRIES[c].flag} ${ECO_COUNTRIES[c].label}`),
+        datasets: [{data: barData.map(r => r ? r.value : null), backgroundColor: gold, borderRadius: 2}]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        scales: {
+          x: {ticks: {color: textDim, font: {size: 10.5}}, grid: {display: false}},
+          y: {ticks: {color: textDim, font: {size: 10}}, grid: {color: hairline}}
+        },
+        plugins: {
+          legend: {display: false},
+          tooltip: {
+            backgroundColor: '#0D1016', titleColor: gold, bodyColor: '#F5F5F5', borderColor: hairline, borderWidth: 1,
+            callbacks: {label: ctx => { const r = barData[ctx.dataIndex]; return r ? r.meta.fmt(r.value) + ' · ' + r.period : 'Donnée indisponible'; }}
+          }
+        }
+      }
+    });
+  }
+}
 
 // ============================================================
 // Module "Banques centrales" — seules la BCE et la Fed ont une vraie
