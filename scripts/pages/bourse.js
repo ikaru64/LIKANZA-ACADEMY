@@ -944,6 +944,10 @@ dcaPricesRowsEl.innerHTML = dcaPeriods.map((p,i)=>`
 let dcaChartInstance = null;
 function updateDcaVsLump(){
   const total = +dcaTotalEl.value;
+  if(!Number.isFinite(total) || total <= 0){
+    document.getElementById('dcaVsLumpResult').innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Indique un montant total à investir positif pour voir la comparaison.</p>`;
+    return;
+  }
   const prices = Array.from(document.querySelectorAll('.dcaPrice')).map(i=>+i.value);
   const perInstallment = total / prices.length;
   let dcaUnits = 0;
@@ -1888,8 +1892,14 @@ if(wlAddBtn) wlAddBtn.addEventListener('click', ()=>{
   const symbol = wlAssetSelect.value;
   const asset = WATCHLIST_ASSETS.find(a=>a.symbol===symbol);
   if(!asset) return;
+  const errorEl = document.getElementById('wlFormError');
+  if(errorEl) errorEl.textContent = '';
   const thresholdRaw = document.getElementById('wlThreshold').value;
   const threshold = thresholdRaw ? Number(thresholdRaw) : null;
+  if(threshold !== null && (!Number.isFinite(threshold) || threshold <= 0)){
+    if(errorEl) errorEl.textContent = 'Le seuil doit être un nombre positif (ou laisse le champ vide pour ne pas en définir).';
+    return;
+  }
   const currentVal = currentValueFor(symbol);
   const direction = (threshold !== null && currentVal !== null) ? (threshold >= currentVal ? 'above' : 'below') : null;
   const list = getWatchlist().filter(x=>x.symbol!==symbol);

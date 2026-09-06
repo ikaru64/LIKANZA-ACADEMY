@@ -98,6 +98,16 @@ function initParcoursHero(){
   // du contenu pédagogique au sens du nouveau cockpit — voir Phase 3 pour
   // son déplacement dans la section repliée "Suite de l'apprentissage".
   renderParcoursNudges('parcoursNudges');
+  // Gap Closure Sprint P2, phase 16 (06/09/2026) : le budget de hauteur fixe
+  // du cockpit (parcours.css, --nudges-h) ne peut pas connaître la hauteur
+  // réelle de ce bandeau autrement qu'en la mesurant après son rendu — un
+  // bandeau vide donne 0px (aucun changement de comportement par rapport à
+  // avant), un vrai bandeau (ré-onboarding/suggestion) est maintenant
+  // correctement soustrait, jamais poussé sous le pli.
+  const nudgesEl = document.getElementById('parcoursNudges');
+  if(nudgesEl && typeof nudgesEl.offsetHeight === 'number'){
+    document.documentElement.style.setProperty('--nudges-h', nudgesEl.offsetHeight + 'px');
+  }
   renderGamificationHeader('dashboardHeader');
   // Score financier (radar SVG déjà réel) : pas montré dans la vue
   // principale du cockpit (l'image de référence ne le montre pas non plus,
@@ -677,6 +687,7 @@ function renderOnboardingDrawerBody(){
         <div class="field"><label for="drawerAssetValeur">Valeur (€)</label><input type="number" id="drawerAssetValeur" min="0" value="1000"></div>
         <button type="button" class="btn btn-sm btn-gold" id="drawerAssetAdd" style="align-self:flex-end;">+ Ajouter</button>
       </div>
+      <p id="drawerAssetError" style="font-size:12px;color:var(--bordeaux);display:none;"></p>
       <div class="cockpit-drawer-list" id="drawerAssetList"></div>
     </div>
     <div class="cockpit-drawer-section">
@@ -689,6 +700,7 @@ function renderOnboardingDrawerBody(){
         <div class="field"><label for="drawerBudgetMontant">Montant (€)</label><input type="number" id="drawerBudgetMontant" min="0" value="500"></div>
         <button type="button" class="btn btn-sm btn-gold" id="drawerBudgetAdd" style="align-self:flex-end;">+ Ajouter</button>
       </div>
+      <p id="drawerBudgetError" style="font-size:12px;color:var(--bordeaux);display:none;"></p>
       <div class="cockpit-drawer-list" id="drawerBudgetList"></div>
     </div>
     <div class="cockpit-drawer-section">
@@ -704,6 +716,7 @@ function renderOnboardingDrawerBody(){
         <div class="field"><label for="drawerGoalVersement">Versement mensuel (€)</label><input type="number" id="drawerGoalVersement" min="0" value="0"></div>
         <button type="button" class="btn btn-sm btn-gold" id="drawerGoalAdd" style="align-self:flex-end;">+ Ajouter</button>
       </div>
+      <p id="drawerGoalError" style="font-size:12px;color:var(--bordeaux);display:none;"></p>
       <div class="cockpit-drawer-list" id="drawerGoalList"></div>
     </div>`;
 
@@ -724,14 +737,30 @@ function renderOnboardingDrawerBody(){
   }
   refreshLists();
 
+  // Gap Closure Sprint P2, phase 16 (06/09/2026) : les 3 handlers ci-dessous
+  // ne faisaient jusqu'ici RIEN de visible en cas d'échec de sauvegarde (nom
+  // vide, montant nul/négatif) — le clic semblait ne pas fonctionner, sans
+  // aucune explication. Ajoute un message honnête à côté du bouton, jamais
+  // une nouvelle règle de validation (saveNetWorthAsset/saveBudgetEntry/
+  // saveFinancialGoal restent les seules sources de vérité sur ce qui est
+  // valide).
+  function showDrawerError(id, message){
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.textContent = message;
+    el.style.display = message ? '' : 'none';
+  }
   document.getElementById('drawerAssetAdd').addEventListener('click', () => {
     const nom = document.getElementById('drawerAssetNom').value;
     const categorie = document.getElementById('drawerAssetCategorie').value;
     const valeur = +document.getElementById('drawerAssetValeur').value || 0;
     if(saveNetWorthAsset({nom, categorie, valeur})){
+      showDrawerError('drawerAssetError', '');
       document.getElementById('drawerAssetNom').value = '';
       exitCockpitDemoModeIfNeeded();
       refreshLists();
+    } else {
+      showDrawerError('drawerAssetError', 'Vérifie le nom (non vide) et la valeur (positive ou nulle).');
     }
   });
   document.getElementById('drawerBudgetAdd').addEventListener('click', () => {
@@ -739,8 +768,11 @@ function renderOnboardingDrawerBody(){
     const categorie = document.getElementById('drawerBudgetCategorie').value;
     const montant = +document.getElementById('drawerBudgetMontant').value || 0;
     if(saveBudgetEntry({type, categorie, montant, mois: currentMonthKey()})){
+      showDrawerError('drawerBudgetError', '');
       exitCockpitDemoModeIfNeeded();
       refreshLists();
+    } else {
+      showDrawerError('drawerBudgetError', 'Le montant doit être strictement positif.');
     }
   });
   document.getElementById('drawerGoalAdd').addEventListener('click', () => {
@@ -749,9 +781,12 @@ function renderOnboardingDrawerBody(){
     const montantActuel = +document.getElementById('drawerGoalActuel').value || 0;
     const versementMensuel = +document.getElementById('drawerGoalVersement').value || 0;
     if(saveFinancialGoal({nom, montantCible, montantActuel, versementMensuel, dateCible: null})){
+      showDrawerError('drawerGoalError', '');
       document.getElementById('drawerGoalNom').value = '';
       exitCockpitDemoModeIfNeeded();
       refreshLists();
+    } else {
+      showDrawerError('drawerGoalError', 'Vérifie le nom (non vide) et le montant cible (positif).');
     }
   });
 }

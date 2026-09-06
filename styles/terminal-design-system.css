@@ -312,3 +312,17 @@ body.terminal-page #bourseTabsGrid.terminal-nav .quick-access-card p, body.termi
   .terminal-nav{flex-direction:row;flex-wrap:wrap;overflow-x:auto;}
   .terminal-nav-label{width:100%;}
 }
+
+/* ---------- Grilles à colonnes fixes des labs (Scenario/DCA/Portefeuille/
+   Options/Paper Trading, bourse.html) : chaque grille garde son propre
+   ratio de colonnes en dur en desktop (2-3 colonnes de largeurs
+   différentes selon le lab), jamais couvert par .terminal-panels-row —
+   Gap Closure Sprint P2, phase 16 (06/09/2026). Sans repli, ces colonnes
+   se compriment en dessous de ~110px de large sur mobile (canvas Chart.js
+   illisible). !important nécessaire ici : un style en dur sur l'élément
+   gagne toujours sur une règle de feuille de style normale, même dans un
+   @media plus spécifique — même motif déjà utilisé plus haut pour
+   #tab-marche-jour.home-tab-panel.active. */
+@media (max-width:900px){
+  .terminal-lab-grid{grid-template-columns:1fr !important;}
+}

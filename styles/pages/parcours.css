@@ -289,7 +289,13 @@
       "kpis   kpis"
       "chart  side"
       "panels side";
-    height:calc(100vh - 60px);
+    /* --nudges-h (mesurée en JS, initParcoursHero) : hauteur réelle du
+       bandeau de nudge (ré-onboarding/suggestion d'intérêt) au-dessus du
+       cockpit, quand il est affiché — sans ça, le budget de hauteur fixe
+       ci-dessous ne tenait compte que des 60px de chrome global et
+       poussait le bas du cockpit sous le pli dès qu'un vrai bandeau
+       apparaissait (Gap Closure Sprint P2, phase 16, 06/09/2026). */
+    height:calc(100vh - 60px - var(--nudges-h, 0px));
   }
   .cockpit-header{grid-area:header;}
   .cockpit-kpis{grid-area:kpis;}

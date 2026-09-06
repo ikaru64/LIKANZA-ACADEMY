@@ -388,7 +388,7 @@ async function renderActionDetail(){
   let activePeriod = '1y';
   function renderPeriodPills(){
     if(!pillsEl) return;
-    pillsEl.innerHTML = PERIOD_OPTIONS.map(p => `<button type="button" class="pill ${p.id===activePeriod?'active':''}" data-period="${p.id}" style="font-size:11.5px;padding:5px 10px;">${p.label}</button>`).join('');
+    pillsEl.innerHTML = PERIOD_OPTIONS.map(p => `<button type="button" class="pill ${p.id===activePeriod?'active':''}" data-period="${p.id}" style="font-size:11.5px;padding:9px 10px;">${p.label}</button>`).join('');
     pillsEl.querySelectorAll('[data-period]').forEach(btn => {
       btn.addEventListener('click', () => loadChartForPeriod(btn.dataset.period));
     });
