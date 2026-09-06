@@ -1,0 +1,249 @@
+/* ============================================================
+   LIKANZA ACADEMY — Likanza Equity Intelligence Terminal
+   Couche de design partagée pour toutes les pages Bourse (refonte
+   06/09/2026). Chargée UNIQUEMENT par bourse.html / action.html /
+   marche.html / dividende.html / bourse-allocation.html — jamais par
+   economie.html (qui a déjà sa propre palette identique dans
+   styles/pages/economie.css, volontairement dupliquée plutôt que
+   partagée pour isoler totalement les deux chantiers déjà livrés
+   séparément).
+
+   Cette refonte est PUREMENT visuelle : aucune fonction JS, aucun id,
+   aucun event listener, aucune clé localStorage ne change. Les classes
+   génériques déjà utilisées dans des centaines de chaînes de template
+   (bourse.js, action.js, marche.js, dividende-page.js) — .card,
+   .card-grid, .field, .btn, .pill, .disclaimer-box, .compare-table,
+   .bar-chart, .result-row, .mode-toggle, .smallcaps, .empty-note — sont
+   reskinnées ici sous .terminal-page pour hériter du nouveau look SANS
+   toucher un seul rendu JS existant. Les nouvelles classes .terminal-*
+   (panel/kpi/table/tab/badge/empty/loader/drawer/tooltip) habillent
+   uniquement les nouvelles structures ajoutées par cette refonte (grille
+   du terminal, rangée de KPI, nouveaux panneaux).
+
+   Thème clair désactivé sur ces pages (décision actée avec l'utilisateur,
+   comme sur economie.html) — le terminal reste sombre en permanence.
+
+   LEÇON RETENUE du bug de chevauchement du cockpit (parcours.css,
+   corrigé le 05/09/2026) : tout élément de grille compressible reçoit
+   dès le départ min-height:0 ET overflow:hidden/auto — jamais ajouté
+   après coup.
+   ============================================================ */
+
+body.terminal-page{
+  --term-bg:#050608;
+  --term-sidebar:#07090D;
+  --term-card:#0D1016;
+  --term-card-2:#10141B;
+  --term-card-hover:#141923;
+  --term-border:rgba(212,175,55,0.16);
+  --term-gold:#D4AF37;
+  --term-gold-light:#F0D36B;
+  --term-text:#F5F5F5;
+  --term-text-dim:#949BA6;
+  --term-positive:#32D583;
+  --term-negative:#F04438;
+  --term-blue:#4F8FE8;
+  --term-violet:#9B7BE0;
+  background:var(--term-bg);
+}
+
+/* ---------- Reskin du chrome partagé, réservé à cette page ---------- */
+body.terminal-page .app-sidebar{background:var(--term-sidebar);border-right-color:var(--term-border);}
+body.terminal-page .app-sidebar a{color:var(--term-text-dim);}
+body.terminal-page .app-sidebar a:hover{color:var(--term-text);background:var(--term-card);}
+body.terminal-page .app-sidebar a.active{color:var(--term-gold-light);background:var(--term-card);box-shadow:inset 3px 0 0 var(--term-gold);}
+body.terminal-page .sidebar-group-label{color:var(--term-text-dim);opacity:0.7;}
+body.terminal-page .site-header{background:var(--term-bg);border-bottom-color:var(--term-border);}
+body.terminal-page .main-nav a, body.terminal-page .nav-dropdown-toggle{color:var(--term-text-dim);}
+body.terminal-page .main-nav a:hover, body.terminal-page .logo-text{color:var(--term-text);}
+body.terminal-page .nav-dropdown-panel{background:var(--term-card);border-color:var(--term-border);}
+body.terminal-page .search-input{background:var(--term-card-hover);border-color:var(--term-border);color:var(--term-text);}
+body.terminal-page .utility-bar{display:none;}
+body.terminal-page .nav-row{padding:8px 24px;}
+body.terminal-page .breadcrumb{display:none;}
+body.terminal-page .site-footer{display:none;}
+
+/* ---------- Reskin des composants génériques réutilisés tels quels par
+   les centaines de rendus JS existants (bourse.js/action.js/marche.js/
+   dividende-page.js) — jamais un changement de structure, uniquement de
+   présentation. ---------- */
+body.terminal-page .card, body.terminal-page .play-tile{
+  background:var(--term-card);border:1px solid var(--term-border);border-radius:4px;color:var(--term-text);
+}
+body.terminal-page .card:hover, body.terminal-page .play-tile:hover{border-color:var(--term-gold);background:var(--term-card-hover);}
+body.terminal-page .card h3, body.terminal-page .card h2{color:var(--term-text);}
+body.terminal-page .card p, body.terminal-page .text-dim, body.terminal-page .meta-line{color:var(--term-text-dim);}
+body.terminal-page .smallcaps{color:var(--term-gold-light);}
+body.terminal-page .section-head h2{color:var(--term-text);}
+body.terminal-page .result-big{color:var(--term-text);}
+body.terminal-page .result-row{border-color:var(--term-border);color:var(--term-text-dim);}
+body.terminal-page .result-row .result-value{color:var(--term-text);}
+body.terminal-page .disclaimer-box{border-color:var(--term-border);background:rgba(212,175,55,0.05);color:var(--term-text-dim);}
+body.terminal-page .empty-note{color:var(--term-text-dim);}
+body.terminal-page hr, body.terminal-page .hairline{border-color:var(--term-border);}
+
+body.terminal-page .field label{color:var(--term-text-dim);}
+body.terminal-page .field input, body.terminal-page .field select, body.terminal-page select, body.terminal-page input[type=text], body.terminal-page input[type=number], body.terminal-page input[type=date]{
+  background:var(--term-card-hover);border:1px solid var(--term-border);color:var(--term-text);border-radius:3px;
+}
+body.terminal-page .field input:focus, body.terminal-page select:focus{border-color:var(--term-gold);outline:none;}
+
+body.terminal-page .btn, body.terminal-page .btn-primary{border-color:var(--term-border);color:var(--term-text);background:var(--term-card-hover);}
+body.terminal-page .btn:hover, body.terminal-page .btn-primary:hover{border-color:var(--term-gold);color:var(--term-gold-light);}
+body.terminal-page .btn-gold{background:linear-gradient(135deg, var(--term-gold), var(--term-gold-light));color:#050608;border-color:var(--term-gold);}
+
+body.terminal-page .pill{border-color:var(--term-border);color:var(--term-text-dim);background:transparent;}
+body.terminal-page .pill:hover{border-color:var(--term-gold);color:var(--term-gold-light);}
+body.terminal-page .pill.active{border-color:var(--term-gold);color:var(--term-gold-light);background:rgba(212,175,55,0.1);}
+
+body.terminal-page .badge{border-color:var(--term-border);color:var(--term-text-dim);}
+body.terminal-page .badge.status-reel{color:var(--term-positive);border-color:rgba(50,213,131,0.35);}
+
+body.terminal-page .compare-table, body.terminal-page table{border-color:var(--term-border);color:var(--term-text);}
+body.terminal-page .compare-table th, body.terminal-page table th{color:var(--term-gold-light);border-color:var(--term-border);background:var(--term-card-2);}
+body.terminal-page .compare-table td, body.terminal-page table td{border-color:var(--term-border);}
+body.terminal-page .compare-table tr:hover, body.terminal-page table tr:hover{background:var(--term-card-hover);}
+
+body.terminal-page .bar-chart .bar, body.terminal-page .bar-fill{background:var(--term-gold);}
+body.terminal-page .bar-labels{color:var(--term-text-dim);}
+
+/* Positif/négatif : mêmes emplacements de classe que le reste du site
+   (var(--emerald)/var(--bordeaux) codés en dur dans certains templates
+   JS partagés) — surcouche pour rester cohérent avec la palette terminal
+   sans devoir réécrire ces chaînes. */
+body.terminal-page{ --emerald:var(--term-positive); --bordeaux:var(--term-negative); --gold:var(--term-gold); --gold-bright:var(--term-gold-light); --text:var(--term-text); --text-dim:var(--term-text-dim); --bg-alt:var(--term-card); --hairline:var(--term-border); }
+
+/* ---------- Nouveaux composants structurels "terminal-*" ---------- */
+.terminal-shell{
+  display:grid;
+  gap:12px;
+  padding:14px 24px 20px;
+}
+.terminal-nav{
+  background:var(--term-card);border:1px solid var(--term-border);border-radius:4px;
+  padding:14px 10px;display:flex;flex-direction:column;gap:2px;overflow-y:auto;min-height:0;
+}
+.terminal-nav-label{font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--term-text-dim);padding:10px 10px 6px;}
+.terminal-nav-label:first-child{padding-top:2px;}
+.terminal-nav button, .terminal-nav a{
+  display:flex;align-items:center;gap:8px;background:none;border:none;width:100%;text-align:left;
+  font:inherit;font-size:12.5px;color:var(--term-text-dim);text-decoration:none;
+  padding:7px 10px;border-radius:3px;cursor:pointer;transition:background .15s ease, color .15s ease;
+}
+.terminal-nav button:hover, .terminal-nav a:hover{background:var(--term-card-hover);color:var(--term-text);}
+.terminal-nav button.active, .terminal-nav a.active{background:rgba(212,175,55,0.1);color:var(--term-gold-light);box-shadow:inset 2px 0 0 var(--term-gold);}
+
+.terminal-header{
+  background:var(--term-card);border:1px solid var(--term-border);border-radius:4px;padding:14px 18px;
+  display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:12px;
+}
+.terminal-header h2{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--term-text);letter-spacing:.02em;}
+.terminal-header h2::before{content:'◆';color:var(--term-gold);font-size:9px;margin-right:8px;position:relative;top:-3px;}
+.terminal-header p{font-size:12px;color:var(--term-text-dim);margin-top:3px;max-width:56ch;}
+.terminal-header-meta{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:var(--term-text-dim);text-align:right;}
+.terminal-header-meta strong{color:var(--term-gold-light);font-weight:600;}
+
+.terminal-kpis{display:grid;grid-template-columns:repeat(auto-fit, minmax(140px, 1fr));gap:10px;}
+.terminal-kpi{
+  background:var(--term-card);border:1px solid var(--term-border);border-radius:4px;padding:12px 14px;
+  display:flex;flex-direction:column;gap:4px;transition:border-color .15s ease, background .15s ease, transform .15s ease;
+  cursor:default;
+}
+button.terminal-kpi{font:inherit;text-align:left;cursor:pointer;}
+.terminal-kpi:hover{border-color:var(--term-gold);background:var(--term-card-hover);}
+.terminal-kpi.active{border-color:var(--term-gold);background:rgba(212,175,55,0.08);}
+.terminal-kpi-label{display:flex;align-items:center;gap:6px;font-family:'IBM Plex Mono',monospace;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--term-text-dim);}
+.terminal-kpi-label svg{width:12px;height:12px;color:var(--term-gold-light);flex-shrink:0;}
+.terminal-kpi-value{font-family:'IBM Plex Mono',monospace;font-size:22px;font-weight:600;color:var(--term-text);font-variant-numeric:tabular-nums;}
+.terminal-kpi-delta{font-size:11px;font-family:'IBM Plex Mono',monospace;}
+.terminal-kpi-delta.up{color:var(--term-positive);}
+.terminal-kpi-delta.down{color:var(--term-negative);}
+.terminal-kpi-delta.flat{color:var(--term-text-dim);}
+.terminal-kpi-spark{margin-top:2px;height:26px;}
+.terminal-kpi-spark canvas, .terminal-kpi-spark svg{width:100%;height:100%;display:block;}
+.terminal-kpi-asof{font-size:9.5px;color:var(--term-text-dim);margin-top:2px;}
+.terminal-kpi.is-loading .terminal-kpi-value{color:var(--term-text-dim);font-size:13px;font-weight:400;}
+.terminal-kpi.is-unavailable{opacity:0.55;}
+
+.terminal-panel{
+  background:var(--term-card);border:1px solid var(--term-border);border-radius:4px;padding:14px 16px;
+  overflow:hidden;min-height:0;display:flex;flex-direction:column;
+}
+.terminal-panel-title{
+  font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.07em;text-transform:uppercase;color:var(--term-gold-light);
+  display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+}
+.terminal-panel-title a, .terminal-panel-title button.terminal-link{color:var(--term-text-dim);font-size:10.5px;text-transform:none;letter-spacing:0;text-decoration:none;background:none;border:none;font:inherit;cursor:pointer;}
+.terminal-panel-title a:hover, .terminal-panel-title button.terminal-link:hover{color:var(--term-gold-light);}
+.terminal-panel-note{font-size:11.5px;color:var(--term-text-dim);margin-top:8px;}
+.terminal-panel-scroll{overflow-y:auto;min-height:0;flex:1;}
+
+/* Badge de fraîcheur/statut — jamais "Live" pour une donnée différée. */
+.terminal-badge{
+  display:inline-flex;align-items:center;gap:4px;font-family:'IBM Plex Mono',monospace;font-size:9px;
+  letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:10px;
+}
+.terminal-badge.is-live{background:rgba(50,213,131,0.14);color:var(--term-positive);}
+.terminal-badge.is-live::before{content:'●';font-size:7px;animation:terminalPulse 1.6s ease-in-out infinite;}
+.terminal-badge.is-delayed{background:rgba(148,155,166,0.14);color:var(--term-text-dim);}
+.terminal-badge.is-fictive{background:rgba(212,175,55,0.12);color:var(--term-gold-light);}
+@keyframes terminalPulse{0%,100%{opacity:1;}50%{opacity:0.35;}}
+@media (prefers-reduced-motion: reduce){.terminal-badge.is-live::before{animation:none;}}
+
+.terminal-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.terminal-row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:7px 4px;border-bottom:1px solid var(--term-border);text-decoration:none;color:inherit;font-size:12px;transition:background .15s ease;}
+.terminal-row:last-child{border-bottom:none;}
+.terminal-row:hover{background:var(--term-card-hover);}
+.terminal-row-meta{font-size:10px;color:var(--term-text-dim);display:block;}
+
+.terminal-empty{
+  display:flex;flex-direction:column;align-items:flex-start;gap:6px;padding:20px 16px;
+  color:var(--term-text-dim);font-size:12.5px;
+}
+.terminal-empty-icon{font-size:22px;opacity:0.8;}
+.terminal-empty h4{color:var(--term-text);font-size:13px;font-weight:600;margin:0;}
+
+.terminal-loader{display:flex;flex-direction:column;gap:8px;}
+.terminal-loader-bar{height:12px;border-radius:3px;background:linear-gradient(90deg, var(--term-card-2) 25%, var(--term-card-hover) 50%, var(--term-card-2) 75%);background-size:200% 100%;animation:terminalLoading 1.4s ease-in-out infinite;}
+@keyframes terminalLoading{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
+@media (prefers-reduced-motion: reduce){.terminal-loader-bar{animation:none;background:var(--term-card-2);}}
+
+.terminal-drawer-backdrop{position:fixed;inset:0;background:rgba(5,6,8,0.75);z-index:200;opacity:0;transition:opacity .25s ease;pointer-events:none;}
+.terminal-drawer-backdrop.open{opacity:1;pointer-events:auto;}
+.terminal-drawer{
+  position:fixed;top:0;right:0;bottom:0;width:420px;max-width:calc(100vw - 32px);
+  background:var(--term-card);border-left:1px solid var(--term-gold);box-shadow:-24px 0 48px -24px rgba(0,0,0,0.6);
+  z-index:201;display:flex;flex-direction:column;transform:translateX(100%);transition:transform .28s ease;
+}
+.terminal-drawer.open{transform:translateX(0);}
+.terminal-drawer-head{display:flex;justify-content:space-between;align-items:flex-start;padding:18px 20px 14px;border-bottom:1px solid var(--term-border);}
+.terminal-drawer-body{flex:1;overflow-y:auto;padding:16px 20px 24px;color:var(--term-text-dim);}
+
+.terminal-modal{
+  background:var(--term-card);color:var(--term-text);border:1px solid var(--term-gold);border-radius:4px;padding:24px;
+  max-width:480px;width:calc(100vw - 48px);
+}
+.terminal-modal::backdrop{background:rgba(5,6,8,0.75);}
+
+[title].terminal-tooltip{cursor:help;border-bottom:1px dotted var(--term-text-dim);}
+
+/* ---------- Desktop (≥1180px) : coquille sans scroll principal ---------- */
+@media (min-width:1180px){
+  .terminal-shell.has-nav{
+    grid-template-columns:190px 1fr;
+    grid-template-rows:auto auto minmax(0,1fr);
+    grid-template-areas:"nav header" "nav kpis" "nav main";
+    height:calc(100vh - 60px);
+  }
+  .terminal-shell.has-nav .terminal-nav{grid-area:nav;}
+  .terminal-shell.has-nav .terminal-header{grid-area:header;}
+  .terminal-shell.has-nav .terminal-kpis{grid-area:kpis;}
+  .terminal-shell.has-nav .terminal-main{grid-area:main;overflow-y:auto;min-height:0;}
+}
+
+/* ---------- Tablette / mobile : empilé, scroll normal de page ---------- */
+@media (max-width:1179px){
+  .terminal-shell{padding:14px 16px 20px;}
+  .terminal-nav{flex-direction:row;flex-wrap:wrap;overflow-x:auto;}
+  .terminal-nav-label{width:100%;}
+}

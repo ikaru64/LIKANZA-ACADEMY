@@ -214,7 +214,7 @@ async function renderActionDetail(){
           ? `<span class="result-big">${price.toFixed(2)} €</span><span class="mono" style="font-size:18px;color:${changePercent>=0?'var(--emerald)':'var(--bordeaux)'}">${changePercent>=0?'+':''}${changePercent.toFixed(2)}%</span>`
           : `<span class="result-big" style="color:var(--text-dim);">n.d.</span>`}
       </div>
-      ${quoteError ? `<p style="font-size:12px;color:var(--text-dim);">Cotation en direct momentanément indisponible${stock.curated ? ' : valeur de démonstration affichée' : ''}.</p>` : ''}
+      ${quoteError ? `<p style="font-size:12px;color:var(--text-dim);">Dernier cours momentanément indisponible${stock.curated ? ' : valeur de démonstration affichée' : ''}.</p>` : ''}
       <div style="margin-top:12px;">
         <button class="fav-btn" data-fav-id="action-${ticker}" data-fav-title="${nom}" data-fav-url="action.html#${encodeURIComponent(ticker)}" data-fav-type="Action">${ICONS.star} Favoris</button>
       </div>

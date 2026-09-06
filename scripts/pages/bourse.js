@@ -103,7 +103,7 @@ function renderStockGrid(){
     const detailHref = isMarketAsset ? `marche.html#${encodeURIComponent(entry.symbol)}` : `action.html#${encodeURIComponent(entry.symbol)}`;
     return `
       <div class="card" id="custom-${entry.symbol}">
-        <span class="smallcaps">${isMarketAsset ? (ASSET_TYPE_LABELS[assetType] || 'Actif de marché') + ' · cours en direct' : 'Cours en direct uniquement'}</span>
+        <span class="smallcaps">${isMarketAsset ? (ASSET_TYPE_LABELS[assetType] || 'Actif de marché') + ' · cotation différée' : 'Cotation différée uniquement'}</span>
         <h3>${entry.name} <span class="mono" style="font-size:13px;color:var(--text-dim);">${entry.symbol}</span></h3>
         <div class="result-row" id="quote-${entry.symbol}" style="margin:0 0 10px;"><span class="mono" style="color:var(--text-dim);">Chargement…</span></div>
         <div id="trend-${entry.symbol}"></div>

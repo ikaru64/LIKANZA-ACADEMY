@@ -13,8 +13,9 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="styles/design-system.css">
+<link rel="stylesheet" href="styles/terminal-design-system.css">
 </head>
-<body class="has-bottom-nav">
+<body class="has-bottom-nav terminal-page">
 <aside class="app-sidebar" aria-label="Navigation principale">
   <a href="index.html" class="sidebar-brand"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></a>
   <a href="index.html"><span class="icon" data-icon="house"></span><span>Tableau de bord</span></a>
@@ -289,7 +290,7 @@
   </div>
 
   <div class="home-tab-panel" id="tab-paper-trading">
-    <div class="section-head"><h2>🔥 Paper Trading</h2><span class="meta-line">Argent fictif, exécuté à de vrais cours en direct</span></div>
+    <div class="section-head"><h2>🔥 Paper Trading</h2><span class="meta-line">Argent fictif — ordres exécutés au dernier cours disponible</span></div>
     <p class="disclaimer-box" style="max-width:70ch;">Argent entièrement fictif, aucune exécution réelle. Le prix d'exécution est le dernier cours connu affiché — jamais un carnet d'ordres ni un spread modélisé : une exécution réelle en conditions de marché diffère toujours légèrement. Aucun frais de courtage simulé.</p>
     <div class="card-grid" id="paperTradingSummary" style="margin-top:16px;"></div>
     <div class="card" style="margin-top:16px;">
@@ -349,6 +350,12 @@
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
 <script src="scripts/historical-data.js"></script>
+<!-- Chart.js — même version/intégrité que parcours.html/economie.html,
+     pour les nouveaux graphiques du terminal Bourse (remplace les
+     helpers SVG maison uniquement pour les nouveaux rendus de cette
+     page ; scripts/data.js n'est pas modifié, les autres pages qui
+     utilisent ces helpers SVG continuent de fonctionner à l'identique). -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" integrity="sha512-CQBWl4fJHWbryGE+Pc7UAxWMUMNMWzWxF4SQo9CgkJIN1kx6djDQZjh3Y8SZ1d+6I+1zze6Z7kHXO7q3UyZAWw==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="scripts/pages/bourse.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
