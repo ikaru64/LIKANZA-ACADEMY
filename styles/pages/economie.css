@@ -193,6 +193,20 @@ body.terminal-page .field input{background:var(--term-card-hover);border:1px sol
 body.terminal-page .result-row{justify-content:space-between;border-bottom:1px solid var(--term-border);padding:7px 0;color:var(--term-text-dim);}
 body.terminal-page .result-row .result-value{color:var(--term-text);font-weight:600;}
 
+/* ---------- Carte mondiale (06/09/2026) : sélecteur d'indicateur (dans
+   .eco-kpis) + carte/légende/détail (dans .eco-main) — aucune nouvelle
+   zone de grille, mêmes slots que les autres modules. ---------- */
+.eco-map-picker{display:flex;gap:8px;flex-wrap:wrap;padding:6px 0;}
+.eco-map-wrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.eco-map-wrap svg{width:100%;height:auto;max-height:100%;}
+.eco-map-wrap svg path{transition:fill .15s ease;}
+.eco-map-wrap svg path:hover{stroke:var(--term-gold);stroke-width:1;}
+.eco-map-legend{margin-top:10px;}
+.eco-map-legend-bar{height:8px;border-radius:2px;}
+.eco-map-legend-labels{display:flex;justify-content:space-between;font-size:10.5px;color:var(--term-text-dim);margin-top:4px;font-family:'IBM Plex Mono',monospace;}
+.eco-map-legend-swatch{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--term-text-dim);margin-top:6px;}
+.eco-map-swatch-off{display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--term-card-hover);border:1px solid var(--term-border);}
+
 /* ---------- Modale de simulation ("Simuler la dette"), même motif que
    le cockpit mais palette terminal (parcours.css n'est pas chargé sur
    cette page) ---------- */

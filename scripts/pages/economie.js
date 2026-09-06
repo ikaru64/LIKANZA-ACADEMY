@@ -40,16 +40,42 @@ let ecoActiveCountry = 'FR';
 // ---------- Vues transversales (modules) : seulement celles pour
 // lesquelles une vraie source existe déjà — Croissance/Inflation/Emploi
 // sont déjà couverts par la vue "Pays" (KPI + Macro Trend), pas dupliqués
-// ici. Carte mondiale/comparateur/Graph Lab/mode enseignant/crisis
-// replay/impact engine restent des chantiers futurs (cf. en-tête). ----------
+// ici. Graph Lab/mode enseignant/crisis replay/impact engine restent des
+// chantiers futurs (cf. en-tête). La carte mondiale (ajoutée le
+// 06/09/2026) est le premier de ces modules différés à être construit —
+// périmètre volontairement restreint à l'Europe/Amériques/Asie (26 pays
+// réels, WORLDBANK_MAP_COUNTRIES côté backend), jamais l'Afrique ni
+// l'Océanie tant qu'aucune donnée n'y est vérifiée. ----------
 const ECO_VIEWS = {
   overview: {label: "Vue d'ensemble", icon: 'compass'},
+  map: {label: 'Carte mondiale', icon: 'globe'},
   compare: {label: 'Comparateur', icon: 'list'},
   'central-banks': {label: 'Banques centrales', icon: 'landmark'},
   debt: {label: 'Dette & déficit', icon: 'scale'},
   'public-finance': {label: 'Finances publiques', icon: 'coins'}
 };
 let ecoActiveView = 'overview';
+
+// ---------- État de la carte mondiale ----------
+// Seuls les indicateurs à couverture complète sur les 26 pays sont
+// proposés ici (croissance/inflation/chômage) — la dette publique n'a de
+// vraie donnée Banque Mondiale que pour ~11/26 pays, trop incomplet pour
+// une carte crédible (api/eco-map.js la refuse déjà côté serveur).
+const ECO_MAP_INDICATORS = ['gdp-growth', 'inflation', 'unemployment'];
+let ecoMapIndicator = 'gdp-growth';
+let ecoMapSvgMarkup = null; // chargé une seule fois, mis en cache pour la session
+let ecoMapData = null; // {indicator, values, source, sourceUrl, label} de l'indicateur actif
+// Libellés FR des 26 pays de la carte — copie front de
+// lib/worldbank.js::WORLDBANK_COUNTRY_LABELS (module Node, non accessible
+// au navigateur), mêmes 26 pays, jamais un pays de plus ou de moins que
+// WORLDBANK_MAP_COUNTRIES côté serveur.
+const WORLDBANK_MAP_COUNTRY_LABELS_FR = {
+  FR: 'France', DE: 'Allemagne', IT: 'Italie', ES: 'Espagne', GB: 'Royaume-Uni',
+  NL: 'Pays-Bas', CH: 'Suisse', SE: 'Suède', PL: 'Pologne', RU: 'Russie', TR: 'Turquie',
+  US: 'États-Unis', CA: 'Canada', MX: 'Mexique', BR: 'Brésil', AR: 'Argentine',
+  JP: 'Japon', CN: 'Chine', KR: 'Corée du Sud', IN: 'Inde', ID: 'Indonésie',
+  VN: 'Vietnam', TH: 'Thaïlande', PH: 'Philippines', PK: 'Pakistan', SA: 'Arabie saoudite'
+};
 
 // ---------- Métadonnées par indicateur : libellé, icône, formatage,
 // et clé de série RÉELLE selon le pays (jamais une clé générique qui
@@ -179,6 +205,8 @@ function renderEcoBody(){
   if(ecoActiveView === 'overview'){
     renderEcoKpis('ecoKpis');
     rerenderEcoMain();
+  } else if(ecoActiveView === 'map'){
+    renderMapView();
   } else if(ecoActiveView === 'compare'){
     renderCompareView();
   } else if(ecoActiveView === 'central-banks'){
@@ -188,6 +216,171 @@ function renderEcoBody(){
   } else if(ecoActiveView === 'public-finance'){
     renderPublicFinanceView();
   }
+}
+
+// ============================================================
+// Module "Carte mondiale" (06/09/2026) — 26 pays réels d'Europe/
+// Amériques/Asie (WORLDBANK_MAP_COUNTRIES côté backend), un seul appel
+// réseau par indicateur (/api/eco-map), fond de carte SVG tiers vendorisé
+// (assets/maps/world-map.svg, CC BY-SA 3.0) colorié par JS. Jamais un
+// pays coloré sans vraie donnée reçue ; tout pays hors des 26 (Afrique,
+// Océanie comprises) reste en gris neutre, avec une note explicite —
+// jamais présenté comme un manque de donnée plutôt qu'un choix de
+// périmètre assumé.
+// ============================================================
+async function ecoLoadMapSvg(){
+  if(ecoMapSvgMarkup) return ecoMapSvgMarkup;
+  const resp = await fetch('assets/maps/world-map.svg');
+  if(!resp.ok) throw new Error(`Fond de carte indisponible (HTTP ${resp.status})`);
+  ecoMapSvgMarkup = await resp.text();
+  return ecoMapSvgMarkup;
+}
+
+// Couleur relative aux vraies valeurs reçues (normalisation min-max sur
+// CE jeu de données précis) — jamais un seuil absolu inventé du type
+// "croissance > 3 % = vert", qui affirmerait une norme universelle non
+// vérifiée. `tone` réutilise EXACTEMENT ECO_KPI_META[...].tone déjà
+// défini : 'growth' (haut=favorable), 'inverse' (haut=défavorable),
+// 'neutral' (jamais de jugement bon/mauvais, ex. inflation — même
+// principe déjà affirmé pour les KPI classiques, une teinte à intensité
+// variable plutôt que rouge/vert).
+function ecoMapLerp(a, b, f){ return a.map((v, i) => Math.round(v + (b[i] - v) * f)); }
+function ecoMapColorFor(rawT, tone){
+  const t = Math.max(0, Math.min(1, rawT));
+  if(tone === 'neutral'){
+    const light = [110, 114, 122], dark = [212, 175, 55];
+    const rgb = ecoMapLerp(light, dark, t);
+    return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+  }
+  const favorable = tone === 'growth' ? t : 1 - t;
+  const neg = [240, 68, 56], mid = [110, 114, 122], pos = [50, 213, 131];
+  const rgb = favorable < 0.5 ? ecoMapLerp(neg, mid, favorable * 2) : ecoMapLerp(mid, pos, (favorable - 0.5) * 2);
+  return `rgb(${rgb[0]},${rgb[1]},${rgb[2]})`;
+}
+function ecoMapLegendGradient(tone){
+  if(tone === 'neutral') return 'linear-gradient(to right, rgb(110,114,122), rgb(212,175,55))';
+  if(tone === 'growth') return 'linear-gradient(to right, rgb(240,68,56), rgb(110,114,122), rgb(50,213,131))';
+  return 'linear-gradient(to right, rgb(50,213,131), rgb(110,114,122), rgb(240,68,56))';
+}
+
+function renderMapIndicatorPicker(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<div class="eco-map-picker">
+    ${ECO_MAP_INDICATORS.map(k => `<button type="button" class="pill ${k === ecoMapIndicator ? 'active' : ''}" data-map-indicator="${k}">${ICONS[ECO_KPI_META[k].icon] || ''} ${ECO_KPI_META[k].label}</button>`).join('')}
+  </div>`;
+  el.querySelectorAll('[data-map-indicator]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.mapIndicator === ecoMapIndicator) return;
+      ecoMapIndicator = btn.dataset.mapIndicator;
+      el.querySelectorAll('[data-map-indicator]').forEach(b => b.classList.toggle('active', b.dataset.mapIndicator === ecoMapIndicator));
+      renderMapMain();
+    });
+  });
+}
+
+// Panneau de détail au clic sur un pays — affiche exactement la donnée
+// déjà reçue pour l'indicateur actif, jamais une valeur supplémentaire
+// non chargée. Pour les 8 pays déjà couverts par une vraie fiche
+// détaillée (ECO_COUNTRIES), ajoute un lien réel vers cette fiche.
+function renderMapCountryDetail(code, entry){
+  const el = document.getElementById('ecoMapDetail');
+  if(!el) return;
+  const meta = ECO_KPI_META[ecoMapIndicator];
+  const label = WORLDBANK_MAP_COUNTRY_LABELS_FR[code] || code;
+  const hasFullSheet = !!ECO_COUNTRIES[code];
+  el.innerHTML = `
+    <div class="eco-panel" style="margin-top:10px;">
+      <span class="eco-panel-title">${label}</span>
+      <p style="font-size:20px;font-family:'IBM Plex Mono',monospace;margin-top:6px;color:var(--term-text);">${meta.fmt(entry.value)}</p>
+      <p class="eco-panel-note">${meta.label} · ${entry.year} · ${ecoMapData.source}</p>
+      ${hasFullSheet ? `<button type="button" class="btn btn-sm eco-link" id="ecoMapGoToSheet" style="margin-top:8px;">Voir la fiche complète →</button>` : ''}
+    </div>`;
+  const goBtn = document.getElementById('ecoMapGoToSheet');
+  if(goBtn) goBtn.addEventListener('click', () => {
+    ecoActiveCountry = code;
+    ecoActiveView = 'overview';
+    renderEcoNav('ecoNav');
+    renderEcoBody();
+  });
+}
+
+function renderMapLegend(elId, meta, min, max){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <div class="eco-map-legend-bar" style="background:${ecoMapLegendGradient(meta.tone)};"></div>
+    <div class="eco-map-legend-labels"><span>${meta.fmt(min)}</span><span>${meta.fmt(max)}</span></div>
+    <div class="eco-map-legend-swatch"><span class="eco-map-swatch-off"></span> Hors périmètre ou donnée indisponible</div>`;
+}
+
+async function renderMapView(){
+  renderMapIndicatorPicker('ecoKpis');
+  await renderMapMain();
+}
+
+async function renderMapMain(){
+  const mainEl = document.getElementById('ecoMain');
+  if(!mainEl) return;
+  mainEl.innerHTML = `<p class="eco-panel-note">Chargement de la carte…</p>`;
+  const meta = ECO_KPI_META[ecoMapIndicator];
+  let svgMarkup, mapData;
+  try {
+    [svgMarkup, mapData] = await Promise.all([
+      ecoLoadMapSvg(),
+      fetch(`/api/eco-map?indicator=${ecoMapIndicator}`).then(async resp => {
+        if(!resp.ok){ const body = await resp.json().catch(() => ({})); throw new Error(body.error || `HTTP ${resp.status}`); }
+        return resp.json();
+      })
+    ]);
+  } catch(err){
+    mainEl.innerHTML = `<p class="eco-panel-note">Carte indisponible pour le moment (${err.message}).</p>`;
+    return;
+  }
+  ecoMapData = mapData;
+  const values = mapData.values || {};
+  const nums = Object.values(values).map(v => v.value);
+  if(nums.length === 0){
+    mainEl.innerHTML = `<p class="eco-panel-note">Aucune donnée réelle disponible pour "${meta.label}" pour le moment.</p>`;
+    return;
+  }
+  const min = Math.min(...nums), max = Math.max(...nums);
+
+  mainEl.innerHTML = `
+    <p class="eco-panel-note">Carte limitée à l'Europe, aux Amériques et à l'Asie pour l'instant — l'Afrique et l'Océanie n'ont pas encore de données vérifiées sur ce site, jamais affichées par défaut plutôt qu'estimées.</p>
+    <div class="eco-map-wrap" id="ecoMapSvgWrap">${svgMarkup}</div>
+    <div class="eco-map-legend" id="ecoMapLegend"></div>
+    <div id="ecoMapDetail"></div>
+    <p class="eco-panel-note">${mapData.source} · Fond de carte : <a href="https://github.com/flekschas/simple-world-map" target="_blank" rel="noopener">simple-world-map</a> (CC BY-SA 3.0, Al MacDonald / Fritz Lekschas).</p>`;
+
+  renderMapLegend('ecoMapLegend', meta, min, max);
+
+  const wrapEl = document.getElementById('ecoMapSvgWrap');
+  const svgEl = wrapEl.querySelector('svg');
+  if(!svgEl) return;
+  const pathsById = {};
+  wrapEl.querySelectorAll('path[id]').forEach(p => { pathsById[p.id] = p; });
+  const neutralFill = ecoCssVar('--term-card-hover') || '#141923';
+  const neutralStroke = ecoCssVar('--term-border') || 'rgba(212,175,55,0.16)';
+  Object.values(pathsById).forEach(path => {
+    path.style.fill = neutralFill;
+    path.style.stroke = neutralStroke;
+    path.style.strokeWidth = '0.5';
+  });
+  Object.entries(values).forEach(([code, entry]) => {
+    const path = pathsById[code.toLowerCase()];
+    if(!path) return; // pays réel mais absent du fond de carte tiers -> ignoré, jamais une erreur bloquante
+    const t = (max === min) ? 0.5 : (entry.value - min) / (max - min);
+    path.style.fill = ecoMapColorFor(t, meta.tone);
+    path.style.cursor = 'pointer';
+    const label = WORLDBANK_MAP_COUNTRY_LABELS_FR[code] || code;
+    // <title> natif : vraie infobulle au survol, sans logique JS de
+    // positionnement à maintenir — nom réel, valeur réelle, année réelle.
+    const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+    titleEl.textContent = `${label} — ${meta.fmt(entry.value)} (${entry.year})`;
+    path.insertBefore(titleEl, path.firstChild);
+    path.addEventListener('click', () => renderMapCountryDetail(code, entry));
+  });
 }
 
 function renderEcoHeader(elId){
