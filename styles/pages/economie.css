@@ -182,6 +182,35 @@ body.terminal-page .pill:hover{border-color:var(--term-gold);color:var(--term-go
 body.terminal-page .pill.active{border-color:var(--term-gold);color:var(--term-gold-light);background:rgba(212,175,55,0.1);}
 body.terminal-page select{background:var(--term-card-hover);color:var(--term-text);border:1px solid var(--term-border);border-radius:3px;padding:6px 10px;font-size:12px;}
 
+/* ---------- Reskin des composants de formulaire partagés (dialog de
+   simulation, réutilisés depuis design-system.css) réservé à cette page ---------- */
+body.terminal-page .btn{border-color:var(--term-border);color:var(--term-text);}
+body.terminal-page .btn:hover{border-color:var(--term-gold);color:var(--term-gold-light);}
+body.terminal-page .btn-gold{background:linear-gradient(135deg, var(--term-gold), var(--term-gold-light));color:#050608;}
+body.terminal-page .disclaimer-box{border-color:var(--term-border);background:rgba(212,175,55,0.05);color:var(--term-text-dim);}
+body.terminal-page .field label{color:var(--term-text-dim);}
+body.terminal-page .field input{background:var(--term-card-hover);border:1px solid var(--term-border);color:var(--term-text);border-radius:3px;padding:8px 10px;font-size:13px;width:100%;}
+body.terminal-page .result-row{justify-content:space-between;border-bottom:1px solid var(--term-border);padding:7px 0;color:var(--term-text-dim);}
+body.terminal-page .result-row .result-value{color:var(--term-text);font-weight:600;}
+
+/* ---------- Modale de simulation ("Simuler la dette"), même motif que
+   le cockpit mais palette terminal (parcours.css n'est pas chargé sur
+   cette page) ---------- */
+.eco-modal{
+  background:var(--term-card);color:var(--term-text);
+  border:1px solid var(--term-gold);border-radius:3px;padding:24px;
+  max-width:480px;width:calc(100vw - 48px);
+}
+.eco-modal::backdrop{background:rgba(5,6,8,0.75);}
+
+/* ---------- Schéma pédagogique en flux (banques centrales / dette) ---------- */
+.eco-mechanism-flow{display:flex;align-items:center;flex-wrap:wrap;gap:6px;margin-top:12px;}
+.eco-mechanism-step{
+  background:var(--term-card-hover);border:1px solid var(--term-border);border-radius:3px;
+  padding:6px 10px;font-size:11px;color:var(--term-text-dim);white-space:nowrap;
+}
+.eco-mechanism-arrow{color:var(--term-gold);font-size:13px;}
+
 /* ---------- Section secondaire (glossaire) : scroll normal, jamais dans
    le cockpit sans-scroll ---------- */
 .eco-secondary{padding:20px 24px 8px;}
