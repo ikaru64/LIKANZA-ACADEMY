@@ -51,6 +51,7 @@ const ECO_VIEWS = {
   map: {label: 'Carte mondiale', icon: 'globe'},
   compare: {label: 'Comparateur', icon: 'list'},
   'graph-lab': {label: 'Graph Lab', icon: 'telescope'},
+  'crisis-replay': {label: 'Crisis Replay', icon: 'triangle-alert'},
   'central-banks': {label: 'Banques centrales', icon: 'landmark'},
   debt: {label: 'Dette & déficit', icon: 'scale'},
   'public-finance': {label: 'Finances publiques', icon: 'coins'}
@@ -212,6 +213,8 @@ function renderEcoBody(){
     renderCompareView();
   } else if(ecoActiveView === 'graph-lab'){
     renderGraphLabView();
+  } else if(ecoActiveView === 'crisis-replay'){
+    renderCrisisView();
   } else if(ecoActiveView === 'central-banks'){
     renderCentralBanksView();
   } else if(ecoActiveView === 'debt'){
@@ -509,6 +512,140 @@ async function renderGraphLabMain(){
   if(ecoGraphLabChartB){ ecoGraphLabChartB.destroy(); ecoGraphLabChartB = null; }
   ecoGraphLabChartA = renderGraphLabChart('ecoGraphLabCanvasA', clippedA, ecoCssVar('--term-gold-light') || '#F0D36B');
   ecoGraphLabChartB = renderGraphLabChart('ecoGraphLabCanvasB', clippedB, ecoCssVar('--term-blue') || '#4F8FE8');
+}
+
+// ============================================================
+// Module "Crisis Replay" (06/09/2026) — 3 crises réelles rejouées avec les
+// séries déjà branchées (taux BCE/Fed + croissance du PIB par pays),
+// jamais une nouvelle source. Chaque narration ne cite QUE des faits
+// historiques largement établis (dates d'événements réels), jamais un
+// chiffre économique inventé — tout chiffre affiché vient du vrai point
+// de donnée déjà chargé.
+//
+// Fenêtres et couverture vérifiées EN DIRECT le 06/09/2026 (curl réel via
+// api/eco-rate) avant d'écrire ce module : les 3 séries Eurostat
+// (croissance/inflation/chômage FR/DE/IT/ES) ne remontent PAS avant
+// 2016 (chômage : pas avant sept. 2021) — la crise 2008 n'est donc
+// réellement montrable que pour les 4 pays couverts par la Banque
+// Mondiale (US/GB/JP/CN, annuelle depuis 1990) et les 2 taux directeurs
+// (BCE depuis 1999, Fed depuis 1954). Jamais présenté comme une carence
+// de ce module : une note explicite le dit sur cette crise précise.
+// ============================================================
+const ECO_CRISES = {
+  'gfc-2008': {
+    label: 'Crise financière 2008', startYear: 2007, endYear: 2010, peakYear: 2009,
+    narrative: "Déclenchée par l'effondrement du marché immobilier américain (subprime) et la faillite de Lehman Brothers en septembre 2008, la crise financière mondiale a provoqué une récession sévère et des baisses de taux directeurs rapides de la part des banques centrales.",
+    coverageNote: "Les séries Eurostat (France, Allemagne, Italie, Espagne) utilisées sur cette page ne remontent pas avant 2016 — cette crise n'est donc montrée ici que pour les États-Unis, le Royaume-Uni, le Japon et la Chine (Banque Mondiale, annuelle) et pour les taux directeurs BCE/Fed."
+  },
+  'covid-2020': {
+    label: 'Covid-19 (2020)', startYear: 2019, endYear: 2022, peakYear: 2020,
+    narrative: "Les mesures de confinement adoptées à partir de mars 2020 pour freiner la pandémie de Covid-19 ont provoqué un arrêt brutal de l'activité économique mondiale, suivi d'un rebond soutenu par des politiques monétaires et budgétaires exceptionnelles.",
+    coverageNote: "Le chômage Eurostat (France, Allemagne, Italie, Espagne) utilisé sur cette page ne remonte pas avant septembre 2021 — la croissance du PIB reste, elle, disponible pour ces 4 pays sur cette période."
+  },
+  'inflation-2022': {
+    label: "Choc d'inflation (2021-2023)", startYear: 2021, endYear: 2023, peakYear: 2022,
+    narrative: "La reprise post-Covid, les tensions sur les chaînes d'approvisionnement et la guerre en Ukraine (à partir de février 2022) ont provoqué une forte hausse des prix de l'énergie et de l'alimentation, entraînant le cycle de hausses de taux directeurs le plus rapide depuis plusieurs décennies.",
+    coverageNote: null
+  }
+};
+let ecoActiveCrisis = 'inflation-2022'; // la mieux couverte pour les 8 pays, choisie par défaut
+let ecoCrisisChartEcb = null;
+let ecoCrisisChartFed = null;
+
+function ecoCrisisClip(points, startYear, endYear){
+  return points.filter(p => { const y = parseInt(String(p.period).slice(0, 4), 10); return y >= startYear && y <= endYear; });
+}
+
+function renderCrisisPicker(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<div class="eco-map-picker" style="grid-column:1/-1;">
+    ${Object.entries(ECO_CRISES).map(([key, c]) => `<button type="button" class="pill ${key === ecoActiveCrisis ? 'active' : ''}" data-crisis="${key}">${c.label}</button>`).join('')}
+  </div>`;
+  el.querySelectorAll('[data-crisis]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.crisis === ecoActiveCrisis) return;
+      ecoActiveCrisis = btn.dataset.crisis;
+      el.querySelectorAll('[data-crisis]').forEach(b => b.classList.toggle('active', b.dataset.crisis === ecoActiveCrisis));
+      renderCrisisMain();
+    });
+  });
+}
+
+async function renderCrisisView(){
+  renderCrisisPicker('ecoKpis');
+  await renderCrisisMain();
+}
+
+// Une seule vraie valeur par pays pour la table : le dernier point réel
+// dont l'année correspond à l'année charnière de la crise (pour les séries
+// trimestrielles FR/DE/IT/ES, cela prend naturellement le dernier
+// trimestre réel de cette année) — jamais une moyenne ou une estimation,
+// et la période exacte affichée (ex. "2009-Q4") rend la granularité
+// explicite plutôt que de la masquer derrière une simple année.
+function ecoCrisisPeakValue(points, peakYear){
+  const inYear = points.filter(p => parseInt(String(p.period).slice(0, 4), 10) === peakYear);
+  return inYear.length > 0 ? inYear[inYear.length - 1] : null;
+}
+
+async function renderCrisisMain(){
+  const mainEl = document.getElementById('ecoMain');
+  if(!mainEl) return;
+  mainEl.innerHTML = `<p class="eco-panel-note">Chargement…</p>`;
+  const crisis = ECO_CRISES[ecoActiveCrisis];
+
+  const countryCodes = Object.keys(ECO_COUNTRIES);
+  const [ecbSeries, fedSeries, ...countrySeries] = await Promise.all([
+    ecoFetchRealSeries('FR', 'policy-rate'),
+    ecoFetchRealSeries('US', 'policy-rate'),
+    ...countryCodes.map(code => ecoFetchRealSeries(code, 'gdp-growth'))
+  ]);
+
+  const tableRows = countryCodes.map((code, i) => {
+    const series = countrySeries[i];
+    const point = series ? ecoCrisisPeakValue(series.points, crisis.peakYear) : null;
+    return {code, point, meta: series ? series.meta : ECO_KPI_META['gdp-growth']};
+  });
+
+  mainEl.innerHTML = `
+    <p class="eco-panel-note">${crisis.narrative}</p>
+    ${crisis.coverageNote ? `<p class="eco-panel-note" style="color:var(--term-gold-light);">${crisis.coverageNote}</p>` : ''}
+    <div class="eco-panel" style="margin-top:8px;">
+      <span class="eco-panel-title">Taux BCE (dépôt) — ${crisis.startYear}–${crisis.endYear}</span>
+      <div style="position:relative;height:130px;margin-top:8px;"><canvas id="ecoCrisisCanvasEcb"></canvas></div>
+    </div>
+    <div class="eco-panel" style="margin-top:10px;">
+      <span class="eco-panel-title">Taux Fed (fonds fédéraux) — ${crisis.startYear}–${crisis.endYear}</span>
+      <div style="position:relative;height:130px;margin-top:8px;"><canvas id="ecoCrisisCanvasFed"></canvas></div>
+    </div>
+    <div class="eco-panel" style="margin-top:10px;">
+      <span class="eco-panel-title">Croissance du PIB, dernière période réelle de ${crisis.peakYear}</span>
+      <table style="width:100%;border-collapse:collapse;font-size:11.5px;margin-top:8px;">
+        <thead><tr>
+          <th style="text-align:left;padding:6px 8px;color:var(--term-text-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;">Pays</th>
+          <th style="text-align:left;padding:6px 8px;color:var(--term-text-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;">Période réelle</th>
+          <th style="text-align:right;padding:6px 8px;color:var(--term-text-dim);font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;">Croissance du PIB</th>
+        </tr></thead>
+        <tbody>
+          ${tableRows.map(r => `<tr>
+            <td style="padding:6px 8px;color:var(--term-text);">${ECO_COUNTRIES[r.code].flag} ${ECO_COUNTRIES[r.code].label}</td>
+            <td style="padding:6px 8px;color:var(--term-text-dim);font-family:'IBM Plex Mono',monospace;">${r.point ? r.point.period : '—'}</td>
+            <td style="text-align:right;padding:6px 8px;color:var(--term-text);font-family:'IBM Plex Mono',monospace;">${r.point ? r.meta.fmt(r.point.value) : '<span style="color:var(--term-text-dim);">N/D</span>'}</td>
+          </tr>`).join('')}
+        </tbody>
+      </table>
+      <p class="eco-panel-note">"N/D" = aucune vraie donnée disponible pour ce pays sur cette année précise — jamais une valeur estimée pour combler la case.</p>
+    </div>
+    <p class="eco-panel-note">Rejeu historique basé sur des données réellement publiées — jamais une reconstitution ni une prédiction. Les dates d'événements citées sont des faits historiques établis ; les chiffres affichés viennent uniquement des vraies séries déjà utilisées ailleurs sur cette page.</p>`;
+
+  if(ecoCrisisChartEcb){ ecoCrisisChartEcb.destroy(); ecoCrisisChartEcb = null; }
+  if(ecoCrisisChartFed){ ecoCrisisChartFed.destroy(); ecoCrisisChartFed = null; }
+  if(ecbSeries){
+    ecoCrisisChartEcb = renderGraphLabChart('ecoCrisisCanvasEcb', {points: ecoCrisisClip(ecbSeries.points, crisis.startYear, crisis.endYear), meta: ecbSeries.meta, label: 'BCE'}, ecoCssVar('--term-gold-light') || '#F0D36B');
+  }
+  if(fedSeries){
+    ecoCrisisChartFed = renderGraphLabChart('ecoCrisisCanvasFed', {points: ecoCrisisClip(fedSeries.points, crisis.startYear, crisis.endYear), meta: fedSeries.meta, label: 'Fed'}, ecoCssVar('--term-blue') || '#4F8FE8');
+  }
 }
 
 function renderEcoHeader(elId){
