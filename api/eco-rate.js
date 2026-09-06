@@ -21,6 +21,7 @@
              GET /api/eco-rate?series=gov-debt-fr        (dette publique France, % du PIB, trimestrielle, Eurostat)
 
    Étendu pour le terminal économique (06/09/2026) :
+             GET /api/eco-rate?series=inflation-de|it|es|eu     (BCE HICP, "eu" = zone euro U2, PAS le même agrégat que les "eu" ci-dessous)
              GET /api/eco-rate?series=unemployment-de|it|es|eu  (Eurostat, mêmes datasets, autre geo)
              GET /api/eco-rate?series=gdp-growth-de|it|es|eu
              GET /api/eco-rate?series=gov-debt-de|it|es|eu
@@ -43,7 +44,7 @@
    affiche "donnée indisponible" dans ce cas.
    ============================================================ */
 
-const { fetchEcbDepositRate, fetchEcbInflationFR, fetchEcbMortgageRateFR, fetchEcbHomePriceIndexFR, fetchEcbDepositRateHistory } = require('../lib/ecb');
+const { fetchEcbDepositRate, fetchEcbInflationFR, fetchEcbMortgageRateFR, fetchEcbHomePriceIndexFR, fetchEcbDepositRateHistory, fetchEcbInflation } = require('../lib/ecb');
 const { fetchEurostatUnemploymentFR, fetchEurostatGdpGrowthFR, fetchEurostatGovDebtFR, fetchEurostatUnemployment, fetchEurostatGdpGrowth, fetchEurostatGovDebt, fetchEurostatGovDeficit, fetchEurostatConsumerConfidence } = require('../lib/eurostat');
 const { fetchWorldBankSeries } = require('../lib/worldbank');
 const { fetchFedFundsRate } = require('../lib/fred');
@@ -51,6 +52,12 @@ const { fetchFedFundsRate } = require('../lib/fred');
 // geo Eurostat réel derrière chaque suffixe de clé ("eu" -> EU27_2020,
 // jamais "zone euro" — cf. note ci-dessus).
 const EUROSTAT_GEO_SUFFIXES = {de: 'DE', it: 'IT', es: 'ES', eu: 'EU27_2020'};
+// geo BCE réel derrière chaque suffixe pour l'inflation HICP — ici "eu"
+// signifie bien la zone euro (U2, agrégat BCE réel), un périmètre
+// DIFFÉRENT du "eu" Eurostat ci-dessus (Union européenne à 27). Les deux
+// sont réels mais ne mesurent pas le même ensemble de pays — toujours
+// étiquetés distinctement côté front (cf. lib/ecb.js).
+const ECB_INFLATION_GEO_SUFFIXES = {de: 'DE', it: 'IT', es: 'ES', eu: 'U2'};
 // code pays Banque Mondiale (ISO 2 lettres) derrière chaque suffixe.
 const WORLDBANK_GEO_SUFFIXES = {us: 'US', jp: 'JP', gb: 'GB', cn: 'CN'};
 
@@ -66,6 +73,9 @@ const SERIES_FETCHERS = {
 };
 SERIES_FETCHERS['gov-deficit-fr'] = () => fetchEurostatGovDeficit('FR');
 SERIES_FETCHERS['consumer-confidence-fr'] = () => fetchEurostatConsumerConfidence('FR');
+for(const [suffix, geo] of Object.entries(ECB_INFLATION_GEO_SUFFIXES)){
+  SERIES_FETCHERS[`inflation-${suffix}`] = () => fetchEcbInflation(geo);
+}
 for(const [suffix, geo] of Object.entries(EUROSTAT_GEO_SUFFIXES)){
   SERIES_FETCHERS[`unemployment-${suffix}`] = () => fetchEurostatUnemployment(geo);
   SERIES_FETCHERS[`gdp-growth-${suffix}`] = () => fetchEurostatGdpGrowth(geo);
