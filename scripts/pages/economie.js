@@ -381,9 +381,38 @@ function rerenderEcoMain(){ renderEcoMainChart('ecoMain'); }
 // affichées (un lien vers le calendrier officiel remplace la donnée).
 // ============================================================
 const ECO_CENTRAL_BANKS = [
-  {key: 'ecb', label: 'BCE', seriesKey: 'policy-rate-ecb-history', officialUrl: 'https://www.ecb.europa.eu/press/govcdec/mopo/html/index.en.html'},
+  {key: 'ecb', label: 'BCE', seriesKey: 'policy-rate-ecb-history', officialUrl: 'https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html'},
   {key: 'fed', label: 'Fed', seriesKey: 'policy-rate-fed', officialUrl: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm'}
 ];
+
+// ---------- Calendrier des réunions de politique monétaire — dates
+// réelles vérifiées directement sur les calendriers officiels le
+// 06/09/2026 (jamais un chiffre "consensus"/"attendu" : ces dates sont
+// déjà fixées et publiées par les banques centrales elles-mêmes, pas une
+// prévision). Snapshot manuel, à mettre à jour quand une nouvelle année
+// de calendrier est publiée — même discipline que le budget de l'État. ----------
+const ECO_CENTRAL_BANK_MEETINGS = [
+  {date: '2026-09-09', dateEnd: '2026-09-10', bank: 'BCE', url: 'https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html'},
+  {date: '2026-09-15', dateEnd: '2026-09-16', bank: 'Fed', url: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm'},
+  {date: '2026-10-27', dateEnd: '2026-10-28', bank: 'Fed', url: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm'},
+  {date: '2026-10-28', dateEnd: '2026-10-29', bank: 'BCE', url: 'https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html'},
+  {date: '2026-12-08', dateEnd: '2026-12-09', bank: 'Fed', url: 'https://www.federalreserve.gov/monetarypolicy/fomccalendars.htm'},
+  {date: '2026-12-16', dateEnd: '2026-12-17', bank: 'BCE', url: 'https://www.ecb.europa.eu/press/calendars/mgcgc/html/index.en.html'}
+];
+
+function ecoFormatDateRange(start, end){
+  const s = new Date(start + 'T00:00:00'), e = new Date(end + 'T00:00:00');
+  const sameMonth = s.getMonth() === e.getMonth();
+  const dayFmt = d => d.toLocaleDateString('fr-FR', {day: '2-digit'});
+  const fullFmt = d => d.toLocaleDateString('fr-FR', {day: '2-digit', month: 'short', year: 'numeric'});
+  return sameMonth ? `${dayFmt(s)}-${fullFmt(e)}` : `${fullFmt(s)} - ${fullFmt(e)}`;
+}
+function ecoNextMeetingFor(bank, fromDate){
+  return ECO_CENTRAL_BANK_MEETINGS.filter(m => m.bank === bank && m.dateEnd >= fromDate).sort((a, b) => a.date < b.date ? -1 : 1)[0] || null;
+}
+function ecoUpcomingMeetings(fromDate){
+  return ECO_CENTRAL_BANK_MEETINGS.filter(m => m.dateEnd >= fromDate).sort((a, b) => a.date < b.date ? -1 : 1);
+}
 
 // Dernier VRAI changement de taux dans l'historique (jamais une date
 // de réunion supposée) : le premier point, en partant de la fin, dont
@@ -415,11 +444,13 @@ async function renderCentralBanksView(){
       results[b.key] = data;
       const last = data.points[data.points.length - 1];
       const change = ecoLastRateChange(data.points);
+      const next = ecoNextMeetingFor(b.label, last.period.slice(0, 10));
       cardEl.classList.remove('is-loading');
       cardEl.innerHTML = `
         <span class="eco-kpi-label">${ICONS.landmark || ''} Taux ${b.label}</span>
         <span class="eco-kpi-value">${last.value.toFixed(2)} %</span>
         ${change ? `<span class="eco-kpi-delta ${change.delta > 0 ? 'down' : 'up'}">${change.delta > 0 ? '↑' : '↓'} ${Math.abs(change.delta).toFixed(2)} pt le ${change.period}</span>` : `<span class="eco-kpi-delta flat">Aucun changement sur la période couverte</span>`}
+        ${next ? `<span class="eco-kpi-delta flat">Prochaine réunion : ${ecoFormatDateRange(next.date, next.dateEnd)}</span>` : ''}
         <span class="eco-kpi-asof">${ecoFreshnessBadge(data.frequency)} · ${last.period} · <a href="${b.officialUrl}" target="_blank" rel="noopener" style="color:var(--term-text-dim);">Calendrier officiel →</a></span>`;
     } catch(err){
       cardEl.classList.remove('is-loading');
@@ -437,6 +468,16 @@ async function renderCentralBanksView(){
       <div class="eco-mechanism-flow">
         ${['Inflation', 'Banque centrale', 'Taux directeurs', 'Coût du crédit', 'Consommation / investissement', 'Croissance', 'Inflation'].map((step, i, arr) => `<span class="eco-mechanism-step">${step}</span>${i < arr.length - 1 ? '<span class="eco-mechanism-arrow">→</span>' : ''}`).join('')}
       </div>
+    </div>
+    <div class="eco-panel" style="margin-top:16px;padding:12px 14px;">
+      <span class="eco-panel-title">Prochaines réunions de politique monétaire</span>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:8px;">
+        ${ecoUpcomingMeetings(new Date().toISOString().slice(0, 10)).slice(0, 4).map(m => `
+          <a href="${m.url}" target="_blank" rel="noopener" style="border-bottom:1px solid var(--term-border);padding:6px 2px;text-decoration:none;color:inherit;display:flex;justify-content:space-between;font-size:12px;">
+            <span>${m.bank}</span><span class="mono" style="color:var(--term-text-dim);">${ecoFormatDateRange(m.date, m.dateEnd)}</span>
+          </a>`).join('') || '<p class="eco-panel-note">Aucune réunion à venir dans le calendrier connu.</p>'}
+      </div>
+      <p class="eco-panel-note">Dates officielles publiées par la BCE et la Réserve fédérale — jamais un chiffre "consensus" ou "attendu" pour la décision elle-même.</p>
     </div>`;
 
   const canvas = document.getElementById('ecoCbChart');
