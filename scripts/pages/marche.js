@@ -15,10 +15,50 @@ function marcheCurrentSymbol(){
   return MARKET_DATA.some(m=>m.symbol===sym) ? sym : MARKET_DATA[0].symbol;
 }
 
-// Sparkline factorisée dans scripts/data.js (renderSparklineHTML), réutilisée
-// aussi par les lignes hausses/baisses de la page Bourse.
+// Migration Chart.js (refonte terminal Bourse, 06/09/2026) : remplace
+// renderSparklineHTML (SVG maison, scripts/data.js) UNIQUEMENT sur cette
+// page — la fonction partagée reste utilisée telle quelle par les autres
+// pages (lignes hausses/baisses de bourse.html, etc.). Même historique réel
+// (it.history), seul le rendu change. Le canvas est injecté après coup
+// (le Chart a besoin d'un vrai élément DOM déjà présent pour s'attacher).
+let marcheChartInstance = null;
 function renderMarcheChart(it){
-  return renderSparklineHTML(it.history, {unite: it.unite, source: it.source});
+  return `<div id="marcheChartBody"></div>`;
+}
+function renderMarcheChartCanvas(it){
+  const bodyEl = document.getElementById('marcheChartBody');
+  if(!bodyEl) return;
+  const hist = it.history;
+  if(!Array.isArray(hist) || hist.length < 2){
+    bodyEl.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">L'historique des dernières séances s'affiche dès que les cotations automatiques sont disponibles (connexion au backend requise).</p>`;
+    return;
+  }
+  bodyEl.innerHTML = `<div style="position:relative;height:220px;"><canvas id="marcheChartCanvas"></canvas></div>`;
+  const canvas = document.getElementById('marcheChartCanvas');
+  if(!canvas || typeof Chart === 'undefined') return;
+  if(marcheChartInstance) marcheChartInstance.destroy();
+  const closes = hist.map(h => h.close);
+  const up = closes[closes.length - 1] >= closes[0];
+  const color = up ? '#32D583' : '#F04438';
+  marcheChartInstance = new Chart(canvas.getContext('2d'), {
+    type: 'line',
+    data: {
+      labels: hist.map(h => h.date),
+      datasets: [{data: closes, borderColor: color, backgroundColor: up ? 'rgba(50,213,131,0.08)' : 'rgba(240,68,56,0.08)', borderWidth: 2, pointRadius: 0, fill: true, tension: 0.15}]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      interaction: {mode: 'index', intersect: false},
+      scales: {
+        x: {ticks: {color: '#949BA6', maxTicksLimit: 8, font: {size: 10}}, grid: {display: false}},
+        y: {ticks: {color: '#949BA6', font: {size: 10}}, grid: {color: 'rgba(212,175,55,0.1)'}}
+      },
+      plugins: {
+        legend: {display: false},
+        tooltip: {backgroundColor: '#0D1016', titleColor: '#D4AF37', bodyColor: '#F5F5F5', borderColor: 'rgba(212,175,55,0.16)', borderWidth: 1}
+      }
+    }
+  });
 }
 
 function renderMarcheSiblings(current){
@@ -169,6 +209,7 @@ function renderMarcheDetail(){
     <p class="disclaimer-box">Ces informations sont fournies à titre pédagogique, en différé. Elles ne constituent ni un conseil en investissement, ni une incitation à acheter ou vendre.</p>`;
 
   initFavButtons();
+  renderMarcheChartCanvas(it);
   renderMarcheSiblings(sym);
   if(it.assetType === 'etf') renderEtfFundamentals('etfFundamentals-' + it.symbol, it.symbol);
   renderMarcheFollowBtn(it);
