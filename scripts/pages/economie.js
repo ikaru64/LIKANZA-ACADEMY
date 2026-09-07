@@ -103,6 +103,7 @@ const ECO_VIEWS = {
   compare: {label: 'Comparateur', icon: 'list'},
   'graph-lab': {label: 'Graph Lab', icon: 'telescope'},
   'crisis-replay': {label: 'Crisis Replay', icon: 'triangle-alert'},
+  'impact-engine': {label: 'Et si...?', icon: 'shuffle'},
   'central-banks': {label: 'Banques centrales', icon: 'landmark'},
   debt: {label: 'Dette & déficit', icon: 'scale'},
   'public-finance': {label: 'Finances publiques', icon: 'coins'}
@@ -266,6 +267,8 @@ function renderEcoBody(){
     renderGraphLabView();
   } else if(ecoActiveView === 'crisis-replay'){
     renderCrisisView();
+  } else if(ecoActiveView === 'impact-engine'){
+    renderImpactEngineView();
   } else if(ecoActiveView === 'central-banks'){
     renderCentralBanksView();
   } else if(ecoActiveView === 'debt'){
@@ -602,6 +605,7 @@ const ECO_CRISES = {
 let ecoActiveCrisis = 'inflation-2022'; // la mieux couverte pour les 8 pays, choisie par défaut
 let ecoCrisisChartEcb = null;
 let ecoCrisisChartFed = null;
+let ecoActiveScenario = 'rate-hike';
 
 function ecoCrisisClip(points, startYear, endYear){
   return points.filter(p => { const y = parseInt(String(p.period).slice(0, 4), 10); return y >= startYear && y <= endYear; });
@@ -1089,6 +1093,99 @@ function ecoLastRateChange(points){
     if(Math.abs(delta) > 1e-9) return {period: points[i].period, delta};
   }
   return null;
+}
+
+// ============================================================
+// Module "Et si...?" (07/09/2026) — généralise le motif déjà validé deux
+// fois sur cette page (renderCentralBanksView "Pourquoi les taux
+// changent ?", renderDebtView "Pourquoi la dette augmente ?") : un
+// enchaînement QUALITATIF de mécanismes économiques reconnus (manuels
+// d'économie), jamais un chiffre inventé ni une relation mesurée. Un
+// vrai moteur quantitatif ("+1 pt de taux ⇒ −X % de PIB") exigerait une
+// relation économétrique sans source vérifiée pour ce projet — hors de
+// portée, définitivement. Réutilise .eco-mechanism-flow/-step/-arrow
+// (déjà en place) et l'idiome de bascule de vue déjà utilisé par
+// renderMapCountryDetail — zéro nouvelle donnée, zéro nouvel appel réseau.
+// ============================================================
+const ECO_SCENARIOS = {
+  'rate-hike': {
+    label: 'La banque centrale relève ses taux directeurs',
+    chain: ['Banque centrale relève ses taux', "Coût du crédit augmente", "Emprunt des ménages / entreprises ralentit", "Consommation et investissement ralentissent", "Croissance ralentit", "Inflation reflue (mais le chômage peut augmenter)"],
+    caveat: "Mécanisme de manuel d'économie (canal du taux d'intérêt), pas une prévision : l'ampleur et le délai réels dépendent fortement du contexte (anticipations, autres chocs simultanés).",
+    link: {type: 'crisis', key: 'inflation-2022', note: "Ce mécanisme est celui du cycle de hausses de taux le plus rapide depuis plusieurs décennies, déclenché en réponse au choc d'inflation 2021-2023 →"}
+  },
+  'oil-shock': {
+    label: 'Le prix du pétrole augmente fortement',
+    chain: ['Prix du pétrole augmente', 'Coûts de production et de transport augmentent', 'Prix à la consommation augmentent (inflation importée)', 'Pouvoir d\'achat des ménages baisse', 'Banques centrales sous pression de resserrer leur politique'],
+    caveat: "Mécanisme de manuel d'économie (choc d'offre / \"cost-push\"), pas une prévision : la hausse des prix de l'énergie n'est jamais le seul facteur d'un épisode d'inflation réel.",
+    link: {type: 'crisis', key: 'inflation-2022', note: "La hausse des prix de l'énergie est l'un des facteurs cités (parmi d'autres) du choc d'inflation 2021-2023 →"}
+  },
+  'currency-depreciation': {
+    label: 'Une monnaie se déprécie fortement',
+    chain: ['Monnaie se déprécie', 'Produits importés plus chers', 'Inflation importée augmente', 'Produits exportés plus compétitifs à l\'étranger', 'Effet net sur la balance commerciale très dépendant du contexte'],
+    caveat: "Mécanisme théorique standard, pas une prévision : le sens et l'ampleur de l'effet net dépendent fortement des élasticités et de la structure des échanges du pays concerné. Cette page ne suit aucune série de change réelle — aucun lien vers un module de ce site n'est proposé ici.",
+    link: null
+  },
+  'fiscal-expansion': {
+    label: "L'État augmente fortement ses dépenses publiques",
+    chain: ['Dépenses publiques augmentent', 'Demande globale augmente', 'Activité et emploi soutenus à court terme', 'Déficit public se creuse', 'Dette publique augmente'],
+    caveat: "Mécanisme de manuel d'économie (relance budgétaire), pas une prévision : les deux dernières étapes suivent la même identité comptable déjà détaillée dans le module \"Dette & déficit\".",
+    link: {type: 'view', view: 'debt', note: "Voir l'identité comptable complète de la dynamique de la dette →"}
+  },
+  'recession-spiral': {
+    label: "L'activité ralentit fortement (récession)",
+    chain: ['Activité économique ralentit', "Entreprises réduisent l'emploi", 'Chômage augmente', 'Revenus des ménages baissent', 'Consommation baisse', 'Activité ralentit encore'],
+    caveat: "Mécanisme de manuel d'économie (spirale récessive), pas une prévision : une récession réelle peut être freinée à tout moment par une réponse monétaire ou budgétaire.",
+    link: {type: 'crisis', key: 'covid-2020', note: "Cette spirale s'est produite pour de vrai lors de la récession Covid-19 (2020) →"}
+  },
+  'banking-crisis': {
+    label: 'Une crise de confiance frappe le système bancaire',
+    chain: ['Confiance dans les banques s\'effondre', 'Resserrement brutal du crédit (credit crunch)', 'Investissement et consommation chutent', 'Récession', 'Banques centrales baissent les taux en urgence'],
+    caveat: "Mécanisme de manuel d'économie (crise bancaire systémique), pas une prévision : chaque crise bancaire réelle a ses propres déclencheurs et sa propre ampleur.",
+    link: {type: 'crisis', key: 'gfc-2008', note: "Cet enchaînement est celui de la crise financière de 2008 →"}
+  }
+};
+
+function renderImpactEnginePicker(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<div class="eco-map-picker" style="grid-column:1/-1;">
+    ${Object.entries(ECO_SCENARIOS).map(([key, s]) => `<button type="button" class="pill ${key === ecoActiveScenario ? 'active' : ''}" data-scenario="${key}">${s.label}</button>`).join('')}
+  </div>`;
+  el.querySelectorAll('[data-scenario]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.scenario === ecoActiveScenario) return;
+      ecoActiveScenario = btn.dataset.scenario;
+      el.querySelectorAll('[data-scenario]').forEach(b => b.classList.toggle('active', b.dataset.scenario === ecoActiveScenario));
+      renderImpactEngineMain();
+    });
+  });
+}
+
+function renderImpactEngineMain(){
+  const el = document.getElementById('ecoMain');
+  if(!el) return;
+  const s = ECO_SCENARIOS[ecoActiveScenario];
+  el.innerHTML = `
+    <span class="eco-panel-title">Et si... ${s.label.charAt(0).toLowerCase()}${s.label.slice(1)} ?</span>
+    <p class="eco-panel-note" style="margin-top:6px;">Ces enchaînements présentent des mécanismes économiques reconnus (manuels d'économie), jamais une prévision chiffrée ni une relation mesurée sur ce site — l'ampleur, le délai et parfois même le sens réel de ces effets dépendent fortement du contexte.</p>
+    <div class="eco-mechanism-flow" style="margin-top:14px;">
+      ${s.chain.map((step, i, arr) => `<span class="eco-mechanism-step">${step}</span>${i < arr.length - 1 ? '<span class="eco-mechanism-arrow">→</span>' : ''}`).join('')}
+    </div>
+    <p class="eco-panel-note" style="margin-top:12px;">${s.caveat}</p>
+    ${s.link ? `<button type="button" class="btn btn-sm eco-link" id="ecoScenarioLink" style="margin-top:10px;">${s.link.note}</button>` : ''}`;
+  const linkBtn = document.getElementById('ecoScenarioLink');
+  if(linkBtn) linkBtn.addEventListener('click', () => {
+    if(s.link.type === 'crisis'){ ecoActiveView = 'crisis-replay'; ecoActiveCrisis = s.link.key; }
+    else if(s.link.type === 'view'){ ecoActiveView = s.link.view; }
+    renderEcoNav('ecoNav');
+    renderEcoBody();
+  });
+}
+
+function renderImpactEngineView(){
+  renderImpactEnginePicker('ecoKpis');
+  renderImpactEngineMain();
 }
 
 async function renderCentralBanksView(){
