@@ -37,6 +37,57 @@ const ECO_COUNTRIES = {
 const ECO_EUROSTAT_COUNTRIES = new Set(['FR', 'DE', 'IT', 'ES']); // séries Eurostat/BCE (index à convertir pour l'inflation)
 let ecoActiveCountry = 'FR';
 
+// ---------- Mode enseignant (07/09/2026) : bascule persistée qui ajoute
+// une définition en langage simple sous chaque KPI, réutilisant EXACTEMENT
+// le texte déjà présent dans LIBRARY (le même "Définition express" que la
+// Bibliothèque/l'accueil) — jamais un texte pédagogique réécrit à part,
+// qui pourrait diverger de la vraie définition ailleurs sur le site.
+// ECO_TEACHER_TERMS ne couvre QUE les indicateurs ayant un vrai terme
+// LIBRARY correspondant (vérifié un par un) : gov-deficit et
+// consumer-confidence n'ont réellement aucun terme dédié dans la
+// catégorie "Économie" de LIBRARY — pas de faux lien vers une définition
+// inexistante pour ces deux-là. ----------
+const ECO_TEACHER_TERMS = {
+  'gdp-growth': 'PIB (Produit intérieur brut)',
+  'inflation': 'Inflation',
+  'unemployment': 'Chômage',
+  'gov-debt': 'Dette publique',
+  'policy-rate-ecb': 'Taux directeur',
+  'policy-rate-fed': 'Taux directeur'
+};
+const ECO_CRISIS_TEACHER_TERMS = {
+  'gfc-2008': 'Crise des subprimes',
+  'covid-2020': 'Récession',
+  'inflation-2022': 'Inflation'
+};
+let ecoTeacherMode = safeGetJSON('fzr-eco-teacher-mode', false);
+function ecoLibraryDefinition(terme){
+  const entry = LIBRARY.find(l => l.terme === terme);
+  return entry ? entry.simple : null;
+}
+function ecoTeacherToggleHtml(){
+  return `<button type="button" class="pill ${ecoTeacherMode ? 'active' : ''}" id="ecoTeacherToggle" style="margin-top:6px;" title="Ajoute une définition en langage simple sous chaque indicateur">🎓 Mode enseignant</button>`;
+}
+function ecoWireTeacherToggle(){
+  const btn = document.getElementById('ecoTeacherToggle');
+  if(!btn) return;
+  btn.addEventListener('click', () => {
+    ecoTeacherMode = !ecoTeacherMode;
+    safeSetJSON('fzr-eco-teacher-mode', ecoTeacherMode);
+    renderEcoBody();
+  });
+}
+// Bloc de définition réutilisable, même esprit que renderCalcNote
+// (dividende-page.js) : replié par défaut, jamais imposé à un utilisateur
+// qui n'a pas activé le mode enseignant (il n'apparaît pas du tout dans
+// ce cas, pas juste masqué en CSS).
+function ecoTeacherDefinitionHtml(terme){
+  if(!ecoTeacherMode || !terme) return '';
+  const def = ecoLibraryDefinition(terme);
+  if(!def) return '';
+  return `<p class="eco-teacher-note">🎓 <strong>${terme}</strong> : ${def}</p>`;
+}
+
 // ---------- Vues transversales (modules) : seulement celles pour
 // lesquelles une vraie source existe déjà — Croissance/Inflation/Emploi
 // sont déjà couverts par la vue "Pays" (KPI + Macro Trend), pas dupliqués
@@ -609,6 +660,7 @@ async function renderCrisisMain(){
 
   mainEl.innerHTML = `
     <p class="eco-panel-note">${crisis.narrative}</p>
+    ${ecoTeacherDefinitionHtml(ECO_CRISIS_TEACHER_TERMS[ecoActiveCrisis])}
     ${crisis.coverageNote ? `<p class="eco-panel-note" style="color:var(--term-gold-light);">${crisis.coverageNote}</p>` : ''}
     <div class="eco-panel" style="margin-top:8px;">
       <span class="eco-panel-title">Taux BCE (dépôt) — ${crisis.startYear}–${crisis.endYear}</span>
@@ -656,7 +708,8 @@ function renderEcoHeader(elId){
   const context = ecoActiveView === 'overview'
     ? `${ECO_COUNTRIES[ecoActiveCountry].flag} ${ECO_COUNTRIES[ecoActiveCountry].label}`
     : ECO_VIEWS[ecoActiveView].label;
-  el.innerHTML = `${actualise}<br><strong>${context}</strong>`;
+  el.innerHTML = `${actualise}<br><strong>${context}</strong><br>${ecoTeacherToggleHtml()}`;
+  ecoWireTeacherToggle();
 }
 
 async function renderEcoKpis(elId){
@@ -700,7 +753,8 @@ async function renderEcoKpis(elId){
         <span class="eco-kpi-value">${meta.fmt(last.value)}</span>
         ${prev ? `<span class="eco-kpi-delta ${deltaClass}">${arrow} ${meta.fmt(Math.abs(delta)).replace(/^\+/, '')} vs période préc.</span>` : ''}
         <div class="eco-kpi-spark">${renderSparklineHTML(sparkHistory, {compact: true})}</div>
-        <span class="eco-kpi-asof">${ecoFreshnessBadge(data.frequency)} · ${last.period}</span>`;
+        <span class="eco-kpi-asof">${ecoFreshnessBadge(data.frequency)} · ${last.period}</span>
+        ${ecoTeacherDefinitionHtml(ECO_TEACHER_TERMS[k])}`;
     } catch(err){
       cardEl.classList.remove('is-loading');
       cardEl.classList.add('is-unavailable');

@@ -207,6 +207,11 @@ body.terminal-page .result-row .result-value{color:var(--term-text);font-weight:
 .eco-map-legend-swatch{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--term-text-dim);margin-top:6px;}
 .eco-map-swatch-off{display:inline-block;width:12px;height:12px;border-radius:2px;background:var(--term-card-hover);border:1px solid var(--term-border);}
 
+/* ---------- Mode enseignant (07/09/2026) : définition en langage simple
+   réutilisant LIBRARY, jamais un texte pédagogique réécrit à part. ---------- */
+.eco-teacher-note{font-size:11.5px;color:var(--term-text-dim);margin-top:8px;padding-top:8px;border-top:1px dashed var(--term-border);line-height:1.5;}
+.eco-teacher-note strong{color:var(--term-gold-light);}
+
 /* ---------- Modale de simulation ("Simuler la dette"), même motif que
    le cockpit mais palette terminal (parcours.css n'est pas chargé sur
    cette page) ---------- */
