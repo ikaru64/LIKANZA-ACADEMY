@@ -65,7 +65,8 @@ const COCKPIT_DEMO_DATA = (function(){
   return {assets, debts: [], goals, lifeProjects: [], budgetEntries, history};
 })();
 
-let cockpitDemoMode = false;
+let cockpitMode = 'demo'; // 'personal' | 'business' | 'demo'
+let cockpitDemoMode = false; // dérivé de cockpitMode, conservé pour ne rien casser dans les fonctions ci-dessous
 // Gap Closure Sprint P2, phase 17 (06/09/2026) : un utilisateur au profil
 // business réel (Business Lab) mais sans aucune donnée financière
 // personnelle déclenchait ce mode démo — il voyait un salaire/Livret A/PEA
@@ -73,16 +74,27 @@ let cockpitDemoMode = false;
 // rapport avec son vrai profil business, potentiellement pris pour de
 // vraies données. Un vrai profil business existant est un signal réel
 // suffisant pour préférer l'état vide honnête ("Ajoute tes premiers
-// actifs...") à une démo personnelle non pertinente.
-function cockpitDetectDemoMode(){
+// actifs...") à une démo personnelle non pertinente — corrigé en phase 17.
+//
+// Suivi disclosed de la phase 17 (07/09/2026) : préférer l'état vide était
+// correct mais insuffisant côté produit — ce même utilisateur a de VRAIES
+// données professionnelles, analysées ailleurs sur le site (Business Lab),
+// qui méritent la même place de choix qu'un hero personnel plutôt qu'un
+// clic supplémentaire. cockpitDetectMode() distingue donc 3 états réels ;
+// un utilisateur ayant les DEUX (donnée perso réelle + profil business
+// réel) reste en 'personal' — son business reste à un clic via la nav
+// existante, pas un cas couvert par ce hero business.
+function cockpitDetectMode(){
+  const hasRealPersonalData = getNetWorthAssets().length > 0 || getNetWorthHistory().length > 0
+    || getFinancialGoals().length > 0 || getLifeProjects().length > 0;
   // getBusinessProfile() retourne toujours un objet complet (defaults
   // fusionnés), jamais null — safeGetJSON(...,null) directement sur la
   // clé brute est le seul moyen de savoir si un profil a RÉELLEMENT été
   // enregistré (même motif que renderPersonalizationPanel, data.js).
   const hasRealBusinessProfile = !!safeGetJSON('fzr-business-profile', null);
-  return getNetWorthAssets().length === 0 && getNetWorthHistory().length === 0
-    && getFinancialGoals().length === 0 && getLifeProjects().length === 0
-    && !hasRealBusinessProfile;
+  if(hasRealPersonalData) return 'personal';
+  if(hasRealBusinessProfile) return 'business';
+  return 'demo';
 }
 function cockpitAssets(){ return cockpitDemoMode ? COCKPIT_DEMO_DATA.assets : getNetWorthAssets(); }
 function cockpitDebts(){ return cockpitDemoMode ? COCKPIT_DEMO_DATA.debts : getPersonalDebts(); }
@@ -105,7 +117,8 @@ function initParcoursHero(){
     return;
   }
   document.getElementById('parcoursMainSection').style.display = 'block';
-  cockpitDemoMode = cockpitDetectDemoMode();
+  cockpitMode = cockpitDetectMode();
+  cockpitDemoMode = cockpitMode === 'demo';
   // En-tête scindé (refonte cockpit, 05/09/2026) : les 3 bandeaux de nudge
   // (onboarding/ré-onboarding/suggestion d'intérêt) restent au-dessus du
   // pli, toujours visibles ; le bloc gamification (XP/niveau/série) est
@@ -130,11 +143,7 @@ function initParcoursHero(){
   renderHealthScoreDashboardWidget('cockpitHealthScore');
   renderDashboardShell('dashboardShell');
   renderDashboardPriorityBanner('dashboardPriority', 'dashboardShell');
-  renderCockpitHeader('cockpitHeader');
-  renderCockpitKPIs('cockpitKPIs');
-  renderCockpitChart('cockpitChart');
-  renderCockpitSide('cockpitSide');
-  renderCockpitPanelsRow('cockpitPanelsRow');
+  renderCockpitBody();
 }
 
 // Reconstruit tout le cockpit à l'identique (utilisé après la bascule de
@@ -142,11 +151,107 @@ function initParcoursHero(){
 // sortir du mode démo) — un seul point d'entrée pour ne jamais oublier un
 // sous-composant lors d'un futur ajout.
 function rerenderCockpit(){
+  cockpitMode = cockpitDetectMode();
+  cockpitDemoMode = cockpitMode === 'demo';
+  renderCockpitBody();
+}
+
+// Dispatcheur hero personnel/business (suivi disclosed Gap Closure Sprint
+// phase 17, 07/09/2026) : un profil Business Lab réel sans donnée
+// financière personnelle réelle mérite son propre hero, pas un hero
+// personnel vide — voir cockpitDetectMode(). Aucune 3ème rangée de
+// panneaux fabriquée en mode business (moins de contenu, mais honnête,
+// plutôt qu'un remplissage forcé pour égaler visuellement le personnel).
+function renderCockpitBody(){
+  if(cockpitMode === 'business'){
+    renderBusinessCockpitHeader('cockpitHeader');
+    renderBusinessCockpitKPIs('cockpitKPIs');
+    renderBusinessCockpitMain('cockpitChart');
+    renderBusinessCockpitSide('cockpitSide');
+    const panelsRowEl = document.getElementById('cockpitPanelsRow');
+    if(panelsRowEl) panelsRowEl.innerHTML = '';
+    return;
+  }
   renderCockpitHeader('cockpitHeader');
   renderCockpitKPIs('cockpitKPIs');
   renderCockpitChart('cockpitChart');
   renderCockpitSide('cockpitSide');
   renderCockpitPanelsRow('cockpitPanelsRow');
+}
+
+// ============================================================
+// Hero Business (07/09/2026) — suivi disclosed de la Gap Closure Sprint,
+// phase 17. Réutilise exclusivement des fonctions déjà réelles et déjà en
+// production sur business-lab.html (computeBusinessProfileSnapshot,
+// computeRunway, renderBusinessDiagnostics, renderNextStepCard,
+// businessLabDecisionsPool/businessLabCasesPool) — zéro nouvelle métrique
+// ni série temporelle inventée. Le profil entreprise est un instantané
+// unique (pas d'historique comme fzr-net-worth-history) : aucun graphique
+// "évolution" n'est donc fabriqué ici, contrairement au hero personnel.
+// ============================================================
+function renderBusinessCockpitHeader(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <div class="cockpit-title">
+      <h2>Mon Univers Financier</h2>
+      <span class="cockpit-demo-badge" style="background:var(--emerald);color:#0B0B0D;">Vue entreprise</span>
+      <p class="cockpit-subtitle" style="width:100%;">Aucune donnée financière personnelle enregistrée — voici un aperçu de ton entreprise, à partir de ton profil Business Lab.</p>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <a href="business-lab.html#companyProfile" class="btn btn-sm btn-gold">Gérer mon profil entreprise →</a>
+      <div class="cockpit-meta">
+        <div>Statut</div>
+        <div class="cockpit-meta-value">Profil renseigné</div>
+      </div>
+    </div>`;
+}
+function renderBusinessCockpitKPIs(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const profile = getBusinessProfile();
+  const snapshot = computeBusinessProfileSnapshot(profile);
+  const runway = computeRunway(profile);
+  const cards = [
+    {key: 'ca', label: "Chiffre d'affaires annuel", value: snapshot.ca, icon: 'coins'},
+    {key: 'resultat', label: 'Résultat mensuel', value: snapshot.resultatMensuelApproximatif, icon: 'trending-up'},
+    {key: 'tresorerie', label: 'Trésorerie actuelle', value: profile.tresorerieActuelle, icon: 'wallet'}
+  ];
+  el.innerHTML = cards.map(c => `
+    <div class="cockpit-kpi" id="${elId}-${c.key}">
+      <span class="kpi-top"><span class="kpi-icon">${ICONS[c.icon] || ''}</span><span class="kpi-label">${c.label}</span></span>
+      <span class="kpi-value mono" id="${elId}-${c.key}-value">0 €</span>
+    </div>`).join('') + `
+    <div class="cockpit-kpi" id="${elId}-runway">
+      <span class="kpi-top"><span class="kpi-icon">${ICONS['shield'] || ''}</span><span class="kpi-label">Runway</span></span>
+      <span class="kpi-value mono">${runway.runwayMois === null ? 'Profitable' : runway.runwayMois.toFixed(1) + ' mois'}</span>
+    </div>`;
+  cards.forEach(c => {
+    animateNumber(document.getElementById(`${elId}-${c.key}-value`), c.value, {format: fmtEUR});
+  });
+}
+function renderBusinessCockpitMain(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<span class="smallcaps">Check-up entreprise</span><div id="${elId}-diagnostics" style="margin-top:12px;"></div>`;
+  renderBusinessDiagnostics(`${elId}-diagnostics`);
+}
+function renderBusinessCockpitSide(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <div class="cockpit-panel" id="${elId}-nextstep"></div>
+    <div class="cockpit-panel" id="${elId}-lab"></div>`;
+  renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
+  const labEl = document.getElementById(`${elId}-lab`);
+  if(labEl){
+    const decisions = businessLabDecisionsPool().length;
+    const cases = businessLabCasesPool().length;
+    labEl.innerHTML = `
+      <span class="panel-title">Business Lab</span>
+      <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">${decisions} décisions rapides et ${cases} business cases réels à explorer pour progresser.</p>
+      <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;align-self:flex-start;">Ouvrir le Business Lab →</a>`;
+  }
 }
 
 // ============================================================
