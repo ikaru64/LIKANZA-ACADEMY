@@ -81,9 +81,36 @@
     </div>
   </div>
 </header>
-<h1 class="visually-hidden">Économie — Likanza Economic Intelligence Terminal</h1>
+<h1 class="visually-hidden">Économie — Economy Intelligence</h1>
 
-<div class="eco-terminal" id="ecoTerminal">
+<!-- ============================================================
+     Accueil "Economy Intelligence" (refonte du 07/09/2026) : mission
+     unique — comprendre en 20-30 secondes l'état de l'économie, ce qui
+     change, et le lien avec les marchés, puis pouvoir creuser au clic.
+     Vue par défaut de cette page. L'ancien "terminal" à 9 onglets
+     (#ecoTerminal ci-dessous) n'est pas supprimé : il devient la Vue
+     avancée, atteinte via ?vue=avance (voir economie.js, ecoInitPageMode).
+     ============================================================ -->
+<div class="eco-home" id="ecoHome" style="display:none;">
+  <section class="eco-home-hero" id="ecoHomeHero"></section>
+  <section class="eco-home-section" id="ecoHomeMetrics"></section>
+  <section class="eco-home-section" id="ecoHomeState"></section>
+  <section class="eco-home-section" id="ecoHomeChanges"></section>
+  <div class="eco-home-row">
+    <section class="eco-home-section" id="ecoHomeWorld"></section>
+    <section class="eco-home-section" id="ecoHomeCalendar"></section>
+  </div>
+  <section class="eco-home-section" id="ecoHomeMarkets"></section>
+  <section class="eco-home-section" id="ecoHomeCtas"></section>
+</div>
+
+<!-- ============================================================
+     Vue avancée (ex-page par défaut, préservée intégralement) : les 9
+     modules réels du terminal restent accessibles tels quels — jamais
+     supprimés, seulement redispatchés derrière un état plutôt que montrés
+     par défaut. Accès via ?vue=avance ou "Vue terminal avancée →" (Zone 6).
+     ============================================================ -->
+<div class="eco-terminal" id="ecoTerminal" style="display:none;">
   <nav class="eco-nav" id="ecoNav" aria-label="Navigation économie"></nav>
 
   <div class="eco-header" id="ecoHeader">
@@ -98,17 +125,6 @@
 
   <div class="eco-main" id="ecoMain"></div>
 </div>
-
-<section class="eco-secondary">
-  <div class="card" style="max-width:640px;margin-bottom:20px;background:var(--term-card);border-color:var(--term-border);">
-    <span class="smallcaps" style="color:var(--term-gold-light);">🧪 Aller plus loin</span>
-    <h3 style="margin:8px 0 6px;color:var(--term-text);">Laboratoire économique</h3>
-    <p style="font-size:13px;color:var(--term-text-dim);margin-bottom:14px;">Que se passe-t-il sur les obligations, les actions, l'immobilier ou le crédit quand un choc macro survient ? Des scénarios qualitatifs, avec le mécanisme expliqué — jamais une prédiction.</p>
-    <a href="laboratoire.html#tab-economie" class="btn btn-sm btn-gold">Explorer les scénarios →</a>
-  </div>
-  <h3>Comprendre les concepts clés</h3>
-  <div class="glossary-list" id="ecoGlossary"></div>
-</section>
 
 <footer class="site-footer">
   <div class="footer-inner">

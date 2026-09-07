@@ -1,19 +1,22 @@
 /* ============================================================
    LIKANZA ACADEMY — Page Économie (economie.html)
-   Refonte du 06/09/2026 : "Likanza Economic Intelligence Terminal"
-   (Phase 1, socle). Toutes les séries viennent de /api/eco-rate (BCE,
+   Refonte du 06-07/09/2026 : socle "Likanza Economic Intelligence
+   Terminal" (pays/KPI/Macro Trend/Comparateur/Carte mondiale/Graph Lab/
+   Crisis Replay/mode enseignant/Et si.../Banques centrales/Dette &
+   déficit/Finances publiques) construit module après module — tout est
+   réel, sourcé, testé. Toutes les séries viennent de /api/eco-rate (BCE,
    Eurostat, Banque Mondiale, FRED — voir api/eco-rate.js) — jamais une
    valeur inventée pour combler une case vide ; une série indisponible
    affiche honnêtement "Donnée indisponible".
 
-   Portée volontairement limitée à un socle réel plutôt qu'aux 40
-   sections du brief d'origine — carte interactive, Graph Lab, mode
-   enseignant, crisis replay et impact engine restent reportés à des
-   chantiers futurs (décision actée avec l'utilisateur, cf. mémoire
-   project_economie_terminal_status). Le comparateur de pays (section 26
-   du brief) a été ajouté ensuite : aucune nouvelle donnée nécessaire,
-   il ne fait que réutiliser les séries déjà réelles et déjà branchées
-   pour les 8 pays ci-dessous.
+   Refonte du 07/09/2026 : ce socle (ECO_VIEWS, renderEcoBody...) devient
+   la VUE AVANCÉE (?vue=avance), atteinte au clic depuis un nouvel
+   ACCUEIL à 6 zones (mission unique : comprendre l'état de l'économie,
+   ce qui change et le lien avec les marchés en 20-30 secondes — voir le
+   bloc "Accueil Economy Intelligence" plus bas dans ce fichier, et
+   ecoInitPageMode tout en bas pour la bascule). Rien n'a été supprimé
+   ni réécrit dans le socle ci-dessous — seulement redispatché derrière
+   un état plutôt que montré par défaut.
    ============================================================ */
 
 // ---------- Pays couverts : seulement des pays réels, jamais un agrégat
@@ -938,7 +941,7 @@ async function ecoFetchRealSeries(country, rowKey){
       }).filter(Boolean);
       if(points.length === 0) return null;
     }
-    return {points, meta};
+    return {points, meta, frequency: data.frequency, source: data.source};
   } catch(err){
     return null;
   }
@@ -1495,18 +1498,567 @@ function renderPublicFinanceView(){
   }
 }
 
-safeRun('terminal économie — navigation', () => renderEcoNav('ecoNav'));
-safeRun('terminal économie — corps (en-tête/KPI/contenu)', () => renderEcoBody());
+// ============================================================
+// Accueil "Economy Intelligence" (refonte du 07/09/2026) — nouvelle
+// mission unique de cette page : comprendre en 20-30 secondes l'état de
+// l'économie, ce qui change, et le lien avec les marchés, puis pouvoir
+// creuser au clic. Le terminal à 9 onglets ci-dessus (ECO_VIEWS,
+// renderEcoBody...) n'est pas supprimé : il devient la Vue avancée,
+// atteinte via ?vue=avance (voir ecoInitPageMode, tout en bas de ce
+// fichier) — rien n'est réécrit ni perdu, seulement redispatché derrière
+// un état plutôt que montré par défaut. Toute donnée ici réutilise
+// exactement les mêmes fonctions réelles que la Vue avancée
+// (fetchEcoSeries/ecoFetchRealSeries/ECO_KPI_META) — zéro nouvelle
+// source, zéro valeur inventée.
+// ============================================================
 
-// ---------- Concepts clés — Bibliothèque (catégorie "Économie" déjà
-// existante), même pattern d'accordéon que la page Crypto. ----------
-const ecoLib = LIBRARY.filter(l => l.categorie === 'Économie');
-safeRun('glossaire économie', () => {
-  const el = document.getElementById('ecoGlossary');
+// ---------- Géographies visibles pour la page d'accueil. "Zone euro"
+// n'est JAMAIS un raccourci vers l'agrégat UE27 Eurostat (périmètre
+// réellement différent de l'agrégat BCE U2 — cf. api/eco-rate.js, déjà
+// documenté comme un piège à ne jamais fusionner) : seuls les
+// indicateurs ayant une vraie source zone-euro (BCE, U2) lui sont
+// proposés (ECO_HOME_EA_AVAILABLE) — les autres affichent honnêtement
+// "Non disponible pour la zone euro" plutôt qu'un agrégat UE27
+// silencieusement substitué. Royaume-Uni/Japon réservés dans la
+// structure (libellé/drapeau déjà prêts), non affichés pour l'instant
+// (ECO_HOME_GEOS_VISIBLE). ----------
+const ECO_HOME_GEOS = {
+  FR: {label: 'France', flag: '🇫🇷'},
+  EA: {label: 'Zone euro', flag: '🇪🇺'},
+  US: {label: 'États-Unis', flag: '🇺🇸'},
+  CN: {label: 'Chine', flag: '🇨🇳'},
+  GB: {label: 'Royaume-Uni', flag: '🇬🇧'},
+  JP: {label: 'Japon', flag: '🇯🇵'}
+};
+const ECO_HOME_GEOS_VISIBLE = ['FR', 'EA', 'US', 'CN']; // GB/JP réservés, à activer plus tard
+let ecoHomeGeo = 'FR';
+
+// Les 6 indicateurs de la Zone 2. PMI et taux souverain à 10 ans (cités
+// en exemple) n'ont AUCUNE source réelle intégrée sur ce site (vérifié :
+// absents de ECO_KPI_META et de tout lib/*.js — le taux à 10 ans avait
+// déjà été tenté puis abandonné faute de source fiable, cf. mémoire du
+// projet) — remplacés par 2 indicateurs déjà réels et déjà sourcés :
+// Dette publique et Confiance des ménages.
+const ECO_HOME_INDICATORS = ['inflation', 'gdp-growth', 'policy-rate', 'unemployment', 'gov-debt', 'consumer-confidence'];
+const ECO_HOME_EA_AVAILABLE = ['inflation', 'policy-rate']; // seuls les 2 à avoir une vraie source zone-euro (U2)
+
+// Vérifié un par un contre LIBRARY (catégorie "Économie") : Confiance des
+// ménages n'a réellement aucun terme dédié — jamais un ⓘ fabriqué pour
+// cet indicateur.
+const ECO_HOME_INDICATOR_TERMS = {
+  'inflation': 'Inflation', 'gdp-growth': 'PIB (Produit intérieur brut)', 'policy-rate': 'Taux directeur',
+  'unemployment': 'Chômage', 'gov-debt': 'Dette publique', 'consumer-confidence': null
+};
+// Vérifié un par un dans COURS_CATALOG (scripts/app.js, champ
+// libraryTermes) : seuls ces 2 termes figurent réellement dans un cours
+// (Inflation -> "Les fondations de tes finances personnelles" ;
+// PIB/Taux directeur -> "Comprendre l'économie") — jamais un lien de
+// cours fabriqué pour Chômage/Dette publique/Confiance, qui n'en ont
+// aucun (Bibliothèque seule pour ceux-là).
+const ECO_HOME_INDICATOR_COURSE = {
+  'inflation': 'budget-securite', 'gdp-growth': 'economie-generale', 'policy-rate': 'economie-generale',
+  'unemployment': null, 'gov-debt': null, 'consumer-confidence': null
+};
+
+// ---------- Interprétations prudentes (Zones 2 et 4) — jamais présentées
+// comme une certitude, vocabulaire imposé : "peut", "tend historiquement
+// à", "est généralement associé à", "constitue un signal à surveiller".
+// Une entrée par indicateur × sens réel du dernier mouvement observé. ----------
+const ECO_HOME_INTERPRETATIONS = {
+  'inflation': {
+    up: "Une inflation qui remonte peut augmenter la probabilité d'un maintien des taux directeurs à un niveau élevé.",
+    down: "Une inflation qui ralentit peut réduire progressivement la pression sur la politique monétaire."
+  },
+  'gdp-growth': {
+    up: "Une croissance qui accélère est généralement associée à un marché du travail plus dynamique.",
+    down: "Une croissance qui ralentit constitue un signal à surveiller pour l'emploi dans les mois qui suivent."
+  },
+  'policy-rate': {
+    up: "Une hausse des taux directeurs tend historiquement à renchérir le crédit et à ralentir la demande.",
+    down: "Une baisse des taux directeurs tend historiquement à alléger le coût du crédit."
+  },
+  'unemployment': {
+    up: "Une hausse du chômage peut peser sur la consommation des ménages dans les mois suivants.",
+    down: "Un chômage en baisse est généralement associé à une consommation des ménages plus soutenue."
+  },
+  'gov-debt': {
+    up: "Une dette publique en hausse peut, à terme, limiter la marge de manœuvre budgétaire de l'État.",
+    down: "Une dette publique en baisse peut redonner une marge de manœuvre budgétaire supplémentaire."
+  },
+  'consumer-confidence': {
+    up: "Une confiance des ménages en hausse est généralement associée à une consommation plus soutenue.",
+    down: "Une confiance des ménages en baisse constitue un signal à surveiller pour la consommation à venir."
+  }
+};
+function ecoHomeInterpretation(indicatorKey, delta){
+  if(!delta) return null;
+  return (ECO_HOME_INTERPRETATIONS[indicatorKey] || {})[delta > 0 ? 'up' : 'down'] || null;
+}
+
+// ---------- Récupération partagée : un seul fetch par indicateur pour
+// toute la page d'accueil (Zones 2/3/4 lisent le même résultat mis en
+// cache, jamais 3 appels réseau indépendants qui pourraient renvoyer des
+// valeurs légèrement désynchronisées). "EA" (zone euro) a son propre
+// chemin de récupération, sur les 2 vraies séries zone-euro (inflation-eu
+// = BCE U2, policy-rate-ecb-history = déjà zone-euro par nature). ----------
+let ecoHomeData = {}; // {indicatorKey: {points, meta, frequency, source} | null}
+async function ecoHomeFetchIndicator(geo, indicatorKey){
+  if(geo === 'EA'){
+    if(!ECO_HOME_EA_AVAILABLE.includes(indicatorKey)) return null;
+    const seriesKey = indicatorKey === 'inflation' ? 'inflation-eu' : 'policy-rate-ecb-history';
+    const meta = indicatorKey === 'inflation' ? ECO_KPI_META['inflation'] : ECO_KPI_META['policy-rate-ecb'];
+    try {
+      const data = await fetchEcoSeries(seriesKey);
+      let points = data.points;
+      if(indicatorKey === 'inflation'){
+        points = points.map((p, i) => {
+          if(i < 12) return null;
+          const rate = computeRealInflationRate(points.slice(0, i + 1));
+          return typeof rate === 'number' ? {period: p.period, value: rate} : null;
+        }).filter(Boolean);
+        if(points.length === 0) return null;
+      }
+      return {points, meta, frequency: data.frequency, source: data.source};
+    } catch(err){ return null; }
+  }
+  return ecoFetchRealSeries(geo, indicatorKey);
+}
+async function ecoHomeFetchAll(geo){
+  const results = await Promise.all(ECO_HOME_INDICATORS.map(k => ecoHomeFetchIndicator(geo, k)));
+  const data = {};
+  ECO_HOME_INDICATORS.forEach((k, i) => { data[k] = results[i]; });
+  ecoHomeData = data;
+}
+
+function ecoHomeLastDelta(points){
+  if(!points || points.length < 2) return null;
+  return points[points.length - 1].value - points[points.length - 2].value;
+}
+
+// ============================================================
+// ZONE 1 — Hero "Economy Intelligence" : titre + sélecteur géographique.
+// ============================================================
+function renderEcoHomeHero(){
+  const el = document.getElementById('ecoHomeHero');
   if(!el) return;
-  el.innerHTML = ecoLib.map(l => `
-    <div class="glossary-item">
-      <button type="button" class="head" style="background:none;border:none;width:100%;text-align:left;font:inherit;" onclick="this.nextElementSibling.classList.toggle('open')"><h4>${l.terme}</h4><span class="idx">${l.niveau}</span></button>
-      <div class="glossary-body">${l.detail}</div>
-    </div>`).join('') || '<p style="color:var(--text-dim);font-size:13px;">Notions à venir.</p>';
-});
+  el.innerHTML = `
+    <div class="eco-home-hero-top">
+      <div>
+        <span class="eco-home-eyebrow">Economy Intelligence</span>
+        <h2>Comprendre l'économie mondiale en quelques secondes.</h2>
+      </div>
+      <a href="economie.html?vue=avance" class="btn btn-sm" title="La vue complète : carte mondiale, comparateur, Graph Lab, Crisis Replay, Et si...?, banques centrales, dette, finances publiques">Vue terminal avancée →</a>
+    </div>
+    <div class="eco-home-geo-picker" id="ecoHomeGeoPicker">
+      ${ECO_HOME_GEOS_VISIBLE.map(g => `<button type="button" class="pill ${g === ecoHomeGeo ? 'active' : ''}" data-geo="${g}">${ECO_HOME_GEOS[g].flag} ${ECO_HOME_GEOS[g].label}</button>`).join('')}
+    </div>`;
+  el.querySelectorAll('[data-geo]').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      if(btn.dataset.geo === ecoHomeGeo) return;
+      ecoHomeGeo = btn.dataset.geo;
+      el.querySelectorAll('[data-geo]').forEach(b => b.classList.toggle('active', b.dataset.geo === ecoHomeGeo));
+      renderEcoHomeMetricsLoading();
+      await ecoHomeFetchAll(ecoHomeGeo);
+      renderEcoHomeMetrics();
+      renderEcoHomeState();
+      renderEcoHomeChanges();
+    });
+  });
+}
+
+// ============================================================
+// ZONE 2 — 6 indicateurs macro principaux (MacroMetricCard). Icône+
+// libellé, valeur, delta+tendance (sparkline déjà existante), source+
+// fraîcheur, interprétation prudente, ⓘ (définition LIBRARY + cours
+// réel si disponible), "Voir l'historique →" (renvoie à la Vue avancée,
+// réutilise le Macro Trend chart existant tel quel).
+// ============================================================
+function renderEcoHomeMetricsLoading(){
+  const el = document.getElementById('ecoHomeMetrics');
+  if(!el) return;
+  el.innerHTML = `<span class="eco-home-section-title">Indicateurs clés</span><div class="eco-home-metrics-grid">${ECO_HOME_INDICATORS.map(k => {
+    const meta = k === 'policy-rate' ? {icon: 'landmark', label: 'Taux directeur'} : ECO_KPI_META[k];
+    return `<div class="eco-kpi is-loading"><span class="eco-kpi-label">${ICONS[meta.icon] || ''} ${meta.label}</span><span class="eco-kpi-value">Chargement…</span></div>`;
+  }).join('')}</div>`;
+}
+function ecoHomeInfoHtml(indicatorKey, uid){
+  const terme = ECO_HOME_INDICATOR_TERMS[indicatorKey];
+  if(!terme) return '';
+  const def = ecoLibraryDefinition(terme);
+  if(!def) return '';
+  const courseId = ECO_HOME_INDICATOR_COURSE[indicatorKey];
+  const courseOrLibHtml = courseId
+    ? `<a href="cours.html#${courseId}" style="display:block;margin-top:8px;">Voir le cours complet →</a>`
+    : `<a href="bibliotheque.html#${encodeURIComponent(terme.replace(/\s+/g, '-'))}" style="display:block;margin-top:8px;">Voir dans la Bibliothèque →</a>`;
+  return `
+    <button type="button" class="eco-info-btn" aria-label="Qu'est-ce que ${terme} ?" onclick="document.getElementById('${uid}').classList.toggle('open')">ⓘ</button>
+    <div class="glossary-body" id="${uid}">
+      <div class="glossary-body-inner">
+        <strong>Qu'est-ce que ${terme} ?</strong>
+        <p style="margin-top:4px;">${def}</p>
+        ${courseOrLibHtml}
+      </div>
+    </div>`;
+}
+function renderEcoHomeMetrics(){
+  const el = document.getElementById('ecoHomeMetrics');
+  if(!el) return;
+  const geoLabel = ECO_HOME_GEOS[ecoHomeGeo].label;
+  el.innerHTML = `<span class="eco-home-section-title">Indicateurs clés — ${geoLabel}</span><div class="eco-home-metrics-grid" id="ecoHomeMetricsGrid"></div>`;
+  const grid = document.getElementById('ecoHomeMetricsGrid');
+  grid.innerHTML = ECO_HOME_INDICATORS.map((k, i) => {
+    const fallbackMeta = k === 'policy-rate' ? {icon: 'landmark', label: 'Taux directeur'} : ECO_KPI_META[k];
+    const d = ecoHomeData[k];
+    const uid = `ecoHomeInfo-${k}`;
+    if(!d || d.points.length === 0){
+      return `<div class="eco-kpi is-unavailable"><span class="eco-kpi-label">${ICONS[fallbackMeta.icon] || ''} ${fallbackMeta.label}</span><span class="eco-kpi-value" style="font-size:12px;font-weight:400;color:var(--term-text-dim);">Donnée indisponible${ecoHomeGeo === 'EA' && !ECO_HOME_EA_AVAILABLE.includes(k) ? ' pour la zone euro' : ''}</span></div>`;
+    }
+    const last = d.points[d.points.length - 1];
+    const delta = ecoHomeLastDelta(d.points);
+    const deltaClass = delta !== null ? ecoDeltaClass(d.meta.tone, delta) : 'flat';
+    const arrow = deltaClass === 'up' ? '↑' : deltaClass === 'down' ? '↓' : '→';
+    const sparkHistory = d.points.slice(-24).map(p => ({close: p.value, date: p.period}));
+    const interpretation = ecoHomeInterpretation(k, delta);
+    return `<div class="eco-kpi">
+      <span class="eco-kpi-label">${ICONS[d.meta.icon] || ''} ${d.meta.label}${ecoHomeInfoHtml(k, uid)}</span>
+      <span class="eco-kpi-value">${d.meta.fmt(last.value)}</span>
+      ${delta !== null ? `<span class="eco-kpi-delta ${deltaClass}">${arrow} ${d.meta.fmt(Math.abs(delta)).replace(/^\+/, '')} vs période préc.</span>` : ''}
+      <div class="eco-kpi-spark">${renderSparklineHTML(sparkHistory, {compact: true})}</div>
+      <span class="eco-kpi-asof">${ecoFreshnessBadge(d.frequency)} · ${last.period} · ${d.source || ''}</span>
+      ${interpretation ? `<p class="eco-home-interpretation">${interpretation}</p>` : ''}
+      <a href="economie.html?vue=avance&pays=${ecoHomeGeo === 'EA' ? 'FR' : ecoHomeGeo}&onglet=overview${ECO_CHART_VARIABLES.includes(k) ? `&variable=${k}` : ''}" class="eco-link" style="font-size:11px;">Voir l'historique →</a>
+    </div>`;
+  }).join('');
+}
+
+// ============================================================
+// ZONE 3 — État de l'économie (EconomyState). Méthodologie disclosed,
+// jamais un chiffre inventé : chaque barre = position (0-100 %) de la
+// dernière valeur réelle dans le min-max de son PROPRE historique déjà
+// récupéré (Zone 2) — jamais un seuil absolu inventé. Le sens (haut =
+// favorable) suit le "tone" déjà défini dans ECO_KPI_META : croissance
+// (growth) et marché du travail (inverse sur le chômage, donc barre
+// inversée) ont une lecture favorable/défavorable claire ; inflation et
+// taux directeur restent "neutral" (pas de jugement bon/mauvais universel
+// sur leur niveau, même principe déjà appliqué à la Carte mondiale) — la
+// barre "Conditions financières" est un PROXY assumé et disclosed
+// (position du taux directeur dans son historique), jamais un indice
+// composite inventé. Formulation imposée : "Lecture des indicateurs
+// actuels", jamais "L'économie est officiellement...".
+// ============================================================
+function ecoHomeBarPct(points, tone){
+  if(!points || points.length < 2) return null;
+  const values = points.map(p => p.value);
+  const min = Math.min(...values), max = Math.max(...values);
+  if(max === min) return 50;
+  const last = values[values.length - 1];
+  const pct = ((last - min) / (max - min)) * 100;
+  return tone === 'inverse' ? 100 - pct : pct;
+}
+const ECO_HOME_STATE_DIMENSIONS = [
+  {key: 'gdp-growth', label: 'Croissance', tone: 'growth'},
+  {key: 'inflation', label: 'Inflation', tone: 'neutral'},
+  {key: 'unemployment', label: 'Marché du travail', tone: 'inverse'},
+  {key: 'policy-rate', label: 'Conditions financières', tone: 'neutral'}
+];
+function ecoHomeReading(){
+  const growth = ecoHomeData['gdp-growth'];
+  const favorable = [], vigilance = [];
+  if(growth && growth.points.length >= 2){
+    const delta = ecoHomeLastDelta(growth.points);
+    const last = growth.points[growth.points.length - 1].value;
+    if(delta < 0) vigilance.push(`Croissance en ralentissement (${ECO_KPI_META['gdp-growth'].fmt(last)} sur la dernière période observée).`);
+    else if(delta > 0) favorable.push(`Croissance en accélération (${ECO_KPI_META['gdp-growth'].fmt(last)} sur la dernière période observée).`);
+  }
+  const inflation = ecoHomeData['inflation'];
+  if(inflation && inflation.points.length >= 3){
+    const p = inflation.points, n = p.length;
+    if(p[n - 1].value < p[n - 2].value && p[n - 2].value < p[n - 3].value) favorable.push('Inflation en baisse sur les deux dernières périodes observées.');
+    else if(p[n - 1].value > p[n - 2].value && p[n - 2].value > p[n - 3].value) vigilance.push('Inflation en hausse sur les deux dernières périodes observées.');
+  }
+  const unemployment = ecoHomeData['unemployment'];
+  if(unemployment && unemployment.points.length >= 2){
+    const delta = ecoHomeLastDelta(unemployment.points);
+    const last = unemployment.points[unemployment.points.length - 1].value;
+    if(delta <= 0) favorable.push(`Marché du travail résilient (chômage à ${ECO_KPI_META['unemployment'].fmt(last)}).`);
+    else vigilance.push(`Chômage en hausse (${ECO_KPI_META['unemployment'].fmt(last)} sur la dernière période observée).`);
+  }
+  let headline = 'Lecture mixte';
+  if(growth && growth.points.length >= 2){
+    const delta = ecoHomeLastDelta(growth.points);
+    const last = growth.points[growth.points.length - 1].value;
+    if(delta < 0 && last < 1) headline = 'Ralentissement modéré';
+    else if(delta < 0) headline = 'Croissance qui ralentit';
+    else if(last > 1.5) headline = 'Expansion soutenue';
+    else headline = 'Croissance stable';
+  }
+  const watch = ecoUpcomingMeetings(new Date().toISOString().slice(0, 10)).slice(0, 3)
+    .map(m => `Réunion ${m.bank} — ${ecoFormatDateRange(m.date, m.dateEnd)}`);
+  return {headline, favorable, vigilance, watch};
+}
+function renderEcoHomeState(){
+  const el = document.getElementById('ecoHomeState');
+  if(!el) return;
+  const reading = ecoHomeReading();
+  el.innerHTML = `
+    <span class="eco-home-section-title">État de l'économie <button type="button" class="eco-link" id="ecoHomeMethodoBtn" style="font-size:10.5px;">Méthodologie</button></span>
+    <div class="eco-panel" style="margin-top:10px;">
+      <p style="font-size:11px;color:var(--term-text-dim);text-transform:uppercase;letter-spacing:.06em;">Lecture des indicateurs actuels</p>
+      <p style="font-family:'Cormorant Garamond',serif;font-size:24px;color:var(--term-gold-light);margin-top:4px;">${reading.headline}</p>
+      <div class="eco-home-bars">
+        ${ECO_HOME_STATE_DIMENSIONS.map(dim => {
+          const pct = ecoHomeBarPct((ecoHomeData[dim.key] || {}).points, dim.tone);
+          return `<div class="eco-home-bar-row">
+            <span class="eco-home-bar-label">${dim.label}</span>
+            <div class="eco-home-bar-track">${pct === null ? '' : `<div class="eco-home-bar-fill" style="width:${pct}%;"></div>`}</div>
+          </div>`;
+        }).join('')}
+      </div>
+      <div class="eco-home-state-cols">
+        <div><span class="eco-home-col-title" style="color:var(--term-positive);">Points favorables</span>${reading.favorable.length ? reading.favorable.map(t => `<p>${t}</p>`).join('') : '<p class="eco-panel-note">Aucun signal favorable net sur les indicateurs suivis actuellement.</p>'}</div>
+        <div><span class="eco-home-col-title" style="color:var(--term-negative);">Points de vigilance</span>${reading.vigilance.length ? reading.vigilance.map(t => `<p>${t}</p>`).join('') : '<p class="eco-panel-note">Aucun signal de vigilance net sur les indicateurs suivis actuellement.</p>'}</div>
+        <div><span class="eco-home-col-title">À surveiller</span>${reading.watch.length ? reading.watch.map(t => `<p>${t}</p>`).join('') : '<p class="eco-panel-note">Aucune échéance connue dans le calendrier suivi.</p>'}</div>
+      </div>
+      <div class="glossary-body" id="ecoHomeMethodoBody"><div class="glossary-body-inner">
+        <strong>Méthodologie</strong>
+        <p style="margin-top:4px;">Chaque barre indique la position de la dernière valeur réelle par rapport au minimum et au maximum de son propre historique observé sur ce site (jamais un seuil absolu inventé). "Marché du travail" est inversé (un chômage bas remplit la barre). "Inflation" et "Conditions financières" (proxy : niveau du taux directeur dans son historique) restent neutres — ni favorables ni défavorables par nature, comme sur la Carte mondiale. Cette lecture décrit les indicateurs suivis, ce n'est jamais une prévision ni un verdict officiel sur l'économie.</p>
+      </div></div>
+    </div>`;
+  const methodoBtn = document.getElementById('ecoHomeMethodoBtn');
+  if(methodoBtn) methodoBtn.addEventListener('click', () => document.getElementById('ecoHomeMethodoBody').classList.toggle('open'));
+}
+
+// ============================================================
+// ZONE 4 — Ce qui change (MacroEventCard, 3 max). Calcul automatique
+// (jamais 3 événements curés à la main, source de contenu qui périme) :
+// les indicateurs avec le plus grand mouvement réel récent normalisé
+// (|delta| / écart-type historique).
+// ============================================================
+function ecoHomeStdDev(values){
+  const n = values.length;
+  if(n < 2) return 0;
+  const mean = values.reduce((s, v) => s + v, 0) / n;
+  return Math.sqrt(values.reduce((s, v) => s + (v - mean) ** 2, 0) / n);
+}
+function ecoHomeTopChanges(){
+  return ECO_HOME_INDICATORS.map(k => {
+    const d = ecoHomeData[k];
+    if(!d || d.points.length < 2) return null;
+    const values = d.points.map(p => p.value);
+    const last = values[values.length - 1];
+    const prev = values[values.length - 2];
+    const delta = last - prev;
+    if(Math.abs(delta) < 1e-9) return null;
+    const stdev = ecoHomeStdDev(values);
+    return {key: k, last, prev, delta, score: stdev > 0 ? Math.abs(delta) / stdev : 0, meta: d.meta, period: d.points[d.points.length - 1].period};
+  }).filter(Boolean).sort((a, b) => b.score - a.score).slice(0, 3);
+}
+function renderEcoHomeChanges(){
+  const el = document.getElementById('ecoHomeChanges');
+  if(!el) return;
+  const changes = ecoHomeTopChanges();
+  el.innerHTML = `
+    <span class="eco-home-section-title">Ce qui change — ${ECO_HOME_GEOS[ecoHomeGeo].label}</span>
+    <div class="eco-home-changes-grid">
+      ${changes.length === 0 ? '<p class="eco-panel-note">Aucun mouvement significatif détecté sur les indicateurs suivis actuellement.</p>' : changes.map(c => `
+        <div class="eco-panel">
+          <span class="eco-panel-title">${c.meta.label}</span>
+          <p style="font-family:'IBM Plex Mono',monospace;font-size:18px;color:var(--term-text);margin-top:6px;">${c.meta.fmt(c.last)} <span style="font-size:12px;color:var(--term-text-dim);font-weight:400;">contre ${c.meta.fmt(c.prev)} précédemment</span></p>
+          <p class="eco-panel-note">${ecoHomeInterpretation(c.key, c.delta) || ''}</p>
+        </div>`).join('')}
+    </div>`;
+}
+
+// ============================================================
+// ZONE 5 — Monde (CountryComparison compact). Réutilise ecoHomeFetchIndicator
+// (qui gère déjà FR/EA/US/CN/GB/JP) pour les 4 géographies visibles de la
+// page + les 8 pays réels du Comparateur existant réunis sous une seule
+// liste, comparaison compacte 5 indicateurs. Favorable/neutre/vigilance
+// dérivé du "tone" déjà défini (jamais vert=bon/rouge=mauvais sans
+// logique) — l'inflation reste explicitement neutre, jamais colorée,
+// cohérent avec la Carte mondiale déjà livrée.
+// ============================================================
+const ECO_HOME_WORLD_GEOS = ['FR', 'EA', 'US', 'CN'];
+const ECO_HOME_WORLD_ROWS = ['inflation', 'gdp-growth', 'policy-rate', 'unemployment', 'gov-debt'];
+let ecoHomeWorldData = null;
+function ecoHomeToneLabel(tone, delta){
+  if(tone === 'neutral' || !delta) return {label: 'neutre', cls: 'flat'};
+  const rising = delta > 0;
+  const favorable = (tone === 'growth' && rising) || (tone === 'inverse' && !rising);
+  return favorable ? {label: 'favorable', cls: 'up'} : {label: 'vigilance', cls: 'down'};
+}
+async function renderEcoHomeWorld(){
+  const el = document.getElementById('ecoHomeWorld');
+  if(!el) return;
+  el.innerHTML = `<span class="eco-home-section-title">Monde</span><p class="eco-panel-note">Chargement…</p>`;
+  if(!ecoHomeWorldData){
+    const table = {};
+    for(const geo of ECO_HOME_WORLD_GEOS){
+      table[geo] = {};
+      for(const row of ECO_HOME_WORLD_ROWS){ table[geo][row] = await ecoHomeFetchIndicator(geo, row); }
+    }
+    ecoHomeWorldData = table;
+  }
+  el.innerHTML = `
+    <span class="eco-home-section-title">Monde</span>
+    <div class="eco-table-wrap">
+      <table class="eco-home-world-table">
+        <thead><tr><th>Indicateur</th>${ECO_HOME_WORLD_GEOS.map(g => `<th>${ECO_HOME_GEOS[g].flag} ${ECO_HOME_GEOS[g].label}</th>`).join('')}</tr></thead>
+        <tbody>
+          ${ECO_HOME_WORLD_ROWS.map(row => `<tr><td>${row === 'policy-rate' ? 'Taux directeur' : ECO_KPI_META[row].label}</td>${ECO_HOME_WORLD_GEOS.map(geo => {
+            const d = ecoHomeWorldData[geo][row];
+            if(!d || d.points.length === 0) return `<td class="is-na">N/D</td>`;
+            const last = d.points[d.points.length - 1];
+            const delta = ecoHomeLastDelta(d.points);
+            const tone = ecoHomeToneLabel(d.meta.tone, delta);
+            return `<td><span class="mono">${d.meta.fmt(last.value)}</span><span class="eco-home-tone eco-home-tone-${tone.cls}">${tone.label}</span></td>`;
+          }).join('')}</tr>`).join('')}
+        </tbody>
+      </table>
+    </div>
+    <a href="economie.html?vue=avance&onglet=compare" class="eco-link" style="font-size:11.5px;margin-top:8px;display:inline-block;">Voir le comparateur complet →</a>
+    <a href="economie.html?vue=avance&onglet=map" class="eco-link" style="font-size:11.5px;margin-top:8px;margin-left:14px;display:inline-block;">Voir la carte mondiale →</a>`;
+}
+
+// ============================================================
+// ZONE 6 — Calendrier macro (compact). Réutilise ECO_CENTRAL_BANK_MEETINGS
+// / ecoUpcomingMeetings tels quels — aucune page calendrier dédiée
+// n'existe sur le site (vérifié) et aucune source de dates de publication
+// macro n'est intégrée : "Voir tous les événements suivis →" déplie la
+// liste complète EN PLACE plutôt que de fabriquer un lien vers une page
+// qui n'existe pas.
+// ============================================================
+function renderEcoHomeCalendar(){
+  const el = document.getElementById('ecoHomeCalendar');
+  if(!el) return;
+  const all = ecoUpcomingMeetings(new Date().toISOString().slice(0, 10));
+  const preview = all.slice(0, 3);
+  el.innerHTML = `
+    <span class="eco-home-section-title">Calendrier macro</span>
+    <div class="eco-panel" style="margin-top:10px;">
+      <div id="ecoHomeCalendarList">
+        ${preview.map(m => `<a href="${m.url}" target="_blank" rel="noopener" class="eco-home-calendar-row"><span>${m.bank}</span><span class="mono">${ecoFormatDateRange(m.date, m.dateEnd)}</span></a>`).join('') || '<p class="eco-panel-note">Aucune échéance connue pour l\'instant.</p>'}
+      </div>
+      ${all.length > preview.length ? `<button type="button" class="eco-link" id="ecoHomeCalendarMore" style="margin-top:8px;font-size:11.5px;">Voir tous les événements suivis (${all.length}) →</button>` : ''}
+      <p class="eco-panel-note">Dates officielles BCE/Fed. Aucun calendrier de publications macro (inflation, PIB, emploi...) n'est encore intégré sur ce site.</p>
+    </div>`;
+  const moreBtn = document.getElementById('ecoHomeCalendarMore');
+  if(moreBtn) moreBtn.addEventListener('click', () => {
+    document.getElementById('ecoHomeCalendarList').innerHTML = all.map(m => `<a href="${m.url}" target="_blank" rel="noopener" class="eco-home-calendar-row"><span>${m.bank}</span><span class="mono">${ecoFormatDateRange(m.date, m.dateEnd)}</span></a>`).join('');
+    moreBtn.style.display = 'none';
+  });
+}
+
+// ============================================================
+// Macro → Marchés (MacroMarketImpact) — pédagogique, distinct de l'Et
+// si...? existant (qui reste dans la Vue avancée pour les chaînes de
+// cause à effet macro-macro) : mécanismes réels de manuel, jamais une
+// prédiction ni une recommandation d'achat. Ponts vers Bourse limités
+// aux vraies destinations existantes (aucune vue "secteurs sensibles aux
+// taux" n'existe sur bourse.html, vérifié).
+// ============================================================
+const ECO_MARKET_IMPACTS = {
+  'inflation-up': {label: 'Inflation ↑', bonds: "Peut peser sur le prix des obligations déjà émises (leur rendement doit rester compétitif face à la hausse des prix).", stocks: 'Peut peser sur les valorisations, notamment des entreprises à forte croissance attendue.', realestate: 'Peut renchérir indirectement le coût du crédit immobilier si la banque centrale réagit en relevant ses taux.', currency: 'Effet sur la monnaie très dépendant de la réponse de la banque centrale.'},
+  'inflation-down': {label: 'Inflation ↓', bonds: 'Peut soutenir le prix des obligations déjà émises.', stocks: 'Peut soutenir les valorisations, notamment des entreprises à forte croissance attendue.', realestate: 'Peut contribuer à rendre le crédit immobilier moins coûteux si la banque centrale baisse ses taux en retour.', currency: 'Effet sur la monnaie très dépendant de la réponse de la banque centrale.'},
+  'rate-up': {label: 'Taux directeurs ↑', bonds: 'Tend historiquement à faire baisser le prix des obligations déjà émises (rendement moins compétitif).', stocks: 'Peut augmenter le coût du capital pour les entreprises et peser sur les valorisations.', realestate: 'Tend historiquement à renchérir le crédit immobilier.', currency: 'Peut soutenir relativement la monnaie concernée (rendement plus attractif pour les capitaux étrangers).'},
+  'rate-down': {label: 'Taux directeurs ↓', bonds: 'Peut soutenir le prix des obligations déjà émises.', stocks: 'Peut réduire le coût du capital pour les entreprises.', realestate: 'Peut contribuer à rendre le crédit immobilier moins coûteux.', currency: 'Peut exercer une pression relative sur la monnaie concernée.'},
+  'growth-up': {label: 'Croissance ↑', bonds: "Peut peser légèrement sur les obligations si elle ravive les anticipations d'inflation ou de taux.", stocks: 'Est généralement associée à une amélioration des perspectives de bénéfices des entreprises.', realestate: 'Peut soutenir la demande immobilière via un marché du travail plus dynamique.', currency: 'Peut soutenir relativement la monnaie concernée.'},
+  'growth-down': {label: 'Croissance ↓', bonds: 'Peut soutenir les obligations perçues comme des valeurs refuges.', stocks: 'Est généralement associée à des perspectives de bénéfices plus prudentes.', realestate: 'Peut peser sur la demande immobilière via un marché du travail plus incertain.', currency: 'Peut exercer une pression relative sur la monnaie concernée.'},
+  'unemployment-up': {label: 'Chômage ↑', bonds: 'Peut soutenir les obligations si la hausse renforce les anticipations de baisse des taux.', stocks: 'Peut peser sur la consommation et donc sur les résultats des entreprises exposées.', realestate: 'Peut peser sur la demande immobilière.', currency: 'Peut exercer une pression relative sur la monnaie concernée.'},
+  'oil-up': {label: 'Pétrole ↑', bonds: "Peut peser sur les obligations si la hausse ravive les anticipations d'inflation.", stocks: 'Effet contrasté : peut peser sur les entreprises fortement consommatrices d\'énergie, soutenir les producteurs.', realestate: 'Effet indirect, via le coût de la vie et le pouvoir d\'achat des ménages.', currency: 'Peut soutenir relativement la monnaie des pays exportateurs de pétrole.'}
+};
+let ecoHomeMarketScenario = 'rate-down';
+function renderEcoHomeMarkets(){
+  const el = document.getElementById('ecoHomeMarkets');
+  if(!el) return;
+  const s = ECO_MARKET_IMPACTS[ecoHomeMarketScenario];
+  el.innerHTML = `
+    <span class="eco-home-section-title">Macro → Marchés</span>
+    <p class="eco-panel-note">Des mécanismes économiques reconnus, jamais une prédiction ni une recommandation d'investissement.</p>
+    <div class="eco-map-picker" style="margin-top:8px;">
+      ${Object.entries(ECO_MARKET_IMPACTS).map(([key, v]) => `<button type="button" class="pill ${key === ecoHomeMarketScenario ? 'active' : ''}" data-scenario="${key}">${v.label}</button>`).join('')}
+    </div>
+    <div class="eco-home-market-grid" style="margin-top:10px;">
+      <div class="eco-panel"><span class="eco-panel-title">Obligations</span><p style="margin-top:6px;font-size:12.5px;">${s.bonds}</p></div>
+      <div class="eco-panel"><span class="eco-panel-title">Actions</span><p style="margin-top:6px;font-size:12.5px;">${s.stocks}</p></div>
+      <div class="eco-panel"><span class="eco-panel-title">Immobilier</span><p style="margin-top:6px;font-size:12.5px;">${s.realestate}</p></div>
+      <div class="eco-panel"><span class="eco-panel-title">Devises</span><p style="margin-top:6px;font-size:12.5px;">${s.currency}</p></div>
+    </div>
+    <div style="margin-top:10px;display:flex;gap:16px;flex-wrap:wrap;">
+      <a href="bourse.html#tab-marches" class="eco-link" style="font-size:11.5px;">Explorer les obligations et taux sur Bourse →</a>
+      <a href="bourse.html#tab-screener" class="eco-link" style="font-size:11.5px;">Filtrer les actions par secteur sur Bourse →</a>
+    </div>`;
+  el.querySelectorAll('[data-scenario]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if(btn.dataset.scenario === ecoHomeMarketScenario) return;
+      ecoHomeMarketScenario = btn.dataset.scenario;
+      renderEcoHomeMarkets();
+    });
+  });
+}
+
+// ============================================================
+// CTA Laboratoire + pont Actualités. Une seule vraie destination existe
+// pour les scénarios macro (laboratoire.html#tab-economie, "Gouverneur de
+// banque centrale" + scénarios) — les 5 exemples illustrent le contenu
+// sans fabriquer 5 ancres différentes qui n'existent pas.
+// ============================================================
+function renderEcoHomeCtas(){
+  const el = document.getElementById('ecoHomeCtas');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="eco-home-ctas-grid">
+      <div class="eco-panel">
+        <span class="eco-panel-title">🧪 Tester un scénario économique</span>
+        <p class="eco-panel-note" style="margin-top:6px;">Hausse des taux, baisse des taux, inflation élevée, récession, choc pétrolier — des scénarios qualitatifs, avec le mécanisme expliqué, jamais une prédiction.</p>
+        <a href="laboratoire.html#tab-economie" class="btn btn-sm btn-gold" style="margin-top:10px;">Explorer les scénarios →</a>
+      </div>
+      <div class="eco-panel">
+        <span class="eco-panel-title">📰 Ce qui change actuellement</span>
+        <p class="eco-panel-note" style="margin-top:6px;">Cette page se concentre sur 3 mouvements macro majeurs (Zone "Ce qui change" ci-dessus) — pour toute l'actualité économique, retrouve les vraies publications de la semaine.</p>
+        <a href="actualites.html?cat=${encodeURIComponent('Économie')}" class="btn btn-sm" style="margin-top:10px;">Voir toutes les actualités économiques →</a>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+// Orchestrateur accueil + bascule de mode (Vue accueil / Vue avancée).
+// ============================================================
+async function renderEcoHomeAll(){
+  renderEcoHomeHero();
+  renderEcoHomeMetricsLoading();
+  await ecoHomeFetchAll(ecoHomeGeo);
+  renderEcoHomeMetrics();
+  renderEcoHomeState();
+  renderEcoHomeChanges();
+  renderEcoHomeCalendar();
+  renderEcoHomeMarkets();
+  renderEcoHomeCtas();
+  renderEcoHomeWorld();
+}
+
+// ?vue=avance (+ pays/onglet/variable optionnels) ouvre la Vue avancée
+// (l'ancien terminal, préservé à l'identique) ; par défaut, l'Accueil.
+// Simple lecture au chargement (pas de routage SPA) — cohérent avec le
+// reste du site, où chaque page relit son propre état au chargement.
+function ecoInitPageMode(){
+  const params = new URLSearchParams(location.search);
+  const isAdvanced = params.get('vue') === 'avance';
+  const homeEl = document.getElementById('ecoHome');
+  const terminalEl = document.getElementById('ecoTerminal');
+  if(homeEl) homeEl.style.display = isAdvanced ? 'none' : '';
+  if(terminalEl) terminalEl.style.display = isAdvanced ? '' : 'none';
+  if(isAdvanced){
+    const pays = params.get('pays');
+    const onglet = params.get('onglet');
+    const variable = params.get('variable');
+    if(pays && ECO_COUNTRIES[pays]) ecoActiveCountry = pays;
+    if(onglet && ECO_VIEWS[onglet]) ecoActiveView = onglet;
+    if(variable && ECO_CHART_VARIABLES.includes(variable)) ecoChartVariable = variable;
+    safeRun('terminal économie — navigation', () => renderEcoNav('ecoNav'));
+    safeRun('terminal économie — corps (en-tête/KPI/contenu)', () => renderEcoBody());
+  } else {
+    safeRun('accueil économie', () => renderEcoHomeAll());
+  }
+}
+ecoInitPageMode();

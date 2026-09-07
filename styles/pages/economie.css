@@ -263,3 +263,102 @@ body.terminal-page .glossary-body{color:var(--term-text-dim);}
   .eco-nav{flex-direction:row;flex-wrap:wrap;overflow-x:auto;}
   .eco-nav-label{width:100%;}
 }
+
+/* ============================================================
+   Accueil "Economy Intelligence" (07/09/2026) — page normale (scroll de
+   page classique, PAS le cockpit sans-scroll de la Vue avancée
+   ci-dessus). 6 zones hiérarchisées, palette --term-* identique.
+   ============================================================ */
+.eco-home{
+  max-width:1180px;
+  margin:0 auto;
+  padding:20px 24px 60px;
+  display:flex;
+  flex-direction:column;
+  gap:28px;
+}
+.eco-home-section-title{
+  font-family:'Cormorant Garamond',serif;
+  font-size:19px;font-weight:600;color:var(--term-text);
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+}
+
+/* ---------- Zone 1 : hero ---------- */
+.eco-home-hero-top{
+  display:flex;justify-content:space-between;align-items:flex-end;flex-wrap:wrap;gap:14px;
+}
+.eco-home-eyebrow{
+  font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--term-gold-light);
+}
+.eco-home-hero-top h2{
+  font-family:'Cormorant Garamond',serif;font-size:30px;font-weight:600;color:var(--term-text);
+  margin-top:4px;max-width:26ch;
+}
+.eco-home-geo-picker{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px;}
+
+/* ---------- Zone 2 : 6 cartes indicateur ---------- */
+.eco-home-metrics-grid{
+  display:grid;grid-template-columns:repeat(auto-fit, minmax(170px, 1fr));gap:10px;margin-top:10px;
+}
+.eco-info-btn{
+  background:none;border:none;color:var(--term-text-dim);cursor:pointer;font-size:12px;
+  margin-left:auto;padding:0 2px;line-height:1;
+}
+.eco-info-btn:hover{color:var(--term-gold-light);}
+.eco-home-interpretation{
+  font-size:11px;color:var(--term-text-dim);line-height:1.45;margin-top:4px;
+  padding-top:6px;border-top:1px dashed var(--term-border);
+}
+
+/* ---------- Zone 3 : état de l'économie ---------- */
+.eco-home-bars{display:flex;flex-direction:column;gap:8px;margin-top:16px;}
+.eco-home-bar-row{display:grid;grid-template-columns:140px 1fr;align-items:center;gap:10px;}
+.eco-home-bar-label{font-size:11.5px;color:var(--term-text-dim);}
+.eco-home-bar-track{height:8px;border-radius:4px;background:var(--term-card-hover);overflow:hidden;}
+.eco-home-bar-fill{height:100%;background:linear-gradient(90deg, var(--term-gold), var(--term-gold-light));border-radius:4px;}
+.eco-home-state-cols{
+  display:grid;grid-template-columns:repeat(3, 1fr);gap:16px;margin-top:18px;padding-top:16px;
+  border-top:1px solid var(--term-border);
+}
+.eco-home-col-title{
+  display:block;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--term-text-dim);margin-bottom:8px;
+}
+.eco-home-state-cols p{font-size:12px;color:var(--term-text-dim);margin-top:6px;line-height:1.5;}
+
+/* ---------- Zone 4 : ce qui change ---------- */
+.eco-home-changes-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(220px, 1fr));gap:12px;margin-top:10px;}
+
+/* ---------- Zone 5/6 côte à côte ---------- */
+.eco-home-row{display:grid;grid-template-columns:1.4fr 1fr;gap:20px;align-items:start;}
+.eco-table-wrap{overflow-x:auto;margin-top:10px;}
+.eco-home-world-table{width:100%;border-collapse:collapse;font-size:12px;white-space:nowrap;}
+.eco-home-world-table th, .eco-home-world-table td{padding:8px 10px;border-bottom:1px solid var(--term-border);text-align:left;}
+.eco-home-world-table th{color:var(--term-text-dim);font-weight:500;font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.04em;}
+.eco-home-world-table td.is-na{color:var(--term-text-dim);}
+.eco-home-tone{display:inline-block;margin-left:8px;font-size:9.5px;letter-spacing:.04em;text-transform:uppercase;padding:2px 6px;border-radius:8px;}
+.eco-home-tone-up{background:rgba(50,213,131,0.14);color:var(--term-positive);}
+.eco-home-tone-down{background:rgba(240,68,56,0.14);color:var(--term-negative);}
+.eco-home-tone-flat{background:rgba(145,152,163,0.14);color:var(--term-text-dim);}
+.eco-home-calendar-row{
+  display:flex;justify-content:space-between;gap:10px;padding:7px 0;border-top:1px solid var(--term-border);
+  text-decoration:none;color:var(--term-text);font-size:12.5px;
+}
+.eco-home-calendar-row:first-child{border-top:none;}
+
+/* ---------- Macro → Marchés ---------- */
+.eco-home-market-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(180px, 1fr));gap:10px;}
+
+/* ---------- CTA laboratoire + actualités ---------- */
+.eco-home-ctas-grid{display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:16px;}
+
+/* ---------- Mobile/tablette : grilles resserrées, jamais de scroll
+   horizontal incontrôlé (seul .eco-table-wrap défile, volontairement) ---------- */
+@media (max-width:900px){
+  .eco-home{padding:16px 16px 40px;gap:22px;}
+  .eco-home-metrics-grid{grid-template-columns:repeat(2, 1fr);}
+  .eco-home-row{grid-template-columns:1fr;}
+  .eco-home-state-cols{grid-template-columns:1fr;gap:14px;}
+  .eco-home-hero-top h2{font-size:24px;max-width:none;}
+}

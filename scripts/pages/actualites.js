@@ -154,14 +154,21 @@ async function initWeeklyNews(){
     weeklyArticles = (data.articles || []).map(a => ({...a, weekStart: data.weekStart}));
 
     const cats = ['Toutes', ...new Set(weeklyArticles.map(a => a.categorie))];
-    filtersEl.innerHTML = cats.map((c,i) => `<button class="pill ${i===0?'active':''}" data-cat="${c}">${c}</button>`).join('');
+    // ?cat=<catégorie> (ex. depuis economie.html) : pré-sélectionne le
+    // filtre correspondant s'il existe réellement parmi les catégories de
+    // la semaine — même motif que defis.js/formations.js/quiz-approfondi.js.
+    // Jamais un filtre fabriqué : si la catégorie demandée n'est pas
+    // présente cette semaine-là, on retombe honnêtement sur "Toutes".
+    const requestedCat = new URLSearchParams(location.search).get('cat');
+    const initialCat = (requestedCat && cats.includes(requestedCat)) ? requestedCat : 'Toutes';
+    filtersEl.innerHTML = cats.map(c => `<button class="pill ${c===initialCat?'active':''}" data-cat="${c}">${c}</button>`).join('');
     filtersEl.addEventListener('click', e => {
       if(e.target.tagName !== 'BUTTON') return;
       filtersEl.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
       e.target.classList.add('active');
       renderFull(e.target.dataset.cat);
     });
-    renderFull('Toutes');
+    renderFull(initialCat);
     renderPourVous();
 
     // Ouvre directement la bonne carte si on arrive via une ancre (#slug)
