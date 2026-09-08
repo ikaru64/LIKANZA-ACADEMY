@@ -28,25 +28,22 @@ const { JSDOM } = require('jsdom');
 
 const ROOT = path.join(__dirname, '..', '..');
 
-// Scripts locaux réellement chargés par bourse.html, dans l'ordre — le
-// CDN Chart.js est volontairement exclu (jamais chargé depuis un test :
-// remplacé par un stub configurable, voir loadBoursePage ci-dessous).
-const BOURSE_LOCAL_SCRIPTS = [
-  'scripts/icons.js',
-  'scripts/app.js',
-  'scripts/data.js',
-  'scripts/historical-data.js',
-  'scripts/pages/bourse.js'
-];
+// Scripts locaux communs à toutes les pages "terminal" (Bourse, Économie...) —
+// le CDN Chart.js est volontairement exclu (jamais chargé depuis un test :
+// remplacé par un stub configurable, voir loadPage ci-dessous).
+const COMMON_LOCAL_SCRIPTS = ['scripts/icons.js', 'scripts/app.js', 'scripts/data.js', 'scripts/historical-data.js'];
+const BOURSE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/bourse.js'];
+const ECONOMIE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/economie.js'];
 
 function stripScriptTags(html){
   return html.replace(/<script\b[^>]*><\/script>/gi, '');
 }
 
 /**
- * Charge bourse.html dans une vraie instance jsdom, avec tous ses scripts
- * locaux réellement exécutés (voir l'explication en tête de fichier).
- * Retourne { window, document, runInPage }.
+ * Charge une vraie page Likanza (htmlFile, relatif à la racine du dépôt) dans
+ * une vraie instance jsdom, avec la liste de scripts locaux donnée réellement
+ * exécutée dans l'ordre (voir l'explication en tête de fichier). Retourne
+ * { window, document, runInPage }.
  *
  * Options :
  *  - fetchImpl(url, options) : implémentation de window.fetch. Par défaut,
@@ -57,12 +54,12 @@ function stripScriptTags(html){
  *    Chart.js vient d'un CDN et ne doit jamais être réellement chargé
  *    dans un test).
  */
-function loadBoursePage({ fetchImpl, chartStub } = {}){
-  const rawHtml = fs.readFileSync(path.join(ROOT, 'bourse.html'), 'utf8');
+function loadPage(htmlFile, localScripts, { fetchImpl, chartStub } = {}){
+  const rawHtml = fs.readFileSync(path.join(ROOT, htmlFile), 'utf8');
   const html = stripScriptTags(rawHtml);
 
   const dom = new JSDOM(html, {
-    url: 'https://likanza-academy.test/bourse.html',
+    url: `https://likanza-academy.test/${htmlFile}`,
     runScripts: 'dangerously',
     pretendToBeVisual: true
   });
@@ -89,9 +86,18 @@ function loadBoursePage({ fetchImpl, chartStub } = {}){
   DefaultMockChart.instances = [];
   window.Chart = chartStub || DefaultMockChart;
   window.fetch = fetchImpl || (async () => ({ ok: false, status: 503, json: async () => ({ error: 'HTTP 503 (stub de test — aucun réseau réel)' }) }));
+  // jsdom n'implémente pas <dialog>.showModal()/close() (nécessiterait un
+  // vrai rendu de layout) — plusieurs pages (economie.html, bourse.html)
+  // utilisent un <dialog> natif pour leurs modales de simulation ; un
+  // simple mock d'état (.open) suffit, aucun code de production n'inspecte
+  // le rendu visuel réel de la boîte de dialogue.
+  if(window.HTMLDialogElement && !window.HTMLDialogElement.prototype.showModal){
+    window.HTMLDialogElement.prototype.showModal = function(){ this.open = true; };
+    window.HTMLDialogElement.prototype.close = function(){ this.open = false; };
+  }
 
   // ---------- Chargement des scripts locaux réels, dans l'ordre réel ----------
-  BOURSE_LOCAL_SCRIPTS.forEach(rel => {
+  localScripts.forEach(rel => {
     const code = fs.readFileSync(path.join(ROOT, rel), 'utf8');
     const scriptEl = window.document.createElement('script');
     scriptEl.textContent = code;
@@ -129,4 +135,7 @@ function flush(ms = 30){
   return new Promise(r => setTimeout(r, ms));
 }
 
-module.exports = { loadBoursePage, flush, ROOT };
+function loadBoursePage(options){ return loadPage('bourse.html', BOURSE_LOCAL_SCRIPTS, options); }
+function loadEconomiePage(options){ return loadPage('economie.html', ECONOMIE_LOCAL_SCRIPTS, options); }
+
+module.exports = { loadPage, loadBoursePage, loadEconomiePage, flush, ROOT };

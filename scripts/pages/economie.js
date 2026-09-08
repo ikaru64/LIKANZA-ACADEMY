@@ -223,9 +223,23 @@ function ecoFreshnessBadge(frequency){
     : `<span class="eco-freshness is-periodic">Dernière publication</span>`;
 }
 
-function ecoDeltaClass(tone, delta){
-  if(Math.abs(delta) < 1e-9) return 'flat';
-  if(tone === 'neutral') return 'flat';
+// fmt (optionnel, la fonction meta.fmt du KPI concerné) : le seuil de
+// platitude doit refléter ce qui sera RÉELLEMENT affiché à l'écran (arrondi
+// par fmt), jamais l'écart brut — sinon la flèche peut annoncer une hausse
+// alors que le chiffre affiché arrondit à zéro (ex. +0,04 pt sur le PIB
+// affichait "↑ 0.0 %"). Sans fmt fourni, repli sur l'ancien seuil brut.
+function ecoDeltaClass(tone, delta, fmt){
+  const displayedZero = fmt
+    ? parseFloat(String(fmt(Math.abs(delta))).replace(/[^0-9.,-]/g, '').replace(',', '.')) === 0
+    : Math.abs(delta) < 1e-9;
+  if(displayedZero) return 'flat';
+  // tone 'neutral' (ex. inflation, confiance des ménages, taux directeur) :
+  // jamais de jugement favorable/défavorable sur le sens de variation — mais
+  // "flat" (pas de variation mesurable) et "variation réelle sans jugement"
+  // sont deux notions différentes, jamais confondues sous un même "→"
+  // depuis le 08/09/2026 (avant : toujours 'flat', même sur un écart réel
+  // non nul — la flèche "→" se lisait à tort comme "inchangé").
+  if(tone === 'neutral') return delta > 0 ? 'neutral-up' : 'neutral-down';
   const rising = delta > 0;
   if(tone === 'growth') return rising ? 'up' : 'down';
   if(tone === 'inverse') return rising ? 'down' : 'up';
@@ -327,6 +341,16 @@ async function ecoLoadMapSvg(){
 // variable plutôt que rouge/vert).
 function ecoMapLerp(a, b, f){ return a.map((v, i) => Math.round(v + (b[i] - v) * f)); }
 function ecoMapColorFor(rawT, tone){
+  // Garde-fou de robustesse, pas un bug visible aujourd'hui : renderMapMain
+  // protège déjà sa propre division par zéro (max === min -> t = 0.5) avant
+  // d'appeler cette fonction. Mais ecoMapColorFor est déclarée dans la
+  // portée globale de la page, donc appelable par un futur appelant sans
+  // cette garantie — Math.min(1, NaN) vaut NaN, ce qui produirait
+  // silencieusement "rgb(NaN,NaN,NaN)" (CSS invalide, ignoré par le
+  // navigateur) au lieu d'une couleur explicite "aucune donnée". Même
+  // couleur que le remplissage neutre de renderMapMain, pour rester
+  // cohérent visuellement entre les deux chemins.
+  if(!Number.isFinite(rawT)) return ecoCssVar('--term-card-hover') || '#141923';
   const t = Math.max(0, Math.min(1, rawT));
   if(tone === 'neutral'){
     const light = [110, 114, 122], dark = [212, 175, 55];
@@ -439,8 +463,19 @@ async function renderMapMain(){
   const wrapEl = document.getElementById('ecoMapSvgWrap');
   const svgEl = wrapEl.querySelector('svg');
   if(!svgEl) return;
+  // Le fond de carte représente un pays en plusieurs morceaux (territoires,
+  // archipels : France, Italie, Espagne, Royaume-Uni, Suède, Russie,
+  // États-Unis, Canada, Argentine, Japon, Chine, Indonésie, Philippines —
+  // vérifié en direct dans le SVG, 08/09/2026) comme un <g id="xx"> dont les
+  // <path> enfants n'ont eux-mêmes aucun id — un sélecteur limité à
+  // "path[id]" les manque entièrement (13 des 26 pays réels de la carte,
+  // dont le pays par défaut de la page). Ces <path> enfants n'ont non plus
+  // aucun attribut fill propre (vérifié : le remplissage/curseur posé sur le
+  // <g> hérite normalement vers tous ses descendants en SVG) — poser le
+  // style sur le groupe suffit donc, pas besoin de descendre jusqu'aux
+  // tracés terminaux.
   const pathsById = {};
-  wrapEl.querySelectorAll('path[id]').forEach(p => { pathsById[p.id] = p; });
+  wrapEl.querySelectorAll('path[id], g[id]').forEach(p => { pathsById[p.id] = p; });
   const neutralFill = ecoCssVar('--term-card-hover') || '#141923';
   const neutralStroke = ecoCssVar('--term-border') || 'rgba(212,175,55,0.16)';
   Object.values(pathsById).forEach(path => {
@@ -450,13 +485,15 @@ async function renderMapMain(){
   });
   Object.entries(values).forEach(([code, entry]) => {
     const path = pathsById[code.toLowerCase()];
-    if(!path) return; // pays réel mais absent du fond de carte tiers -> ignoré, jamais une erreur bloquante
+    if(!path) return; // code ISO réellement absent de ce fond de carte tiers (aucun cas connu parmi les 26 pays de WORLDBANK_MAP_COUNTRIES, vérifié) -> ignoré, jamais une erreur bloquante
     const t = (max === min) ? 0.5 : (entry.value - min) / (max - min);
     path.style.fill = ecoMapColorFor(t, meta.tone);
     path.style.cursor = 'pointer';
     const label = WORLDBANK_MAP_COUNTRY_LABELS_FR[code] || code;
     // <title> natif : vraie infobulle au survol, sans logique JS de
     // positionnement à maintenir — nom réel, valeur réelle, année réelle.
+    // Un seul <title>, posé sur le <g> pour un pays multi-tracés, suffit
+    // pour toute la zone survolée — jamais une infobulle par sous-tracé.
     const titleEl = document.createElementNS('http://www.w3.org/2000/svg', 'title');
     titleEl.textContent = `${label} — ${meta.fmt(entry.value)} (${entry.year})`;
     path.insertBefore(titleEl, path.firstChild);
@@ -769,8 +806,8 @@ async function renderEcoKpis(elId){
       const last = points[points.length - 1];
       const prev = points.length > 1 ? points[points.length - 2] : null;
       const delta = prev ? last.value - prev.value : 0;
-      const deltaClass = prev ? ecoDeltaClass(meta.tone, delta) : 'flat';
-      const arrow = deltaClass === 'up' ? '↑' : deltaClass === 'down' ? '↓' : '→';
+      const deltaClass = prev ? ecoDeltaClass(meta.tone, delta, meta.fmt) : 'flat';
+      const arrow = (deltaClass === 'up' || deltaClass === 'neutral-up') ? '↑' : (deltaClass === 'down' || deltaClass === 'neutral-down') ? '↓' : '→';
       const sparkHistory = points.slice(-24).map(p => ({close: p.value, date: p.period}));
       cardEl.classList.remove('is-loading');
       cardEl.innerHTML = `
@@ -1335,6 +1372,12 @@ async function renderDebtView(){
   mainEl.innerHTML = `
     <span class="eco-panel-title">Dette publique — ${ECO_COUNTRIES[country].label}<button type="button" class="eco-link" id="ecoDebtSimBtn">Simuler la dette →</button></span>
     <div style="position:relative;flex:1;min-height:200px;margin-top:12px;" id="ecoDebtChartWrap"><canvas id="ecoDebtChart"></canvas></div>
+    <!-- Décomposition qualitative des 3 forces réelles à l'œuvre (déficit
+         primaire, charge d'intérêts, croissance nominale) — reste exacte
+         après le passage à la formule précise de computeDebtProjection
+         (08/09/2026, cf. son commentaire) : les 3 mêmes termes y figurent
+         encore (1+i, 1/(1+g), -pb), seule leur combinaison précise a changé,
+         jamais les forces qualitatives elles-mêmes. Vérifié, pas supposé. -->
     <div class="eco-mechanism" style="margin-top:16px;">
       <span class="eco-panel-title">Pourquoi la dette augmente ? <span style="font-weight:400;text-transform:none;font-size:10.5px;color:var(--term-text-dim);">— identité comptable, pas une prévision</span></span>
       <div class="eco-mechanism-flow">
@@ -1381,16 +1424,39 @@ async function renderDebtView(){
 // quand disponible, jamais un exemple fabriqué. ----------
 function computeDebtProjection(params){
   const {dette0, croissanceReellePct, inflationPct, tauxInteretPct, soldePrimairePct} = params;
+  // Chaque paramètre doit être un nombre fini — jamais un calcul lancé sur un
+  // champ vidé silencieusement remplacé par 0 par l'appelant (voir
+  // openDebtSimulator/recompute, qui distingue déjà champ vide et zéro saisi).
+  if(![dette0, croissanceReellePct, inflationPct, tauxInteretPct, soldePrimairePct].every(Number.isFinite)) return null;
   const croissanceNominalePct = (1 + croissanceReellePct / 100) * (1 + inflationPct / 100) * 100 - 100;
+  // Une croissance nominale de -100 % (ou moins) annule ou inverse le
+  // dénominateur (1 + croissanceNominalePct/100) du terme d'effet de
+  // croissance ci-dessous — sans ce garde-fou, le résultat explose vers
+  // Infinity plutôt que d'afficher un message honnête sur une hypothèse hors
+  // de portée du modèle.
+  if(croissanceNominalePct <= -100) return null;
   const results = {};
   let dette = dette0;
+  // Une dette publique négative n'a pas de sens dans ce cadre (ce serait une
+  // position créditrice nette, un concept différent, non modélisé ici) — la
+  // trajectoire est plafonnée à 0, et flooredAtYear retient la première année
+  // où ça se produit pour que l'appelant explique le plancher plutôt que
+  // d'afficher un 0,0 % PIB sec à un horizon qui l'a dépassé depuis longtemps.
+  let flooredAtYear = null;
+  // Formule exacte de la dynamique du ratio dette/PIB : d(t) = d(t-1) *
+  // (1+i)/(1+g) - pb. Une version développée (dette + intérêts - effet de
+  // croissance - solde primaire, avec effet de croissance = dette*g/(1+g))
+  // omet le terme croisé -i*g/(1+g)*dette et surestime systématiquement la
+  // dette (~2,6 points de PIB à 20 ans sur les valeurs par défaut de cette
+  // page, vérifié) — remplacée le 08/09/2026 par la formule exacte
+  // ci-dessous, qui donne le même résultat qu'un calcul direct de d*(1+i)/(1+g).
   for(let year = 1; year <= 20; year++){
-    const interets = dette * (tauxInteretPct / 100);
-    const croissanceEffet = dette * (croissanceNominalePct / 100) / (1 + croissanceNominalePct / 100);
-    dette = dette + interets - croissanceEffet - soldePrimairePct;
+    dette = (dette * (1 + tauxInteretPct / 100)) / (1 + croissanceNominalePct / 100) - soldePrimairePct;
+    if(dette < 0 && flooredAtYear === null) flooredAtYear = year;
+    dette = Math.max(dette, 0);
     if([5, 10, 20].includes(year)) results[year] = dette;
   }
-  return {croissanceNominalePct, atHorizon: results};
+  return {croissanceNominalePct, atHorizon: results, flooredAtYear};
 }
 
 function openDebtSimulator(country, hasDebt){
@@ -1401,12 +1467,21 @@ function openDebtSimulator(country, hasDebt){
         <form method="dialog">
           <h3 style="font-family:'Cormorant Garamond',serif;font-size:20px;margin-bottom:4px;">Simuler la dette publique</h3>
           <p class="disclaimer-box" style="margin-bottom:14px;">Simulation pédagogique — identité comptable standard, pas une prévision officielle. Les hypothèses sont les tiennes, jamais des données réelles projetées comme certaines.</p>
+          <!-- Bornes économiquement plausibles (08/09/2026) — pas des limites
+               réelles observées quelque part, juste un garde-fou contre une
+               saisie qui rendrait le modèle non calculable (ex. -100 % de
+               croissance) ou absurde à interpréter : dette 0-400 % du PIB
+               (au-delà, aucun cas réel connu et le modèle perd son sens
+               pédagogique), croissance réelle -15 à 15 %/an, inflation -5 à
+               30 %/an, taux d'intérêt 0-25 %/an (jamais négatif ici, ce
+               modèle ne traite pas les taux réels négatifs), solde primaire
+               -20 à 20 % du PIB. -->
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-            <div class="field"><label for="dsDette0">Dette initiale (% PIB)</label><input type="number" id="dsDette0" step="0.1"></div>
-            <div class="field"><label for="dsCroissance">Croissance réelle (%/an)</label><input type="number" id="dsCroissance" step="0.1" value="1.2"></div>
-            <div class="field"><label for="dsInflation">Inflation (%/an)</label><input type="number" id="dsInflation" step="0.1" value="2"></div>
-            <div class="field"><label for="dsTaux">Taux d'intérêt apparent (%/an)</label><input type="number" id="dsTaux" step="0.1" value="3"></div>
-            <div class="field" style="grid-column:1/-1;"><label for="dsSolde">Solde primaire (% PIB, négatif = déficit primaire)</label><input type="number" id="dsSolde" step="0.1" value="-1"></div>
+            <div class="field"><label for="dsDette0">Dette initiale (% PIB)</label><input type="number" id="dsDette0" step="0.1" min="0" max="400"></div>
+            <div class="field"><label for="dsCroissance">Croissance réelle (%/an)</label><input type="number" id="dsCroissance" step="0.1" min="-15" max="15" value="1.2"></div>
+            <div class="field"><label for="dsInflation">Inflation (%/an)</label><input type="number" id="dsInflation" step="0.1" min="-5" max="30" value="2"></div>
+            <div class="field"><label for="dsTaux">Taux d'intérêt apparent (%/an)</label><input type="number" id="dsTaux" step="0.1" min="0" max="25" value="3"></div>
+            <div class="field" style="grid-column:1/-1;"><label for="dsSolde">Solde primaire (% PIB, négatif = déficit primaire)</label><input type="number" id="dsSolde" step="0.1" min="-20" max="20" value="-1"></div>
           </div>
           <div id="dsResults" style="margin-top:14px;"></div>
           <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:16px;">
@@ -1415,17 +1490,43 @@ function openDebtSimulator(country, hasDebt){
         </form>
       </dialog>`);
     dialog = document.getElementById('ecoDebtSimDialog');
+    // Distingue un champ vidé d'un vrai zéro saisi : "+valeur || 0" les
+    // confondait, ce qui construisait silencieusement une projection sur une
+    // hypothèse jamais renseignée plutôt que de suspendre le calcul.
+    const DS_FIELD_LABELS = {dsDette0: 'la dette initiale', dsCroissance: 'la croissance réelle', dsInflation: "l'inflation", dsTaux: "le taux d'intérêt", dsSolde: 'le solde primaire'};
+    function readDsField(id){
+      const raw = document.getElementById(id).value;
+      if(raw === '') return null;
+      const num = +raw;
+      return Number.isFinite(num) ? num : null;
+    }
     const recompute = () => {
+      const raw = {
+        dsDette0: readDsField('dsDette0'), dsCroissance: readDsField('dsCroissance'),
+        dsInflation: readDsField('dsInflation'), dsTaux: readDsField('dsTaux'), dsSolde: readDsField('dsSolde')
+      };
+      const resultsEl = document.getElementById('dsResults');
+      const missing = Object.entries(raw).filter(([, v]) => v === null).map(([id]) => DS_FIELD_LABELS[id]);
+      if(missing.length > 0){
+        resultsEl.innerHTML = `<p class="eco-panel-note">Renseigne ${missing.join(', ')} pour voir la projection — un champ vide n'est jamais remplacé par zéro.</p>`;
+        return;
+      }
       const params = {
-        dette0: +document.getElementById('dsDette0').value || 0,
-        croissanceReellePct: +document.getElementById('dsCroissance').value || 0,
-        inflationPct: +document.getElementById('dsInflation').value || 0,
-        tauxInteretPct: +document.getElementById('dsTaux').value || 0,
-        soldePrimairePct: +document.getElementById('dsSolde').value || 0
+        dette0: raw.dsDette0, croissanceReellePct: raw.dsCroissance, inflationPct: raw.dsInflation,
+        tauxInteretPct: raw.dsTaux, soldePrimairePct: raw.dsSolde
       };
       const proj = computeDebtProjection(params);
-      document.getElementById('dsResults').innerHTML = [5, 10, 20].map(h => `
-        <div class="result-row"><span class="result-horizon">Dans ${h} ans</span><span class="result-value mono">${proj.atHorizon[h].toFixed(1)} % PIB</span></div>`).join('');
+      if(!proj){
+        resultsEl.innerHTML = `<p class="eco-panel-note">Cette combinaison d'hypothèses n'est pas calculable ici (la croissance nominale composée tombe à -100 % ou moins) — essaie des valeurs moins extrêmes.</p>`;
+        return;
+      }
+      resultsEl.innerHTML = [5, 10, 20].map(h => {
+        const flooredHere = proj.flooredAtYear !== null && h >= proj.flooredAtYear;
+        const valueHtml = flooredHere
+          ? `Dette remboursée avant cet horizon <span style="color:var(--term-text-dim);font-weight:400;">(la trajectoire atteint 0 avant, ce modèle ne sait pas la prolonger au-delà)</span>`
+          : `${proj.atHorizon[h].toFixed(1)} % PIB`;
+        return `<div class="result-row"><span class="result-horizon">Dans ${h} ans</span><span class="result-value mono">${valueHtml}</span></div>`;
+      }).join('');
     };
     ['dsDette0', 'dsCroissance', 'dsInflation', 'dsTaux', 'dsSolde'].forEach(id => document.getElementById(id).addEventListener('input', recompute));
     dialog._recompute = recompute;
@@ -1733,8 +1834,8 @@ function renderEcoHomeMetrics(){
     }
     const last = d.points[d.points.length - 1];
     const delta = ecoHomeLastDelta(d.points);
-    const deltaClass = delta !== null ? ecoDeltaClass(d.meta.tone, delta) : 'flat';
-    const arrow = deltaClass === 'up' ? '↑' : deltaClass === 'down' ? '↓' : '→';
+    const deltaClass = delta !== null ? ecoDeltaClass(d.meta.tone, delta, d.meta.fmt) : 'flat';
+    const arrow = (deltaClass === 'up' || deltaClass === 'neutral-up') ? '↑' : (deltaClass === 'down' || deltaClass === 'neutral-down') ? '↓' : '→';
     const sparkHistory = d.points.slice(-24).map(p => ({close: p.value, date: p.period}));
     const interpretation = ecoHomeInterpretation(k, delta);
     return `<div class="eco-kpi">

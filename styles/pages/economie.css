@@ -148,6 +148,13 @@ body.terminal-page .site-footer{display:none;}
 .eco-kpi-delta.up{color:var(--term-positive);}
 .eco-kpi-delta.down{color:var(--term-negative);}
 .eco-kpi-delta.flat{color:var(--term-text-dim);}
+/* Variation réelle et non nulle, mais sans jugement favorable/défavorable
+   (indicateurs "neutral" — inflation, confiance des ménages, taux
+   directeur) : distincte de .flat (pas de variation mesurable) par une
+   couleur dédiée, jamais confondue avec le vert/rouge des tons jugés
+   (08/09/2026 — --term-violet n'était utilisé nulle part ailleurs sur
+   cette page, couleur libre pour cette 3e sémantique). */
+.eco-kpi-delta.neutral-up, .eco-kpi-delta.neutral-down{color:var(--term-violet);}
 .eco-kpi-spark{margin-top:2px;height:26px;}
 .eco-kpi-spark svg{width:100%;height:100%;display:block;}
 .eco-kpi-asof{font-size:9.5px;color:var(--term-text-dim);margin-top:2px;}
