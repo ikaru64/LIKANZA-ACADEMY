@@ -2,7 +2,7 @@
 const BOURSE_TABS = [
   {id:'tab-marche-jour', title:'Marché du jour', desc:'Hausses, baisses, sélection', icon:'star'},
   {id:'tab-fiches', title:'Fiches actions', desc:'liste modifiable, 20 max', icon:'list'},
-  {id:'tab-screener', title:'Filtrer', desc:'Parmi tes valeurs suivies', icon:'search'},
+  {id:'tab-screener', title:'Filtrer', desc:'Parmi tes titres suivis', icon:'search'},
   {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale'},
   {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
   {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
@@ -10,7 +10,7 @@ const BOURSE_TABS = [
   {id:'tab-marches', title:'Autres marchés', desc:'ETF, Forex, matières premières, taux', icon:'landmark'},
   {id:'tab-options', title:'Options', desc:'Call/Put, payoff à l\'échéance', icon:'swords'},
   {id:'tab-paper-trading', title:'Paper Trading', desc:'Argent fictif, vrais cours', icon:'flame'},
-  {id:'tab-watchlist', title:'Ma watchlist', desc:'Seuils d\'alerte, en local', icon:'triangle-alert'}
+  {id:'tab-watchlist', title:'Ma liste de surveillance', desc:'Seuils d\'alerte, en local', icon:'triangle-alert'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
@@ -718,7 +718,7 @@ function renderScreener(){
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:12px;">${summary}</p>
     ${list.length === 0
-      ? `<p style="color:var(--text-dim);font-size:13px;">Aucune de tes valeurs suivies ne correspond à cette combinaison de critères.</p>`
+      ? `<p style="color:var(--text-dim);font-size:13px;">Aucun de tes titres suivis ne correspond à cette combinaison de critères.</p>`
       : (screenerAdvancedMode ? renderScreenerAdvancedTable(list) : `<div class="card-grid">${list.map(s => {
           const isStock = (s.assetType || 'stock') === 'stock';
           const href = isStock ? `action.html#${encodeURIComponent(s.ticker)}` : `marche.html#${encodeURIComponent(s.ticker)}`;
@@ -759,10 +759,19 @@ function computeScenarios(bpaActuel, prixActuel, growth, perTarget, horizon){
   // des scénarios (un PER plus élevé sur un nombre négatif donne un résultat
   // PLUS négatif, donc "favorable" devient le pire des trois).
   if(!Number.isFinite(bpaActuel) || bpaActuel <= 0 || !Number.isFinite(prixActuel) || prixActuel <= 0) return null;
+  // Écart de croissance proportionnel à l'hypothèse centrale plutôt qu'un
+  // nombre de points fixe (choix retenu le 08/09/2026, option B) : un écart
+  // fixe (ex. ±6 pts) combiné à la croissance composée sur l'horizon rendait
+  // le scénario défavorable disproportionné sur une hypothèse déjà prudente
+  // (ex. 2 % -> défavorable à -4 %/an, environ -45 % de cours cible sur 5
+  // ans) tout en devenant négligeable sur une hypothèse ambitieuse. Plancher
+  // à 2 points pour qu'une croissance nulle ou très faible garde un écart
+  // lisible entre les 3 scénarios.
+  const growthSpread = Math.max(Math.abs(growth) * 0.5, 2);
   const defs = {
-    defavorable: {growth: growth - 6, per: perTarget * 0.75},
+    defavorable: {growth: growth - growthSpread, per: perTarget * 0.75},
     central: {growth: growth, per: perTarget},
-    favorable: {growth: growth + 6, per: perTarget * 1.25}
+    favorable: {growth: growth + growthSpread, per: perTarget * 1.25}
   };
   const out = {};
   Object.entries(defs).forEach(([key,s])=>{
@@ -929,7 +938,8 @@ function updateScenario(){
   Object.entries(scenarios).forEach(([key,r])=>{
     html += `<div class="result-row" style="justify-content:space-between;width:100%;"><span>${labels[key]}</span><span class="mono" style="color:${r.variation>=0?'var(--emerald)':'var(--bordeaux)'}">${r.prixCible.toFixed(1)} € (${r.variation>=0?'+':''}${r.variation.toFixed(0)}%)</span></div>`;
   });
-  resultsEl.innerHTML = `<div class="result-label">Prix théorique estimé dans ${horizon} an(s), cours actuel ${stock.prix} € ${renderDataBadge('scenario')}</div>` + html + `<p style="margin-top:6px;">${renderDataBadge('fait')} BPA de départ : ${formatFundamentalValue('trailingEps', ff.trailingEps)}</p>`;
+  const growthSpread = Math.max(Math.abs(growth) * 0.5, 2);
+  resultsEl.innerHTML = `<div class="result-label">Prix théorique estimé dans ${horizon} an(s), cours actuel ${stock.prix} € ${renderDataBadge('scenario')}</div>` + html + `<p style="margin-top:6px;">${renderDataBadge('fait')} BPA de départ : ${formatFundamentalValue('trailingEps', ff.trailingEps)}</p><p style="font-size:11px;color:var(--text-dim);margin-top:6px;">Défavorable/favorable : croissance centrale ± ${growthSpread.toFixed(1)} pt/an (écart proportionnel à l'hypothèse centrale, jamais un même écart fixe quelle que soit son ampleur) et PER × 0,75/× 1,25.</p>`;
 
   const chart = document.getElementById('scenChart');
   const labelsEl = document.getElementById('scenChartLabels');

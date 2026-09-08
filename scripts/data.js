@@ -10823,10 +10823,14 @@ function computeComparativeScenarios(epsA, epsB, {growth, perTarget, horizon}){
     // silencieusement transformé en cours cible négatif ou en scénarios dont
     // le sens s'inverse (favorable pire que défavorable sur un BPA négatif).
     if(!Number.isFinite(bpaActuel) || bpaActuel <= 0) return null;
+    // Écart de croissance proportionnel à l'hypothèse centrale, même
+    // formule que computeScenarios (scripts/pages/bourse.js) — voir ce
+    // fichier pour le détail du choix (option B, 08/09/2026).
+    const growthSpread = Math.max(Math.abs(growth) * 0.5, 2);
     const defs = {
-      defavorable: {growth: growth - 6, per: perTarget * 0.75},
+      defavorable: {growth: growth - growthSpread, per: perTarget * 0.75},
       central: {growth, per: perTarget},
-      favorable: {growth: growth + 6, per: perTarget * 1.25}
+      favorable: {growth: growth + growthSpread, per: perTarget * 1.25}
     };
     const out = {};
     Object.entries(defs).forEach(([key, s]) => {

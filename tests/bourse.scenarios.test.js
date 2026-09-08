@@ -50,6 +50,30 @@ t.isNull(computeScenarios(5, NaN, 10, 15, 1), "un prix actuel NaN est refusé");
 t.equal(computeComparativeScenarios(0, 0, { growth: 5, perTarget: 12, horizon: 2 }), { a: null, b: null },
   "deux BPA nuls -> les deux côtés sont refusés, jamais un cours cible à 0 € affiché comme réel");
 
+// ---------- Écart de croissance proportionnel à l'hypothèse centrale (option B, 08/09/2026) ----------
+// growthSpread = max(|growth| * 0.5, 2). Vérifié en dérivant le taux de
+// croissance implicite des scénarios défavorable/favorable à partir du
+// cours cible obtenu (BPA=5, PER=15, horizon=1 an, pour rester simple :
+// prixCible = 5 * (1+g/100) * per).
+function impliedGrowth(prixCible, per, bpa){ return ((prixCible / (per * bpa)) - 1) * 100; }
+{
+  // growth=2 -> spread=max(1,2)=2 -> défavorable=0%, favorable=4%
+  const s = computeScenarios(5, 100, 2, 15, 1);
+  t.close(impliedGrowth(s.defavorable.prixCible, 15 * 0.75, 5), 0, "à 2 % de croissance centrale, le scénario défavorable retombe sur 0 % (écart resserré par le plancher), pas -4 % comme avec l'ancien écart fixe de 6 pts");
+  t.close(impliedGrowth(s.favorable.prixCible, 15 * 1.25, 5), 4, "à 2 % de croissance centrale, le scénario favorable est à 4 %");
+}
+{
+  // growth=20 -> spread=max(10,2)=10 -> défavorable=10%, favorable=30%
+  const s = computeScenarios(5, 100, 20, 15, 1);
+  t.close(impliedGrowth(s.defavorable.prixCible, 15 * 0.75, 5), 10, "à 20 % de croissance centrale, l'écart s'élargit bien (défavorable à 10 %, pas 14 % comme avec l'ancien écart fixe)");
+  t.close(impliedGrowth(s.favorable.prixCible, 15 * 1.25, 5), 30, "à 20 % de croissance centrale, le scénario favorable est à 30 %");
+}
+{
+  // growth=0 -> spread=max(0,2)=2 (plancher) -> défavorable=-2%, favorable=2%
+  const s = computeScenarios(5, 100, 0, 15, 1);
+  t.close(impliedGrowth(s.defavorable.prixCible, 15 * 0.75, 5), -2, "à 0 % de croissance centrale, le plancher de 2 points garde un écart lisible entre les 3 scénarios (jamais un écart nul)");
+}
+
 const summary = t.summary();
 console.log(`\n${t.name} : ${summary.total - summary.failed}/${summary.total} OK`);
 process.exit(summary.failed > 0 ? 1 : 0);
