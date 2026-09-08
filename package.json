@@ -2,8 +2,14 @@
   "name": "likanza-academy-site",
   "private": true,
   "version": "1.0.0",
+  "scripts": {
+    "test": "node tests/run.js"
+  },
   "dependencies": {
     "@neondatabase/serverless": "^0.10.4",
     "fast-xml-parser": "^5.10.1"
+  },
+  "devDependencies": {
+    "jsdom": "^30.0.1"
   }
 }
