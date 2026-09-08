@@ -752,7 +752,13 @@ renderScreenerFilters();
 // jamais de stock.prix / stock.per fictif — un BPA indisponible renvoie null,
 // jamais un scénario calculé sur une base inventée.
 function computeScenarios(bpaActuel, prixActuel, growth, perTarget, horizon){
-  if(typeof bpaActuel !== 'number' || typeof prixActuel !== 'number' || prixActuel <= 0) return null;
+  // Un BPA nul, négatif ou NaN (typeof NaN === 'number' !) doit être refusé
+  // ici, pas seulement filtré côté affichage : la valorisation par PER
+  // (bénéfice futur × multiple) suppose un bénéfice positif — appliquée à un
+  // BPA négatif, elle produit un cours cible négatif et inverse même le sens
+  // des scénarios (un PER plus élevé sur un nombre négatif donne un résultat
+  // PLUS négatif, donc "favorable" devient le pire des trois).
+  if(!Number.isFinite(bpaActuel) || bpaActuel <= 0 || !Number.isFinite(prixActuel) || prixActuel <= 0) return null;
   const defs = {
     defavorable: {growth: growth - 6, per: perTarget * 0.75},
     central: {growth: growth, per: perTarget},
@@ -906,7 +912,15 @@ function updateScenario(){
   const scenarios = ff ? computeScenarios(ff.trailingEps, stock.prix, growth, perTarget, horizon) : null;
   const resultsEl = document.getElementById('scenResults');
   if(!scenarios){
-    resultsEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (BPA réel indisponible pour ${stock.nom}, scénario non calculable).</p>`;
+    // Deux raisons distinctes, pas la même pédagogie : un BPA CONNU mais nul/
+    // négatif (entreprise en perte) n'est pas un manque de donnée — c'est la
+    // méthode de valorisation par PER qui ne s'applique pas à ce cas, ce qui
+    // mérite d'être expliqué plutôt que noyé dans le message générique
+    // "donnée indisponible".
+    const bpaConnuMaisInvalide = ff && Number.isFinite(ff.trailingEps) && ff.trailingEps <= 0;
+    resultsEl.innerHTML = bpaConnuMaisInvalide
+      ? `<p style="color:var(--text-dim);font-size:13px;">La valorisation par PER (bénéfice futur × multiple) ne s'applique pas à une entreprise qui ne dégage pas de bénéfice : il n'existe pas de cours cible calculable par cette méthode pour ${stock.nom} (BPA réel constaté : ${formatFundamentalValue('trailingEps', ff.trailingEps)}).</p>`
+      : `<p style="color:var(--text-dim);font-size:13px;">${FUNDAMENTALS_UNAVAILABLE_TEXT} (BPA réel indisponible pour ${stock.nom}, scénario non calculable).</p>`;
     document.getElementById('scenChart').innerHTML = ''; document.getElementById('scenChartLabels').innerHTML = '';
     return;
   }
@@ -943,33 +957,53 @@ dcaPricesRowsEl.innerHTML = dcaPeriods.map((p,i)=>`
 
 let dcaChartInstance = null;
 function updateDcaVsLump(){
+  const resultEl = document.getElementById('dcaVsLumpResult');
+  function clearChart(){
+    if(dcaChartInstance){ dcaChartInstance.destroy(); dcaChartInstance = null; }
+  }
   const total = +dcaTotalEl.value;
   if(!Number.isFinite(total) || total <= 0){
-    document.getElementById('dcaVsLumpResult').innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Indique un montant total à investir positif pour voir la comparaison.</p>`;
+    resultEl.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Indique un montant total à investir positif pour voir la comparaison.</p>`;
+    clearChart();
     return;
   }
   const prices = Array.from(document.querySelectorAll('.dcaPrice')).map(i=>+i.value);
+  // Un versement à un prix manquant/nul/négatif ne peut pas être ignoré
+  // silencieusement : sa part du montant total (total/4) disparaîtrait du
+  // calcul, faussant la comparaison plutôt que de simplement l'amputer d'un
+  // versement. Une comparaison sur des prix incomplets n'a pas de sens —
+  // on ne calcule rien plutôt que d'afficher un verdict trompeur.
+  const hasInvalidPrice = prices.some(p => !Number.isFinite(p) || p <= 0);
+  if(hasInvalidPrice){
+    resultEl.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Renseigne les 4 prix (chacun supérieur à 0) pour comparer les deux stratégies — une comparaison sur des versements incomplets donnerait un résultat trompeur.</p>`;
+    clearChart();
+    return;
+  }
   const perInstallment = total / prices.length;
   let dcaUnits = 0;
-  prices.forEach(p=>{ if(p>0) dcaUnits += perInstallment/p; });
-  const finalPrice = prices[prices.length-1];
+  prices.forEach(p => { dcaUnits += perInstallment / p; });
+  const finalPrice = prices[prices.length - 1];
   const dcaValue = dcaUnits * finalPrice;
-  const lumpUnits = prices[0]>0 ? total/prices[0] : 0;
+  const lumpUnits = total / prices[0];
   const lumpValue = lumpUnits * finalPrice;
-  const best = dcaValue >= lumpValue ? 'dca' : 'lump';
-  document.getElementById('dcaVsLumpResult').innerHTML = `
+  const diff = dcaValue - lumpValue;
+  const best = Math.abs(diff) < 1e-9 ? 'equal' : (diff > 0 ? 'dca' : 'lump');
+  const conclusionText = best === 'equal'
+    ? "Avec ces prix, les deux stratégies donnent exactement le même résultat sur cette période précise — un résultat qui dépend entièrement des prix saisis, pas d'une règle générale."
+    : `Avec ces prix, la stratégie ${best === 'dca' ? 'DCA' : 'investissement unique'} aurait donné le meilleur résultat sur cette période précise, un résultat qui dépend entièrement des prix saisis, pas d'une règle générale.`;
+  resultEl.innerHTML = `
     <div class="whatif-compare">
       <div class="whatif-col"><div class="lab">DCA (réparti)</div><div class="val" style="color:${best==='dca'?'var(--emerald)':'var(--text)'}">${fmtEUR(dcaValue)}</div></div>
       <div class="whatif-col"><div class="lab">Tout en une fois</div><div class="val" style="color:${best==='lump'?'var(--emerald)':'var(--text)'}">${fmtEUR(lumpValue)}</div></div>
     </div>
-    <p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">Avec ces prix, la stratégie ${best==='dca'?'DCA':'investissement unique'} aurait donné le meilleur résultat sur cette période précise, un résultat qui dépend entièrement des prix saisis, pas d'une règle générale.</p>`;
+    <p style="font-size:12.5px;color:var(--text-dim);margin-top:12px;">${conclusionText}</p>`;
   // Graphique (refonte terminal 06/09/2026) : visualise les 2 MÊMES valeurs
   // déjà calculées ci-dessus (dcaValue/lumpValue) — jamais un point de
   // donnée supplémentaire, purement une représentation visuelle du calcul
   // existant. Barres des prix saisis en second axe pour montrer le "timing".
   const canvas = document.getElementById('dcaChartCanvas');
   if(canvas && typeof Chart !== 'undefined'){
-    if(dcaChartInstance) dcaChartInstance.destroy();
+    clearChart();
     dcaChartInstance = new Chart(canvas.getContext('2d'), {
       type: 'bar',
       data: {

@@ -10818,7 +10818,11 @@ function computeComparisonAngles(companyA, companyB){
 // ---------- Curseur d'hypothèses comparatif (même hypothèse, vrais points de départ) ----------
 function computeComparativeScenarios(epsA, epsB, {growth, perTarget, horizon}){
   function oneScenario(bpaActuel){
-    if(typeof bpaActuel !== 'number') return null;
+    // Même garde-fou que computeScenarios (scripts/pages/bourse.js) : un BPA
+    // nul, négatif ou NaN (typeof NaN === 'number') doit être refusé, jamais
+    // silencieusement transformé en cours cible négatif ou en scénarios dont
+    // le sens s'inverse (favorable pire que défavorable sur un BPA négatif).
+    if(!Number.isFinite(bpaActuel) || bpaActuel <= 0) return null;
     const defs = {
       defavorable: {growth: growth - 6, per: perTarget * 0.75},
       central: {growth, per: perTarget},
