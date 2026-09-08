@@ -113,6 +113,18 @@ const ECO_VIEWS = {
 };
 let ecoActiveView = 'overview';
 
+// Vues qui lisent réellement ecoActiveCountry (vérifié par grep dans ce
+// fichier : seules "Vue d'ensemble" et "Dette & déficit" en dépendent —
+// la Carte mondiale/le Comparateur/Graph Lab/Crisis Replay/Et si.../
+// Banques centrales/Finances publiques gèrent chacun leur propre notion
+// de pays, ou n'en ont aucune). Bug UX réel découvert lors de l'audit de
+// la refonte Accueil du 07/09/2026 : les boutons pays restaient
+// cliquables sur TOUTES les vues, sans aucun effet visible en dehors de
+// ces deux-là — corrigé en désactivant réellement (disabled, pas
+// seulement visuel) les boutons pays hors de ces vues, avec une note
+// explicite plutôt qu'un piège silencieux.
+const ECO_VIEWS_USING_COUNTRY = new Set(['overview', 'debt']);
+
 // ---------- État de la carte mondiale ----------
 // Seuls les indicateurs à couverture complète sur les 26 pays sont
 // proposés ici (croissance/inflation/chômage) — la dette publique n'a de
@@ -224,6 +236,7 @@ function ecoDeltaClass(tone, delta){
 function renderEcoNav(elId){
   const el = document.getElementById(elId);
   if(!el) return;
+  const countryRelevant = ECO_VIEWS_USING_COUNTRY.has(ecoActiveView);
   el.innerHTML = `
     <span class="eco-nav-label">Modules</span>
     ${Object.entries(ECO_VIEWS).map(([key, v]) => `
@@ -231,25 +244,30 @@ function renderEcoNav(elId){
         <span class="eco-nav-flag">${ICONS[v.icon] || ''}</span><span>${v.label}</span>
       </button>`).join('')}
     <span class="eco-nav-label">Pays</span>
+    ${countryRelevant ? '' : `<p class="eco-nav-note">Ce module n'est pas spécifique à un pays.</p>`}
     ${Object.entries(ECO_COUNTRIES).map(([code, c]) => `
-      <button type="button" class="${code === ecoActiveCountry ? 'active' : ''}" data-country="${code}">
+      <button type="button" class="${code === ecoActiveCountry ? 'active' : ''}" data-country="${code}" ${countryRelevant ? '' : 'disabled'}>
         <span class="eco-nav-flag">${c.flag}</span><span>${c.label}</span>
       </button>`).join('')}
   `;
   el.querySelectorAll('button[data-view]').forEach(btn => {
     btn.addEventListener('click', () => {
+      if(btn.dataset.view === ecoActiveView) return;
       ecoActiveView = btn.dataset.view;
-      el.querySelectorAll('button[data-view]').forEach(b => b.classList.toggle('active', b.dataset.view === ecoActiveView));
+      renderEcoNav(elId); // reconstruit aussi l'état activé/désactivé des boutons pays pour la nouvelle vue
       renderEcoBody();
     });
   });
-  el.querySelectorAll('button[data-country]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      ecoActiveCountry = btn.dataset.country;
-      el.querySelectorAll('button[data-country]').forEach(b => b.classList.toggle('active', b.dataset.country === ecoActiveCountry));
-      renderEcoBody();
+  if(countryRelevant){
+    el.querySelectorAll('button[data-country]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if(btn.dataset.country === ecoActiveCountry) return;
+        ecoActiveCountry = btn.dataset.country;
+        el.querySelectorAll('button[data-country]').forEach(b => b.classList.toggle('active', b.dataset.country === ecoActiveCountry));
+        renderEcoBody();
+      });
     });
-  });
+  }
 }
 
 // Dispatcheur central : la vue "Vue d'ensemble" garde le comportement

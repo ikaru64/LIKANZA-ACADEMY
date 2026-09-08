@@ -87,6 +87,12 @@ body.terminal-page .site-footer{display:none;}
 .eco-nav button:hover{background:var(--term-card-hover);color:var(--term-text);}
 .eco-nav button.active{background:rgba(212,175,55,0.1);color:var(--term-gold-light);box-shadow:inset 2px 0 0 var(--term-gold);}
 .eco-nav button .eco-nav-flag{font-size:14px;}
+/* Boutons pays réellement désactivés (pas seulement grisés) sur les
+   modules qui ne lisent pas ecoActiveCountry — cf. ECO_VIEWS_USING_COUNTRY,
+   corrige un vrai piège UX (bouton cliquable sans aucun effet). */
+.eco-nav button:disabled{cursor:not-allowed;opacity:0.35;}
+.eco-nav button:disabled:hover{background:none;color:var(--term-text-dim);}
+.eco-nav-note{font-size:10.5px;color:var(--term-text-dim);padding:0 10px 6px;line-height:1.4;}
 
 .eco-header{
   background:var(--term-card);
