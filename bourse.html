@@ -14,6 +14,30 @@
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="styles/design-system.css">
 <link rel="stylesheet" href="styles/terminal-design-system.css">
+<!-- Données structurées : identité seule des 8 valeurs de départ (nom,
+     description), jamais un cours ni une capitalisation — un type
+     "Corporation"/"FinancialProduct" inviterait un moteur de recherche à
+     afficher un extrait enrichi avec un prix, qui périmerait dès la
+     prochaine variation de marché. "ItemList" générique reste volontai-
+     rement neutre sur ce point. À tenir en sync avec STOCKS_DEMO
+     (scripts/app.js) si cette liste change. -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "name": "Valeurs suivies sur Likanza Academy — Bourse",
+  "itemListElement": [
+    {"@type": "Thing", "position": 1, "name": "Air Liquide (AI.PA)", "description": "Industrie, France, éligible PEA"},
+    {"@type": "Thing", "position": 2, "name": "TotalEnergies (TTE.PA)", "description": "Énergie, France, éligible PEA"},
+    {"@type": "Thing", "position": 3, "name": "Sanofi (SAN.PA)", "description": "Santé, France, éligible PEA"},
+    {"@type": "Thing", "position": 4, "name": "Safran (SAF.PA)", "description": "Aéronautique, France, éligible PEA"},
+    {"@type": "Thing", "position": 5, "name": "Vinci (DG.PA)", "description": "Construction, France, éligible PEA"},
+    {"@type": "Thing", "position": 6, "name": "L'Oréal (OR.PA)", "description": "Consommation, France, éligible PEA"},
+    {"@type": "Thing", "position": 7, "name": "ASML (ASML.AS)", "description": "Technologie, Pays-Bas, éligible PEA"},
+    {"@type": "Thing", "position": 8, "name": "LVMH (MC.PA)", "description": "Luxe, France, éligible PEA"}
+  ]
+}
+</script>
 </head>
 <body class="has-bottom-nav terminal-page">
 <aside class="app-sidebar" aria-label="Navigation principale">
@@ -87,7 +111,7 @@
 <div class="terminal-header" style="margin:14px 24px 0;">
   <div>
     <h2>Equity Intelligence Terminal</h2>
-    <p>Marchés, valeurs suivies, comparateur, portefeuille — cotations différées, jamais présentées comme temps réel.</p>
+    <p>Marchés, titres suivis, comparateur, portefeuille — cotations différées, jamais présentées comme temps réel.</p>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
     <div id="bourseToolsProgress" style="font-size:11.5px;"></div>
@@ -113,13 +137,13 @@
           <button class="pill" data-mjtab="selection"><span data-icon="star"></span> Sélection</button>
         </div>
         <div class="terminal-panel-scroll">
-          <div id="marketOfDayBody" style="margin-top:12px;"></div>
+          <div id="marketOfDayBody" style="margin-top:12px;" data-live="pending"></div>
           <div id="marketLevelTip" style="margin-top:12px;"></div>
         </div>
       </div>
       <div class="terminal-panel">
-        <div class="terminal-panel-title">🔥 Ce qui bouge réellement<span style="font-weight:400;text-transform:none;font-size:10px;color:var(--term-text-dim);">valeurs suivies</span></div>
-        <div class="terminal-panel-scroll" id="marketMoversBody"></div>
+        <div class="terminal-panel-title">🔥 Ce qui bouge réellement<span style="font-weight:400;text-transform:none;font-size:10px;color:var(--term-text-dim);">titres suivis</span></div>
+        <div class="terminal-panel-scroll" id="marketMoversBody" data-live="pending"></div>
       </div>
       <div class="terminal-panel">
         <div class="terminal-panel-title">📅 À surveiller<span style="font-weight:400;text-transform:none;font-size:10px;color:var(--term-text-dim);">types d'événements</span></div>
@@ -140,11 +164,32 @@
     </div>
     <p class="disclaimer-box" style="max-width:70ch;">Toute action ajoutée par recherche accède aux mêmes outils que les 8 valeurs de départ (Comparateur, Scénarios, Dividendes, fiche détaillée) dès que Likanza a pu récupérer ses fondamentaux réels — jamais un accès limité au seul cours. Secteur, pays et éligibilité PEA restent en revanche vérifiés uniquement pour les 8 valeurs de départ : affichés « non déterminé » pour les autres, jamais devinés.</p>
     <p class="disclaimer-box" style="max-width:70ch;margin-top:10px;">Marchés couverts : les places disponibles via Yahoo Finance (Europe, États-Unis, et d'autres places selon disponibilité) — la couverture réelle dépend du fournisseur et n'est jamais garantie à 100 %. Une recherche sans résultat ne signifie pas nécessairement que le titre n'existe pas.</p>
-    <div class="card-grid" id="stockGrid"></div>
+    <!-- Repli statique (référencement + lecture sans JavaScript) : identité
+         seule des 8 valeurs de départ (nom, secteur, pays, éligibilité PEA)
+         — JAMAIS un cours ni une variation, qui périmeraient immédiatement.
+         Remplacé par le vrai rendu dynamique dès que le JS s'exécute (voir
+         data-live sur #stockGrid ci-dessous). À tenir manuellement en
+         synchronisation avec STOCKS_DEMO (scripts/app.js) si cette liste
+         change un jour — même discipline que le snapshot budgétaire de
+         economie.html : un contenu statique daté, jamais recalculé seul. -->
+    <noscript>
+      <ul style="font-size:13px;color:var(--text-dim);line-height:1.8;">
+        <li>Air Liquide (AI.PA) — Industrie, France, éligible PEA</li>
+        <li>TotalEnergies (TTE.PA) — Énergie, France, éligible PEA</li>
+        <li>Sanofi (SAN.PA) — Santé, France, éligible PEA</li>
+        <li>Safran (SAF.PA) — Aéronautique, France, éligible PEA</li>
+        <li>Vinci (DG.PA) — Construction, France, éligible PEA</li>
+        <li>L'Oréal (OR.PA) — Consommation, France, éligible PEA</li>
+        <li>ASML (ASML.AS) — Technologie, Pays-Bas, éligible PEA</li>
+        <li>LVMH (MC.PA) — Luxe, France, éligible PEA</li>
+      </ul>
+      <p>Active JavaScript pour voir les cours en direct (différés), les variations et les outils d'analyse (comparateur, scénarios, dividendes).</p>
+    </noscript>
+    <div class="card-grid" id="stockGrid" data-live="pending"></div>
   </div>
 
   <div class="home-tab-panel" id="tab-screener">
-    <div class="section-head"><h2>Filtre parmi tes valeurs suivies</h2><span class="meta-line">pas un screener de marché complet</span></div>
+    <div class="section-head"><h2>Filtre parmi tes titres suivis</h2><span class="meta-line">pas un screener de marché complet</span></div>
     <p class="disclaimer-box" style="max-width:70ch;">Ceci filtre uniquement les valeurs que tu suis déjà (les 8 valeurs de départ, plus celles que tu ajoutes par recherche) — pas l'ensemble du marché. Un filtrage sur des milliers de titres nécessiterait un fournisseur de données de screening que Likanza n'utilise pas aujourd'hui.</p>
     <div id="screenerFilters" style="display:flex;flex-wrap:wrap;gap:8px;margin:16px 0;"></div>
     <label class="pill" style="display:inline-flex;gap:6px;align-items:center;cursor:pointer;margin-bottom:12px;">
@@ -155,7 +200,7 @@
   </div>
 
   <div class="home-tab-panel" id="tab-comparateur">
-    <div class="terminal-panel-title" style="margin-bottom:10px;">⚖️ Comparateur — workspace<span style="font-weight:400;text-transform:none;font-size:10.5px;color:var(--term-text-dim);">2 à 5 titres, parmi tes valeurs suivies</span></div>
+    <div class="terminal-panel-title" style="margin-bottom:10px;">⚖️ Comparateur — workspace<span style="font-weight:400;text-transform:none;font-size:10.5px;color:var(--term-text-dim);">2 à 5 titres, parmi tes titres suivis</span></div>
     <div class="field" style="max-width:420px;margin-bottom:14px;">
       <label for="compareSearchInput">Ajouter une action à comparer (nom ou ticker)</label>
       <input type="text" id="compareSearchInput" placeholder="Ex : Apple, Microsoft, TSLA...">
@@ -347,8 +392,8 @@
   </div>
 
   <div class="home-tab-panel" id="tab-watchlist">
-    <div class="section-head"><h2>Ma watchlist</h2><span class="meta-line">seuils d'alerte, en local</span></div>
-    <p class="disclaimer-box" style="max-width:70ch;">Distincte des "valeurs suivies" ci-dessus (celles affichées dans Fiches actions/Comparateur) : ici, une liste d'actifs — actions, crypto, indices — avec un seuil d'alerte visuel optionnel et une note personnelle.</p>
+    <div class="section-head"><h2>Ma liste de surveillance</h2><span class="meta-line">seuils d'alerte, en local</span></div>
+    <p class="disclaimer-box" style="max-width:70ch;">Distincte des "titres suivis" ci-dessus (ceux affichés dans Fiches actions/Comparateur) : ici, une liste d'actifs — actions, crypto, indices — avec un seuil d'alerte visuel optionnel et une note personnelle.</p>
     <div id="watchlistDemoBanner"></div>
     <div class="card" style="max-width:640px;margin:16px 0 20px;">
       <div class="field"><label for="wlAsset">Actif à suivre</label>
@@ -360,11 +405,11 @@
       <div class="field"><label for="wlNote">Note personnelle (optionnel)</label>
         <input type="text" id="wlNote" placeholder="Pourquoi tu suis cet actif...">
       </div>
-      <button class="btn btn-gold btn-sm" id="wlAddBtn">Ajouter à la watchlist</button>
+      <button class="btn btn-gold btn-sm" id="wlAddBtn">Ajouter à ma liste de surveillance</button>
       <p id="wlFormError" style="font-size:12px;color:var(--bordeaux);margin-top:6px;"></p>
     </div>
     <div class="card-grid" id="watchlistGrid" style="display:none;"></div>
-    <p class="empty-note" id="watchlistEmpty">Ta watchlist est vide pour l'instant.</p>
+    <p class="empty-note" id="watchlistEmpty">Ta liste de surveillance est vide pour l'instant.</p>
   </div>
 
   </div>
