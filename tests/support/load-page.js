@@ -34,6 +34,7 @@ const ROOT = path.join(__dirname, '..', '..');
 const COMMON_LOCAL_SCRIPTS = ['scripts/icons.js', 'scripts/app.js', 'scripts/data.js', 'scripts/historical-data.js'];
 const BOURSE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/bourse.js'];
 const ECONOMIE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/economie.js'];
+const LABORATOIRE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/laboratoire.js'];
 
 function stripScriptTags(html){
   return html.replace(/<script\b[^>]*><\/script>/gi, '');
@@ -137,5 +138,6 @@ function flush(ms = 30){
 
 function loadBoursePage(options){ return loadPage('bourse.html', BOURSE_LOCAL_SCRIPTS, options); }
 function loadEconomiePage(options){ return loadPage('economie.html', ECONOMIE_LOCAL_SCRIPTS, options); }
+function loadLaboratoirePage(options){ return loadPage('laboratoire.html', LABORATOIRE_LOCAL_SCRIPTS, options); }
 
-module.exports = { loadPage, loadBoursePage, loadEconomiePage, flush, ROOT };
+module.exports = { loadPage, loadBoursePage, loadEconomiePage, loadLaboratoirePage, flush, ROOT };

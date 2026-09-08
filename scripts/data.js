@@ -7858,11 +7858,21 @@ function computeParametricVaR(portefeuilleValeur, rendementAnnuelPct, volatilite
 // valeur fausse silencieusement renvoyée. ----------
 function computeBondPrice(faceValue, couponRatePct, yearsToMaturity, marketRatePct, paymentsPerYear){
   const n = paymentsPerYear || 1;
-  if(!(faceValue > 0) || !(yearsToMaturity > 0) || !(n >= 1) || typeof couponRatePct !== 'number' || typeof marketRatePct !== 'number') return null;
+  // Number.isFinite (pas seulement typeof === 'number') : typeof NaN ===
+  // 'number' est vrai, donc l'ancien garde-fou laissait passer un NaN.
+  if(!(faceValue > 0) || !(yearsToMaturity > 0) || !(n >= 1) || !Number.isFinite(couponRatePct) || !Number.isFinite(marketRatePct)) return null;
   const totalPeriods = Math.round(yearsToMaturity * n);
   if(totalPeriods < 1) return null;
   const couponPerPeriod = (couponRatePct / 100) * faceValue / n;
   const ratePerPeriod = (marketRatePct / 100) / n;
+  // Un taux du marché ≤ -100 % (le champ "bondRate" n'a aucune borne HTML —
+  // contrairement à bondCoupon/bondYears — un utilisateur peut réellement le
+  // saisir) annule ou inverse la base (1 + ratePerPeriod) actualisant chaque
+  // flux : Math.pow(base<=0, t) vaut 0 (ou change de signe), et
+  // couponPerPeriod/0 explose vers Infinity — affiché "∞ €" par fmtEUR
+  // (Math.round(Infinity).toLocaleString() = '∞'), sans qu'aucun garde-fou
+  // existant (typeof, price==null côté appelant) ne l'intercepte.
+  if(1 + ratePerPeriod <= 0) return null;
   let price = 0;
   for(let t = 1; t <= totalPeriods; t++){
     price += couponPerPeriod / Math.pow(1 + ratePerPeriod, t);

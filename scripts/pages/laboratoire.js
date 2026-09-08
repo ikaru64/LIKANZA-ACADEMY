@@ -1953,7 +1953,7 @@ function updateBond(){
     const rate = +document.getElementById('bondRate').value;
     const price = computeBondPrice(face, coupon, years, rate, freq);
     if(price == null){
-      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : la valeur nominale et la maturité doivent être positives.</p>`;
+      resultEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Hypothèses invalides : la valeur nominale et la maturité doivent être positives, et le taux du marché doit rester au-dessus de -100 % (en dessous, l'actualisation des flux n'a plus de sens).</p>`;
       return;
     }
     const ecart = price - face;
