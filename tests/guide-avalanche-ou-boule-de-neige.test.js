@@ -78,16 +78,16 @@ function loadGuidePage(options){ return loadPage('guide-avalanche-ou-boule-de-ne
   t.ok(!!btn, "Étape 1 — le bouton Simuler existe bien");
   btn.dispatchEvent(new window.Event('click'));
 
-  const written = JSON.parse(window.localStorage.getItem('fzr-context-guide-simulation-avalanche-ou-boule-de-neige'));
+  const written = JSON.parse(window.localStorage.getItem('likanza-context-guide-simulation-avalanche-ou-boule-de-neige'));
   t.equal(written.extraMonthly, 150, "Étape 1 — le contexte transmet bien la VRAIE valeur saisie, jamais une valeur par défaut fabriquée");
   t.equal(written.guideSlug, 'avalanche-ou-boule-de-neige', "Étape 1 — le contexte identifie bien le vrai guide d'origine");
-  t.ok(window.localStorage.getItem('fzr-context-guide-simulation-dca-ou-lump-sum') === null, "Étape 1 — aucune écriture parasite sur la clé de contexte du guide DCA (clés bien séparées)");
-  t.ok(window.localStorage.getItem('fzr-context-guide-simulation-acheter-ou-louer') === null, "Étape 1 — aucune écriture parasite sur la clé de contexte du guide Acheter-ou-louer non plus");
+  t.ok(window.localStorage.getItem('likanza-context-guide-simulation-dca-ou-lump-sum') === null, "Étape 1 — aucune écriture parasite sur la clé de contexte du guide DCA (clés bien séparées)");
+  t.ok(window.localStorage.getItem('likanza-context-guide-simulation-acheter-ou-louer') === null, "Étape 1 — aucune écriture parasite sur la clé de contexte du guide Acheter-ou-louer non plus");
 
   // ---------- ÉTAPE 2 — "Navigation" vers laboratoire.html : préremplissage réel ----------
-  const savedContext = window.localStorage.getItem('fzr-context-guide-simulation-avalanche-ou-boule-de-neige');
+  const savedContext = window.localStorage.getItem('likanza-context-guide-simulation-avalanche-ou-boule-de-neige');
   const lab = loadLaboratoirePage({seed: w => {
-    w.localStorage.setItem('fzr-context-guide-simulation-avalanche-ou-boule-de-neige', savedContext);
+    w.localStorage.setItem('likanza-context-guide-simulation-avalanche-ou-boule-de-neige', savedContext);
   }});
 
   t.equal(lab.document.getElementById('debtExtra').value, '150', "Étape 2 — la mensualité supplémentaire réelle est bien préremplie sur le widget avalanche/boule de neige");
@@ -101,7 +101,7 @@ function loadGuidePage(options){ return loadPage('guide-avalanche-ou-boule-de-ne
 
   // consumeContext écrit littéralement null via safeSetJSON (jamais un vrai
   // removeItem) -> getItem renvoie la CHAÎNE "null", pas la valeur null.
-  const consumedValue = lab.window.localStorage.getItem('fzr-context-guide-simulation-avalanche-ou-boule-de-neige');
+  const consumedValue = lab.window.localStorage.getItem('likanza-context-guide-simulation-avalanche-ou-boule-de-neige');
   t.ok(consumedValue === 'null' || !consumedValue, "Étape 2 — le contexte est bien supprimé après lecture (usage unique)");
 
   // Le calcul réel en aval reflète bien la mensualité supplémentaire transmise

@@ -12,12 +12,12 @@ const { loadParcoursPage, flush } = require('./support/load-page');
 const t = createSuite('parcours.tabs');
 
 function seedPersonalUser(window){
-  window.localStorage.setItem('fzr-positioning-result', JSON.stringify({profile: 'equilibre', completedAt: new Date().toISOString(), version: 2}));
-  window.localStorage.setItem('fzr-net-worth-assets', JSON.stringify([
+  window.localStorage.setItem('likanza-positioning-result', JSON.stringify({profile: 'equilibre', completedAt: new Date().toISOString(), version: 2}));
+  window.localStorage.setItem('likanza-net-worth-assets', JSON.stringify([
     {id: 'a1', nom: 'Compte courant', categorie: 'cash', valeur: 5000, dateAjout: new Date().toISOString()},
     {id: 'a2', nom: 'PEA', categorie: 'pea', valeur: 15000, dateAjout: new Date().toISOString()}
   ]));
-  window.localStorage.setItem('fzr-financial-goals', JSON.stringify([
+  window.localStorage.setItem('likanza-financial-goals', JSON.stringify([
     {id: 'g1', nom: "Fonds d'urgence", montantCible: 3000, montantActuel: 500, versementMensuel: 100, dateCible: null}
   ]));
 }
@@ -70,7 +70,7 @@ function seedPersonalUser(window){
   {
     const { window, document } = loadParcoursPage({seed: w => {
       seedPersonalUser(w);
-      w.localStorage.setItem('fzr-life-projects', JSON.stringify([
+      w.localStorage.setItem('likanza-life-projects', JSON.stringify([
         {id: 'p1', nom: 'Achat maison', categorie: 'immobilier', budgetTotal: 300000, dateCible: null, horizonApprox: null, priority: null, status: 'actif', notes: '', etapes: [], dateCreation: new Date().toISOString(),
           linkedSimulations: [
             {label: 'Trajectoire à 10 ans (hypothèse centrale : 85 000 €)', url: 'laboratoire.html#tab-budget-epargne', date: new Date().toISOString()}
@@ -126,7 +126,7 @@ function seedPersonalUser(window){
   {
     const { window, document } = loadParcoursPage({seed: w => {
       seedPersonalUser(w);
-      w.localStorage.setItem('fzr-real-portfolio', JSON.stringify([
+      w.localStorage.setItem('likanza-real-portfolio', JSON.stringify([
         {id: 'tx1', ticker: 'AI.PA', name: 'Air Liquide', quantity: 10, buyPrice: 150, buyDate: '2026-01-01', currency: 'EUR', note: ''}
       ]));
     }});

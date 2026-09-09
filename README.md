@@ -93,18 +93,18 @@ Tout est stocké uniquement sur l'appareil de chaque visiteur, jamais partagé :
 
 | Clé | Contenu |
 |---|---|
-| `fzr-level` | Niveau choisi (débutant/intermédiaire/avancé/expert) |
-| `fzr-progress` | Missions marquées terminées |
-| `fzr-gamification` | FinPoints, série, badges débloqués |
-| `fzr-activity-log` | Jours d'activité (pour la barre hebdomadaire) |
-| `fzr-quiz-stats` | Statistiques par thème, historique des défis |
-| `fzr-quiz-points-ledger` | Anti-abus : questions déjà récompensées aujourd'hui |
-| `fzr-favorites` | Favoris (articles, actions) |
-| `fzr-watchlist` | Watchlist personnelle avec seuils d'alerte |
-| `fzr-profile` | Profil de simulation (âge, épargne, horizon, risque) |
-| `fzr-theme` / `fzr-lang` | Préférences de thème et de langue |
-| `fzr-draft-courses` / `fzr-draft-news` | Brouillons de l'espace admin |
-| `sessionStorage: fzr-admin-session` | Session de connexion admin (effacée à la fermeture de l'onglet) |
+| `likanza-level` | Niveau choisi (débutant/intermédiaire/avancé/expert) |
+| `likanza-progress` | Missions marquées terminées |
+| `likanza-gamification` | FinPoints, série, badges débloqués |
+| `likanza-activity-log` | Jours d'activité (pour la barre hebdomadaire) |
+| `likanza-quiz-stats` | Statistiques par thème, historique des défis |
+| `likanza-quiz-points-ledger` | Anti-abus : questions déjà récompensées aujourd'hui |
+| `likanza-favorites` | Favoris (articles, actions) |
+| `likanza-watchlist` | Watchlist personnelle avec seuils d'alerte |
+| `likanza-profile` | Profil de simulation (âge, épargne, horizon, risque) |
+| `likanza-theme` / `likanza-lang` | Préférences de thème et de langue |
+| `likanza-draft-courses` / `likanza-draft-news` | Brouillons de l'espace admin |
+| `sessionStorage: likanza-admin-session` | Session de connexion admin (effacée à la fermeture de l'onglet) |
 
 ## 9. Fonctions réellement actives vs. prévues
 

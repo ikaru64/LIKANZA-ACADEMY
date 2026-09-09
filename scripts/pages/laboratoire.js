@@ -1025,7 +1025,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       }));
     }
     // Remplace entièrement les lignes locales par les crédits réellement
-    // enregistrés (fzr-personal-debts) — un import ponctuel, pas une liaison
+    // enregistrés (likanza-personal-debts) — un import ponctuel, pas une liaison
     // permanente : modifier une ligne ici n'écrit jamais dans le registre
     // persistant, pour ne jamais perturber une exploration "et si" en cours.
     function loadFromSaved(){
@@ -1111,7 +1111,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
 })();
 
 // ---------- Mes crédits enregistrés (Financial Lab, Phase 2) : éditeur
-// persistant unique pour fzr-personal-debts — le tableau de bord (Phase 1)
+// persistant unique pour likanza-personal-debts — le tableau de bord (Phase 1)
 // et les 2 outils ci-dessus (import à la demande, jamais une liaison
 // permanente) le lisent, mais c'est ici et ici seulement qu'on l'écrit. ----------
 (function initDebtsManager(){
@@ -1147,7 +1147,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
 })();
 
 // ---------- Mes objectifs (Financial Lab, Phase 2) : éditeur persistant pour
-// fzr-financial-goals — statut 🟢🟠🔴 calculé par computeGoalProjection
+// likanza-financial-goals — statut 🟢🟠🔴 calculé par computeGoalProjection
 // (scripts/data.js), jamais un jugement fabriqué ici. ----------
 (function initGoalsManager(){
   const listEl = document.getElementById('goalMgrList');
@@ -1277,7 +1277,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
 })();
 
 // ---------- Mes abonnements & factures (Financial Lab, Phase 2) : éditeur
-// persistant pour fzr-recurring-charges — le coût sur 10 ans (computeRecurringChargeCost)
+// persistant pour likanza-recurring-charges — le coût sur 10 ans (computeRecurringChargeCost)
 // répond directement à "que se passe-t-il si je supprime ça". ----------
 (function initChargesManager(){
   const listEl = document.getElementById('chargeMgrList');
@@ -1321,7 +1321,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
 })();
 
 // ---------- Mon patrimoine net (Financial Lab, Phase 2) : éditeur persistant
-// pour fzr-net-worth-assets, les dettes venant TOUJOURS de fzr-personal-debts
+// pour likanza-net-worth-assets, les dettes venant TOUJOURS de likanza-personal-debts
 // (jamais une seconde liste de passifs, §71). Historique : un point réel par
 // mois (recordNetWorthSnapshot), jamais un historique rétroactif fabriqué —
 // il se construit au fil des visites. ----------
@@ -2418,7 +2418,7 @@ function checkLifeProjectSimulationContext(){
 })();
 
 // ---------- 🗺️ Mes projets de vie (Dashboard "Mon Univers Financier",
-// Chantier 7) : CRUD projets + étapes (fzr-life-projects, data.js) + ligne du
+// Chantier 7) : CRUD projets + étapes (likanza-life-projects, data.js) + ligne du
 // temps (renderLifeTimeline, réutilisée telle quelle). Pas d'état local
 // propre à l'IIFE au-delà des champs du formulaire : re-render() complet à
 // chaque action, comme les autres gestionnaires CRUD de ce fichier. ----------
@@ -2634,12 +2634,12 @@ safeRun('laboratoire économique', () => renderEcoLabScenarios('ecoLabScenarios'
 // pur dans scripts/data.js (initGovernorState/applyGovernorDecision/
 // scoreGovernorGame), aucune donnée réelle ici — modèle pédagogique simplifié,
 // même esprit que les scénarios qualitatifs ci-dessus (jamais présenté comme
-// une prédiction). Historique de parties : fzr-gouverneur-history. ----------
-function getGovernorHistory(){ return safeGetJSON('fzr-gouverneur-history', []); }
+// une prédiction). Historique de parties : likanza-gouverneur-history. ----------
+function getGovernorHistory(){ return safeGetJSON('likanza-gouverneur-history', []); }
 function saveGovernorResult(entry){
   const history = getGovernorHistory();
   history.unshift(entry);
-  safeSetJSON('fzr-gouverneur-history', history.slice(0, 20));
+  safeSetJSON('likanza-gouverneur-history', history.slice(0, 20));
 }
 
 function renderGovernorSim(elId){

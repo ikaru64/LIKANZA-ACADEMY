@@ -16,7 +16,7 @@ function forceRepaint(){
 }
 
 function initTheme(){
-  const saved = safeGet('fzr-theme');
+  const saved = safeGet('likanza-theme');
   if(saved) document.documentElement.setAttribute('data-theme', saved);
   const btn = document.getElementById('themeToggle');
   if(btn){
@@ -24,7 +24,7 @@ function initTheme(){
     btn.addEventListener('click', ()=>{
       const isLight = document.documentElement.getAttribute('data-theme') === 'light';
       document.documentElement.setAttribute('data-theme', isLight ? 'dark' : 'light');
-      safeSet('fzr-theme', isLight ? 'dark' : 'light');
+      safeSet('likanza-theme', isLight ? 'dark' : 'light');
       btn.innerHTML = isLight ? ICONS.sun : ICONS.moon;
       forceRepaint();
     });
@@ -69,7 +69,7 @@ function safeSetJSON(key, val){
 
 // ---------- Context Engine minimal (chantier Continuité, phase 5,
 // 30/08/2026, sections 41-44 du prompt d'origine) : généralise le motif déjà
-// prouvé en production par l'ancien fzr-business-strategy-transfer (écrire
+// prouvé en production par l'ancien likanza-business-strategy-transfer (écrire
 // un contexte -> naviguer -> le lire une seule fois -> le supprimer) en une
 // paire réutilisable, plutôt que de réinventer ce motif à chaque nouveau
 // besoin de continuité inter-pages. Toujours "lu une seule fois puis
@@ -77,10 +77,10 @@ function safeSetJSON(key, val){
 // rapport si l'utilisateur y revient plus tard sans repasser par la
 // source. ----------
 function writeContext(key, payload){
-  safeSetJSON('fzr-context-' + key, payload);
+  safeSetJSON('likanza-context-' + key, payload);
 }
 function consumeContext(key){
-  const fullKey = 'fzr-context-' + key;
+  const fullKey = 'likanza-context-' + key;
   const data = safeGetJSON(fullKey, null);
   if(data) safeSetJSON(fullKey, null);
   return data;
@@ -181,7 +181,7 @@ async function enrichSearchIndexWithLiveNews(){
 }
 
 // ---------- Favoris (localStorage — fonctionnel une fois le site hébergé) ----------
-function getFavorites(){ return safeGetJSON('fzr-favorites', []); }
+function getFavorites(){ return safeGetJSON('likanza-favorites', []); }
 function isFavorite(id){ return getFavorites().some(f=>f.id===id); }
 function toggleFavorite(id, title, url, type){
   let favs = getFavorites();
@@ -190,7 +190,7 @@ function toggleFavorite(id, title, url, type){
   }else{
     favs.push({id, title, url, type, date:new Date().toLocaleDateString('fr-FR')});
   }
-  safeSetJSON('fzr-favorites', favs);
+  safeSetJSON('likanza-favorites', favs);
   return isFavorite(id);
 }
 function initFavButtons(){
@@ -206,8 +206,8 @@ function initFavButtons(){
 }
 
 // ---------- Niveau utilisateur (Academy) ----------
-function getLevel(){ return safeGet('fzr-level') || 'debutant'; }
-function setLevelStorage(lvl){ safeSet('fzr-level', lvl); }
+function getLevel(){ return safeGet('likanza-level') || 'debutant'; }
+function setLevelStorage(lvl){ safeSet('likanza-level', lvl); }
 
 // ---------- Verrouillage des parcours (formation progressive) ----------
 // Un niveau se débloque uniquement quand toutes les missions du niveau
@@ -217,7 +217,7 @@ function isLevelUnlocked(level){
   const idx = LEVEL_ORDER.indexOf(level);
   if(idx <= 0) return true;
   const prev = LEVEL_ORDER[idx-1];
-  const progress = safeGetJSON('fzr-progress', {});
+  const progress = safeGetJSON('likanza-progress', {});
   return COURSES[prev].every((c,i)=>progress[prev+'-'+i]);
 }
 function firstUnlockedLevel(){
@@ -328,7 +328,7 @@ function loadMarketCategoryQuotes(symbols, opts){
   )).then(results=>{
     const allQuotes = [].concat(...results);
     const applied = applyLiveQuotes(allQuotes);
-    if(applied > 0) document.dispatchEvent(new CustomEvent('fzr:quotes-updated'));
+    if(applied > 0) document.dispatchEvent(new CustomEvent('likanza:quotes-updated'));
     return applied;
   });
 }
@@ -341,7 +341,7 @@ function initLiveMarketData(){
       if(applyLiveQuotes(payload.quotes) > 0){
         renderTicker('tickerTrack');
         // Prévient les pages qui affichent ces données (ex. marche.html)
-        document.dispatchEvent(new CustomEvent('fzr:quotes-updated'));
+        document.dispatchEvent(new CustomEvent('likanza:quotes-updated'));
       }
     })
     .catch(err=>{
@@ -434,9 +434,9 @@ const MARKET_TIPS = {
 };
 
 // ---------- Personnalisation légère par domaine (profil Likanza) ----------
-// Utilise le niveau spécifique au domaine (fzr-profile.levels, alimenté par
+// Utilise le niveau spécifique au domaine (likanza-profile.levels, alimenté par
 // le test de positionnement) quand il existe, sinon le niveau global
-// (fzr-level) — jamais une valeur inventée : dégradation silencieuse vers le
+// (likanza-level) — jamais une valeur inventée : dégradation silencieuse vers le
 // signal réel disponible le plus précis.
 function getDomainLevel(domainKey){
   if(domainKey){
@@ -459,12 +459,12 @@ function levelFromPct(pct){
 
 // Résultats des quiz approfondis (quiz-approfondi.html) : un par domaine,
 // écrit uniquement à la fin d'un quiz complet — jamais partiel.
-function getDeepQuizResults(){ return safeGetJSON('fzr-deep-quiz-results', {}); }
+function getDeepQuizResults(){ return safeGetJSON('likanza-deep-quiz-results', {}); }
 function saveDeepQuizResult(domainKey, correct, total){
   const results = getDeepQuizResults();
   const pct = total > 0 ? Math.round((correct / total) * 100) : 0;
   results[domainKey] = {niveau: levelFromPct(pct), pct, correct, total, date: new Date().toISOString()};
-  safeSetJSON('fzr-deep-quiz-results', results);
+  safeSetJSON('likanza-deep-quiz-results', results);
   return results[domainKey];
 }
 // Seuil de réussite d'un quiz approfondi = un vrai mini-examen par domaine
@@ -988,7 +988,7 @@ function renderBusinessAlertsDashboardWidget(elId){
     return;
   }
   const runway = computeRunway(profile);
-  const unitEconomics = safeGetJSON('fzr-unit-economics', null) ? computeUnitEconomics(safeGetJSON('fzr-unit-economics', {})) : null;
+  const unitEconomics = safeGetJSON('likanza-unit-economics', null) ? computeUnitEconomics(safeGetJSON('likanza-unit-economics', {})) : null;
   const alerts = computeBusinessDiagnostics({snapshot, runway, unitEconomics}).filter(d => d.niveau !== 'ok');
   if(alerts.length === 0){
     el.innerHTML = `<span class="smallcaps">🚨 Likanza détecte</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Rien à signaler pour l'instant.</p>`;
@@ -1097,7 +1097,7 @@ function renderCombinedWealthDashboardWidget(elId){
 // section repliée "Suite de l'apprentissage" de parcours.html — aucun
 // changement à renderDashboardShell lui-même, qui ne fait qu'itérer ce
 // tableau ; getDashboardLayout migre déjà silencieusement les id disparus
-// d'un ancien fzr-dashboard-layout enregistré.
+// d'un ancien likanza-dashboard-layout enregistré.
 const DASHBOARD_WIDGETS = [
   {id: 'continue', title: null, mode: 'both', selfCard: false, render: renderContinueWidget},
   {id: 'gamification', title: null, mode: 'both', selfCard: false, render: elId => renderGamificationWidget(elId, false)},
@@ -1138,7 +1138,7 @@ const WIDGET_DISPLAY_NAMES = {
   'mistakes': 'Notions à revoir',
   'domain-dashboard': 'Niveau par domaine'
 };
-const DASHBOARD_LAYOUT_KEY = 'fzr-dashboard-layout';
+const DASHBOARD_LAYOUT_KEY = 'likanza-dashboard-layout';
 function getDashboardLayout(){
   const knownIds = DASHBOARD_WIDGETS.map(w => w.id);
   const stored = safeGetJSON(DASHBOARD_LAYOUT_KEY, null);
@@ -1506,7 +1506,7 @@ function renderNextStepRecommendation(elId){
 // Corrige la déconnexion Bourse ↔ modèle de compétences identifiée par
 // l'audit du 2026-08-20 (section H). ----------
 function getEncounteredConcepts(){
-  return safeGetJSON('fzr-concepts-encountered', {});
+  return safeGetJSON('likanza-concepts-encountered', {});
 }
 function recordConceptEncounter(categories){
   if(!Array.isArray(categories) || categories.length === 0) return;
@@ -1518,7 +1518,7 @@ function recordConceptEncounter(categories){
     map[cat].count += 1;
     map[cat].lastSeenAt = now;
   });
-  safeSetJSON('fzr-concepts-encountered', map);
+  safeSetJSON('likanza-concepts-encountered', map);
 }
 
 // Détecte, à partir des vrais champs fondamentaux ET des vrais indicateurs
@@ -1643,7 +1643,7 @@ function normalizeNiveau(v){
   const key = String(v).toLowerCase();
   return key in NIVEAU_RANK ? NIVEAU_RANK[key] : null;
 }
-function getPositioningResult(){ return safeGetJSON('fzr-positioning-result', null); }
+function getPositioningResult(){ return safeGetJSON('likanza-positioning-result', null); }
 // Version du questionnaire d'onboarding (chantier Onboarding intelligent,
 // 31/08/2026, section 68 du prompt d'origine) — vit ici (chargé sur CHAQUE
 // page, pas seulement test-positionnement.html) pour que le bandeau "Améliore
@@ -1918,13 +1918,13 @@ function renderLeagueBoard(elId){
 }
 
 function getGamification(){
-  const g = safeGetJSON('fzr-gamification', {xp:0, financePoints:0, streak:0, lastVisit:null, badges:[]});
+  const g = safeGetJSON('likanza-gamification', {xp:0, financePoints:0, streak:0, lastVisit:null, badges:[]});
   if(g.financePoints === undefined) g.financePoints = g.xp; // migration en douceur depuis l'ancien système à monnaie unique
   if(g.streakFreezes === undefined) g.streakFreezes = 0; // migration en douceur : tolérance de série (voir checkDailyStreak)
   if(g.pendingStreakBonus === undefined) g.pendingStreakBonus = 0; // migration en douceur : voir checkDailyStreak/awardXP
   return g;
 }
-function saveGamification(g){ safeSetJSON('fzr-gamification', g); }
+function saveGamification(g){ safeSetJSON('likanza-gamification', g); }
 
 function levelFromXP(xp){
   const level = Math.floor(xp/100) + 1;
@@ -1985,17 +1985,17 @@ function checkDailyStreak(){
 // ---------- Activité hebdomadaire (jours distincts actifs sur les 7 derniers jours) ----------
 const WEEKLY_GOAL_DAYS = 5;
 function logActivity(){
-  const log = safeGetJSON('fzr-activity-log', []);
+  const log = safeGetJSON('likanza-activity-log', []);
   const today = new Date().toDateString();
   if(!log.includes(today)){
     log.push(today);
     const cutoff = Date.now() - 30*86400000; // on garde 30 jours max, pas besoin de plus
     const trimmed = log.filter(d => new Date(d).getTime() >= cutoff);
-    safeSetJSON('fzr-activity-log', trimmed);
+    safeSetJSON('likanza-activity-log', trimmed);
   }
 }
 function getWeeklyActivityDays(){
-  const log = safeGetJSON('fzr-activity-log', []);
+  const log = safeGetJSON('likanza-activity-log', []);
   const cutoff = Date.now() - 7*86400000;
   return log.filter(d => new Date(d).getTime() >= cutoff).length;
 }
@@ -2132,8 +2132,8 @@ function getNotionOfDay(){
 // Couche additionnelle au-dessus des missions fixes de COURSES (formations.html) :
 // celles-ci ne s'épuisent jamais, se régénèrent chaque jour/semaine à partir
 // de gabarits, et s'adaptent au niveau/intérêts/progression réels de
-// l'utilisateur. N'utilise jamais fzr-progress (clé des missions fixes) :
-// stockage dédié (fzr-daily-missions-log / fzr-weekly-missions-log), aucune
+// l'utilisateur. N'utilise jamais likanza-progress (clé des missions fixes) :
+// stockage dédié (likanza-daily-missions-log / likanza-weekly-missions-log), aucune
 // collision possible avec le système existant.
 const MISSION_TEMPLATES = [
   {id:'decouvrir-concept', xp:5, build(){
@@ -2144,7 +2144,7 @@ const MISSION_TEMPLATES = [
     const progress = getCoursProgress();
     // Priorité de continuité (chantier Onboarding intelligent, 31/08/2026,
     // section 37 du prompt d'origine) : si l'utilisateur a un cours en cours
-    // (fzr-last-position, chantier Continuité phase 6) encore pertinent
+    // (likanza-last-position, chantier Continuité phase 6) encore pertinent
     // (pas déjà terminé), la mission du jour propose de le reprendre
     // exactement où il s'est arrêté, plutôt que de retomber sur le premier
     // cours non terminé de COURS_CATALOG sans lien avec l'activité réelle.
@@ -2234,7 +2234,7 @@ function isoWeekStart(){
 }
 function getDailyMissionsLog(){
   const today = new Date().toDateString();
-  const log = safeGetJSON('fzr-daily-missions-log', {date:today, doneIds:[]});
+  const log = safeGetJSON('likanza-daily-missions-log', {date:today, doneIds:[]});
   if(log.date !== today) return {date:today, doneIds:[]};
   return log;
 }
@@ -2242,13 +2242,13 @@ function completeDailyMission(id, xp){
   const log = getDailyMissionsLog();
   if(log.doneIds.includes(id)) return false;
   log.doneIds.push(id);
-  safeSetJSON('fzr-daily-missions-log', log);
+  safeSetJSON('likanza-daily-missions-log', log);
   awardXP(xp, {dailyMissionDone:id});
   return true;
 }
 function getWeeklyMissionsLog(){
   const weekStart = isoWeekStart();
-  const log = safeGetJSON('fzr-weekly-missions-log', {weekStart, doneIds:[]});
+  const log = safeGetJSON('likanza-weekly-missions-log', {weekStart, doneIds:[]});
   if(log.weekStart !== weekStart) return {weekStart, doneIds:[]};
   return log;
 }
@@ -2256,7 +2256,7 @@ function completeWeeklyMission(id, xp){
   const log = getWeeklyMissionsLog();
   if(log.doneIds.includes(id)) return false;
   log.doneIds.push(id);
-  safeSetJSON('fzr-weekly-missions-log', log);
+  safeSetJSON('likanza-weekly-missions-log', log);
   awardXP(xp, {weeklyMissionDone:id});
   return true;
 }
@@ -2423,7 +2423,7 @@ function buildParcoursNudgesHTML(elId){
   // juste une invitation légère, explicitement remise à plus tard possible
   // ("Plus tard" mémorise la version pour ne plus la réafficher tant qu'elle
   // ne change pas encore).
-  const dismissedReonboardingVersion = safeGetJSON('fzr-reonboarding-dismissed-version', null);
+  const dismissedReonboardingVersion = safeGetJSON('likanza-reonboarding-dismissed-version', null);
   const showReonboardingNudge = !showOnboardingNudge
     && (positioningResult.onboardingVersion || 0) < ONBOARDING_VERSION
     && dismissedReonboardingVersion !== ONBOARDING_VERSION;
@@ -2468,7 +2468,7 @@ function buildParcoursNudgesHTML(elId){
 function wireParcoursNudges(elId, showReonboardingNudge, interestSuggestion){
   if(showReonboardingNudge){
     document.getElementById(`${elId}-reonboarding-later`).addEventListener('click', () => {
-      safeSetJSON('fzr-reonboarding-dismissed-version', ONBOARDING_VERSION);
+      safeSetJSON('likanza-reonboarding-dismissed-version', ONBOARDING_VERSION);
       const banner = document.getElementById(`${elId}-reonboarding`);
       if(banner) banner.remove();
     });
@@ -2520,13 +2520,13 @@ function renderDashboardHeader(elId){
 // FinPoints que la première fois qu'elle est réussie dans la journée. ----------
 function getQuizPointsLedger(){
   const today = new Date().toDateString();
-  const ledger = safeGetJSON('fzr-quiz-points-ledger', {date:today, ids:[]});
+  const ledger = safeGetJSON('likanza-quiz-points-ledger', {date:today, ids:[]});
   if(ledger.date !== today) return {date:today, ids:[]};
   return ledger;
 }
 // Anti-farming au-delà du quotidien : répondre juste à la même question
 // chaque jour donnait l'XP plein indéfiniment (le ledger ci-dessus ne
-// protège que dans la même journée). fzr-xp-repeat-counts compte, à vie,
+// protège que dans la même journée). likanza-xp-repeat-counts compte, à vie,
 // combien de fois chaque question a déjà rapporté des points — borné par
 // construction : au plus ~172 questions existent sur tout le site, donc
 // cette table ne grossit jamais au-delà de cette taille, peu importe le
@@ -2534,14 +2534,14 @@ function getQuizPointsLedger(){
 // = 0 XP (mais recordAnswer/isAppliedItem restent appelés séparément par
 // chaque site d'appel, donc la maîtrise par concept continue de progresser
 // même quand l'XP n'est plus versé).
-function getXPRepeatCounts(){ return safeGetJSON('fzr-xp-repeat-counts', {}); }
-function saveXPRepeatCounts(counts){ safeSetJSON('fzr-xp-repeat-counts', counts); }
+function getXPRepeatCounts(){ return safeGetJSON('likanza-xp-repeat-counts', {}); }
+function saveXPRepeatCounts(counts){ safeSetJSON('likanza-xp-repeat-counts', counts); }
 
 function tryAwardQuizPoints(questionId, amount, ctx){
   const ledger = getQuizPointsLedger();
   if(ledger.ids.includes(questionId)) return 0;
   ledger.ids.push(questionId);
-  safeSetJSON('fzr-quiz-points-ledger', ledger);
+  safeSetJSON('likanza-quiz-points-ledger', ledger);
   const counts = getXPRepeatCounts();
   const timesAwarded = counts[questionId] || 0;
   counts[questionId] = timesAwarded + 1;
@@ -2554,9 +2554,9 @@ function tryAwardQuizPoints(questionId, amount, ctx){
 
 // ---------- Statistiques de quiz (par catégorie, historique) ----------
 function getQuizStats(){
-  return safeGetJSON('fzr-quiz-stats', {categoryStats:{}, history:[]});
+  return safeGetJSON('likanza-quiz-stats', {categoryStats:{}, history:[]});
 }
-function saveQuizStats(stats){ safeSetJSON('fzr-quiz-stats', stats); }
+function saveQuizStats(stats){ safeSetJSON('likanza-quiz-stats', stats); }
 
 // Un item "appliqué" demande de raisonner sur un cas, jamais un simple rappel
 // de définition — condition nécessaire pour progresser au-delà du palier
@@ -2639,9 +2639,9 @@ function getPassedDefisSessionsCount(){ return getQuizStats().totalPassedSession
 // domaine déjà déclaré (intérêt ou objectif) n'est jamais compté, et un
 // refus explicite est mémorisé à vie (jamais reproposé). ----------
 const INFERRED_INTEREST_CONFIRM_THRESHOLD = 3;
-function getInferredInterestSignals(){ return safeGetJSON('fzr-inferred-interest-signals', {}); }
-function saveInferredInterestSignals(s){ safeSetJSON('fzr-inferred-interest-signals', s); }
-function getDismissedInferredInterests(){ return safeGetJSON('fzr-inferred-interest-dismissed', []); }
+function getInferredInterestSignals(){ return safeGetJSON('likanza-inferred-interest-signals', {}); }
+function saveInferredInterestSignals(s){ safeSetJSON('likanza-inferred-interest-signals', s); }
+function getDismissedInferredInterests(){ return safeGetJSON('likanza-inferred-interest-dismissed', []); }
 function isDomainAlreadyExplicit(domainKey){
   const profile = getProfile();
   return !!((profile.interests || {})[domainKey] || (profile.goals || {})[domainKey]);
@@ -2677,10 +2677,10 @@ function confirmInferredInterest(domainKey, accepted){
     saveProfile({...getProfile(), interests: {...(getProfile().interests || {}), [domainKey]: true}});
   } else {
     const dismissed = getDismissedInferredInterests();
-    if(!dismissed.includes(domainKey)) safeSetJSON('fzr-inferred-interest-dismissed', dismissed.concat(domainKey));
+    if(!dismissed.includes(domainKey)) safeSetJSON('likanza-inferred-interest-dismissed', dismissed.concat(domainKey));
   }
 }
-// Score de maîtrise continu par catégorie, dérivé de fzr-quiz-stats (aucune
+// Score de maîtrise continu par catégorie, dérivé de likanza-quiz-stats (aucune
 // donnée inventée — uniquement de vraies réponses aux quiz). Seule mesure de
 // maîtrise du site (l'ancienne version à double seuil silencieux, avec son
 // angle mort 50-75%, a été retirée).
@@ -2878,7 +2878,7 @@ function renderFinancialIQDetail(elId){
 }
 
 // ---------- Maîtrise par concept, 4 paliers (Découvert → Compris → Appliqué → Maîtrisé) ----------
-// Même source de vérité que getSkillMastery (fzr-quiz-stats.categoryStats) —
+// Même source de vérité que getSkillMastery (likanza-quiz-stats.categoryStats) —
 // jamais un second système qui pourrait diverger. "Concept" = les mêmes ~50
 // catégories déjà partagées par les quiz, les Défis et DOMAINS[].quizCategories
 // (app.js) — pas une nouvelle taxonomie. Chaque palier est un sur-ensemble
@@ -2911,8 +2911,8 @@ function getAllConceptMastery(){
 // Contrairement au tableau "wrong" local à startQuizSession (perdu au
 // rechargement), ceci garde une trace durable des erreurs à travers les 3
 // moteurs de quiz du site, pour alimenter une vraie recommandation de révision.
-function getMistakes(){ return safeGetJSON('fzr-mistakes', []); }
-function saveMistakes(list){ safeSetJSON('fzr-mistakes', list); }
+function getMistakes(){ return safeGetJSON('likanza-mistakes', []); }
+function saveMistakes(list){ safeSetJSON('likanza-mistakes', list); }
 
 // Catégorie avec le plus d'erreurs non résolues (tri par nombre décroissant)
 // — logique auparavant dupliquée indépendamment dans getNextStepSuggestion,
@@ -2965,7 +2965,7 @@ function resolveMistake(questionId){
 
 // ---------- Répétition espacée réelle (audit Formations Phase 3 du
 // 27/08/2026) : jusqu'ici, une notion maîtrisée ne revenait jamais se
-// retester automatiquement — seules les erreurs (fzr-mistakes, ci-dessus)
+// retester automatiquement — seules les erreurs (likanza-mistakes, ci-dessus)
 // étaient reprogrammées, et seulement à l'initiative de l'utilisateur.
 // Ici, une catégorie qui atteint "maîtrisé" (getSkillMastery) est
 // programmée pour resurgir à J+7, puis J+14 si la révision réussit à
@@ -2973,8 +2973,8 @@ function resolveMistake(questionId){
 // réinitialisée tant qu'elle reste suivie, jamais avancée par une révision
 // faite en avance ou ratée. ----------
 const SPACED_REPETITION_INTERVALS_DAYS = [7, 14, 30];
-function getSpacedRepetition(){ return safeGetJSON('fzr-spaced-repetition', {}); }
-function saveSpacedRepetition(state){ safeSetJSON('fzr-spaced-repetition', state); }
+function getSpacedRepetition(){ return safeGetJSON('likanza-spaced-repetition', {}); }
+function saveSpacedRepetition(state){ safeSetJSON('likanza-spaced-repetition', state); }
 // toISOString() convertit d'abord en UTC : dans un fuseau en avance sur UTC
 // (ex. France), juste après minuit local, la date UTC est encore la veille —
 // ça décalerait toutes les échéances d'un jour. On formate donc toujours la
@@ -4007,7 +4007,7 @@ function startMixedSession(elId, items, opts){
     if(pct >= 90) msg = "Excellente maîtrise du sujet.";
     else if(pct >= 70) msg = "Très bon résultat.";
     else if(pct >= 50) msg = "Les bases sont là, certaines notions restent à consolider.";
-    // Alimente le même historique que l'ancien moteur QCM (fzr-quiz-stats),
+    // Alimente le même historique que l'ancien moteur QCM (likanza-quiz-stats),
     // pour que "Cette semaine" (renderDefisSemaine) reflète aussi les sessions
     // lancées depuis Défi du jour / Recommandé / À revoir / Parcours.
     recordQuizCompletion(opts.level || 'mixte', opts.categorie || 'mélange', items.length, pct);
@@ -4251,7 +4251,7 @@ const DEFIS_PARCOURS = [
   {id:'immobilier', titre:"🏠 Comprendre l'immobilier", categories:['Immobilier','SCPI','Crédit']},
   {id:'economie', titre:"🌍 Comprendre l'économie", categories:['PIB','Taux directeur','Banque centrale','Récession','Offre et demande']}
 ];
-function getDefisParcoursProgress(){ return safeGetJSON('fzr-defis-parcours-progress', {}); }
+function getDefisParcoursProgress(){ return safeGetJSON('likanza-defis-parcours-progress', {}); }
 function renderDefisParcours(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -4285,7 +4285,7 @@ function renderDefisParcours(elId){
         onComplete: () => {
           const p2 = getDefisParcoursProgress();
           p2[`${parcoursId}-${cat}`] = true;
-          safeSetJSON('fzr-defis-parcours-progress', p2);
+          safeSetJSON('likanza-defis-parcours-progress', p2);
         },
         onRestart: () => { renderDefisParcours(elId); }
       });
@@ -4682,7 +4682,7 @@ function renderChartPatternGame(elId){
 // COURS_CATALOG (app.js). Les points ne sont accordés qu'à la réussite du quiz,
 // une seule fois par cours (pas de gain répété en retentant un cours déjà validé).
 const COURS_PASS_THRESHOLD = 0.6;
-function getCoursProgress(){ return safeGetJSON('fzr-cours-progress', {}); }
+function getCoursProgress(){ return safeGetJSON('likanza-cours-progress', {}); }
 
 // Suivi des chapitres réellement ouverts par cours (audit Formations du
 // 27/08/2026 : le raccourci "Test" du sélecteur de format permettait de
@@ -4691,24 +4691,24 @@ function getCoursProgress(){ return safeGetJSON('fzr-cours-progress', {}); }
 // format actif (getFormatFilteredChapitres retire des chapitres), le titre
 // reste stable quel que soit le format utilisé pour l'ouvrir.
 function getVisitedChapters(coursId){
-  const all = safeGetJSON('fzr-cours-visited', {});
+  const all = safeGetJSON('likanza-cours-visited', {});
   return all[coursId] || [];
 }
 function markChapterVisited(coursId, chapitreTitre){
-  const all = safeGetJSON('fzr-cours-visited', {});
+  const all = safeGetJSON('likanza-cours-visited', {});
   const list = all[coursId] || [];
   if(!list.includes(chapitreTitre)) list.push(chapitreTitre);
   all[coursId] = list;
-  safeSetJSON('fzr-cours-visited', all);
+  safeSetJSON('likanza-cours-visited', all);
 }
 
 // ---------- Reprise de position (chantier Continuité, phase 6, 30/08/2026,
 // sections 30-32 et 59 du prompt d'origine) : contrairement aux booléens de
-// fzr-cours-visited (ce qui a été lu), fzr-last-position retient OÙ
+// likanza-cours-visited (ce qui a été lu), likanza-last-position retient OÙ
 // exactement l'utilisateur s'est arrêté, pour permettre un vrai "Continuer"
 // depuis le tableau de bord. Une seule position à la fois (la plus récente
 // activité de ce type), jamais un historique complet à maintenir. ----------
-const LAST_POSITION_KEY = 'fzr-last-position';
+const LAST_POSITION_KEY = 'likanza-last-position';
 function getLastPosition(){ return safeGetJSON(LAST_POSITION_KEY, null); }
 function saveLastPosition(position){ safeSetJSON(LAST_POSITION_KEY, position); }
 // Widget "Continuer" (sections 30-32, 59) : une seule action, jamais une
@@ -4740,7 +4740,7 @@ function renderContinueWidget(elId){
 // commun l'emporte, à égalité le premier domaine testé (ordre de DOMAINS).
 // Reste correct même si COURS_CATALOG grandit sans mise à jour manuelle.
 // ---------- Parcours guidés (objectif/métier) : voir LEARNING_PATHS (app.js).
-// Progression dérivée de fzr-cours-progress, déjà la seule source de vérité
+// Progression dérivée de likanza-cours-progress, déjà la seule source de vérité
 // de complétion d'un cours — jamais un second compteur qui pourrait diverger. ----------
 function getLearningPathProgress(path){
   const progress = getCoursProgress();
@@ -4996,11 +4996,11 @@ function renderCourseIntro(elId, cours, onStart){
 // Engine) : simple, jamais bloquant, un avis par contenu (pas un vote répété
 // à chaque relecture) — sert uniquement à repérer les cours à améliorer,
 // jamais affiché comme une note publique. ----------
-function getClarityFeedback(){ return safeGetJSON('fzr-clarity-feedback', {}); }
+function getClarityFeedback(){ return safeGetJSON('likanza-clarity-feedback', {}); }
 function saveClarityFeedbackEntry(contentId, rating){
   const all = getClarityFeedback();
   all[contentId] = {rating, date: new Date().toISOString()};
-  safeSetJSON('fzr-clarity-feedback', all);
+  safeSetJSON('likanza-clarity-feedback', all);
 }
 const CLARITY_OPTIONS = [
   {value:'tres-claire', label:'Très claire'},
@@ -5383,7 +5383,7 @@ function renderCoursQuiz(elId, cours, onComplete){
     let rewardMsg = '';
     if(passed && !alreadyDone){
       progress[cours.id] = true;
-      safeSetJSON('fzr-cours-progress', progress);
+      safeSetJSON('likanza-cours-progress', progress);
       awardXP(50, {coursCompleted:true});
       rewardMsg = ' · +50 XP · +50 Finance Points';
       if(typeof onComplete === 'function') onComplete();
@@ -5409,7 +5409,7 @@ function renderCoursQuiz(elId, cours, onComplete){
 // Contenu dans COURSES (app.js). Comme pour les cours, les missions sont
 // présentées en tuiles cliquables sur formations.html plutôt qu'en accordéon
 // — chaque tuile ouvre sa mission complète sur mission.html#niveau-index.
-function getMissionProgress(){ return safeGetJSON('fzr-progress', {}); }
+function getMissionProgress(){ return safeGetJSON('likanza-progress', {}); }
 
 function renderMissionTiles(elId, level){
   const el = document.getElementById(elId);
@@ -5435,7 +5435,7 @@ function completeMission(level, index, onLevelComplete){
   const key = level+'-'+index;
   if(progress[key]) return;
   progress[key] = true;
-  safeSetJSON('fzr-progress', progress);
+  safeSetJSON('likanza-progress', progress);
   const mods = COURSES[level] || [];
   const doneCount = mods.filter((c,i)=>progress[level+'-'+i]).length;
   const levelJustCompleted = doneCount === mods.length;
@@ -5644,9 +5644,9 @@ function renderBusinessNiveau(elId){
 
 // ---------- Ta progression sur les outils de raisonnement Business (cas,
 // modèles, problèmes, Unit Economics, idée en cours) : jamais un pourcentage
-// inventé, uniquement des comptes réels tirés de fzr-xp-repeat-counts (clé
+// inventé, uniquement des comptes réels tirés de likanza-xp-repeat-counts (clé
 // permanente écrite par tryAwardQuizPoints, contrairement au ledger du jour
-// utilisé pour l'anti-farming) et de fzr-business-project. ----------
+// utilisé pour l'anti-farming) et de likanza-business-project. ----------
 function renderBusinessToolsProgress(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -5655,7 +5655,7 @@ function renderBusinessToolsProgress(elId){
   const modelsStudied = claimedIds.filter(id => id.startsWith('business-model-')).length;
   const problemsExplored = claimedIds.filter(id => id.startsWith('business-problem-')).length;
   const unitEconomicsUsed = claimedIds.some(id => id.startsWith('unit-economics-'));
-  const projectAnswers = safeGetJSON('fzr-business-project', {});
+  const projectAnswers = safeGetJSON('likanza-business-project', {});
   const ideaInProgress = Object.values(projectAnswers).some(v => (typeof v === 'string' ? v.trim() : v));
 
   const casesTotal = (typeof BUSINESS_CASES !== 'undefined') ? BUSINESS_CASES.length : null;
@@ -5679,7 +5679,7 @@ function renderBusinessToolsProgress(elId){
 
 // ---------- Ta progression Bourse V2 : mêmes principes que
 // renderBusinessToolsProgress — uniquement des comptes réels tirés de
-// fzr-xp-repeat-counts et fzr-investor-profile, jamais un pourcentage
+// likanza-xp-repeat-counts et likanza-investor-profile, jamais un pourcentage
 // inventé. ----------
 function renderBourseToolsProgress(elId){
   const el = document.getElementById(elId);
@@ -5687,7 +5687,7 @@ function renderBourseToolsProgress(elId){
   const claimedIds = Object.keys(getXPRepeatCounts());
   const scenariosViewed = claimedIds.some(id => id.startsWith('allocation-scenarios-'));
   const portfolioSimulated = claimedIds.some(id => id.startsWith('portfolio-simulator-'));
-  const profile = safeGetJSON('fzr-investor-profile', null);
+  const profile = safeGetJSON('likanza-investor-profile', null);
 
   const rows = [
     {label: 'Profil investisseur rempli', value: profile ? 'Oui' : 'Pas encore', href: 'bourse-allocation.html'},
@@ -6024,7 +6024,7 @@ const BUSINESS_METHODOLOGY = {
 function renderUnitEconomics(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const stored = safeGetJSON('fzr-unit-economics', {prix:50, coutDirect:15, cac:40, achatsMoyens:3, chargesFixes:1500, churnMensuelPct:0, arpuMensuel:0});
+  const stored = safeGetJSON('likanza-unit-economics', {prix:50, coutDirect:15, cac:40, achatsMoyens:3, chargesFixes:1500, churnMensuelPct:0, arpuMensuel:0});
 
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Renseigne tes propres hypothèses : les calculs s'enchaînent à partir de ces chiffres, sans jugement automatique sur ton projet.</p>
@@ -6057,7 +6057,7 @@ function renderUnitEconomics(elId){
   }
   function update(){
     const a = readInputs();
-    safeSetJSON('fzr-unit-economics', a);
+    safeSetJSON('likanza-unit-economics', a);
     const r = computeUnitEconomics(a);
     const ratioColor = r.ratioLtvCac === null ? 'var(--text-dim)' : r.ratioLtvCac >= 3 ? 'var(--emerald)' : r.ratioLtvCac >= 1 ? 'var(--gold-bright)' : 'var(--bordeaux)';
     document.getElementById(`${elId}-results`).innerHTML = `
@@ -6134,7 +6134,7 @@ function computeHeadcountBreakeven(a){
 function renderHeadcountSimulator(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const stored = safeGetJSON('fzr-headcount-sim', {salaireBrutMensuel:2800, chargesPatronalesPct:42, coutRecrutement:2000, margeGenereeParEmploye:3500});
+  const stored = safeGetJSON('likanza-headcount-sim', {salaireBrutMensuel:2800, chargesPatronalesPct:42, coutRecrutement:2000, margeGenereeParEmploye:3500});
 
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Le coût réel d'une embauche inclut toujours les charges patronales, jamais seulement le salaire brut affiché sur l'offre.</p>
@@ -6165,7 +6165,7 @@ function renderHeadcountSimulator(elId){
   }
   function update(){
     const a = readInputs();
-    safeSetJSON('fzr-headcount-sim', a);
+    safeSetJSON('likanza-headcount-sim', a);
     const r = computeHeadcountBreakeven(a);
     if(!r){
       document.getElementById(`${elId}-results`).innerHTML = `<p style="color:var(--bordeaux);font-size:13px;">${renderDataBadge('avis')} Le salaire brut et les charges patronales doivent être des valeurs réelles et positives (ou nulles) — un coût ne peut pas être négatif.</p>`;
@@ -6202,14 +6202,14 @@ function renderHeadcountSimulator(elId){
 }
 
 // ---------- Dépenses OPEX/CAPEX & projection de trésorerie (Financial Lab,
-// Phase 5) : liste persistante (même patron fzr-real-portfolio que partout
+// Phase 5) : liste persistante (même patron likanza-real-portfolio que partout
 // ailleurs) — OPEX = charges d'exploitation récurrentes mensuelles, CAPEX =
 // investissement ponctuel (non récurrent, jamais mensualisé automatiquement).
 // La projection s'ajoute explicitement au résultat déjà calculé dans le
 // profil entreprise, sans jamais tenter de fusionner les deux registres
 // (risque de double comptage disclosed plutôt que masqué par une fausse
 // fusion automatique). ----------
-const BUSINESS_EXPENSES_KEY = 'fzr-business-expenses';
+const BUSINESS_EXPENSES_KEY = 'likanza-business-expenses';
 function getBusinessExpenses(){
   try {
     const raw = JSON.parse(localStorage.getItem(BUSINESS_EXPENSES_KEY) || '[]');
@@ -6352,7 +6352,7 @@ function computePricingImpact(a){
 function renderPricingSimulator(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const stored = safeGetJSON('fzr-pricing-sim', {prixActuel:50, coutDirect:20, volumeActuel:100});
+  const stored = safeGetJSON('likanza-pricing-sim', {prixActuel:50, coutDirect:20, volumeActuel:100});
 
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Jamais une élasticité prix/volume inventée : seulement ce que le calcul mécanique montre à volume constant, et ce qu'il faudrait vendre en plus pour compenser.</p>
@@ -6381,7 +6381,7 @@ function renderPricingSimulator(elId){
       volumeActuel: document.getElementById(`${elId}-volumeActuel`).value,
       nouveauPrix: sliderEl.value
     };
-    safeSetJSON('fzr-pricing-sim', {prixActuel: a.prixActuel, coutDirect: a.coutDirect, volumeActuel: a.volumeActuel});
+    safeSetJSON('likanza-pricing-sim', {prixActuel: a.prixActuel, coutDirect: a.coutDirect, volumeActuel: a.volumeActuel});
     document.getElementById(`${elId}-nouveauPrixVal`).textContent = fmtEUR(+a.nouveauPrix);
     const r = computePricingImpact(a);
     const deltaMarge = r.margeTotaleNouvelleVolumeConstant - r.margeTotaleActuelle;
@@ -6425,7 +6425,7 @@ function computeSalesFunnel(a){
 function renderSalesFunnel(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const stored = safeGetJSON('fzr-sales-funnel', {visiteurs:5000, tauxLead:10, tauxProspect:30, tauxClient:20, budgetMarketing:2000});
+  const stored = safeGetJSON('likanza-sales-funnel', {visiteurs:5000, tauxLead:10, tauxProspect:30, tauxClient:20, budgetMarketing:2000});
 
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Jamais un taux de conversion "moyen du marché" — uniquement tes propres taux, étage par étage.</p>
@@ -6448,7 +6448,7 @@ function renderSalesFunnel(elId){
       tauxClient: document.getElementById(`${elId}-tauxClient`).value,
       budgetMarketing: document.getElementById(`${elId}-budgetMarketing`).value
     };
-    safeSetJSON('fzr-sales-funnel', a);
+    safeSetJSON('likanza-sales-funnel', a);
     const r = computeSalesFunnel(a);
     const maxVal = Math.max(r.visiteurs, 1);
     const stages = [
@@ -6488,13 +6488,13 @@ function renderSalesFunnel(elId){
 
 // ---------- Scénarios & stress-test (Financial Lab, Phase 6) : applique un
 // choc au profil entreprise (jamais au profil lui-même — un calcul à côté,
-// jamais une écriture dans fzr-business-profile) et compare plusieurs
-// scénarios sauvegardés. Seuls les DELTAS sont persistés (fzr-business-scenarios),
+// jamais une écriture dans likanza-business-profile) et compare plusieurs
+// scénarios sauvegardés. Seuls les DELTAS sont persistés (likanza-business-scenarios),
 // jamais un résultat figé : la comparaison recalcule toujours contre le
 // profil ACTUEL (§71, source de vérité unique) — un scénario sauvegardé la
 // semaine dernière reflète honnêtement l'impact sur la situation d'aujourd'hui,
 // pas une photo obsolète. ----------
-const BUSINESS_SCENARIOS_KEY = 'fzr-business-scenarios';
+const BUSINESS_SCENARIOS_KEY = 'likanza-business-scenarios';
 const BUSINESS_SCENARIO_PRESETS = {
   optimiste: {label: 'Optimiste', caDeltaPct: 15, coutsDeltaPct: -5, perteClients: 0},
   pessimiste: {label: 'Pessimiste', caDeltaPct: -15, coutsDeltaPct: 10, perteClients: 0},
@@ -6703,7 +6703,7 @@ function computeValorisationMultiples(a){
 function renderValorisationSimulator(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const stored = safeGetJSON('fzr-valorisation-sim', {ebitda:50000, multipleEV:6, resultatNet:35000, per:12});
+  const stored = safeGetJSON('likanza-valorisation-sim', {ebitda:50000, multipleEV:6, resultatNet:35000, per:12});
 
   el.innerHTML = `
     <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} L'EBITDA et le résultat net sont à saisir toi-même — le profil entreprise ne calcule jamais une vraie EBITDA (amortissements et impôts non modélisés).</p>
@@ -6728,7 +6728,7 @@ function renderValorisationSimulator(elId){
       resultatNet: document.getElementById(`${elId}-resultatNet`).value,
       per: document.getElementById(`${elId}-per`).value
     };
-    safeSetJSON('fzr-valorisation-sim', a);
+    safeSetJSON('likanza-valorisation-sim', a);
     const r = computeValorisationMultiples(a);
     document.getElementById(`${elId}-results`).innerHTML = `
       <div class="card-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
@@ -6801,7 +6801,7 @@ function renderBusinessDiagnostics(elId){
   const profile = getBusinessProfile();
   const snapshot = computeBusinessProfileSnapshot(profile);
   const runway = computeRunway(profile);
-  const unitEconomics = safeGetJSON('fzr-unit-economics', null) ? computeUnitEconomics(safeGetJSON('fzr-unit-economics', {})) : null;
+  const unitEconomics = safeGetJSON('likanza-unit-economics', null) ? computeUnitEconomics(safeGetJSON('likanza-unit-economics', {})) : null;
 
   if(snapshot.ca === 0){
     el.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Renseigne d'abord "Mon profil entreprise" ci-dessus pour activer le check-up automatique.</p>`;
@@ -6871,7 +6871,7 @@ function renderTopicWidget(elId, {title, intro, terms, ctaLabel, ctaHref}){
 }
 
 // ---------- Ton profil business (business.html) ----------
-// Agrège l'historique réel du Business Game (fzr-business-game-history,
+// Agrège l'historique réel du Business Game (likanza-business-game-history,
 // voir scripts/games/business-game.js) : ne conclut jamais sur une seule
 // partie, affiche uniquement des chiffres réellement enregistrés, et ne
 // prétend jamais diagnostiquer une vraie personnalité — toujours cadré
@@ -8409,11 +8409,11 @@ function initReveal(){
     if(prefersReduced || !('IntersectionObserver' in window)){
       return; // pas d'animation, contenu visible immédiatement
     }
-    targets.forEach(el=>el.classList.add('fzr-reveal'));
+    targets.forEach(el=>el.classList.add('likanza-reveal'));
     const io = new IntersectionObserver((entries)=>{
       entries.forEach(entry=>{
         if(entry.isIntersecting){
-          entry.target.classList.add('fzr-in-view');
+          entry.target.classList.add('likanza-in-view');
           io.unobserve(entry.target);
         }
       });
@@ -8423,19 +8423,19 @@ function initReveal(){
     // iframe redimensionnée, etc.), on force la visibilité après un court délai
     // plutôt que de laisser du contenu invisible indéfiniment.
     setTimeout(()=>{
-      document.querySelectorAll('.fzr-reveal:not(.fzr-in-view)').forEach(el=>{
-        el.classList.add('fzr-in-view');
+      document.querySelectorAll('.likanza-reveal:not(.likanza-in-view)').forEach(el=>{
+        el.classList.add('likanza-in-view');
       });
     }, 1200);
   }catch(err){
     console.error('initReveal a échoué, contenu affiché sans animation :', err);
-    document.querySelectorAll('.fzr-reveal').forEach(el=>el.classList.add('fzr-in-view'));
+    document.querySelectorAll('.likanza-reveal').forEach(el=>el.classList.add('likanza-in-view'));
   }
 }
 
 // ---------- Watchlist personnelle (locale, avec seuils d'alerte) ----------
-function getWatchlist(){ return safeGetJSON('fzr-watchlist', []); }
-function saveWatchlist(list){ safeSetJSON('fzr-watchlist', list); }
+function getWatchlist(){ return safeGetJSON('likanza-watchlist', []); }
+function saveWatchlist(list){ safeSetJSON('likanza-watchlist', list); }
 function parseNumericValue(str){
   const n = Number(String(str).replace(/[^\d,.-]/g,'').replace(',', '.'));
   return isNaN(n) ? null : n;
@@ -8456,13 +8456,13 @@ const FOLLOWED_STOCKS_MAX = 20;
 // comme 'stock', rétrocompatible avec les listes déjà suivies par les
 // utilisateurs.
 function getFollowedStocks(){
-  let list = safeGetJSON('fzr-followed-stocks', null);
+  let list = safeGetJSON('likanza-followed-stocks', null);
   if(list === null){
     // Premier chargement : on part des 8 valeurs de démonstration, en
     // reprenant une éventuelle liste de l'ancienne fonctionnalité séparée
-    // (fzr-custom-stocks) pour ne rien perdre de ce qui avait déjà été ajouté.
+    // (likanza-custom-stocks) pour ne rien perdre de ce qui avait déjà été ajouté.
     const defaults = STOCKS_DEMO.map(s => ({symbol: s.ticker, name: s.nom, assetType: 'stock'}));
-    const legacy = safeGetJSON('fzr-custom-stocks', []).map(s => ({symbol: s.symbol, name: s.name, assetType: 'stock'}));
+    const legacy = safeGetJSON('likanza-custom-stocks', []).map(s => ({symbol: s.symbol, name: s.name, assetType: 'stock'}));
     const seen = new Set(defaults.map(s => s.symbol));
     legacy.forEach(s => { if(!seen.has(s.symbol)){ defaults.push(s); seen.add(s.symbol); } });
     list = defaults;
@@ -8470,7 +8470,7 @@ function getFollowedStocks(){
   }
   return list.map(s => ({...s, assetType: s.assetType || 'stock'}));
 }
-function saveFollowedStocks(list){ safeSetJSON('fzr-followed-stocks', list); }
+function saveFollowedStocks(list){ safeSetJSON('likanza-followed-stocks', list); }
 function addFollowedStock(stock){
   const list = getFollowedStocks().filter(s => s.symbol !== stock.symbol);
   list.push({symbol: stock.symbol, name: stock.name, assetType: stock.assetType || 'stock'});
@@ -8550,36 +8550,36 @@ function progressSyncApiUrl(){
 // des préférences d'affichage locales (thème, langue) ni des données
 // sensibles (session admin) ou de contenu éditorial (brouillons admin) — voir
 // le plan de ce chantier pour le détail de chaque exclusion. Depuis le
-// chantier Continuité (phase 5, 30/08/2026) : aucune clé fzr-context-*
+// chantier Continuité (phase 5, 30/08/2026) : aucune clé likanza-context-*
 // (Context Engine, writeContext/consumeContext) n'est jamais ajoutée ici —
 // ce sont des contextes éphémères "écrire -> naviguer -> lire une fois ->
 // supprimer" au sein d'une même session de navigation, jamais destinés à
 // survivre à un rechargement ni à traverser plusieurs appareils. L'ancienne
-// clé fzr-business-strategy-transfer (migrée vers fzr-context-business-strategy)
+// clé likanza-business-strategy-transfer (migrée vers likanza-context-business-strategy)
 // était présente ici par le passé ; retirée pour la même raison.
 const PROGRESS_SYNC_KEYS = [
-  'fzr-profile', 'fzr-investor-profile', 'fzr-followed-stocks', 'fzr-gamification',
-  'fzr-level', 'fzr-progress', 'fzr-xp-repeat-counts', 'fzr-quiz-points-ledger',
-  'fzr-quiz-stats', 'fzr-deep-quiz-results', 'fzr-mistakes', 'fzr-favorites',
-  'fzr-cours-progress', 'fzr-defis-parcours-progress', 'fzr-daily-missions-log',
-  'fzr-weekly-missions-log', 'fzr-activity-log', 'fzr-positioning-result',
-  'fzr-business-project', 'fzr-business-game-history', 'fzr-portfolio-game-history',
-  'fzr-unit-economics', 'fzr-watchlist', 'fzr-real-portfolio',
-  'fzr-paper-trading', 'fzr-market-panic-history', 'fzr-gouverneur-history', 'fzr-clarity-feedback',
-  'fzr-concepts-encountered', 'fzr-personal-debts', 'fzr-financial-goals', 'fzr-recurring-charges',
-  'fzr-net-worth-assets', 'fzr-business-profile', 'fzr-budget-entries', 'fzr-net-worth-history',
-  'fzr-business-expenses', 'fzr-business-scenarios', 'fzr-last-position',
+  'likanza-profile', 'likanza-investor-profile', 'likanza-followed-stocks', 'likanza-gamification',
+  'likanza-level', 'likanza-progress', 'likanza-xp-repeat-counts', 'likanza-quiz-points-ledger',
+  'likanza-quiz-stats', 'likanza-deep-quiz-results', 'likanza-mistakes', 'likanza-favorites',
+  'likanza-cours-progress', 'likanza-defis-parcours-progress', 'likanza-daily-missions-log',
+  'likanza-weekly-missions-log', 'likanza-activity-log', 'likanza-positioning-result',
+  'likanza-business-project', 'likanza-business-game-history', 'likanza-portfolio-game-history',
+  'likanza-unit-economics', 'likanza-watchlist', 'likanza-real-portfolio',
+  'likanza-paper-trading', 'likanza-market-panic-history', 'likanza-gouverneur-history', 'likanza-clarity-feedback',
+  'likanza-concepts-encountered', 'likanza-personal-debts', 'likanza-financial-goals', 'likanza-recurring-charges',
+  'likanza-net-worth-assets', 'likanza-business-profile', 'likanza-budget-entries', 'likanza-net-worth-history',
+  'likanza-business-expenses', 'likanza-business-scenarios', 'likanza-last-position',
   // Ajoutées pendant le chantier Continuité (phase 9, 30/08/2026) : de la
   // vraie progression utilisateur, oubliées de la whitelist par le passé —
   // les Projets de vie et les 4 simulateurs Business n'avaient jusqu'ici
   // aucune raison de ne PAS être synchronisés (contrairement aux clés
-  // fzr-context-* du Context Engine, phase 5, volontairement exclues).
-  'fzr-life-projects', 'fzr-headcount-sim', 'fzr-pricing-sim', 'fzr-sales-funnel', 'fzr-valorisation-sim'
+  // likanza-context-* du Context Engine, phase 5, volontairement exclues).
+  'likanza-life-projects', 'likanza-headcount-sim', 'likanza-pricing-sim', 'likanza-sales-funnel', 'likanza-valorisation-sim'
 ];
 // Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
 // jamais synchronisé" (première visite -> on restaure depuis le compte) de
 // "cet appareil synchronise déjà" (il devient la source de vérité).
-const PROGRESS_SYNC_MARKER = 'fzr-sync-last-at';
+const PROGRESS_SYNC_MARKER = 'likanza-sync-last-at';
 
 function getSyncToken(){
   const cached = safeGetJSON('likanza-auth-user', null);
@@ -9129,7 +9129,7 @@ function resolveFollowedAsset(symbol){
 // appel réseau dédié). Une transaction malformée (quantité/prix non
 // positifs, ticker manquant) est ignorée, jamais complétée par une valeur
 // par défaut inventée. ----------
-const REAL_PORTFOLIO_KEY = 'fzr-real-portfolio';
+const REAL_PORTFOLIO_KEY = 'likanza-real-portfolio';
 function getRealPortfolio(){
   try {
     const raw = JSON.parse(localStorage.getItem(REAL_PORTFOLIO_KEY) || '[]');
@@ -9317,7 +9317,7 @@ function renderRealPortfolioHTML(positions, totals){
 // des fondations transverses — voir audit du 26/08/2026 : "aucune donnée
 // financière personnelle persistante n'existe" était le vrai trou
 // architectural bloquant dashboard/diagnostic/target engine/patrimoine).
-// Même patron exact que fzr-real-portfolio ci-dessus (liste d'entrées avec
+// Même patron exact que likanza-real-portfolio ci-dessus (liste d'entrées avec
 // id, validation stricte avant écriture, fonctions get/save/remove dédiées,
 // jamais un objet mutable partagé) — 4 registres indépendants, aucune
 // duplication entre eux (source de vérité unique, section 71 du prompt
@@ -9339,7 +9339,7 @@ function renderRealPortfolioHTML(positions, totals){
 // ============================================================
 
 // ---- Dettes personnelles ----
-const PERSONAL_DEBTS_KEY = 'fzr-personal-debts';
+const PERSONAL_DEBTS_KEY = 'likanza-personal-debts';
 function getPersonalDebts(){
   try {
     const raw = JSON.parse(localStorage.getItem(PERSONAL_DEBTS_KEY) || '[]');
@@ -9365,7 +9365,7 @@ function removePersonalDebt(id){
 
 // ---- Objectifs financiers (remplace le calcul à objectif unique de
 // widget-budget-goal) ----
-const FINANCIAL_GOALS_KEY = 'fzr-financial-goals';
+const FINANCIAL_GOALS_KEY = 'likanza-financial-goals';
 function getFinancialGoals(){
   try {
     const raw = JSON.parse(localStorage.getItem(FINANCIAL_GOALS_KEY) || '[]');
@@ -9465,7 +9465,7 @@ function computeGoalsPriorityAllocation(goals, capacity, priorityGoalId){
 
 // ---- 🗺️ Mes Projets de vie (audit Dashboard du 28/08/2026, Chantier 7) :
 // décision de modèle de données actée dans l'audit — un Projet reste un
-// registre SÉPARÉ de fzr-financial-goals plutôt qu'une extension du modèle
+// registre SÉPARÉ de likanza-financial-goals plutôt qu'une extension du modèle
 // Objectif. Un Objectif est un montant plat à épargner ; un Projet a des
 // étapes propres (chacune avec son propre statut et sa propre dépense
 // réelle), un budget total, et des risques — retrofitter ce modèle dans les
@@ -9479,7 +9479,7 @@ const LIFE_PROJECT_CATEGORY_META = {
   mariage: {emoji: '💍', label: 'Mariage'}, voyage: {emoji: '✈️', label: 'Voyage'},
   etudes: {emoji: '🎓', label: 'Études'}, famille: {emoji: '👶', label: 'Famille'}, autre: {emoji: '📌', label: 'Autre'}
 };
-const LIFE_PROJECTS_KEY = 'fzr-life-projects';
+const LIFE_PROJECTS_KEY = 'likanza-life-projects';
 function getLifeProjects(){
   try {
     const raw = JSON.parse(localStorage.getItem(LIFE_PROJECTS_KEY) || '[]');
@@ -9641,7 +9641,7 @@ function computeProjectProgress(project){
 // catégories de LIFE_PROJECT_CATEGORIES (le prompt d'origine imaginait
 // "voiture"/"investir" comme catégories de projet, mais ces catégories
 // n'existent pas ici — l'épargne/investissement est suivi via un Objectif,
-// fzr-financial-goals, un registre séparé, voir le commentaire au-dessus de
+// likanza-financial-goals, un registre séparé, voir le commentaire au-dessus de
 // LIFE_PROJECT_CATEGORIES). "etudes"/"autre" restent volontairement vides :
 // aucune catégorie de quiz réelle ne correspond à un vrai écart de
 // compétence pour ces types de projet, jamais un lien forcé.
@@ -9787,7 +9787,7 @@ function computeWealthProjectionScenarios(baseParams){
 // ---- Charges récurrentes : abonnements ET factures (même structure, un
 // champ categorie les distingue) — remplace le calcul à une seule charge de
 // widget-budget-sub. ----
-const RECURRING_CHARGES_KEY = 'fzr-recurring-charges';
+const RECURRING_CHARGES_KEY = 'likanza-recurring-charges';
 const RECURRING_CHARGE_FREQUENCIES = ['mensuel', 'trimestriel', 'annuel'];
 function getRecurringCharges(){
   try {
@@ -9893,7 +9893,7 @@ function computeUpcomingReminders(daysAhead){
 
 // ---- Actifs (patrimoine) — le passif vient TOUJOURS des dettes
 // personnelles ci-dessus, jamais d'une liste de passifs séparée. ----
-const NET_WORTH_ASSETS_KEY = 'fzr-net-worth-assets';
+const NET_WORTH_ASSETS_KEY = 'likanza-net-worth-assets';
 // 'actions' conservé pour ne jamais casser une catégorie déjà enregistrée
 // chez un utilisateur existant (audit Dashboard du 28/08/2026 : les
 // enveloppes PEA/CTO/crypto sont assez distinctes fiscalement et en risque
@@ -9932,7 +9932,7 @@ function removeNetWorthAsset(id){
   const list = getNetWorthAssets().filter(a => a.id !== id);
   localStorage.setItem(NET_WORTH_ASSETS_KEY, JSON.stringify(list));
 }
-// Patrimoine net = actifs saisis − dettes personnelles (fzr-personal-debts).
+// Patrimoine net = actifs saisis − dettes personnelles (likanza-personal-debts).
 // Jamais un troisième registre de "passifs" : une dette n'existe qu'à un
 // seul endroit (section 71 du prompt Financial Lab, "source de vérité").
 function computeNetWorth(assets, debts){
@@ -9948,7 +9948,7 @@ function computeNetWorth(assets, debts){
 // point par mois (écrasé s'il existe déjà) : rouvrir la page 3 fois le même
 // mois ne doit jamais créer 3 points, seulement mettre à jour le point du
 // mois en cours avec la valeur la plus récente.
-const NET_WORTH_HISTORY_KEY = 'fzr-net-worth-history';
+const NET_WORTH_HISTORY_KEY = 'likanza-net-worth-history';
 function getNetWorthHistory(){
   try {
     const raw = JSON.parse(localStorage.getItem(NET_WORTH_HISTORY_KEY) || '[]');
@@ -10074,7 +10074,7 @@ function computeCapitalIncomeEstimate(assetsOverride, debtsOverride, budgetEntri
 // pour que "Où part mon argent" agrège de vrais totaux comparables d'un mois
 // à l'autre, jamais une liste de libellés disparates impossibles à regrouper.
 // ============================================================
-const BUDGET_ENTRY_KEY = 'fzr-budget-entries';
+const BUDGET_ENTRY_KEY = 'likanza-budget-entries';
 const BUDGET_CATEGORIES = {
   revenu: ['Salaire', 'Freelance / Business', 'Autre revenu'],
   depense: ['Logement', 'Alimentation', 'Transport', 'Loisirs & sorties', 'Santé', 'Abonnements', 'Autre']
@@ -10194,8 +10194,8 @@ function computeFinancialDiagnostics(ctx){
 }
 // Dashboard central — ne stocke jamais rien lui-même, recompose uniquement à
 // partir des registres existants (source de vérité unique, §71 du prompt
-// Financial Lab) : fzr-budget-entries, fzr-personal-debts,
-// fzr-financial-goals, fzr-recurring-charges, fzr-net-worth-assets.
+// Financial Lab) : likanza-budget-entries, likanza-personal-debts,
+// likanza-financial-goals, likanza-recurring-charges, likanza-net-worth-assets.
 function computeFinancialDashboard(mois){
   const entries = getBudgetEntries();
   const budgetSummary = computeBudgetSummary(entries, mois);
@@ -10215,7 +10215,7 @@ function computeFinancialDashboard(mois){
 // d'entreprise central n'existe : Unit Economics et "Construire mon projet"
 // ont chacun leur propre stockage isolé, jamais réutilisé ailleurs, et
 // VAN/TRI/LBO/DCF repartent de zéro à chaque visite. Un seul profil (pas une
-// liste, comme fzr-profile côté personnel — une entreprise à la fois) :
+// liste, comme likanza-profile côté personnel — une entreprise à la fois) :
 // même pattern defaults + merge que getProfile/saveProfile, pour que
 // l'ajout d'un futur champ ne casse jamais un profil déjà sauvegardé. ----------
 // ============================================================
@@ -10228,7 +10228,7 @@ const BUSINESS_PROFILE_DEFAULTS = {
   detteTotale: 0, tresorerieActuelle: 0
 };
 function getBusinessProfile(){
-  const stored = safeGetJSON('fzr-business-profile', null);
+  const stored = safeGetJSON('likanza-business-profile', null);
   if(!stored) return {...BUSINESS_PROFILE_DEFAULTS};
   return {...BUSINESS_PROFILE_DEFAULTS, ...stored};
 }
@@ -10272,7 +10272,7 @@ function saveBusinessProfile(profile){
         .map(prod => ({nom: prod.nom.trim().slice(0, 60), prix: prod.prix, volume: prod.volume}))
     : current.produits;
   merged.ca = computeRevenueModel(merged).ca;
-  safeSetJSON('fzr-business-profile', merged);
+  safeSetJSON('likanza-business-profile', merged);
   return merged;
 }
 // Compte de résultat simplifié (Financial Lab, Phase 4) — Chiffre d'affaires
@@ -10443,7 +10443,7 @@ function renderCompanyProfile(elId){
 // (réduction de position au coût moyen pondéré courant, P&L réalisé) et un
 // solde de trésorerie fictif — jamais un ordre exécuté silencieusement au-delà
 // des fonds disponibles ou de la position détenue. ----------
-const PAPER_TRADING_KEY = 'fzr-paper-trading';
+const PAPER_TRADING_KEY = 'likanza-paper-trading';
 const PAPER_TRADING_STARTING_CASH = 10000;
 function getPaperTradingState(){
   const raw = safeGetJSON(PAPER_TRADING_KEY, null);
@@ -11193,7 +11193,7 @@ function computeDividendReinvestmentSimulation(priceHistory, dividendEvents, ini
 }
 
 // ---------- Profil personnel (pré-remplit les simulateurs + test de positionnement) ----------
-// fzr-profile est le seul objet profil du site : le test de positionnement
+// likanza-profile est le seul objet profil du site : le test de positionnement
 // (levels/interests/learningStyle) fait évoluer cette même structure plutôt
 // que d'en créer une seconde. Migration non destructive : un profil déjà
 // enregistré avant l'ajout de ces 3 champs (ou un profil qui n'existe pas du
@@ -11201,7 +11201,7 @@ function computeDividendReinvestmentSimulation(priceHistory, dividendEvents, ini
 // risque/objectif déjà saisis.
 function getProfile(){
   const defaults = {age:25, epargne:150, horizon:15, risque:'equilibre', objectif:'', levels:{}, interests:{}, learningStyle:{}};
-  const stored = safeGetJSON('fzr-profile', null);
+  const stored = safeGetJSON('likanza-profile', null);
   if(!stored) return defaults;
   return {
     ...defaults, ...stored,
@@ -11210,7 +11210,7 @@ function getProfile(){
     learningStyle: {...defaults.learningStyle, ...(stored.learningStyle || {})}
   };
 }
-function saveProfile(p){ safeSetJSON('fzr-profile', p); }
+function saveProfile(p){ safeSetJSON('likanza-profile', p); }
 
 const PROFILE_OBJECTIFS = [
   {value:'gerer', label:'Mieux gérer mon argent'},
@@ -11244,7 +11244,7 @@ function renderProfileWidget(elId){
   // (games/investor-profile.js) ; l'inverse n'a jamais été voulu (voir le
   // commentaire à cet endroit). On se contente de rendre la divergence
   // visible si l'utilisateur modifie ce champ-ci après coup.
-  const investorProfile = safeGetJSON('fzr-investor-profile', null);
+  const investorProfile = safeGetJSON('likanza-investor-profile', null);
   const riskDivergence = investorProfile && investorProfile.riskProfile && investorProfile.riskProfile !== p.risque;
   el.innerHTML = `
     <div class="profile-widget">
@@ -11299,8 +11299,8 @@ function renderPersonalizationPanel(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const p = getProfile();
-  const investor = safeGetJSON('fzr-investor-profile', null);
-  const hasBusiness = !!safeGetJSON('fzr-business-profile', null);
+  const investor = safeGetJSON('likanza-investor-profile', null);
+  const hasBusiness = !!safeGetJSON('likanza-business-profile', null);
   const business = hasBusiness ? getBusinessProfile() : null;
 
   const goalLabels = [...new Set(POSITIONING_GOALS.filter(g => (p.goals || {})[g.key]).map(g => g.label))];
@@ -11396,7 +11396,7 @@ function renderPersonalizationPanel(elId){
   if(resetBtn) resetBtn.addEventListener('click', () => {
     if(!confirm("Réinitialiser tes objectifs, centres d'intérêt et manière d'apprendre ? Ta progression (XP, cours, quiz) restera intacte.")) return;
     saveProfile({...getProfile(), interests:{}, learningStyle:{}, goals:{}, objectif:'', primaryGoal:null, subGoal:null});
-    safeSetJSON('fzr-positioning-result', null);
+    safeSetJSON('likanza-positioning-result', null);
     renderPersonalizationPanel(elId);
   });
 }

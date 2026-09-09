@@ -116,7 +116,7 @@ const I18N = {
   }
 };
 
-let LANG = safeGet('fzr-lang') || 'fr';
+let LANG = safeGet('likanza-lang') || 'fr';
 function t(key){ return (I18N[LANG] && I18N[LANG][key]) || key; }
 
 function applyStaticI18n(){
@@ -133,7 +133,7 @@ function applyStaticI18n(){
 
 function setLang(lang){
   LANG = lang;
-  safeSet('fzr-lang', lang);
+  safeSet('likanza-lang', lang);
   safeRun('textes traduits', applyStaticI18n);
   safeRun('accès rapides (langue)', renderQuickAccess);
   safeRun('simulateurs (langue)', renderSimPreviews);
@@ -154,7 +154,7 @@ function renderTodayCard(){
   if(missionEl){
     const level = getLevel();
     const mods = COURSES[level] || COURSES.debutant;
-    const progress = safeGetJSON('fzr-progress', {});
+    const progress = safeGetJSON('likanza-progress', {});
     let idx = mods.findIndex((c,i)=>!progress[level+'-'+i]);
     const isReview = idx === -1;
     if(isReview) idx = 0;
@@ -270,7 +270,7 @@ function renderLearnTab(){
   const level = getLevel();
   const labels = {debutant:'Débutant', intermediaire:'Intermédiaire', avance:'Avancé', expert:'Expert'};
   const mods = COURSES[level] || COURSES.debutant;
-  const progress = safeGetJSON('fzr-progress', {});
+  const progress = safeGetJSON('likanza-progress', {});
   const nameEl = document.getElementById('learnLevelName');
   if(nameEl) nameEl.textContent = labels[level] || level;
   const listEl = document.getElementById('learnMissionsList');

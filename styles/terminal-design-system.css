@@ -270,7 +270,7 @@ button.terminal-kpi{font:inherit;text-align:left;cursor:pointer;}
 /* ---------- Distinction visuelle "Ma liste de surveillance" vs "Titres
    suivis" (nommage clarifié le 08/09/2026 — les deux libellés se
    ressemblaient trop pour deux fonctionnalités réellement distinctes en
-   base — fzr-followed-stocks vs fzr-watchlist — à ne jamais fusionner ni
+   base — likanza-followed-stocks vs likanza-watchlist — à ne jamais fusionner ni
    confondre visuellement). Un simple accent de couleur (violet plutôt
    que l'or par défaut des autres cards) suffit à les distinguer au
    premier coup d'oeil sans dupliquer davantage de CSS. ---------- */

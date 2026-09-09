@@ -20,7 +20,7 @@ function daysInMonth(year, monthIndex){ return new Date(year, monthIndex + 1, 0)
 // ---------- Jour d'échéance = 31 : ne doit jamais déborder sur le mois suivant ----------
 {
   const { window } = loadLaboratoirePage();
-  window.localStorage.setItem('fzr-recurring-charges', JSON.stringify([
+  window.localStorage.setItem('likanza-recurring-charges', JSON.stringify([
     {id: 'c1', nom: 'Assurance', montant: 40, frequence: 'mensuel', categorie: 'abonnement', jourEcheance: 31, dateAjout: new Date().toISOString()}
   ]));
   const reminders = window.computeUpcomingReminders(400);
@@ -34,7 +34,7 @@ function daysInMonth(year, monthIndex){ return new Date(year, monthIndex + 1, 0)
 // ---------- Jour d'échéance normal (15) : comportement inchangé (non-régression) ----------
 {
   const { window } = loadLaboratoirePage();
-  window.localStorage.setItem('fzr-recurring-charges', JSON.stringify([
+  window.localStorage.setItem('likanza-recurring-charges', JSON.stringify([
     {id: 'c2', nom: 'Internet', montant: 30, frequence: 'mensuel', categorie: 'abonnement', jourEcheance: 15, dateAjout: new Date().toISOString()}
   ]));
   const reminders = window.computeUpcomingReminders(400);
@@ -47,7 +47,7 @@ function daysInMonth(year, monthIndex){ return new Date(year, monthIndex + 1, 0)
 // ---------- Sans jour d'échéance renseigné : jamais de rappel (jamais un jour deviné) ----------
 {
   const { window } = loadLaboratoirePage();
-  window.localStorage.setItem('fzr-recurring-charges', JSON.stringify([
+  window.localStorage.setItem('likanza-recurring-charges', JSON.stringify([
     {id: 'c3', nom: 'Charge sans jour', montant: 20, frequence: 'mensuel', categorie: 'abonnement', jourEcheance: null, dateAjout: new Date().toISOString()}
   ]));
   const reminders = window.computeUpcomingReminders(400);
@@ -58,7 +58,7 @@ function daysInMonth(year, monthIndex){ return new Date(year, monthIndex + 1, 0)
 {
   const { window } = loadLaboratoirePage();
   const past = new Date(); past.setFullYear(past.getFullYear() - 1);
-  window.localStorage.setItem('fzr-financial-goals', JSON.stringify([
+  window.localStorage.setItem('likanza-financial-goals', JSON.stringify([
     {id: 'g1', nom: 'Objectif passé', montantCible: 1000, montantActuel: 0, versementMensuel: 50, dateCible: past.toISOString().slice(0, 10)}
   ]));
   const reminders = window.computeUpcomingReminders(400);

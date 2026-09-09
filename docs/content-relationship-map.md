@@ -53,7 +53,7 @@ réel qui l'implémente — jamais une relation aspirationnelle non codée.
   (`renderCourseBlock`), lien réel vers un calculateur existant — jamais un
   embed d'état JS live.
 - **→ Défi** : lien "Te tester" en fin de cours vers `defis.html?cat=<categorie>`.
-- **→ Reprise de position** : `fzr-last-position` (le cours et son chapitre
+- **→ Reprise de position** : `likanza-last-position` (le cours et son chapitre
   exact), voir `renderCourseIntro`/`renderContinueWidget`.
 
 ### Défi / Mini-jeu (MENTAL_CHALLENGES, QUIZ_BANK_FULL)
@@ -61,7 +61,7 @@ réel qui l'implémente — jamais une relation aspirationnelle non codée.
 - **→ Domaine** : `domain` (`MENTAL_CHALLENGES`) — doit correspondre à
   `DOMAINS[].mentalChallengeDomain`, valeurs réelles :
   `Finance personnelle, Bourse, Business, Économie, Immobilier, Crypto`.
-- **→ Skill Graph** : chaque réponse alimente `fzr-quiz-stats` via
+- **→ Skill Graph** : chaque réponse alimente `likanza-quiz-stats` via
   `recordAnswer`, jamais un score parallèle.
 - **→ Concept (LIBRARY)** : `conceptsTested[]` — texte libre pédagogique
   descriptif, **pas** un vrai lien de graphe (seulement ~2% recoupent un
@@ -78,7 +78,7 @@ réel qui l'implémente — jamais une relation aspirationnelle non codée.
   widget "prochaine étape" le plus réutilisé du site (39 sites d'appel).
 - **→ Contexte de retour** : `writeContext`/`consumeContext` (Context Engine) —
   précédent réel : Business Game → Construire son projet
-  (`fzr-context-business-strategy`).
+  (`likanza-context-business-strategy`).
 
 ### Business Case / Business Problem
 - **→ Tag** : `BUSINESS_CASE_TAG_LABELS` — espace de noms séparé de LIBRARY,
@@ -110,7 +110,7 @@ réel qui l'implémente — jamais une relation aspirationnelle non codée.
   contextuelle, pas un lien direct vers un `terme` LIBRARY (les deux
   vocabulaires ne se recoupent pas toujours exactement).
 
-### Projet de vie (fzr-life-projects)
+### Projet de vie (likanza-life-projects)
 - **→ Catégorie de quiz** : `PROJECT_REQUIRED_CATEGORIES` (déterministe, 5 des
   7 catégories réelles ont une correspondance ; `etudes`/`autre` volontairement
   vides).

@@ -76,15 +76,15 @@ const PORTFOLIO_SCENARIOS = {
 
 function fmtPct(x){ return `${x >= 0 ? '+' : ''}${x.toFixed(1)}%`; }
 
-// ---------- Historique des parties (fzr-portfolio-game-history) ----------
+// ---------- Historique des parties (likanza-portfolio-game-history) ----------
 // Écriture dès v1 (impossible à reconstituer rétroactivement) ; la lecture/
 // réflexion ("sur tes dernières parties...") est un fast-follow, pas dans
 // cette passe — mais l'écriture doit commencer maintenant.
-function getPortfolioGameHistory(){ return safeGetJSON('fzr-portfolio-game-history', []); }
+function getPortfolioGameHistory(){ return safeGetJSON('likanza-portfolio-game-history', []); }
 function savePortfolioGameResult(entry){
   const history = getPortfolioGameHistory();
   history.unshift(entry);
-  safeSetJSON('fzr-portfolio-game-history', history.slice(0, 20));
+  safeSetJSON('likanza-portfolio-game-history', history.slice(0, 20));
 }
 
 // ---------- Fonctions pures : alignement des dates réelles, tours ----------

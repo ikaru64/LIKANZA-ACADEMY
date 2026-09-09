@@ -123,7 +123,7 @@ function renderCompanyTimeline(elId, timeline){
 function renderScoreVerdictCard(el, ff, volatility, drawdown){
   const score = computeStockScore(ff, volatility, drawdown);
   const tier = computeRiskTier(ff, volatility);
-  const investorProfile = safeGetJSON('fzr-investor-profile', null);
+  const investorProfile = safeGetJSON('likanza-investor-profile', null);
   const verdict = computeStockVerdict(score, tier, investorProfile);
   const factors = typeof score.overall === 'number' ? buildScoreChangeFactors(score) : [];
   const vmeta = ACTION_VERDICT_META[verdict.level];
@@ -522,7 +522,7 @@ async function renderActionDetail(){
         // cet audit) : les notions réellement affichées ci-dessus (PER, ROE,
         // rendement du dividende, RSI/Bollinger) sont enregistrées comme
         // EXPOSITION, jamais comme une réussite — recordConceptEncounter ne
-        // touche jamais la maîtrise réelle (fzr-quiz-stats), contrairement à
+        // touche jamais la maîtrise réelle (likanza-quiz-stats), contrairement à
         // recordAnswer. Sert uniquement à proposer une prochaine étape
         // honnête, via le même moteur que Défis/Cours/Laboratoire. ----------
         const exposureCard = document.getElementById('conceptExposureCard');

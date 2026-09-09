@@ -608,10 +608,10 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 @media (max-width:700px){.stat-strip{grid-template-columns:1fr 1fr;}}
 
 /* ---------- Apparition au défilement (appliquée via app.js) ---------- */
-.fzr-reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease, transform .55s ease;}
-.fzr-reveal.fzr-in-view{opacity:1;transform:translateY(0);}
+.likanza-reveal{opacity:0;transform:translateY(16px);transition:opacity .55s ease, transform .55s ease;}
+.likanza-reveal.likanza-in-view{opacity:1;transform:translateY(0);}
 @media (prefers-reduced-motion:reduce){
-  .fzr-reveal{opacity:1;transform:none;transition:none;}
+  .likanza-reveal{opacity:1;transform:none;transition:none;}
   .card, .btn, .pill, .logo-mark{transition:none !important;}
   .card:hover, .btn:hover, .pill:hover, .logo-row:hover .logo-mark{transform:none !important;}
 }

@@ -1,6 +1,6 @@
 // Les cotations sont d'abord affichées avec les valeurs de repli de
 // MARKET_DATA, puis re-rendues quand les cotations réelles arrivent
-// (événement fzr:quotes-updated émis par data.js, initLiveMarketData) —
+// (événement likanza:quotes-updated émis par data.js, initLiveMarketData) —
 // même pattern que marche.js, pour ne jamais laisser un badge "réel"
 // afficher indéfiniment un prix figé au chargement de la page.
 function renderCryptoPanel(){
@@ -16,7 +16,7 @@ function renderCryptoPanel(){
   </div>`).join('');
 }
 renderCryptoPanel();
-document.addEventListener('fzr:quotes-updated', ()=>safeRun('crypto (cotations)', renderCryptoPanel));
+document.addEventListener('likanza:quotes-updated', ()=>safeRun('crypto (cotations)', renderCryptoPanel));
 
 safeRun('bannière démo crypto', ()=>renderDemoBanner('cryptoDemoBanner'));
 safeRun('conseil niveau crypto', ()=>renderLevelTip('levelTip', 'crypto'));

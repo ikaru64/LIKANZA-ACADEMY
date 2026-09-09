@@ -6,7 +6,7 @@
    calcul (étape 15) réutilise une formule réelle et standard (seuil
    de rentabilité), appliquée aux chiffres saisis par l'utilisateur —
    jamais une performance ou un résultat inventé.
-   Stocké séparément du profil (fzr-business-project) : ceci est un
+   Stocké séparément du profil (likanza-business-project) : ceci est un
    artefact de réflexion sur un projet, pas une donnée d'identité ou
    de niveau de l'utilisateur.
    ============================================================ */
@@ -238,9 +238,9 @@ const BUSINESS_MODEL_LABELS = {unite:"Vente à l'unité", abonnement:'Abonnement
 const CLIENT_TYPE_LABELS = {b2c:'Particuliers (B2C)', b2b:'Entreprises (B2B)', both:'Particuliers et entreprises'};
 
 let stepIndex = 0;
-let answers = safeGetJSON('fzr-business-project', {});
+let answers = safeGetJSON('likanza-business-project', {});
 
-function saveAnswers(){ safeSetJSON('fzr-business-project', answers); }
+function saveAnswers(){ safeSetJSON('likanza-business-project', answers); }
 
 function collectCurrentFields(){
   const step = PROJECT_STEPS[stepIndex];

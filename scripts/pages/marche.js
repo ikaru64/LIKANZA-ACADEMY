@@ -4,7 +4,7 @@
    des dernières séances, repères pédagogiques (MARKET_INFO).
    Le symbole affiché est lu dans le hash de l'URL (ex. marche.html#%5EFCHI) ;
    la fiche se re-rend quand les cotations réelles arrivent
-   (événement fzr:quotes-updated émis par data.js).
+   (événement likanza:quotes-updated émis par data.js).
    ============================================================ */
 
 const MARCHE_TYPE_LABELS = {index:'Indice boursier', crypto:'Cryptomonnaie', commodity:'Matière première', stock:'Action', etf:'ETF', forex:'Paire de devises', rate:'Taux'};
@@ -93,7 +93,7 @@ function renderEtfFieldRow(label, value){
   return `<div class="result-row"><span>${label}</span><span class="mono">${value !== null && value !== undefined ? value : '<span style="color:var(--text-dim);">Donnée indisponible</span>'}</span></div>`;
 }
 // Un seul appel /api/etf-profile par symbole par chargement de page : la
-// fiche se re-rend à chaque événement fzr:quotes-updated (nouvelle cotation
+// fiche se re-rend à chaque événement likanza:quotes-updated (nouvelle cotation
 // de prix, sans rapport avec les fondamentaux du fonds), pas la peine de
 // re-fetcher le profil du fonds à chaque fois.
 const etfProfileCache = {};
@@ -239,4 +239,4 @@ function renderMarcheFollowBtn(it){
 
 safeRun('fiche marché', renderMarcheDetail);
 window.addEventListener('hashchange', ()=>safeRun('fiche marché (navigation)', renderMarcheDetail));
-document.addEventListener('fzr:quotes-updated', ()=>safeRun('fiche marché (cotations)', renderMarcheDetail));
+document.addEventListener('likanza:quotes-updated', ()=>safeRun('fiche marché (cotations)', renderMarcheDetail));

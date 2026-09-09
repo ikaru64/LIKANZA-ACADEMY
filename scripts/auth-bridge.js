@@ -77,7 +77,7 @@
   if (/[?&]la_signedout=1/.test(location.search)) {
     safeStorageRemove(STORAGE_KEY);
     // Gap Closure Sprint P1, phase 15 (06/09/2026) : réinitialise aussi le
-    // marqueur "cet appareil a déjà synchronisé" (fzr-sync-last-at,
+    // marqueur "cet appareil a déjà synchronisé" (likanza-sync-last-at,
     // scripts/data.js PROGRESS_SYNC_MARKER — dupliqué en dur ici plutôt
     // qu'importé, ce fichier restant volontairement autonome de data.js).
     // Sans ça, une reconnexion sur CE MÊME appareil après une déconnexion
@@ -85,7 +85,7 @@
     // autre appareil avait progressé entre-temps) au lieu de re-décider
     // honnêtement push/pull au prochain login — un vrai risque d'écraser
     // silencieusement une progression plus récente faite ailleurs.
-    safeStorageRemove('fzr-sync-last-at');
+    safeStorageRemove('likanza-sync-last-at');
     const cleanSearch = location.search.replace(/[?&]la_signedout=1/, '').replace(/^&/, '?');
     history.replaceState(null, '', location.pathname + (cleanSearch === '?' ? '' : cleanSearch));
     renderDisconnected();

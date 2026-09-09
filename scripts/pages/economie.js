@@ -63,7 +63,7 @@ const ECO_CRISIS_TEACHER_TERMS = {
   'covid-2020': 'Récession',
   'inflation-2022': 'Inflation'
 };
-let ecoTeacherMode = safeGetJSON('fzr-eco-teacher-mode', false);
+let ecoTeacherMode = safeGetJSON('likanza-eco-teacher-mode', false);
 function ecoLibraryDefinition(terme){
   const entry = LIBRARY.find(l => l.terme === terme);
   return entry ? entry.simple : null;
@@ -76,7 +76,7 @@ function ecoWireTeacherToggle(){
   if(!btn) return;
   btn.addEventListener('click', () => {
     ecoTeacherMode = !ecoTeacherMode;
-    safeSetJSON('fzr-eco-teacher-mode', ecoTeacherMode);
+    safeSetJSON('likanza-eco-teacher-mode', ecoTeacherMode);
     renderEcoBody();
   });
 }

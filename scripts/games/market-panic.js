@@ -22,11 +22,11 @@ const MARKET_PANIC_LABELS = {
 const MARKET_PANIC_CAPITAL = 1000;
 const MARKET_PANIC_EXTRA = 500;
 
-function getMarketPanicHistory(){ return safeGetJSON('fzr-market-panic-history', []); }
+function getMarketPanicHistory(){ return safeGetJSON('likanza-market-panic-history', []); }
 function saveMarketPanicResult(entry){
   const history = getMarketPanicHistory();
   history.unshift(entry);
-  safeSetJSON('fzr-market-panic-history', history.slice(0, 20));
+  safeSetJSON('likanza-market-panic-history', history.slice(0, 20));
 }
 
 let marketPanicFxCache = null;

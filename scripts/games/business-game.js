@@ -25,11 +25,11 @@ const BUSINESS_GAME_OUTCOME_META = {
   faillite:  {emoji:'🔴', label:'Faillite'}
 };
 
-function getBusinessGameHistory(){ return safeGetJSON('fzr-business-game-history', []); }
+function getBusinessGameHistory(){ return safeGetJSON('likanza-business-game-history', []); }
 function saveBusinessGameResult(entry){
   const history = getBusinessGameHistory();
   history.unshift(entry);
-  safeSetJSON('fzr-business-game-history', history.slice(0, 20));
+  safeSetJSON('likanza-business-game-history', history.slice(0, 20));
 }
 // Transfert en provenance de Business Strategy (construire-son-projet.js) :
 // { sectorKey, clientCible, budgetInitial, businessModel, strategieChoisie }.

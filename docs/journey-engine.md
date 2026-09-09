@@ -30,7 +30,7 @@ catalogue.
 `checkDailyStreak()` (data.js) calcule désormais `g.lastGapDays` — l'écart
 réel en jours depuis `lastVisit`, **avant** de l'écraser. `null` à la toute
 première visite (jamais un écart fabriqué). Ce champ vit sur l'objet
-`fzr-gamification` comme `streak`/`streakFreezes`, pas une clé séparée.
+`likanza-gamification` comme `streak`/`streakFreezes`, pas une clé séparée.
 
 `WELCOME_PHRASES` (data.js) a été scindé :
 - `WELCOME_PHRASES_DEFAULT` — le cas courant.
@@ -59,7 +59,7 @@ pour qui n'a **jamais** fait le test). Le nouveau bandeau
 ("Nouveau : objectif principal & projets") cible qui a **déjà** fait le
 test, mais avec une version antérieure à `ONBOARDING_VERSION`
 (`docs/onboarding.md` §4). "Plus tard" persiste
-`fzr-reonboarding-dismissed-version` — jamais reproposé pour cette version
+`likanza-reonboarding-dismissed-version` — jamais reproposé pour cette version
 précise, sans bloquer une resollicitation légitime à la prochaine évolution
 du questionnaire.
 
@@ -93,7 +93,7 @@ faux signaux qu'un simple clic).
 recordQuizCompletion(categorie)
   └─ categorieDomainKey(categorie) résout un vrai domaine
       └─ domaine pas déjà déclaré (interest/goal) et pas déjà refusé
-          └─ fzr-inferred-interest-signals[domainKey]++
+          └─ likanza-inferred-interest-signals[domainKey]++
 ```
 
 `getPendingInterestSuggestion()` ne renvoie un domaine qu'une fois
@@ -102,7 +102,7 @@ fois, jamais une liste. `renderDashboardHeader` affiche alors un bandeau
 ("On dirait que ça t'intéresse") : accepter écrit un vrai
 `profile.interests[domainKey] = true` (même mécanisme que le reste du
 site — jamais un second champ "intérêt inféré" affiché ailleurs) ; refuser
-persiste `fzr-inferred-interest-dismissed` **à vie**, jamais reproposé pour
+persiste `likanza-inferred-interest-dismissed` **à vie**, jamais reproposé pour
 ce domaine.
 
 **Règle d'arbitrage stricte, vérifiée à deux endroits** (à l'écriture du

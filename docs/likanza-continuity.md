@@ -19,19 +19,19 @@ en place, pas un défaut. Quatre systèmes distincts, chacun avec sa propre clé
 
 | Système | Clé | Accesseur | Rôle |
 |---|---|---|---|
-| Profil déclaratif | `fzr-profile` | `getProfile()` / `saveProfile()` | age, épargne, horizon, risque, objectif, `levels{}`, `interests{}`, `learningStyle{}`, `goals{}` |
-| Niveau curriculum | `fzr-level` | `getLevel()` / `setLevelStorage()` | palier de contenu débloqué (debutant→expert) |
-| Gamification (XP) | `fzr-gamification` | `getGamification()` / `saveGamification()` | xp, financePoints, streak, badges — mesure l'**engagement**, jamais la compréhension |
-| Maîtrise réelle | `fzr-quiz-stats` | `getQuizStats()` → `getSkillMastery()` | dérivé des vraies réponses aux quiz — voir §3 |
+| Profil déclaratif | `likanza-profile` | `getProfile()` / `saveProfile()` | age, épargne, horizon, risque, objectif, `levels{}`, `interests{}`, `learningStyle{}`, `goals{}` |
+| Niveau curriculum | `likanza-level` | `getLevel()` / `setLevelStorage()` | palier de contenu débloqué (debutant→expert) |
+| Gamification (XP) | `likanza-gamification` | `getGamification()` / `saveGamification()` | xp, financePoints, streak, badges — mesure l'**engagement**, jamais la compréhension |
+| Maîtrise réelle | `likanza-quiz-stats` | `getQuizStats()` → `getSkillMastery()` | dérivé des vraies réponses aux quiz — voir §3 |
 
 Profils métier séparés, chacun avec son propre éditeur complet (jamais dupliqué
 ailleurs, seulement résumé — voir compte.html) :
-- `fzr-investor-profile` (`games/investor-profile.js`) — risque investisseur à
+- `likanza-investor-profile` (`games/investor-profile.js`) — risque investisseur à
   6 questions, plus précis que le profil général. Sync **volontairement à sens
-  unique** vers `fzr-profile.risque` (jamais l'inverse — voir le commentaire à
+  unique** vers `likanza-profile.risque` (jamais l'inverse — voir le commentaire à
   `games/investor-profile.js:114-119`). `renderProfileWidget` (data.js) affiche
   une note informative si les deux divergent, jamais une écriture forcée.
-- `fzr-business-profile` (`getBusinessProfile()`/`saveBusinessProfile()`,
+- `likanza-business-profile` (`getBusinessProfile()`/`saveBusinessProfile()`,
   data.js) — modèle économique quantitatif d'entreprise.
 
 **Panneau utilisateur** : `renderPersonalizationPanel` (data.js) + section
@@ -47,7 +47,7 @@ quiz.
 complet**, jamais de fusion champ par champ (`syncProgressWithAccount`,
 data.js). Whitelist explicite `PROGRESS_SYNC_KEYS` — toute nouvelle clé de
 vraie progression doit y être ajoutée manuellement (voir §7). Règle stricte :
-**aucune clé `fzr-context-*` n'y est jamais ajoutée** (voir §5).
+**aucune clé `likanza-context-*` n'y est jamais ajoutée** (voir §5).
 
 ## 2. Knowledge Graph
 
@@ -89,7 +89,7 @@ Déjà construit, séparé de l'XP dès la conception (voir commentaire à
 tout autre niveau de maîtrise réelle en même temps"*).
 
 - `getSkillMastery()` — pct par catégorie de quiz (`weightedCorrect/weightedTotal`
-  depuis `fzr-quiz-stats`), buckets `'faible'` (<50%), `'en cours'`, `'maîtrisé'`
+  depuis `likanza-quiz-stats`), buckets `'faible'` (<50%), `'en cours'`, `'maîtrisé'`
   (≥75%). C'est la **source de vérité unique** de la maîtrise — tout code qui a
   besoin de savoir "l'utilisateur est-il faible sur X" doit passer par elle
   (ou par `pickWeakestMasteryCategory`, voir §4), jamais recalculer.
@@ -98,7 +98,7 @@ tout autre niveau de maîtrise réelle en même temps"*).
   (data.js, section "concept mastery").
 - `computeDomainMastery()` / `computeFinancialIQ()` — agrégats par domaine et
   score global, noms volontairement distincts de `LEVEL_TITLES` (XP).
-- Répétition espacée (`fzr-spaced-repetition`, J+7/14/30) et difficulté
+- Répétition espacée (`likanza-spaced-repetition`, J+7/14/30) et difficulté
   adaptative en session (`startMixedSession`, `opts.livePool`) — déjà branchés
   sur cette même source, rien à changer.
 
@@ -142,15 +142,15 @@ adaptative).
 ## 5. Context Engine
 
 Un seul vrai précédent existait avant ce chantier :
-`fzr-business-strategy-transfer` (Business Game ↔ Construire son projet),
+`likanza-business-strategy-transfer` (Business Game ↔ Construire son projet),
 motif "écrire → naviguer → lire une fois → supprimer". Généralisé en phase 5 :
 
 ```js
-writeContext(key, payload)   // écrit sous fzr-context-<key>
+writeContext(key, payload)   // écrit sous likanza-context-<key>
 consumeContext(key)          // lit puis supprime immédiatement, ou null
 ```
 
-**Règle stricte** : aucune clé `fzr-context-*` n'est jamais ajoutée à
+**Règle stricte** : aucune clé `likanza-context-*` n'est jamais ajoutée à
 `PROGRESS_SYNC_KEYS` — ce sont des contextes éphémères au sein d'une session
 de navigation, jamais destinés à survivre à un rechargement ni à traverser
 plusieurs appareils.
@@ -166,7 +166,7 @@ chapitre exact quitté (`cours.html#<id>:<chapitre-slug>`), pas seulement le
 cours entier.
 
 **Reprise de position** (phase 6, un système voisin mais distinct — persistant,
-pas éphémère) : `fzr-last-position` (`getLastPosition()`/`saveLastPosition()`),
+pas éphémère) : `likanza-last-position` (`getLastPosition()`/`saveLastPosition()`),
 mis à jour à chaque chapitre affiché, toujours contre l'index dans le cours
 **entier** (jamais une vue filtrée par format). `renderCourseIntro` propose
 "Reprendre au chapitre N →" quand une position réelle et encore pertinente
@@ -193,8 +193,8 @@ intitulé approximatif.
 ACTION UTILISATEUR (quiz répondu, chapitre lu, article ouvert, projet créé...)
         │
         ▼
-ÉCRITURE D'ÉTAT RÉELLE (fzr-quiz-stats / fzr-mistakes / fzr-last-position /
-                          fzr-life-projects / fzr-profile...)
+ÉCRITURE D'ÉTAT RÉELLE (likanza-quiz-stats / likanza-mistakes / likanza-last-position /
+                          likanza-life-projects / likanza-profile...)
         │
         ▼
 SOURCE DE VÉRITÉ RECALCULÉE À LA DEMANDE (jamais un cache qui se périme) :
@@ -218,14 +218,14 @@ sur-engineering (section 79 du prompt d'origine) sans bénéfice mesurable ici.
 
 ## 7. Migrations effectuées
 
-- `fzr-business-strategy-transfer` → `fzr-context-business-strategy` (phase 5,
+- `likanza-business-strategy-transfer` → `likanza-context-business-strategy` (phase 5,
   via le nouveau Context Engine). Retirée de `PROGRESS_SYNC_KEYS`.
-- `PROGRESS_SYNC_KEYS` étendue (phase 9) : `fzr-last-position`,
-  `fzr-life-projects`, `fzr-headcount-sim`, `fzr-pricing-sim`,
-  `fzr-sales-funnel`, `fzr-valorisation-sim` — de la vraie progression
+- `PROGRESS_SYNC_KEYS` étendue (phase 9) : `likanza-last-position`,
+  `likanza-life-projects`, `likanza-headcount-sim`, `likanza-pricing-sim`,
+  `likanza-sales-funnel`, `likanza-valorisation-sim` — de la vraie progression
   utilisateur, oubliée de la whitelist par le passé.
-- Aucune migration destructive : chaque nouvelle clé (`fzr-last-position`,
-  `fzr-context-*`) coexiste avec l'existant, jamais de remplacement d'une
+- Aucune migration destructive : chaque nouvelle clé (`likanza-last-position`,
+  `likanza-context-*`) coexiste avec l'existant, jamais de remplacement d'une
   structure de données déjà en production.
 
 ## 8. Limites connues (assumées, pas des oublis)

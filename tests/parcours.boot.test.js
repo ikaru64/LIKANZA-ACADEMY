@@ -37,11 +37,11 @@ const { loadParcoursPage, flush } = require('./support/load-page');
     // de relancer initParcoursHero() une 2e fois sur un DOM déjà modifié
     // (non idempotent : la gate resterait affichée du 1er appel).
     const { document } = loadParcoursPage({seed: window => {
-      window.localStorage.setItem('fzr-positioning-result', JSON.stringify({profile: 'equilibre', completedAt: new Date().toISOString(), version: 2}));
+      window.localStorage.setItem('likanza-positioning-result', JSON.stringify({profile: 'equilibre', completedAt: new Date().toISOString(), version: 2}));
       // cockpitDetectMode() bascule en mode démo tant qu'aucune vraie donnée
       // personnelle n'existe (getNetWorthAssets/getFinancialGoals... vides) —
       // on seed un vrai objectif pour tester le VRAI cockpit, pas la démo.
-      window.localStorage.setItem('fzr-financial-goals', JSON.stringify([
+      window.localStorage.setItem('likanza-financial-goals', JSON.stringify([
         {id: 'g1', nom: "Fonds d'urgence", montantCible: 3000, montantActuel: 500, versementMensuel: 100, dateCible: null}
       ]));
     }});

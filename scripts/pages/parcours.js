@@ -49,7 +49,7 @@ const COCKPIT_DEMO_DATA = (function(){
   // Historique de démonstration : une rampe de croissance lissée sur 12
   // mois se terminant exactement sur les valeurs actuelles ci-dessus —
   // générée, pas tapée à la main, mais chaque point reste interne et
-  // clairement démo (jamais écrit dans fzr-net-worth-history).
+  // clairement démo (jamais écrit dans likanza-net-worth-history).
   const finalCat = {cash: 12650, epargne: 11230, assurancevie: 2830, pea: 8420, cto: 7010, crypto: 4680, actions: 0, immobilier: 0, vehicule: 0, autre: 0};
   const history = [];
   const now = new Date();
@@ -91,7 +91,7 @@ function cockpitDetectMode(){
   // fusionnés), jamais null — safeGetJSON(...,null) directement sur la
   // clé brute est le seul moyen de savoir si un profil a RÉELLEMENT été
   // enregistré (même motif que renderPersonalizationPanel, data.js).
-  const hasRealBusinessProfile = !!safeGetJSON('fzr-business-profile', null);
+  const hasRealBusinessProfile = !!safeGetJSON('likanza-business-profile', null);
   if(hasRealPersonalData) return 'personal';
   if(hasRealBusinessProfile) return 'business';
   return 'demo';
@@ -237,7 +237,7 @@ function renderCockpitBody(){
 // computeRunway, renderBusinessDiagnostics, renderNextStepCard,
 // businessLabDecisionsPool/businessLabCasesPool) — zéro nouvelle métrique
 // ni série temporelle inventée. Le profil entreprise est un instantané
-// unique (pas d'historique comme fzr-net-worth-history) : aucun graphique
+// unique (pas d'historique comme likanza-net-worth-history) : aucun graphique
 // "évolution" n'est donc fabriqué ici, contrairement au hero personnel.
 // ============================================================
 function renderBusinessCockpitHeader(elId){
@@ -752,10 +752,10 @@ function renderCockpitAllocation(elId){
 // ============================================================
 // Onglet Portefeuille (sprint de consolidation 09/09/2026, section 12 du
 // prompt d'origine) : consolide le MÊME registre réel que Bourse
-// (fzr-real-portfolio, computeRealPortfolioPositions/computeRealPortfolioTotals,
+// (likanza-real-portfolio, computeRealPortfolioPositions/computeRealPortfolioTotals,
 // scripts/data.js) — jamais un 2e calculateur. Mon Univers observe, Bourse
 // reste l'endroit où on déclare/gère ses transactions (lien direct fourni,
-// jamais dupliqué ici). Le paper trading (fzr-paper-trading, un registre de
+// jamais dupliqué ici). Le paper trading (likanza-paper-trading, un registre de
 // simulation) n'est jamais mélangé à ce portefeuille réel.
 // ============================================================
 function cockpitFetchPortfolioQuotes(tickers){

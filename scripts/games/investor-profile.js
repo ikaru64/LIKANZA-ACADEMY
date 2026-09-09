@@ -3,7 +3,7 @@
    Formulaire unique (capital/horizon/objectif/6 questions de risque) →
    résumé éditable. Le résultat est toujours qualifié de "profil de
    risque ESTIMÉ" — jamais une vérité psychologique. Stocké dans
-   fzr-investor-profile, réutilisé par la construction d'allocation
+   likanza-investor-profile, réutilisé par la construction d'allocation
    et par la fiche action (verdict + analyse par horizon).
    ============================================================ */
 
@@ -13,8 +13,8 @@ const INVESTOR_PROFILE_META = {
   dynamique: {emoji: '🔴', label: 'Dynamique', desc: 'tu acceptes des fluctuations importantes en échange d\'un potentiel de gain plus élevé sur la durée'}
 };
 
-function getInvestorProfile(){ return safeGetJSON('fzr-investor-profile', null); }
-function saveInvestorProfile(p){ safeSetJSON('fzr-investor-profile', p); }
+function getInvestorProfile(){ return safeGetJSON('likanza-investor-profile', null); }
+function saveInvestorProfile(p){ safeSetJSON('likanza-investor-profile', p); }
 
 function renderInvestorProfileWizard(elId){
   const el = document.getElementById(elId);

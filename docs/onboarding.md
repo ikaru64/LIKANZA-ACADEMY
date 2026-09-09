@@ -56,8 +56,8 @@ ajouté pour ce cas.
   `personalFinance`) — jamais une question fabriquée pour les autres
   domaines. Étendre `POSITIONING_SUBGOALS` à un nouveau domaine est le seul
   geste nécessaire pour lui donner, lui aussi, une question adaptative.
-- Les deux valeurs sont écrites dans `fzr-profile` (`primaryGoal`, `subGoal`)
-  et `fzr-positioning-result`, jamais un troisième champ séparé.
+- Les deux valeurs sont écrites dans `likanza-profile` (`primaryGoal`, `subGoal`)
+  et `likanza-positioning-result`, jamais un troisième champ séparé.
 
 ## 3. Capture de projet minimal (phase 2)
 

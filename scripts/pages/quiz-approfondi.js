@@ -5,7 +5,7 @@
    atteindre un chiffre). Réutilise le moteur de Défis (startMixedSession) :
    ce n'est pas un 7e moteur de quiz, juste un pool plus grand et
    mono-domaine, lancé avec opts.level/opts.categorie pour que le résultat
-   final s'écrive dans fzr-deep-quiz-results (voir saveDeepQuizResult,
+   final s'écrive dans likanza-deep-quiz-results (voir saveDeepQuizResult,
    scripts/data.js) au lieu de l'historique générique "mixte/mélange".
    ============================================================ */
 

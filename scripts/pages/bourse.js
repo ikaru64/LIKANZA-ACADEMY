@@ -1279,7 +1279,7 @@ renderMarketPulseKpis('marketPulseKpis');
 // Le bandeau global (initLiveMarketData, data.js) rafraîchit MARKET_DATA
 // toutes les 5 min et prévient via cet événement déjà existant — jamais
 // un nouvel appel réseau créé pour ce panneau.
-document.addEventListener('fzr:quotes-updated', () => renderMarketPulseKpis('marketPulseKpis'));
+document.addEventListener('likanza:quotes-updated', () => renderMarketPulseKpis('marketPulseKpis'));
 
 // ================= Cotations réelles (dégradation silencieuse si indisponibles) =================
 if(location.protocol !== 'file:'){
@@ -1562,7 +1562,7 @@ function renderMarketsHub(){
     .map(m => m.symbol);
   if(pending.length) loadMarketCategoryQuotes(pending);
 }
-document.addEventListener('fzr:quotes-updated', () => {
+document.addEventListener('likanza:quotes-updated', () => {
   if(bourseActiveTab === 'tab-marches') safeRun('onglet Autres marchés (cotations)', renderMarketsHub);
 });
 
@@ -1871,7 +1871,7 @@ function renderPaperTrading(){
     refreshPaperTradingViews();
   });
 }
-document.addEventListener('fzr:quotes-updated', () => {
+document.addEventListener('likanza:quotes-updated', () => {
   if(bourseActiveTab === 'tab-paper-trading') safeRun('Paper Trading (cotations)', refreshPaperTradingViews);
 });
 safeRun('Paper Trading', renderPaperTrading);

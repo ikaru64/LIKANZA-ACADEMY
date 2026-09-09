@@ -4,9 +4,9 @@
    qu'il cherche, ce qui l'intéresse et le niveau qu'il PENSE avoir par
    domaine — jamais un niveau vérifié. Aucune question notée ici (la
    vérification réelle se fait via les quiz approfondis, quiz-approfondi.html,
-   qui réutilisent le vrai moteur de Défis). Écrit dans fzr-profile
+   qui réutilisent le vrai moteur de Défis). Écrit dans likanza-profile
    (levels/interests/learningStyle/risque/goals/primaryGoal/subGoal) et
-   fzr-positioning-result (marqueur de complétion + onboardingVersion).
+   likanza-positioning-result (marqueur de complétion + onboardingVersion).
 
    Chantier "Onboarding intelligent" (31/08/2026, sections 1, 6-7 du prompt
    d'origine) : ajoute jusqu'à 3 étapes CONDITIONNELLES entre l'objectif et
@@ -285,15 +285,15 @@ function renderResults(goals, goalLabels, interests, levels, learningStyle, risq
   const resEl = document.getElementById('posResults');
   resEl.style.display = 'block';
 
-  // fzr-positioning-result n'est plus qu'un marqueur de complétion : plus
+  // likanza-positioning-result n'est plus qu'un marqueur de complétion : plus
   // aucune question notée ici, donc plus de score/niveau calculé à stocker.
   // onboardingVersion (chantier Onboarding intelligent, 31/08/2026, section
   // 68 du prompt d'origine) : permet de distinguer plus tard un profil créé
   // avant/après l'ajout de nouvelles questions, sans jamais forcer un ancien
   // utilisateur à tout refaire.
-  safeSetJSON('fzr-positioning-result', {date: new Date().toISOString(), onboardingVersion: ONBOARDING_VERSION, goals, interests, learningStyle, risque, primaryGoal, subGoal: subGoalKey});
+  safeSetJSON('likanza-positioning-result', {date: new Date().toISOString(), onboardingVersion: ONBOARDING_VERSION, goals, interests, learningStyle, risque, primaryGoal, subGoal: subGoalKey});
 
-  // Même profil que Mon compte (fzr-profile) : age/epargne/horizon/objectif
+  // Même profil que Mon compte (likanza-profile) : age/epargne/horizon/objectif
   // existants sont préservés, seuls levels/interests/learningStyle/risque/
   // goals/primaryGoal/subGoal sont mis à jour ici.
   saveProfile({...getProfile(), levels, interests, learningStyle, risque, goals, primaryGoal, subGoal: subGoalKey});
