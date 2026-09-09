@@ -5991,6 +5991,20 @@ const GUIDES = [
     updatedAt: '2026-09-05',
     freshness: 'semi-dynamic',
     hasSimulation: true
+  },
+  {
+    slug: 'avalanche-ou-boule-de-neige',
+    url: 'guide-avalanche-ou-boule-de-neige.html',
+    question: 'Rembourser ses dettes : avalanche ou boule de neige ?',
+    title: 'Avalanche ou boule de neige ? Les deux méthodes réelles pour rembourser plusieurs crédits',
+    shortAnswer: "L'avalanche (taux le plus élevé d'abord) minimise mathématiquement les intérêts payés. La boule de neige (plus petit solde d'abord) coûte un peu plus cher mais peut être plus motivante à tenir dans la durée.",
+    category: 'budget',
+    difficulty: 'debutant',
+    readingTime: '7 min',
+    publishedAt: '2026-09-09',
+    updatedAt: '2026-09-09',
+    freshness: 'evergreen',
+    hasSimulation: true
   }
 ];
 function getGuideBySlug(slug){

@@ -1062,6 +1062,30 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
   });
   renderNextStepCard('nextstep-debt-strategy', {domainKey: 'personalFinance'});
 
+  // ---- Pont Guide ↔ Laboratoire (chantier Guides & Décryptages, guide
+  // "avalanche-ou-boule-de-neige", 09/09/2026) : même motif business-strategy
+  // que le pont DCA ci-dessus (vraie navigation de page, lecture unique au
+  // chargement) — clé de contexte propre à ce guide (jamais la clé générique
+  // 'guide-simulation', régression déjà trouvée et documentée sur ce fichier
+  // le 05/09/2026 quand un 2e widget bridgé est apparu sur la même page).
+  // Seule la mensualité supplémentaire est préremplie : les 2 crédits restent
+  // les exemples par défaut déjà réels de ce widget, jamais des crédits
+  // fabriqués pour l'occasion — le guide invite explicitement l'utilisateur
+  // à les remplacer par les siens ou à charger "Mes crédits enregistrés".
+  const debtGuideContext = consumeContext('guide-simulation-avalanche-ou-boule-de-neige');
+  const debtGuideContextEl = document.getElementById('debtStrategyGuideContext');
+  if(debtGuideContext && debtGuideContextEl){
+    if(debtGuideContext.extraMonthly > 0) document.getElementById('debtExtra').value = debtGuideContext.extraMonthly;
+    updateDebtStrategy();
+    setLabTab('tab-dettes');
+    openLabWidget('tab-dettes', 'widget-debt-strategy');
+    debtGuideContextEl.innerHTML = `
+      <div class="today-card" style="margin-bottom:14px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap;">
+        <p style="font-size:13px;margin:0;">Simulation liée au guide « ${debtGuideContext.guideTitle} ».</p>
+        ${debtGuideContext.guideSlug ? `<a href="guide-${encodeURIComponent(debtGuideContext.guideSlug)}.html" class="btn btn-sm">← Revenir au guide</a>` : ''}
+      </div>`;
+  }
+
   const consoRows = createDebtRowList('debtConsoRows', () => updateDebtConsolidation());
   function updateDebtConsolidation(){
     const newLoan = {
