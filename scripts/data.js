@@ -6140,6 +6140,14 @@ function computeHeadcountBreakeven(a){
   const coutRecrutement = Number(a.coutRecrutement) || 0;
   const margeGenereeParEmploye = Number(a.margeGenereeParEmploye) || 0;
 
+  // salaireBrutMensuel/chargesPatronalesPct n'ont qu'une borne HTML min="0"
+  // (soft — un champ number laisse toujours taper une valeur négative au
+  // clavier, cf. le correctif bondRate du 08/09/2026) : sans ce garde-fou,
+  // un salaire ou des charges patronales négatifs inversent silencieusement
+  // le signe de coutTotalMensuel (ex. charges = -150% -> coût mensuel
+  // négatif), un chiffre qui n'a aucun sens réel présenté comme un vrai coût.
+  if(!Number.isFinite(salaireBrutMensuel) || !Number.isFinite(chargesPatronalesPct) || salaireBrutMensuel < 0 || chargesPatronalesPct < 0) return null;
+
   const coutTotalMensuel = salaireBrutMensuel * (1 + chargesPatronalesPct / 100);
   const coutTotalAnnuel = coutTotalMensuel * 12;
   const margeNetteMensuelle = margeGenereeParEmploye - coutTotalMensuel;
@@ -6196,6 +6204,11 @@ function renderHeadcountSimulator(elId){
     const a = readInputs();
     safeSetJSON('fzr-headcount-sim', a);
     const r = computeHeadcountBreakeven(a);
+    if(!r){
+      document.getElementById(`${elId}-results`).innerHTML = `<p style="color:var(--bordeaux);font-size:13px;">${renderDataBadge('avis')} Le salaire brut et les charges patronales doivent être des valeurs réelles et positives (ou nulles) — un coût ne peut pas être négatif.</p>`;
+      document.getElementById(`${elId}-method`).innerHTML = '';
+      return;
+    }
     document.getElementById(`${elId}-results`).innerHTML = `
       <div class="card" style="margin-bottom:14px;">
         <span class="smallcaps">Coût réel de ce poste</span>

@@ -35,6 +35,7 @@ const COMMON_LOCAL_SCRIPTS = ['scripts/icons.js', 'scripts/app.js', 'scripts/dat
 const BOURSE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/bourse.js'];
 const ECONOMIE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/economie.js'];
 const LABORATOIRE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/laboratoire.js'];
+const BUSINESS_LAB_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/games/business-cases-data.js', 'scripts/games/business-problems-data.js', 'scripts/games/business-problems.js', 'scripts/pages/business-lab-page.js'];
 
 function stripScriptTags(html){
   return html.replace(/<script\b[^>]*><\/script>/gi, '');
@@ -96,6 +97,14 @@ function loadPage(htmlFile, localScripts, { fetchImpl, chartStub } = {}){
     window.HTMLDialogElement.prototype.showModal = function(){ this.open = true; };
     window.HTMLDialogElement.prototype.close = function(){ this.open = false; };
   }
+  // jsdom n'implémente pas .scrollIntoView() (nécessiterait un vrai layout) —
+  // plusieurs pages (business-lab.html, laboratoire.html...) l'appellent après
+  // avoir ouvert un outil au clic ; sans ce stub, jsdom logue une exception
+  // "not a function" à chaque clic (silencieuse pour le test, mais fausse
+  // trace qui masquerait une vraie erreur si on regardait les logs).
+  if(!window.HTMLElement.prototype.scrollIntoView){
+    window.HTMLElement.prototype.scrollIntoView = function(){};
+  }
 
   // ---------- Chargement des scripts locaux réels, dans l'ordre réel ----------
   localScripts.forEach(rel => {
@@ -139,5 +148,6 @@ function flush(ms = 30){
 function loadBoursePage(options){ return loadPage('bourse.html', BOURSE_LOCAL_SCRIPTS, options); }
 function loadEconomiePage(options){ return loadPage('economie.html', ECONOMIE_LOCAL_SCRIPTS, options); }
 function loadLaboratoirePage(options){ return loadPage('laboratoire.html', LABORATOIRE_LOCAL_SCRIPTS, options); }
+function loadBusinessLabPage(options){ return loadPage('business-lab.html', BUSINESS_LAB_LOCAL_SCRIPTS, options); }
 
-module.exports = { loadPage, loadBoursePage, loadEconomiePage, loadLaboratoirePage, flush, ROOT };
+module.exports = { loadPage, loadBoursePage, loadEconomiePage, loadLaboratoirePage, loadBusinessLabPage, flush, ROOT };
