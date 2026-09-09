@@ -39,8 +39,10 @@ existe déjà (au-delà du front statique)".
   crédit, DCA, comparateur de scénarios...) s'exécutent entièrement dans le
   navigateur, sans appel réseau.
 - **Données manuelles** : missions, actualités, questions de quiz sont des
-  tableaux JavaScript écrits à la main (éditables via `admin.html` ou
-  directement dans `data.js`).
+  tableaux JavaScript écrits à la main (éditables directement dans `data.js`,
+  ou localement via `admin.html` — retiré du déploiement public le
+  09/09/2026, mot de passe de démonstration en clair côté client ; le
+  fichier reste récupérable depuis l'historique git pour un usage local).
 
 ### Ce que cette architecture permet
 

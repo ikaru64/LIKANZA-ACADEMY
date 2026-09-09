@@ -13,14 +13,18 @@ Pages. Aucune installation, aucun serveur, aucune dépendance externe requise.
 
 ## 2. Accéder à l'administration de démonstration
 
-Ouvre `admin.html` et connecte-toi avec :
+`admin.html` a été retiré du déploiement public le 09/09/2026 (mot de passe
+de démonstration en clair côté client, jamais une vraie sécurité — voir
+`ARCHITECTURE.md`). Pour l'utiliser en local (édition des missions/actualités,
+section 3), récupère-le depuis l'historique git :
 
-- Identifiant : `admin` (non vérifié, indicatif)
-- Mot de passe : `likanza2026`
+```
+git show <commit-avant-suppression>:admin.html > admin.html
+git show <commit-avant-suppression>:scripts/pages/admin.js > scripts/pages/admin.js
+```
 
-**Important** — change ce mot de passe avant de partager le lien de ton site
-(voir section 10). Ce n'est qu'une protection locale, pas une vraie sécurité
-(voir `ARCHITECTURE.md`).
+puis ouvre le fichier localement (identifiant `admin`, mot de passe
+`likanza2026`, non vérifiés, indicatifs) — jamais dans un déploiement public.
 
 ## 3. Comment modifier les données du site
 
