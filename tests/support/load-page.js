@@ -36,6 +36,7 @@ const BOURSE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/bourse.js'
 const ECONOMIE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/economie.js'];
 const LABORATOIRE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/laboratoire.js'];
 const BUSINESS_LAB_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/games/business-cases-data.js', 'scripts/games/business-problems-data.js', 'scripts/games/business-problems.js', 'scripts/pages/business-lab-page.js'];
+const PARCOURS_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/parcours.js'];
 
 function stripScriptTags(html){
   return html.replace(/<script\b[^>]*><\/script>/gi, '');
@@ -55,8 +56,15 @@ function stripScriptTags(html){
  *  - chartStub : classe utilisée comme window.Chart (mock par défaut,
  *    Chart.js vient d'un CDN et ne doit jamais être réellement chargé
  *    dans un test).
+ *  - seed(window) : appelé après la création de la fenêtre (localStorage
+ *    disponible) mais AVANT l'injection des scripts locaux de la page —
+ *    utile pour pré-remplir localStorage quand le script de la page lit
+ *    son état dès son exécution initiale (ex. initParcoursHero() appelé
+ *    en bas de parcours.js), ce qu'un simple window.localStorage.setItem
+ *    après coup ne peut plus influencer sans relancer manuellement cette
+ *    init (fragile : elle peut ne pas être idempotente).
  */
-function loadPage(htmlFile, localScripts, { fetchImpl, chartStub } = {}){
+function loadPage(htmlFile, localScripts, { fetchImpl, chartStub, seed } = {}){
   const rawHtml = fs.readFileSync(path.join(ROOT, htmlFile), 'utf8');
   const html = stripScriptTags(rawHtml);
 
@@ -106,6 +114,8 @@ function loadPage(htmlFile, localScripts, { fetchImpl, chartStub } = {}){
     window.HTMLElement.prototype.scrollIntoView = function(){};
   }
 
+  if(typeof seed === 'function') seed(window);
+
   // ---------- Chargement des scripts locaux réels, dans l'ordre réel ----------
   localScripts.forEach(rel => {
     const code = fs.readFileSync(path.join(ROOT, rel), 'utf8');
@@ -149,5 +159,6 @@ function loadBoursePage(options){ return loadPage('bourse.html', BOURSE_LOCAL_SC
 function loadEconomiePage(options){ return loadPage('economie.html', ECONOMIE_LOCAL_SCRIPTS, options); }
 function loadLaboratoirePage(options){ return loadPage('laboratoire.html', LABORATOIRE_LOCAL_SCRIPTS, options); }
 function loadBusinessLabPage(options){ return loadPage('business-lab.html', BUSINESS_LAB_LOCAL_SCRIPTS, options); }
+function loadParcoursPage(options){ return loadPage('parcours.html', PARCOURS_LOCAL_SCRIPTS, options); }
 
-module.exports = { loadPage, loadBoursePage, loadEconomiePage, loadLaboratoirePage, loadBusinessLabPage, flush, ROOT };
+module.exports = { loadPage, loadBoursePage, loadEconomiePage, loadLaboratoirePage, loadBusinessLabPage, loadParcoursPage, flush, ROOT };
