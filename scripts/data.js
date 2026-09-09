@@ -1021,9 +1021,11 @@ function renderLifeProjectsDashboardWidget(elId, projectsOverride){
       ${projects.slice(0, 4).map(p => {
         const meta = LIFE_PROJECT_CATEGORY_META[p.categorie];
         const progress = computeProjectProgress(p);
+        const simCount = Array.isArray(p.linkedSimulations) ? p.linkedSimulations.length : 0;
         return `<div style="font-size:12.5px;">
           <span>${meta.emoji} ${p.nom}</span>
           <span style="color:var(--text-dim);margin-left:6px;">${progress.progressionPct !== null ? `${progress.progressionPct}%` : (p.budgetTotal > 0 ? `${fmtEUR(progress.depensesEngagees)}/${fmtEUR(p.budgetTotal)}` : 'à compléter')}</span>
+          ${simCount > 0 ? `<span style="color:var(--text-dim);margin-left:6px;" title="${p.linkedSimulations[0].label}">· 🔗 ${simCount} scénario${simCount > 1 ? 's' : ''} du Laboratoire</span>` : ''}
         </div>`;
       }).join('')}
     </div>

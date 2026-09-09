@@ -66,6 +66,24 @@ function seedPersonalUser(window){
     t.ok(html.includes("Fonds d'urgence"), "le vrai objectif saisi apparaît dans l'onglet Objectifs");
   }
 
+  // ---------- Onglet Objectifs : boucle Lab -> Mon Univers (linkLifeProjectSimulation) visible ici ----------
+  {
+    const { window, document } = loadParcoursPage({seed: w => {
+      seedPersonalUser(w);
+      w.localStorage.setItem('fzr-life-projects', JSON.stringify([
+        {id: 'p1', nom: 'Achat maison', categorie: 'immobilier', budgetTotal: 300000, dateCible: null, horizonApprox: null, priority: null, status: 'actif', notes: '', etapes: [], dateCreation: new Date().toISOString(),
+          linkedSimulations: [
+            {label: 'Trajectoire à 10 ans (hypothèse centrale : 85 000 €)', url: 'laboratoire.html#tab-budget-epargne', date: new Date().toISOString()}
+          ]},
+        {id: 'p2', nom: 'Voyage au Japon', categorie: 'voyage', budgetTotal: 4000, dateCible: null, horizonApprox: null, priority: null, status: 'actif', notes: '', etapes: [], dateCreation: new Date().toISOString(), linkedSimulations: []}
+      ]));
+    }});
+    await flush(50);
+    const html = document.getElementById('cockpitObjectifsBody').innerHTML;
+    t.ok(html.includes('1 scénario du Laboratoire'), "un projet avec un scénario sauvegardé depuis le Laboratoire (linkLifeProjectSimulation) l'affiche bien ici — ferme la boucle Lab -> Mon Univers");
+    t.ok(!/Voyage au Japon[\s\S]{0,120}scénario/.test(html), "un projet sans scénario lié n'affiche jamais ce signal (jamais fabriqué)");
+  }
+
   // ---------- Onglet Projections : scénario, jamais une prévision, choc sans rebond automatique ----------
   {
     const { window, document } = loadParcoursPage({seed: seedPersonalUser});
