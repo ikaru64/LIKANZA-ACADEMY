@@ -13,14 +13,21 @@ pillsEl.insertAdjacentHTML('beforeend', GUIDE_CATEGORIES.map(c =>
 
 let guidesActiveCategory = 'all';
 
+// Recherche par mots, pas par sous-chaîne unique (sprint de consolidation
+// 09/09/2026, section 28 du prompt d'origine) : "pea cto" ne matchait jamais
+// la vraie question "PEA ou compte-titres (CTO) ?" tant que la recherche
+// exigeait "pea cto" comme UNE seule sous-chaîne contiguë — chaque mot du
+// texte réel de la question compte maintenant séparément, tous doivent
+// apparaître (ET logique), peu importe l'ordre ou la ponctuation entre eux.
 function refreshGuidesGrid(){
   const query = (document.getElementById('guidesSearch').value || '').trim().toLowerCase();
   let list = guidesActiveCategory === 'all' ? GUIDES : getGuidesByCategory(guidesActiveCategory);
   if(query){
-    list = list.filter(g =>
-      g.question.toLowerCase().includes(query) ||
-      g.title.toLowerCase().includes(query) ||
-      g.shortAnswer.toLowerCase().includes(query));
+    const words = query.split(/\s+/).filter(Boolean);
+    list = list.filter(g => {
+      const haystack = `${g.question} ${g.title} ${g.shortAnswer}`.toLowerCase();
+      return words.every(w => haystack.includes(w));
+    });
   }
   renderGuidesGrid('guidesGrid', list);
 }
