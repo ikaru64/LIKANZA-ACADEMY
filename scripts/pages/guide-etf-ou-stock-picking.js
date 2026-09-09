@@ -36,6 +36,7 @@ const GUIDE_ETF_OU_STOCK_PICKING = {
   freshness: 'semi-dynamic',
   concepts: ['ETF', 'Diversification', 'Biais du survivant (backtesting)'],
   relatedCourse: {id: 'risque-diversification', chapitre: 'Les pièges du backtesting'},
+  relatedDefiCategory: 'ETF',
   sections: [
     {
       type: 'texte',

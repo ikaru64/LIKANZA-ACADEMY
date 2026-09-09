@@ -31,6 +31,7 @@ const GUIDE_DCA_OU_LUMP_SUM = {
   concepts: ['ETF', 'Volatilité', 'Diversification', 'Tolérance au risque', 'Horizon de placement'],
   relatedTools: [{label: 'Comparateur DCA historique (Laboratoire)', url: 'laboratoire.html#tab-investissement'}],
   relatedCourse: {id: 'risque-diversification', chapitre: 'Volatilité et diversification : le risque au niveau du portefeuille'},
+  relatedDefiCategory: 'Risque et volatilité',
   sections: [
     {
       type: 'texte',

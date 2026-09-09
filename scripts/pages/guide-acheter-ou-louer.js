@@ -30,6 +30,7 @@ const GUIDE_ACHETER_OU_LOUER = {
   freshness: 'semi-dynamic',
   concepts: ['Crédit immobilier', 'Apport personnel'],
   relatedCourse: {id: 'budget-securite', chapitre: 'Ta valeur nette : ce que tu possèdes vraiment'},
+  relatedDefiCategory: 'Immobilier',
   sections: [
     {
       type: 'texte',

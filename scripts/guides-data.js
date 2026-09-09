@@ -279,6 +279,24 @@ function renderGuideBlock(bloc, index, guide){
 // guide.relatedCourse est optionnel ({id, chapitre}) : silencieux si absent
 // ou si l'id/le chapitre ne correspond à rien de réel dans COURS_CATALOG
 // (même discipline que renderRelatedCourseLink lui-même). ----------
+// guide.relatedDefiCategory (sprint de consolidation 09/09/2026, section 43
+// du prompt d'origine : "Teste si tu as compris" -> défi lié) est optionnel
+// (une string) : silencieux si absente OU si aucune vraie question de
+// QUIZ_BANK_FULL/MENTAL_CHALLENGES (scripts/app.js) ne porte cette
+// catégorie exacte — jamais un lien vers une catégorie fabriquée ou vide.
+// Réutilise le support ?cat= déjà réel de defis.html (même motif que
+// actualites.html?cat=/formations.html), jamais un nouveau filtre.
+function renderGuideDefiLink(categorie){
+  if(!categorie) return '';
+  const hasReal = (typeof QUIZ_BANK_FULL !== 'undefined' && QUIZ_BANK_FULL.some(q => q.categorie === categorie))
+    || (typeof MENTAL_CHALLENGES !== 'undefined' && MENTAL_CHALLENGES.some(q => q.categorie === categorie));
+  if(!hasReal) return '';
+  return `<div class="card" style="margin-top:20px;">
+    <span class="panel-title">Teste si tu as compris</span>
+    <p style="font-size:13px;color:var(--text-dim);margin:8px 0 12px;">Un vrai défi sur « ${categorie} », pas une simple relecture.</p>
+    <a href="defis.html?cat=${encodeURIComponent(categorie)}" class="btn btn-sm">Faire un défi →</a>
+  </div>`;
+}
 function renderGuidePage(elId, guide){
   const el = document.getElementById(elId);
   if(!el || !guide) return;
@@ -295,6 +313,7 @@ function renderGuidePage(elId, guide){
       ${sectionsHtml}
       ${renderCourseLibraryLinks(validConcepts)}
       ${guide.relatedCourse ? renderRelatedCourseLink(guide.relatedCourse.id, guide.relatedCourse.chapitre) : ''}
+      ${renderGuideDefiLink(guide.relatedDefiCategory)}
       ${renderMethodologyPanel(guide.methodology)}
       ${renderGuideSources(guide.sources)}
     </div>`;

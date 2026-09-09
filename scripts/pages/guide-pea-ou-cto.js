@@ -36,6 +36,7 @@ const GUIDE_PEA_OU_CTO = {
   freshness: 'dynamic',
   concepts: ['PEA', 'PFU (prélèvement forfaitaire unique / flat tax)', 'Plus-value mobilière (imposition)', 'ETF', 'Diversification'],
   relatedCourse: {id: 'fiscalite-pea', chapitre: 'PEA, assurance-vie, PER : quelle enveloppe pour quel objectif ?'},
+  relatedDefiCategory: 'PEA',
   sections: [
     {
       type: 'texte',

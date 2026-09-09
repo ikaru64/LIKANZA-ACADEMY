@@ -47,6 +47,7 @@ const GUIDE_AVALANCHE_OU_BOULE_DE_NEIGE = {
   concepts: ['Intérêts composés', 'Budget', "Fonds d'urgence"],
   relatedTools: [{label: 'Comparateur de stratégies de remboursement (Laboratoire)', url: 'laboratoire.html#tab-dettes'}],
   relatedCourse: {id: 'budget-securite', chapitre: 'Ta valeur nette : ce que tu possèdes vraiment'},
+  relatedDefiCategory: 'Crédit',
   sections: [
     {
       type: 'texte',
