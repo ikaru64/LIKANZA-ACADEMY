@@ -9,16 +9,19 @@
    clair déjà pris en charge puisque tout en dérive. Angles nets
    (--radius:3px), pas de coins arrondis, cohérent avec le reste du site.
 
-   Interprétation du "pas de scroll" : c'est le COCKPIT lui-même (en-tête,
-   KPI, graphique, donut, comptes, objectifs, allocation — tout ce que la
-   section 22 du brief liste) qui tient dans le premier écran à ≥1180px
-   (hauteur calc(100vh - chrome)), pas la page entière — "Suite de
-   l'apprentissage" dépliée, "Mon profil de simulation" et le pied de page
-   restent atteignables en scrollant plus bas, ce sont des sections
-   secondaires, pas le cockpit. Si le contenu réel du cockpit dépasse
-   quand même l'espace alloué (beaucoup de comptes/objectifs), .cockpit-side
-   et .cockpit-panels-row défilent EN INTERNE plutôt que de tronquer une
-   donnée réelle.
+   Sprint de consolidation (09/09/2026) : le cockpit "tout sur un seul écran
+   sans scroll" (v2, ci-dessus) a été remplacé par une vraie navigation par
+   onglets (Vue d'ensemble/Patrimoine/Portefeuille/Risques/Objectifs/
+   Projections — scripts/pages/parcours.js, COCKPIT_TABS). .cockpit ne
+   contient plus QUE l'en-tête + les KPI (2 lignes courtes) ; le graphique,
+   le donut, les comptes/objectifs/allocation et les 2 nouvelles vues
+   (Portefeuille/Risques) vivent dans des panneaux d'onglet en flux normal,
+   sous la grille d'onglets — la page défile normalement, comme le reste du
+   site (index.html/formations.html avec leurs propres home-tab-panel).
+   Les règles ci-dessous pour .cockpit-header/.cockpit-kpis/.cockpit-chart/
+   .cockpit-side/.cockpit-panels-row/.cockpit-panel restent valables telles
+   quelles (même langage visuel, même contenu) — seule la grille CSS qui les
+   positionnait dans un seul écran fixe a été retirée plus bas.
    ============================================================ */
 
 /* ---------- Chrome de page allégé (réservé à .cockpit-page, jamais le
@@ -32,12 +35,10 @@
    (le reste du site garde son style .app-sidebar a.active existant). */
 .cockpit-page .app-sidebar a.active{box-shadow:inset 3px 0 0 var(--gold), 0 0 18px -6px rgba(212,175,55,0.45);}
 
-/* Le corps de page N'EST PAS bloqué en overflow:hidden : "Mon profil de
-   simulation", la section "Suite de l'apprentissage" dépliée et le pied de
-   page doivent rester atteignables en scrollant. Seul le COCKPIT lui-même
-   (tout ce que la section 22 du brief liste : KPI/graphique/donut/
-   comptes/objectifs/allocation) est dimensionné pour tenir dans le premier
-   écran, sans qu'il faille défiler pour le voir en entier. */
+/* Le corps de page défile normalement (jamais overflow:hidden) : "Mon
+   profil de simulation" et le pied de page restent atteignables en
+   scrollant. Depuis le sprint de consolidation (09/09/2026), le cockpit
+   lui-même défile aussi normalement — voir le commentaire d'en-tête. */
 /* Pied de page masqué sur cette page seulement (app-like, cohérent avec
    l'image de référence, qui n'en montre pas) — les liens légaux/mentions
    restent réellement accessibles via le menu déroulant "Explorer" et sur
@@ -149,9 +150,15 @@
   flex-direction:column;
   gap:10px;
 }
+/* auto-fit plutôt qu'un compte de colonnes fixe (repeat(3,1fr)) : cette
+   grille sert maintenant à des onglets avec des nombres de panneaux
+   différents (2 en Patrimoine — comptes/allocation — potentiellement
+   d'autres ailleurs) — un compte fixe laissait une colonne vide visible
+   dès que le nombre réel de panneaux ne correspondait plus à 3 (sprint de
+   consolidation 09/09/2026). */
 .cockpit-panels-row{
   display:grid;
-  grid-template-columns:repeat(3,1fr);
+  grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
   gap:10px;
 }
 .cockpit-panel{
@@ -216,25 +223,18 @@
 .cockpit-allocation-bar{width:100%;height:5px;background:var(--hairline);border-radius:4px;overflow:hidden;}
 .cockpit-allocation-fill{height:100%;transition:width .3s ease;box-shadow:0 0 8px -2px currentColor;}
 
-/* ---------- Modal "Projeter mon capital" ----------
-   <dialog> natif : aucun précédent sur le site, mais focus trap et
-   fermeture Esc/clic-backdrop gratuits (pas de librairie nécessaire pour
-   un composant aussi simple). Même langage visuel que .card/.cockpit-panel
-   (fond, bordure hairline, angles nets). */
-.cockpit-modal{
-  background:var(--bg-alt);
-  color:var(--text);
-  border:1px solid var(--gold);
-  border-radius:var(--radius);
-  padding:24px;
-  max-width:480px;
-  width:calc(100vw - 48px);
-}
-.cockpit-modal::backdrop{background:rgba(5,6,8,0.7);}
-.cockpit-modal .result-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--hairline);font-size:13px;}
-.cockpit-modal .result-row:last-child{border-bottom:none;}
-.cockpit-modal .result-row .result-horizon{color:var(--text-dim);}
-.cockpit-modal .result-row .result-value{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+/* ---------- Onglet Projections : lignes de résultat "Aujourd'hui / 1 an /
+   5 ans / ...". Anciennement scopées à .cockpit-modal (<dialog> "Projeter
+   mon capital", retiré le 09/09/2026, intégré directement dans l'onglet) —
+   .result-row a un équivalent générique dans design-system.css (utilisé
+   ailleurs sur le site) mais sans le label-à-gauche/valeur-à-droite dont ce
+   composant a besoin ; ces règles, chargées après, l'emportent ici par
+   ordre de source (même spécificité). ---------- */
+#tab-projections .result-row{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--hairline);font-size:13px;}
+#tab-projections .result-row:last-child{border-bottom:none;}
+#tab-projections .result-row .result-horizon{color:var(--text-dim);}
+#tab-projections .result-row .result-value{font-family:'IBM Plex Mono',monospace;font-weight:600;}
+.cockpit-crash-btn.active{border-color:var(--gold);background:rgba(184,151,78,0.12);color:var(--gold-bright);}
 
 /* ---------- Drawer latéral "Configurer mes finances" ----------
    Div classique + position:fixed (pas de <dialog> ici : on veut un
@@ -268,53 +268,27 @@
 .cockpit-drawer-list{display:flex;flex-direction:column;gap:4px;margin-top:8px;}
 .cockpit-drawer-list-row{display:flex;justify-content:space-between;align-items:center;font-size:12px;padding:5px 0;border-bottom:1px solid var(--hairline);}
 
-/* ---------- Desktop (≥1180px, sidebar pleine largeur) ----------
-   Chrome réel APRÈS l'allègement ci-dessus (nav-row compacté à 8px de
-   padding, utility-bar/breadcrumb masqués) : header.site-header ≈ 48px.
-   .cockpit vise donc `calc(100vh - 60px)` pour tenir dans le premier écran
-   (marge de 12px incluse) — jamais une troncature de données réelles :
-   .cockpit-side et .cockpit-panels-row gardent leur propre overflow-y:auto
-   si leur contenu dépasse malgré tout l'espace alloué. */
-@media (min-width:1180px){
-  .cockpit{
-    grid-template-columns:2fr 1fr;
-    /* Le plancher du graphique (300px) correspond à son besoin réel
-       minimal (onglets ~30px + sélecteur de période ~44px + zone de
-       canvas ~180px + padding ~28px) — un plancher plus bas que ça
-       garantissait un débordement visuel, quelle que soit la hauteur
-       d'écran disponible. */
-    grid-template-rows:auto auto minmax(300px,1fr) minmax(0,auto);
-    grid-template-areas:
-      "header header"
-      "kpis   kpis"
-      "chart  side"
-      "panels side";
-    /* --nudges-h (mesurée en JS, initParcoursHero) : hauteur réelle du
-       bandeau de nudge (ré-onboarding/suggestion d'intérêt) au-dessus du
-       cockpit, quand il est affiché — sans ça, le budget de hauteur fixe
-       ci-dessous ne tenait compte que des 60px de chrome global et
-       poussait le bas du cockpit sous le pli dès qu'un vrai bandeau
-       apparaissait (Gap Closure Sprint P2, phase 16, 06/09/2026). */
-    height:calc(100vh - 60px - var(--nudges-h, 0px));
-  }
-  .cockpit-header{grid-area:header;}
-  .cockpit-kpis{grid-area:kpis;}
-  .cockpit-chart{grid-area:chart;min-height:0;}
-  .cockpit-side{grid-area:side;overflow-y:auto;min-height:0;}
-  .cockpit-panels-row{grid-area:panels;overflow-y:auto;min-height:0;}
-  /* Chaque panneau (comptes/objectifs/allocation) est borné à une hauteur
-     fixe et défile EN INTERNE au-delà — sans ce plafond, un compte réel
-     avec beaucoup de lignes (comptes, objectifs...) gonflait la hauteur
-     "auto" de toute la rangée bien au-delà de l'espace réellement
-     disponible, provoquant le même chevauchement visuel que le graphique
-     ci-dessus. Aucune donnée réelle n'est jamais tronquée, seulement
-     rendue défilante dans sa propre carte. */
-  .cockpit-panels-row .cockpit-panel{max-height:210px;overflow-y:auto;}
+/* ---------- Grille des onglets (Vue d'ensemble/Patrimoine/Portefeuille/
+   Risques/Objectifs/Projections) — réutilise .quick-access-grid/
+   .quick-access-card tel quel (design-system.css, même motif qu'index.html),
+   juste une variante plus compacte pour 6 tuiles de navigation plutôt que
+   4 grandes cartes d'accès rapide. ---------- */
+.cockpit-tabs-grid.quick-access-grid{grid-template-columns:repeat(6,1fr);margin:0;}
+
+/* ---------- Onglet Vue d'ensemble : graphique + colonne latérale côte à
+   côte à partir de la tablette large — en flux normal (page qui défile),
+   plus une grille à hauteur fixe sur un seul écran (retiré au sprint de
+   consolidation du 09/09/2026, voir le commentaire d'en-tête du fichier).
+   ---------- */
+#tab-vue-ensemble{display:flex;flex-direction:column;gap:16px;}
+@media (min-width:900px){
+  #tab-vue-ensemble{display:grid;grid-template-columns:2fr 1fr;align-items:start;gap:16px;}
 }
 
-/* ---------- Tablette (1024-1180px, rail icône) : 1 colonne, KPI 2×3 ---------- */
+/* ---------- Tablette (1024-1180px, rail icône) : KPI 2×3, onglets 3×2 ---------- */
 @media (min-width:760px) and (max-width:1179px){
   .cockpit-kpis{grid-template-columns:repeat(2,1fr);}
+  .cockpit-tabs-grid.quick-access-grid{grid-template-columns:repeat(3,1fr);}
   .cockpit-panels-row{grid-template-columns:1fr;}
 }
 
@@ -332,6 +306,3 @@
   .cockpit-panels-row{grid-template-columns:1fr;}
   .cockpit-drawer{width:100%;max-width:100%;}
 }
-
-/* ---------- Section repliable "Suite de l'apprentissage" ---------- */
-details.learning-suite-collapse{margin-top:0;}
