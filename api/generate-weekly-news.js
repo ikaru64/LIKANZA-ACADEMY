@@ -92,16 +92,17 @@ module.exports = async (req, res) => {
         const lien = sources[0].link;
 
         await sql`
-          INSERT INTO weekly_news (week_start, categorie, slug, titre, resume, points, pourquoi, impact, lecture, source, lien, sources, a_surveiller, accord_sources)
+          INSERT INTO weekly_news (week_start, categorie, slug, titre, resume, points, pourquoi, impact, lecture, source, lien, sources, a_surveiller, accord_sources, ne_jamais_conclure)
           VALUES (${weekStart}, ${entry.categorie}, ${entry.slug}, ${article.titre}, ${article.resume},
                   ${JSON.stringify(article.points)}, ${article.pourquoi}, ${JSON.stringify(article.impact)},
                   ${estimateReadingTime(article)}, ${sourceName}, ${lien}, ${JSON.stringify(sources)},
-                  ${JSON.stringify(article.aSurveiller)}, ${article.accordSources || null})
+                  ${JSON.stringify(article.aSurveiller)}, ${article.accordSources || null}, ${JSON.stringify(article.neJamaisConclure)})
           ON CONFLICT (week_start, categorie) DO UPDATE
           SET titre = EXCLUDED.titre, resume = EXCLUDED.resume, points = EXCLUDED.points,
               pourquoi = EXCLUDED.pourquoi, impact = EXCLUDED.impact, lecture = EXCLUDED.lecture,
               source = EXCLUDED.source, lien = EXCLUDED.lien, sources = EXCLUDED.sources,
-              a_surveiller = EXCLUDED.a_surveiller, accord_sources = EXCLUDED.accord_sources
+              a_surveiller = EXCLUDED.a_surveiller, accord_sources = EXCLUDED.accord_sources,
+              ne_jamais_conclure = EXCLUDED.ne_jamais_conclure
         `;
         results.push(entry.categorie);
       } catch(catErr){

@@ -101,6 +101,9 @@ function renderFull(cat){
       ${Array.isArray(a.aSurveiller) && a.aSurveiller.length ? `
       <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:4px;"><strong style="color:var(--text);">👀 À surveiller</strong> <span style="font-style:italic;">— pas une prédiction, des éléments qui confirmeront ou infirmeront cette synthèse</span></p>
       <ul style="color:var(--text-dim);font-size:13px;margin:0 0 14px 18px;">${a.aSurveiller.map(p=>`<li style="margin-bottom:4px;">${p}</li>`).join('')}</ul>` : ''}
+      ${Array.isArray(a.neJamaisConclure) && a.neJamaisConclure.length ? `
+      <p style="font-size:12.5px;color:var(--bordeaux);margin-bottom:4px;"><strong>⚠️ Ce qu'il ne faut pas en conclure</strong></p>
+      <ul style="color:var(--text-dim);font-size:13px;margin:0 0 14px 18px;">${a.neJamaisConclure.map(p=>`<li style="margin-bottom:4px;">${p}</li>`).join('')}</ul>` : ''}
       ${a.accordSources ? `<p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('analyse')} ${a.accordSources}</p>` : ''}
       ${renderNewsApprofondirLink(a.categorie)}
       ${renderArticleConceptLinks(a)}

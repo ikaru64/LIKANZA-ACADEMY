@@ -4172,41 +4172,56 @@ function renderDefiDuJour(elId){
   renderIntro();
 }
 
-// ---------- Recommandé pour toi : catégorie la plus faible en maîtrise, ou
-// à défaut liée à un centre d'intérêt encore peu exploré ----------
+// ---------- Sélection de la catégorie recommandée : catégorie la plus
+// faible en maîtrise, ou à défaut liée à un centre d'intérêt encore peu
+// exploré, ou à défaut une simple rotation de découverte (jamais présentée
+// comme personnalisée dans ce dernier cas — section 70 du prompt Continuité).
+// Factorisé (sprint de consolidation 09/09/2026) pour servir à la fois
+// renderRecommandePourToi (Défis, ci-dessous) et renderCoursRecommandePourToi
+// (Formations, son équivalent "cours" plutôt que "session de défi") — même
+// logique de choix, jamais dupliquée une seconde fois. candidateCategories
+// optionnel restreint le choix (ex : Formations ne peut recommander qu'une
+// catégorie réellement couverte par un vrai cours) ; retourne null si aucune
+// catégorie réelle ne satisfait la restriction — jamais une recommandation
+// fabriquée dans ce cas, à l'appelant de masquer la section. ----------
+function pickRecommendedCategorie(candidateCategories){
+  const weakest = pickWeakestMasteryCategory(candidateCategories);
+  if(weakest){
+    return {
+      categorie: weakest.categorie,
+      reason: `Tu as récemment eu du mal avec ${weakest.categorie} (${weakest.pct}% de bonnes réponses).`,
+      signals: [`${weakest.pct}% de bonnes réponses récemment sur « ${weakest.categorie} » (sous le seuil de 50%).`],
+      personalized: true
+    };
+  }
+  const mastery = candidateCategories ? getSkillMastery().filter(m => candidateCategories.includes(m.categorie)) : getSkillMastery();
+  const profile = getProfile();
+  const knownInterests = Object.keys(profile.interests || {}).filter(k => profile.interests[k]);
+  let candidateCats = knownInterests.flatMap(k => INTEREST_QUIZ_CATEGORIES[k] || []);
+  if(candidateCategories) candidateCats = candidateCats.filter(c => candidateCategories.includes(c));
+  const exploredCats = new Set(mastery.map(m => m.categorie));
+  const unexplored = candidateCats.filter(c => !exploredCats.has(c));
+  if(unexplored.length > 0){
+    const categorie = unexplored[dayOfYear() % unexplored.length];
+    return {
+      categorie,
+      reason: "Ça correspond à l'un de tes centres d'intérêt, et tu ne l'as pas encore beaucoup exploré.",
+      signals: [`Tu as déclaré un centre d'intérêt lié à « ${categorie} ».`, `Tu n'as pas encore été évalué sur cette catégorie.`],
+      personalized: true
+    };
+  }
+  let allCats = [...new Set(defisFullPool().map(i => i.categorie))];
+  if(candidateCategories) allCats = allCats.filter(c => candidateCategories.includes(c));
+  if(allCats.length === 0) return null;
+  const categorie = allCats[dayOfYear() % allCats.length];
+  return {categorie, reason: "Un thème à découvrir pour varier tes révisions.", signals: [], personalized: false};
+}
 function renderRecommandePourToi(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  const weakest = pickWeakestMasteryCategory();
-  let categorie, reason, signals, personalized;
-  if(weakest){
-    categorie = weakest.categorie;
-    reason = `Tu as récemment eu du mal avec ${categorie} (${weakest.pct}% de bonnes réponses).`;
-    signals = [`${weakest.pct}% de bonnes réponses récemment sur « ${categorie} » (sous le seuil de 50%).`];
-    personalized = true;
-  } else {
-    const mastery = getSkillMastery();
-    const profile = getProfile();
-    const knownInterests = Object.keys(profile.interests || {}).filter(k => profile.interests[k]);
-    const candidateCats = knownInterests.flatMap(k => INTEREST_QUIZ_CATEGORIES[k] || []);
-    const exploredCats = new Set(mastery.map(m => m.categorie));
-    const unexplored = candidateCats.filter(c => !exploredCats.has(c));
-    if(unexplored.length > 0){
-      categorie = unexplored[dayOfYear() % unexplored.length];
-      reason = "Ça correspond à l'un de tes centres d'intérêt, et tu ne l'as pas encore beaucoup exploré.";
-      signals = [`Tu as déclaré un centre d'intérêt lié à « ${categorie} ».`, `Tu n'as pas encore été évalué sur cette catégorie.`];
-      personalized = true;
-    } else {
-      const allCats = [...new Set(defisFullPool().map(i => i.categorie))];
-      categorie = allCats[dayOfYear() % allCats.length];
-      reason = "Un thème à découvrir pour varier tes révisions.";
-      // Aucun signal réel derrière ce choix (simple rotation quotidienne) —
-      // jamais présenté comme "recommandé pour toi" (section 70 du prompt
-      // Continuité : pas de fausse personnalisation).
-      signals = [];
-      personalized = false;
-    }
-  }
+  const pick = pickRecommendedCategorie();
+  if(!pick){ el.innerHTML = ''; return; }
+  const {categorie, reason, signals, personalized} = pick;
   el.innerHTML = `
     <span class="smallcaps">${personalized ? '🎯 Recommandé pour toi' : '🔎 À découvrir'}</span>
     <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 6px;">${reason}</p>
@@ -4218,6 +4233,90 @@ function renderRecommandePourToi(elId){
     const pool = defisFullPool().filter(i => i.categorie === categorie);
     startMixedSession(elId, pickAdaptivePool(pool, categorie, 5), {livePool: pool, onRestart: () => renderRecommandePourToi(elId)});
   });
+}
+
+// ---------- Recommandé pour toi (Formations, section 37-38 du prompt de
+// consolidation) : même sélection que ci-dessus, restreinte aux catégories
+// réellement couvertes par un vrai cours (COURS_CATALOG) — jamais de lien de
+// cours fabriqué. Préfère un cours pas encore fait ; s'il est déjà validé
+// (utilisateur déjà fort partout sur cette catégorie), propose quand même de
+// le revoir plutôt que de masquer la section. ----------
+function renderCoursRecommandePourToi(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const coursCategories = [...new Set(COURS_CATALOG.flatMap(c => c.quizCategories || []))];
+  const pick = pickRecommendedCategorie(coursCategories);
+  if(!pick){ el.innerHTML = ''; return; }
+  const {categorie, reason, signals, personalized} = pick;
+  const progress = getCoursProgress();
+  const matches = COURS_CATALOG.filter(c => Array.isArray(c.quizCategories) && c.quizCategories.includes(categorie));
+  const cours = matches.find(c => !progress[c.id]) || matches[0];
+  if(!cours){ el.innerHTML = ''; return; }
+  const done = !!progress[cours.id];
+  el.innerHTML = `
+    <span class="smallcaps">${personalized ? '🎯 Recommandé pour toi' : '🔎 À découvrir'}</span>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 6px;">${reason}</p>
+    <div id="${elId}-pourquoi" style="margin-bottom:10px;"></div>
+    <h3 style="margin-bottom:10px;font-size:17px;">${cours.titre}</h3>
+    <a href="cours.html#${encodeURIComponent(cours.id)}" class="btn btn-sm btn-gold">${done ? 'Revoir le cours' : 'Suivre ce cours'} →</a>`;
+  renderPourquoiToggle(`${elId}-pourquoi`, signals);
+}
+
+// ---------- À renforcer (Formations, section 36 du prompt de consolidation) :
+// liste TOUTES les catégories réellement faibles (getSkillMastery, niveau
+// 'faible'), remplace l'ancien renderFormationsConseil qui n'en affichait
+// qu'une seule en une ligne. Chacune pointe vers un vrai cours qui la couvre
+// si un existe, sinon vers un vrai défi sur cette catégorie — jamais un lien
+// fabriqué. Section entièrement masquée si aucune catégorie faible n'est
+// mesurée (pas assez de données, ou déjà solide partout) — jamais affichée
+// vide ni par défaut.
+function renderFormationsARenforcer(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const weak = getSkillMastery().filter(m => m.niveau === 'faible');
+  if(!weak.length){ el.innerHTML = ''; return; }
+  const progress = getCoursProgress();
+  el.innerHTML = `
+    <div class="section-head" style="margin-bottom:10px;"><h2 style="font-size:19px;">À renforcer</h2><span class="meta-line">catégories où tes résultats récents sont sous 50%</span></div>
+    <div class="card-grid">${weak.map(m => {
+      const cours = COURS_CATALOG.find(c => Array.isArray(c.quizCategories) && c.quizCategories.includes(m.categorie));
+      const link = cours
+        ? `<a href="cours.html#${encodeURIComponent(cours.id)}" class="btn btn-sm">${progress[cours.id] ? 'Revoir le cours' : 'Suivre le cours'} →</a>`
+        : `<a href="defis.html?cat=${encodeURIComponent(m.categorie)}" class="btn btn-sm">S'entraîner →</a>`;
+      return `<div class="card">
+        <span class="smallcaps">${m.categorie}</span>
+        <p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">${m.pct}% de bonnes réponses (${m.correct}/${m.total}).</p>
+        ${link}
+      </div>`;
+    }).join('')}</div>`;
+}
+
+// ---------- Maîtrise par domaine (Formations, section 33 du prompt de
+// consolidation : "un état par domaine plutôt qu'un seul niveau global").
+// Réutilise computeDomainMastery() — même source que Financial IQ et les
+// badges de maîtrise, jamais un second calcul — mais présenté ici sans le
+// cadrage "Financial IQ" propre aux Défis, juste une barre par domaine
+// réellement pratiqué. Domaine absent tant qu'il n'a aucune vraie réponse
+// (déjà filtré par computeDomainMastery) ; section entière masquée si aucun
+// domaine n'a encore de données (nouvel utilisateur) — jamais une barre à 0%
+// pour un domaine jamais touché.
+function renderFormationDomainMastery(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const domains = computeDomainMastery();
+  if(!domains.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="section-head" style="margin-bottom:10px;"><h2 style="font-size:19px;">Ta maîtrise par domaine</h2><span class="meta-line">basée sur tes vraies réponses (cours, défis)</span></div>
+    <div class="card" style="display:flex;flex-direction:column;gap:10px;">
+      ${domains.map(d => `
+        <div>
+          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;">
+            <span>${d.icon} ${d.label}</span>
+            <span class="mono" style="color:var(--text-dim);">${d.pct} % (${d.correct}/${d.total})</span>
+          </div>
+          <div class="dash-weekbar" style="width:100%;"><div class="dash-weekfill" style="width:${d.pct}%;"></div></div>
+        </div>`).join('')}
+    </div>`;
 }
 
 // ---------- À revoir : widget compact (comme sur Mon parcours), lance
@@ -4715,15 +4814,25 @@ function saveLastPosition(position){ safeSetJSON(LAST_POSITION_KEY, position); }
 // liste. Jamais une position périmée : si le cours a été terminé ou
 // supprimé du catalogue depuis, l'état honnête "rien à reprendre" s'affiche
 // à la place plutôt qu'un lien mort ou trompeur.
+// Retourne désormais un booléen (a du contenu réel à reprendre ou non) —
+// ajouté au moment de son branchement réel sur formations.html (sprint de
+// consolidation 09/09/2026, section 32 du prompt d'origine, "Continuer") :
+// jusqu'ici cette fonction n'était appelée par aucune page (voir git log —
+// construite lors du chantier Continuité du 30/08/2026 mais jamais reliée à
+// un conteneur réel). Un appelant peut ignorer la valeur de retour sans
+// risque (comportement inchangé pour un futur appel qui l'ignorerait), mais
+// formations.html l'utilise pour masquer entièrement sa section "Continuer"
+// plutôt que d'afficher en haut de page un bandeau dès l'arrivée "Aucune
+// activité récente à reprendre" à un nouvel utilisateur qui n'a encore rien commencé.
 function renderContinueWidget(elId){
   const el = document.getElementById(elId);
-  if(!el) return;
+  if(!el) return false;
   const pos = getLastPosition();
   const cours = pos && pos.type === 'cours' ? COURS_CATALOG.find(c => c.id === pos.id) : null;
   const stillRelevant = cours && !getCoursProgress()[pos.id];
   if(!stillRelevant){
     el.innerHTML = `<span class="smallcaps">▶ Continuer</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Aucune activité récente à reprendre.</p>`;
-    return;
+    return false;
   }
   // Cible directement le bon chapitre (adressage par chapitre, réouverture
   // du 30/08/2026) : "Reprendre" ramène désormais exactement où l'utilisateur
@@ -4732,6 +4841,7 @@ function renderContinueWidget(elId){
     <span class="smallcaps">▶ Continuer</span>
     <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${cours.titre} — Chapitre ${pos.chapitreIndex + 1} : ${pos.chapitreTitre}</p>
     <a href="cours.html#${encodeURIComponent(pos.id)}:${encodeURIComponent(pos.chapitreTitre.replace(/\s+/g, '-'))}" class="btn btn-sm btn-gold">Reprendre →</a>`;
+  return true;
 }
 
 // Rattache chaque cours à son domaine réel (DOMAINS, app.js) en comptant le
@@ -4808,6 +4918,15 @@ function coursDomainKey(cours){
 // accordéon sur la même page, pour éviter un scroll interminable. domainKey
 // optionnel : ne montre que les cours réellement rattachés à ce domaine
 // (voir coursDomainKey), jamais un cours mal classé pour remplir un onglet.
+// "Je connais déjà" (sprint de consolidation 09/09/2026, section 34 du
+// prompt d'origine, "Skip what I know") : marque le cours acquis directement
+// via likanza-cours-progress, la même clé que la validation par quiz — le
+// site n'a jamais distingué "validé par quiz" de "validé autrement" ailleurs
+// (le badge "Validé" ne prétend pas non plus une note), donc pas de nouvel
+// état à inventer ici. Séparé du lien "Ouvrir →" (bouton propre, pas imbriqué
+// dans le <a> de la tuile — deux liens/actions imbriqués seraient invalides
+// en HTML) : la tuile n'est donc plus elle-même un <a>, mais un conteneur
+// avec un vrai lien "Ouvrir →" et ce bouton distinct dans son pied.
 function renderCoursTiles(elId, domainKey){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -4818,13 +4937,28 @@ function renderCoursTiles(elId, domainKey){
     const isRich = Array.isArray(cours.chapitres) && cours.chapitres.length > 0;
     const meta = isRich ? `${cours.chapitres.length} chapitre${cours.chapitres.length>1?'s':''} · lecture + quiz de validation` : `${cours.libraryTermes.length} notion${cours.libraryTermes.length>1?'s':''} · lecture + quiz de validation`;
     return `
-    <a href="cours.html#${encodeURIComponent(cours.id)}" class="card play-tile">
-      <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
-      <h3 style="font-size:16px;margin-top:10px;">${done ? ICONS.check + ' ' : ''}${cours.titre}</h3>
-      <p>${meta}</p>
-      <div class="card-footer"><span class="badge ${done ? 'status-reel' : 'status-differe'}">${done ? 'Validé' : cours.niveau}</span><span>Ouvrir →</span></div>
-    </a>`;
+    <div class="card play-tile" style="background:var(--bg);">
+      <a href="cours.html#${encodeURIComponent(cours.id)}" style="color:inherit;text-decoration:none;display:block;">
+        <span class="icon" data-icon="book-open" style="color:var(--gold-bright);"></span>
+        <h3 style="font-size:16px;margin-top:10px;">${done ? ICONS.check + ' ' : ''}${cours.titre}</h3>
+        <p>${meta}</p>
+      </a>
+      <div class="card-footer">
+        <span class="badge ${done ? 'status-reel' : 'status-differe'}">${done ? 'Validé' : cours.niveau}</span>
+        <a href="cours.html#${encodeURIComponent(cours.id)}" style="color:var(--gold-bright);font-weight:600;text-decoration:none;">Ouvrir →</a>
+      </div>
+      ${!done ? `<button type="button" class="skip-cours-btn" data-skip-cours="${cours.id}" style="background:none;border:none;padding:0;margin-top:8px;font-size:11.5px;color:var(--text-dim);text-decoration:underline;cursor:pointer;align-self:flex-start;">Je connais déjà cette notion — marquer comme acquis →</button>` : ''}
+    </div>`;
   }).join('')}</div>`;
+  el.querySelectorAll('[data-skip-cours]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const id = btn.dataset.skipCours;
+      const p = getCoursProgress();
+      p[id] = true;
+      safeSetJSON('likanza-cours-progress', p);
+      renderCoursTiles(elId, domainKey);
+    });
+  });
 }
 
 // ---------- Cours enrichi (chapitres réels) : template universel de bloc
@@ -10692,17 +10826,31 @@ function findArticleDefiCategorie(concepts){
   }
   return null;
 }
+// Même discipline que findArticleCourseLink/findArticleDefiCategorie :
+// correspondance EXACTE contre guide.concepts (index léger GUIDES, app.js —
+// voir le commentaire au-dessus de sa déclaration), jamais une déduction sur
+// la seule catégorie. Un article peut correspondre à plusieurs guides ; on ne
+// propose que le premier (une seule carte "Guide lié", pas une liste).
+function findArticleGuideLink(concepts){
+  for(const terme of (concepts || [])){
+    const guide = GUIDES.find(g => Array.isArray(g.concepts) && g.concepts.includes(terme));
+    if(guide) return {guide, terme};
+  }
+  return null;
+}
 // Remplace l'appel direct à renderCourseLibraryLinks(findArticleConcepts(a))
 // dans actualites.js : garde le même lien Bibliothèque qu'avant (comportement
-// inchangé), ajoute un lien cours et/ou un lien défi seulement quand une
+// inchangé), ajoute un lien cours, guide et/ou défi seulement quand une
 // vraie correspondance existe.
 function renderArticleConceptLinks(article){
   const concepts = findArticleConcepts(article);
   const libraryHtml = renderCourseLibraryLinks(concepts);
   const courseLink = findArticleCourseLink(concepts);
+  const guideLink = findArticleGuideLink(concepts);
   const defiCategorie = findArticleDefiCategorie(concepts);
   const extraLinks = [];
   if(courseLink) extraLinks.push(`<a href="cours.html#${encodeURIComponent(courseLink.cours.id)}" style="color:var(--gold-bright);">📖 Suivre le cours « ${courseLink.cours.titre} »</a>`);
+  if(guideLink) extraLinks.push(`<a href="${guideLink.guide.url}" style="color:var(--gold-bright);">💡 Lire le guide « ${guideLink.guide.question} »</a>`);
   if(defiCategorie) extraLinks.push(`<a href="defis.html?cat=${encodeURIComponent(defiCategorie)}" style="color:var(--gold-bright);">🎯 S'entraîner sur « ${defiCategorie} »</a>`);
   return libraryHtml + (extraLinks.length ? `<p style="font-size:12px;color:var(--text-dim);margin-top:8px;">${extraLinks.join(' · ')}</p>` : '');
 }

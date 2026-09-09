@@ -84,6 +84,10 @@
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Formations</div>
 <h1 class="visually-hidden">Formations</h1>
 
+<section class="section" id="continueSection" style="padding-bottom:0;display:none;">
+  <div class="card" id="continueWidget" style="max-width:640px;border:1px solid var(--gold);background:var(--bg-alt);"></div>
+</section>
+
 <section class="section" style="padding-bottom:0;">
   <div class="level-box">
     <div>
@@ -100,8 +104,16 @@
 </section>
 
 <section class="section">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;">
+    <div class="card" id="coursRecommandePourToi"></div>
+    <div id="formationDomainMastery"></div>
+  </div>
+</section>
+
+<section class="section" id="aRenforcerSection"></section>
+
+<section class="section">
   <div class="section-head"><h2>Parcours actuel · <span id="levelLabel"></span></h2><span class="meta-line" id="progressLabel"></span></div>
-  <div id="formationsConseil" style="margin-bottom:14px;"></div>
   <div id="levelCompleteBanner" style="margin-bottom:14px;"></div>
   <div id="courseList"></div>
 </section>

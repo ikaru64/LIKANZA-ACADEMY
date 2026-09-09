@@ -67,20 +67,19 @@ document.querySelectorAll('.level-pills .pill').forEach(btn=>{
   });
 });
 
-function renderFormationsConseil(){
-  // Basé sur la vraie maîtrise en direct (Défis/cours/quiz approfondis),
-  // pas sur un ancien score noté du premier quiz (retiré : celui-ci est
-  // désormais 100% déclaratif).
-  const weakest = getSkillMastery().find(m => m.niveau === 'faible');
-  if(weakest){
-    renderConseilBadge('formationsConseil', {text:`Tes quiz montrent une marge de progression en ${weakest.categorie} (${weakest.pct}%) : une bonne piste pour la suite.`, tone:'warn'});
-    return;
-  }
-  renderConseilBadge('formationsConseil', {text:"Explore les missions ci-dessous à ton rythme, dans l'ordre que tu veux : rien n'est obligatoire.", tone:'neutral'});
-}
+// ---------- Continuer / Recommandé / Maîtrise par domaine / À renforcer
+// (sprint de consolidation 09/09/2026, sections 32-38 du prompt d'origine) :
+// remplace l'ancien renderFormationsConseil (une seule ligne, une seule
+// catégorie faible) par 4 vrais blocs adaptatifs, chacun masqué proprement
+// s'il n'a aucun signal réel (voir data.js pour la discipline de chaque
+// fonction). ----------
+const hasContinue = renderContinueWidget('continueWidget');
+document.getElementById('continueSection').style.display = hasContinue ? '' : 'none';
+renderCoursRecommandePourToi('coursRecommandePourToi');
+renderFormationDomainMastery('formationDomainMastery');
+renderFormationsARenforcer('aRenforcerSection');
 
 refreshLevelUI();
-renderFormationsConseil();
 
 // ---------- Hub de la section Cours, par domaine réel (même pattern que
 // scripts/pages/bourse.js/BOURSE_TABS, scripts/pages/laboratoire.js/LAB_TABS) :

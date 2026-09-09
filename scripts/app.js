@@ -5928,7 +5928,14 @@ const LIBRARY = [
 // guides-data.js sur TOUTES les pages et SEARCH_INDEX (ci-dessous) doit
 // pouvoir indexer les Guides même sur une page qui ne charge jamais
 // guides-data.js (ex. bourse.html). Chaque guide réel ajoute une entrée ici
-// au moment de sa publication — jamais généré, jamais oublié en silence. ----------
+// au moment de sa publication — jamais généré, jamais oublié en silence.
+// concepts (sprint de consolidation 09/09/2026, section 47 du prompt
+// d'origine, "outils/cours/guides liés") : copie exacte du tableau concepts
+// du guide complet (scripts/pages/guide-<slug>.js) — dupliqué ici pour la
+// même raison que title/readingTime le sont déjà (permettre à une page
+// comme actualites.html, qui ne charge jamais un guide complet, de proposer
+// un lien exact vers un guide sans jamais deviner une correspondance
+// approximative). À tenir à jour manuellement si le guide complet évolue. ----------
 const GUIDE_CATEGORIES = [
   {key: 'debuter', label: 'Débuter'},
   {key: 'choisir', label: 'Choisir'},
@@ -5948,7 +5955,8 @@ const GUIDES = [
     publishedAt: '2026-09-05',
     updatedAt: '2026-09-05',
     freshness: 'semi-dynamic',
-    hasSimulation: true
+    hasSimulation: true,
+    concepts: ['ETF', 'Volatilité', 'Diversification', 'Tolérance au risque', 'Horizon de placement']
   },
   {
     slug: 'pea-ou-cto',
@@ -5962,7 +5970,8 @@ const GUIDES = [
     publishedAt: '2026-09-05',
     updatedAt: '2026-09-05',
     freshness: 'dynamic',
-    hasSimulation: false
+    hasSimulation: false,
+    concepts: ['PEA', 'PFU (prélèvement forfaitaire unique / flat tax)', 'Plus-value mobilière (imposition)', 'ETF', 'Diversification']
   },
   {
     slug: 'etf-ou-stock-picking',
@@ -5976,7 +5985,8 @@ const GUIDES = [
     publishedAt: '2026-09-05',
     updatedAt: '2026-09-05',
     freshness: 'semi-dynamic',
-    hasSimulation: false
+    hasSimulation: false,
+    concepts: ['ETF', 'Diversification', 'Biais du survivant (backtesting)']
   },
   {
     slug: 'acheter-ou-louer',
@@ -5990,7 +6000,8 @@ const GUIDES = [
     publishedAt: '2026-09-05',
     updatedAt: '2026-09-05',
     freshness: 'semi-dynamic',
-    hasSimulation: true
+    hasSimulation: true,
+    concepts: ['Crédit immobilier', 'Apport personnel']
   },
   {
     slug: 'avalanche-ou-boule-de-neige',
@@ -6004,7 +6015,8 @@ const GUIDES = [
     publishedAt: '2026-09-09',
     updatedAt: '2026-09-09',
     freshness: 'evergreen',
-    hasSimulation: true
+    hasSimulation: true,
+    concepts: ['Intérêts composés', 'Budget', "Fonds d'urgence"]
   }
 ];
 function getGuideBySlug(slug){
