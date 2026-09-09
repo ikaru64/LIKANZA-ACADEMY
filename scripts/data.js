@@ -9851,12 +9851,22 @@ function computeCalendarEvents(mois){
 // Rappels des N prochains jours (widget "Aujourd'hui") — seules les charges
 // avec un jour d'échéance réellement saisi peuvent apparaître ici (jamais un
 // jour deviné) ; une échéance d'objectif dans le passé n'est jamais un rappel.
+// jourEcheance va jusqu'à 31 (saveRecurringCharge) mais tous les mois n'ont
+// pas 31 jours : `new Date(y, m, 31)` en février DÉBORDE silencieusement sur
+// début mars (comportement natif de Date, jamais une erreur) — trouvé en
+// auditant ce module (08-09/09/2026). clampedDate ramène le jour saisi au
+// dernier jour réel du mois cible (convention standard de facturation),
+// plutôt que de laisser le rappel glisser vers un mois qu'il n'a jamais visé.
 function computeUpcomingReminders(daysAhead){
   const today = new Date(); today.setHours(0, 0, 0, 0);
   const reminders = [];
+  function clampedDate(year, month, day){
+    const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
+    return new Date(year, month, Math.min(day, lastDayOfMonth));
+  }
   getRecurringCharges().filter(c => c.jourEcheance).forEach(c => {
-    let target = new Date(today.getFullYear(), today.getMonth(), c.jourEcheance);
-    if(target < today) target = new Date(today.getFullYear(), today.getMonth() + 1, c.jourEcheance);
+    let target = clampedDate(today.getFullYear(), today.getMonth(), c.jourEcheance);
+    if(target < today) target = clampedDate(today.getFullYear(), today.getMonth() + 1, c.jourEcheance);
     const dans = Math.round((target - today) / 86400000);
     if(dans <= daysAhead) reminders.push({type: 'charge', label: c.nom, montant: c.montant, dans});
   });
