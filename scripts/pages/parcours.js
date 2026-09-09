@@ -121,9 +121,7 @@ function initParcoursHero(){
   cockpitDemoMode = cockpitMode === 'demo';
   // En-tête scindé (refonte cockpit, 05/09/2026) : les 3 bandeaux de nudge
   // (onboarding/ré-onboarding/suggestion d'intérêt) restent au-dessus du
-  // pli, toujours visibles ; le bloc gamification (XP/niveau/série) est
-  // du contenu pédagogique au sens du nouveau cockpit — voir Phase 3 pour
-  // son déplacement dans la section repliée "Suite de l'apprentissage".
+  // pli, toujours visibles.
   renderParcoursNudges('parcoursNudges');
   // Gap Closure Sprint P2, phase 16 (06/09/2026) : le budget de hauteur fixe
   // du cockpit (parcours.css, --nudges-h) ne peut pas connaître la hauteur
@@ -135,14 +133,19 @@ function initParcoursHero(){
   if(nudgesEl && typeof nudgesEl.offsetHeight === 'number'){
     document.documentElement.style.setProperty('--nudges-h', nudgesEl.offsetHeight + 'px');
   }
-  renderGamificationHeader('dashboardHeader');
-  // Score financier (radar SVG déjà réel) : pas montré dans la vue
-  // principale du cockpit (l'image de référence ne le montre pas non plus,
-  // section 16 du brief : "si l'espace le permet") — reste accessible ici,
-  // dans la section pédagogique repliée, jamais supprimé.
-  renderHealthScoreDashboardWidget('cockpitHealthScore');
-  renderDashboardShell('dashboardShell');
-  renderDashboardPriorityBanner('dashboardPriority', 'dashboardShell');
+  // Sprint de consolidation (09/09/2026) : le bandeau gamification (XP/niveau/
+  // série), la "Suite de l'apprentissage" (missions/révisions/parcours
+  // guidés) et le bandeau "À faire maintenant" (computeDashboardPriorityQueue
+  // — vérifié : ses 6 candidats sont TOUS des items d'apprentissage, aucun
+  // financier) sont retirés d'ici. Le Tableau de bord (index.html) en est
+  // déjà responsable (son propre dashboardHeader + onglet "Apprendre").
+  // Mon Univers Financier ne répond plus qu'à "où en est ma situation
+  // financière ?" — voir renderCockpitTabsGrid ci-dessous pour la nouvelle
+  // navigation par onglets (Vue d'ensemble/Patrimoine/Portefeuille/Risques/
+  // Objectifs/Projections). La Santé financière (6 axes, réellement
+  // financière — budget/dette/sécurité/trésorerie/investissement/objectifs)
+  // n'est jamais supprimée : déplacée dans l'onglet Risques.
+  renderCockpitTabsGrid();
   renderCockpitBody();
 }
 
@@ -156,6 +159,45 @@ function rerenderCockpit(){
   renderCockpitBody();
 }
 
+// ============================================================
+// Navigation par onglets (sprint de consolidation 09/09/2026, section 5 du
+// prompt d'origine) : réutilise le motif quick-access-grid/home-tab-panel
+// déjà réel de index.html (renderQuickAccess/setActiveTab, scripts/pages/
+// index.js) — mêmes classes CSS, même mécanique (toggle .active, rendu
+// éager de tous les onglets au chargement, jamais un rendu paresseux qui
+// risquerait un onglet périmé après une modification ailleurs sur la page).
+// ============================================================
+const COCKPIT_TABS = [
+  {id: 'tab-vue-ensemble', label: "Vue d'ensemble", icon: 'compass'},
+  {id: 'tab-patrimoine', label: 'Patrimoine', icon: 'gem'},
+  {id: 'tab-portefeuille', label: 'Portefeuille', icon: 'trending-up'},
+  {id: 'tab-risques', label: 'Risques', icon: 'shield'},
+  {id: 'tab-objectifs', label: 'Objectifs', icon: 'target'},
+  {id: 'tab-projections', label: 'Projections', icon: 'telescope'}
+];
+let cockpitActiveTab = 'tab-vue-ensemble';
+function renderCockpitTabsGrid(){
+  const el = document.getElementById('cockpitTabsGrid');
+  if(!el) return;
+  el.innerHTML = COCKPIT_TABS.map(t => `
+    <button type="button" class="quick-access-card ${t.id === cockpitActiveTab ? 'active' : ''}" data-tab="${t.id}" style="padding:12px 14px;text-align:center;">
+      <div class="icon" style="margin-bottom:4px;">${ICONS[t.icon] || ''}</div>
+      <h3 style="font-size:12.5px;">${t.label}</h3>
+    </button>`).join('');
+  el.querySelectorAll('.quick-access-card').forEach(btn => {
+    btn.addEventListener('click', () => setCockpitActiveTab(btn.dataset.tab));
+  });
+}
+function setCockpitActiveTab(tabId){
+  if(!COCKPIT_TABS.some(t => t.id === tabId)) return;
+  cockpitActiveTab = tabId;
+  document.querySelectorAll('#cockpitTabsGrid .quick-access-card').forEach(c => c.classList.toggle('active', c.dataset.tab === tabId));
+  COCKPIT_TABS.forEach(t => {
+    const panel = document.getElementById(t.id);
+    if(panel) panel.classList.toggle('active', t.id === tabId);
+  });
+}
+
 // Dispatcheur hero personnel/business (suivi disclosed Gap Closure Sprint
 // phase 17, 07/09/2026) : un profil Business Lab réel sans donnée
 // financière personnelle réelle mérite son propre hero, pas un hero
@@ -163,20 +205,29 @@ function rerenderCockpit(){
 // panneaux fabriquée en mode business (moins de contenu, mais honnête,
 // plutôt qu'un remplissage forcé pour égaler visuellement le personnel).
 function renderCockpitBody(){
+  const tabsGridEl = document.getElementById('cockpitTabsGrid');
   if(cockpitMode === 'business'){
+    // Onglets Patrimoine/Portefeuille/Risques/Objectifs/Projections sont
+    // spécifiques aux données financières personnelles — un profil Business
+    // Lab réel les masque plutôt que d'afficher 5 onglets vides ou
+    // dupliquant Business Lab (qui a déjà ses propres outils).
+    if(tabsGridEl) tabsGridEl.style.display = 'none';
     renderBusinessCockpitHeader('cockpitHeader');
     renderBusinessCockpitKPIs('cockpitKPIs');
     renderBusinessCockpitMain('cockpitChart');
     renderBusinessCockpitSide('cockpitSide');
-    const panelsRowEl = document.getElementById('cockpitPanelsRow');
-    if(panelsRowEl) panelsRowEl.innerHTML = '';
     return;
   }
+  if(tabsGridEl) tabsGridEl.style.display = '';
   renderCockpitHeader('cockpitHeader');
   renderCockpitKPIs('cockpitKPIs');
   renderCockpitChart('cockpitChart');
   renderCockpitSide('cockpitSide');
-  renderCockpitPanelsRow('cockpitPanelsRow');
+  renderCockpitPatrimoineTab('cockpitPatrimoineBody');
+  renderCockpitPortefeuilleTab('cockpitPortefeuilleBody');
+  renderCockpitRisquesTab('cockpitRisquesBody');
+  renderCockpitObjectifs('cockpitObjectifsBody');
+  renderCockpitProjectionsTab('cockpitProjectionsBody');
 }
 
 // ============================================================
@@ -288,7 +339,7 @@ function renderCockpitHeader(elId){
       </div>
     </div>`;
   const projectBtn = document.getElementById('cockpitProjectBtn');
-  if(projectBtn) projectBtn.addEventListener('click', openCockpitProjectionModal);
+  if(projectBtn) projectBtn.addEventListener('click', () => setCockpitActiveTab('tab-projections'));
   const configureBtn = document.getElementById('cockpitConfigureBtn');
   if(configureBtn) configureBtn.addEventListener('click', openOnboardingDrawer);
 }
@@ -530,16 +581,18 @@ function renderCockpitSide(elId){
   renderCockpitActionsPanel(`${elId}-actions`);
 }
 
-// ---------- Rangée de panneaux (Comptes / Objectifs / Allocation) ----------
-function renderCockpitPanelsRow(elId){
+// ---------- Onglet Patrimoine (Comptes / Allocation) — les Objectifs ont
+// leur propre onglet (renderCockpitObjectifs, appelé directement depuis
+// renderCockpitBody), le Portefeuille (positions réelles) le sien
+// (renderCockpitPortefeuilleTab) : ancienne rangée à 3 panneaux éclatée en
+// onglets distincts (sprint de consolidation 09/09/2026, section 5). ----------
+function renderCockpitPatrimoineTab(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   el.innerHTML = `
     <div class="cockpit-panel" id="${elId}-accounts"></div>
-    <div class="cockpit-panel" id="${elId}-objectifs"></div>
     <div class="cockpit-panel" id="${elId}-allocation"></div>`;
   renderCockpitAccounts(`${elId}-accounts`);
-  renderCockpitObjectifs(`${elId}-objectifs`);
   renderCockpitAllocation(`${elId}-allocation`);
 }
 
@@ -584,7 +637,12 @@ function renderCockpitDonut(elId){
     document.querySelectorAll(`#${elId}-legend .cockpit-donut-legend-row`).forEach(row => {
       row.classList.toggle('active', row.dataset.key === cockpitAccountsFilter);
     });
-    renderCockpitAccounts('cockpitPanelsRow-accounts');
+    // Le détail par compte vit désormais dans l'onglet Patrimoine (sprint de
+    // consolidation 09/09/2026) — cliquer une catégorie du donut (Vue
+    // d'ensemble) y bascule directement plutôt que de filtrer un panneau
+    // invisible sur l'onglet courant.
+    setCockpitActiveTab('tab-patrimoine');
+    renderCockpitAccounts('cockpitPatrimoineBody-accounts');
   }
 
   cockpitDonutInstance = new Chart(canvas.getContext('2d'), {
@@ -691,6 +749,152 @@ function renderCockpitAllocation(elId){
     </div>`;
 }
 
+// ============================================================
+// Onglet Portefeuille (sprint de consolidation 09/09/2026, section 12 du
+// prompt d'origine) : consolide le MÊME registre réel que Bourse
+// (fzr-real-portfolio, computeRealPortfolioPositions/computeRealPortfolioTotals,
+// scripts/data.js) — jamais un 2e calculateur. Mon Univers observe, Bourse
+// reste l'endroit où on déclare/gère ses transactions (lien direct fourni,
+// jamais dupliqué ici). Le paper trading (fzr-paper-trading, un registre de
+// simulation) n'est jamais mélangé à ce portefeuille réel.
+// ============================================================
+function cockpitFetchPortfolioQuotes(tickers){
+  const missing = tickers.filter(t => !STOCKS_DEMO.find(s => s.ticker === t) && !(t in followedQuotesCache));
+  if(missing.length === 0 || location.protocol === 'file:') return Promise.resolve();
+  return fetch('/api/custom-quotes?symbols=' + encodeURIComponent(missing.join(',')))
+    .then(r => { if(!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(payload => {
+      (payload.quotes || []).forEach(q => {
+        if(typeof q.price === 'number') followedQuotesCache[q.symbol] = {price: q.price, changePercent: q.changePercent, history: q.history, currency: q.currency};
+      });
+    })
+    .catch(() => {});
+}
+// secteur/pays : réels pour les 8 valeurs STOCKS_DEMO (resolveFollowedAsset),
+// `null` sinon — jamais devinés pour une valeur suivie hors de ce curatage.
+function cockpitEnrichedPortfolioPositions(){
+  const transactions = getRealPortfolio();
+  const livePrices = {};
+  transactions.forEach(tx => {
+    const r = resolveFollowedAsset(tx.ticker);
+    if(typeof r.prix === 'number') livePrices[tx.ticker] = r.prix;
+  });
+  const positions = computeRealPortfolioPositions(transactions, livePrices);
+  return positions.map(p => {
+    const r = resolveFollowedAsset(p.ticker);
+    return {...p, secteur: r.secteur, pays: r.pays};
+  });
+}
+function renderCockpitPortefeuilleTab(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(cockpitDemoMode){
+    el.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Le portefeuille réel n'est pas simulé en mode aperçu — déclare tes transactions réelles dans Bourse pour le voir apparaître ici.</p><a href="bourse.html#tab-portefeuille" class="btn btn-sm btn-gold" style="margin-top:10px;">Ouvrir Bourse →</a>`;
+    return;
+  }
+  const transactions = getRealPortfolio();
+  if(transactions.length === 0){
+    el.innerHTML = `<p style="font-size:13px;color:var(--text-dim);">Aucune transaction réelle enregistrée. Déclare tes achats (action, quantité, prix, date) dans Bourse pour voir ton portefeuille consolidé ici.</p><a href="bourse.html#tab-portefeuille" class="btn btn-sm btn-gold" style="margin-top:10px;">Déclarer mes transactions →</a>`;
+    return;
+  }
+  const tickers = [...new Set(transactions.map(t => t.ticker))];
+  el.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Chargement des cotations…</p>`;
+  cockpitFetchPortfolioQuotes(tickers).then(() => {
+    const positions = cockpitEnrichedPortfolioPositions();
+    const totals = computeRealPortfolioTotals(positions);
+    el.innerHTML = `
+      <p style="font-size:12px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('fait')} Les mêmes transactions réelles que dans Bourse, jamais un 2e registre. <a href="bourse.html#tab-portefeuille">Gérer mes transactions →</a></p>
+      ${renderRealPortfolioHTML(positions, totals)}`;
+  });
+}
+
+// ============================================================
+// Onglet Risques (sprint de consolidation 09/09/2026, section 14-16 du
+// prompt d'origine) : jamais un score de risque opaque — des signaux
+// explicables (concentration réelle par position/secteur/pays, calculée sur
+// le MÊME portefeuille que l'onglet Portefeuille) + la Santé financière
+// (computeHealthScore, 6 axes déjà réels) déplacée ici depuis l'ancienne
+// section "Suite de l'apprentissage" : un signal financier, jamais un
+// contenu d'apprentissage.
+// ============================================================
+function renderCockpitRisquesTab(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <div class="cockpit-panel" id="${elId}-health" style="margin-bottom:16px;"></div>
+    <div class="cockpit-panel" id="${elId}-concentration" style="margin-bottom:16px;"></div>
+    <div class="cockpit-panel" id="${elId}-exposure"></div>`;
+  renderHealthScoreDashboardWidget(`${elId}-health`);
+  renderCockpitConcentrationPanel(`${elId}-concentration`);
+  renderCockpitGoalExposurePanel(`${elId}-exposure`);
+}
+function renderCockpitConcentrationPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(cockpitDemoMode || getRealPortfolio().length === 0){
+    el.innerHTML = `<span class="panel-title">Concentration du portefeuille</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Déclare tes transactions réelles dans Bourse pour voir ta concentration par position/secteur/pays ici.</p>`;
+    return;
+  }
+  el.innerHTML = `<span class="panel-title">Concentration du portefeuille</span><p style="font-size:12px;color:var(--text-dim);margin-top:8px;">Chargement…</p>`;
+  const tickers = [...new Set(getRealPortfolio().map(t => t.ticker))];
+  cockpitFetchPortfolioQuotes(tickers).then(() => {
+    const positions = cockpitEnrichedPortfolioPositions();
+    const conc = computeRealPortfolioConcentration(positions);
+    if(!conc){
+      el.innerHTML = `<span class="panel-title">Concentration du portefeuille</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Cours actuels indisponibles pour l'instant — réessaie plus tard.</p>`;
+      return;
+    }
+    function barsHtml(groups, coveragePct, emptyLabel){
+      if(groups.length === 0) return `<p style="font-size:12px;color:var(--text-dim);">${emptyLabel}</p>`;
+      return `
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          ${groups.slice(0, 6).map(g => `
+            <div>
+              <div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px;"><span>${g.label}</span><span class="mono">${g.pct.toFixed(0)} %</span></div>
+              <div class="cockpit-allocation-bar"><div class="cockpit-allocation-fill" style="width:${g.pct}%;background:var(--gold);"></div></div>
+            </div>`).join('')}
+        </div>
+        ${coveragePct < 99.5 ? `<p style="font-size:11px;color:var(--text-dim);margin-top:8px;">${(100 - coveragePct).toFixed(0)} % du portefeuille n'a pas de classification connue (valeur suivie hors des 8 valeurs curatées).</p>` : ''}`;
+    }
+    el.innerHTML = `
+      <span class="panel-title">Concentration du portefeuille</span>
+      <p style="font-size:12px;color:var(--text-dim);margin:8px 0 14px;">${renderDataBadge('calcul')} Calculée sur les positions dont le cours actuel est connu — jamais un score unique, seulement ces ratios réels.</p>
+      <p style="font-size:13px;margin-bottom:12px;">Ta position la plus importante représente <strong style="color:${conc.topPositionPct >= 30 ? 'var(--bordeaux)' : 'var(--text)'};">${conc.topPositionPct.toFixed(0)} %</strong> de ton portefeuille (${conc.byPosition[0].label}).</p>
+      <span class="smallcaps" style="display:block;margin:14px 0 8px;">Par secteur</span>
+      ${barsHtml(conc.bySecteur, conc.secteurCoveragePct, 'Secteur non connu pour tes positions actuelles.')}
+      <span class="smallcaps" style="display:block;margin:14px 0 8px;">Par pays</span>
+      ${barsHtml(conc.byPays, conc.paysCoveragePct, 'Pays non connu pour tes positions actuelles.')}
+      <p class="disclaimer-box" style="margin-top:14px;">Une forte concentration (position, secteur ou pays) n'est ni bonne ni mauvaise en soi — elle augmente simplement l'impact d'un événement propre à cette position/secteur/pays sur l'ensemble de ton portefeuille.</p>`;
+  });
+}
+// "Objectifs court terme exposés au marché" (section 16) : ne sait PAS quel
+// actif finance précisément quel objectif (aucun lien de ce type n'existe
+// dans le modèle de données réel, FinancialGoal n'a pas de linkedAccounts) —
+// un rapprochement général et hedgé entre l'horizon le plus proche et
+// l'exposition globale aux marchés, jamais une attribution précise fabriquée.
+function renderCockpitGoalExposurePanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const goals = (cockpitGoals() || getFinancialGoals()).filter(g => g.dateCible);
+  const now = new Date();
+  const soonGoals = goals.filter(g => {
+    const d = new Date(g.dateCible + 'T00:00:00');
+    const months = (d.getFullYear() - now.getFullYear()) * 12 + (d.getMonth() - now.getMonth());
+    return months >= 0 && months <= 12;
+  });
+  const assets = cockpitAssets();
+  const totalAssets = assets.reduce((s, a) => s + a.valeur, 0);
+  const marketExposed = assets.filter(a => ['pea', 'cto', 'crypto', 'actions'].includes(a.categorie)).reduce((s, a) => s + a.valeur, 0);
+  const marketExposedPct = totalAssets > 0 ? (marketExposed / totalAssets) * 100 : 0;
+  el.innerHTML = `
+    <span class="panel-title">Objectifs proches et marché</span>
+    ${soonGoals.length === 0
+      ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Aucun objectif avec une échéance dans les 12 prochains mois.</p>`
+      : `<p style="font-size:13px;margin-top:8px;">${soonGoals.length} objectif${soonGoals.length > 1 ? 's' : ''} avec une échéance dans les 12 prochains mois : ${soonGoals.map(g => g.nom).join(', ')}.</p>
+         ${marketExposedPct > 20 ? `<p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">${renderDataBadge('avis')} ${marketExposedPct.toFixed(0)} % de ton patrimoine est exposé aux marchés (PEA/CTO/crypto/actions) — une baisse des marchés dans les prochains mois pourrait réduire ce dont tu disposes, si l'argent destiné à un objectif proche en fait partie.</p>` : ''}`}
+    <p class="disclaimer-box" style="margin-top:12px;">Ce signal ne sait pas quel actif finance précisément quel objectif (aucun lien de ce type n'existe aujourd'hui dans tes données) — un rapprochement général entre ton horizon le plus proche et ton exposition globale aux marchés, jamais une analyse précise par objectif.</p>`;
+}
+
 // ---------- Revenus passifs estimés (panneau compact, colonne latérale) ----------
 function renderCockpitRevenusPassifsPanel(elId){
   const el = document.getElementById(elId);
@@ -716,7 +920,7 @@ function renderCockpitActionsPanel(elId){
   const realAlerts = cockpitDemoMode ? [] : computeUnifiedAlerts().slice(0, 2);
   const staticActions = [
     {label: 'Compléter mon profil financier', sub: 'Améliore tes recommandations personnalisées', href: 'profil.html'},
-    {label: 'Simuler mon patrimoine futur', sub: 'Projette ton capital à 5, 10 ou 20 ans', action: 'openCockpitProjectionModal()'},
+    {label: 'Simuler mon patrimoine futur', sub: 'Projette ton capital à 5, 10 ou 20 ans', action: "setCockpitActiveTab('tab-projections')"},
     {label: 'PEA ou compte-titres ?', sub: 'Compare les deux enveloppes sur de vrais critères', href: 'guide-pea-ou-cto.html'}
   ].slice(0, Math.max(1, 3 - realAlerts.length));
   el.innerHTML = `
@@ -732,48 +936,69 @@ function renderCockpitActionsPanel(elId){
 
 // ============================================================
 // Modal "Projeter mon capital" — <dialog> natif, aucune librairie : focus
-// trap + fermeture Esc/backdrop natifs. Recalcul en direct via le vrai
-// moteur computeWealthProjection (data.js, déjà utilisé par "Mon Futur"/
-// Trajectoire), jamais un 2e calcul divergent. Champs pré-remplis avec le
-// vrai patrimoine/solde (ou l'aperçu démo) au moment de l'ouverture.
+// intégrée directement dans l'onglet Projections (sprint de consolidation
+// 09/09/2026, section 19 du prompt d'origine : "elle ne doit plus être un
+// bloc isolé sur une page incohérente") — plus un <dialog> séparé. Recalcul
+// en direct via le vrai moteur computeWealthProjection (data.js, déjà
+// utilisé par "Mon Futur"/Trajectoire), jamais un 2e calcul divergent.
+// Champs pré-remplis avec le vrai patrimoine/solde (ou l'aperçu démo).
+// Scénarios de choc (-10/-20/-30/-40/-50 %, section 21) : une baisse
+// PONCTUELLE appliquée au capital de départ, jamais suivie d'un rebond
+// automatique — toute reprise suppose le même rendement hypothétique choisi
+// ci-dessus, appliqué à partir du capital déjà réduit.
 // ============================================================
 const COCKPIT_PROJECTION_HORIZONS = [1, 5, 10, 20];
-let cockpitProjectionLastFocus = null;
+const COCKPIT_CRASH_SCENARIOS = [-10, -20, -30, -40, -50];
 function computeCockpitProjectionResults(){
-  const capital = +document.getElementById('cpCapital').value || 0;
+  const capitalEl = document.getElementById('cpCapital');
+  if(!capitalEl) return; // onglet pas encore rendu
+  const capitalSaisi = +capitalEl.value || 0;
   const versement = +document.getElementById('cpVersement').value || 0;
   const rendement = +document.getElementById('cpRendement').value || 0;
-  const result = computeWealthProjection({patrimoineInitial: capital, epargneMensuelle: versement, rendementAnnuelPct: rendement, inflationPct: 0, augmentationAnnuellePct: 0});
+  const activeCrashBtn = document.querySelector('.cockpit-crash-btn.active');
+  const crashPct = activeCrashBtn ? +activeCrashBtn.dataset.crash : 0;
+  const capitalApresChoc = capitalSaisi * (1 + crashPct / 100);
+  const result = computeWealthProjection({patrimoineInitial: capitalApresChoc, epargneMensuelle: versement, rendementAnnuelPct: rendement, inflationPct: 0, augmentationAnnuellePct: 0});
   const resultsEl = document.getElementById('cpResults');
   if(!resultsEl) return;
   resultsEl.innerHTML = `
-    <div class="result-row"><span class="result-horizon">Aujourd'hui</span><span class="result-value mono">${fmtEUR(capital)}</span></div>
+    <div class="result-row"><span class="result-horizon">Aujourd'hui${crashPct !== 0 ? ` (après choc ${crashPct} %)` : ''}</span><span class="result-value mono">${fmtEUR(capitalApresChoc)}</span></div>
     ${COCKPIT_PROJECTION_HORIZONS.map(h => `
       <div class="result-row"><span class="result-horizon">${h} an${h > 1 ? 's' : ''}</span><span class="result-value mono">${fmtEUR(result.atHorizon[h].patrimoineNominal)}</span></div>`).join('')}`;
 }
-function openCockpitProjectionModal(){
-  const dialog = document.getElementById('cockpitProjectionModal');
-  if(!dialog || typeof dialog.showModal !== 'function') return;
+function renderCockpitProjectionsTab(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
   const k = computeCockpitKPIs(cockpitAssets(), cockpitDebts(), cockpitBudgetEntries());
-  document.getElementById('cpCapital').value = Math.round(k.patrimoineNet);
-  document.getElementById('cpVersement').value = Math.round(Math.max(0, k.soldeMensuel));
-  computeCockpitProjectionResults();
-  cockpitProjectionLastFocus = document.activeElement;
-  dialog.showModal();
-}
-function initCockpitProjectionModal(){
-  const dialog = document.getElementById('cockpitProjectionModal');
-  if(!dialog) return;
+  el.innerHTML = `
+    <div class="card" style="max-width:640px;">
+      <span class="panel-title">Où pourrait aller ton patrimoine ?</span>
+      <p style="font-size:12px;color:var(--text-dim);margin-top:6px;">${renderDataBadge('scenario')} Un scénario, jamais une prévision — un calcul mécanique à partir des hypothèses ci-dessous, que tu peux modifier librement.</p>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:14px;">
+        <div class="field" style="flex:1;min-width:140px;"><label for="cpCapital">Capital actuel (€)</label><input type="number" id="cpCapital" min="0" step="100" value="${Math.round(k.patrimoineNet)}"></div>
+        <div class="field" style="flex:1;min-width:140px;"><label for="cpVersement">Versement mensuel (€)</label><input type="number" id="cpVersement" min="0" step="10" value="${Math.round(Math.max(0, k.soldeMensuel))}"></div>
+        <div class="field" style="flex:1;min-width:120px;"><label for="cpRendement">Rendement estimé (%/an)</label><input type="number" id="cpRendement" min="0" max="20" step="0.5" value="6"></div>
+      </div>
+      <div style="margin-top:16px;">
+        <span class="smallcaps" style="display:block;margin-bottom:8px;">Et si le marché chutait aujourd'hui ?</span>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-sm cockpit-crash-btn active" data-crash="0">Aucun choc</button>
+          ${COCKPIT_CRASH_SCENARIOS.map(c => `<button type="button" class="btn btn-sm cockpit-crash-btn" data-crash="${c}">${c} %</button>`).join('')}
+        </div>
+      </div>
+      <div id="cpResults" style="margin-top:16px;"></div>
+      <p class="disclaimer-box" style="margin-top:12px;">Simulation pédagogique — rendement non garanti, jamais une certitude. Un choc de marché n'est jamais suivi ici d'un rebond automatique : toute récupération après un choc suppose le même rendement hypothétique que tu as choisi ci-dessus, appliqué à partir du capital déjà réduit.</p>
+    </div>`;
   ['cpCapital', 'cpVersement', 'cpRendement'].forEach(id => {
-    const input = document.getElementById(id);
-    if(input) input.addEventListener('input', computeCockpitProjectionResults);
+    document.getElementById(id).addEventListener('input', computeCockpitProjectionResults);
   });
-  const closeBtn = document.getElementById('cpCloseBtn');
-  if(closeBtn) closeBtn.addEventListener('click', () => dialog.close());
-  // Clic sur le ::backdrop natif : remonte comme un clic sur le <dialog>
-  // lui-même (motif standard), jamais sur son contenu interne.
-  dialog.addEventListener('click', e => { if(e.target === dialog) dialog.close(); });
-  dialog.addEventListener('close', () => { if(cockpitProjectionLastFocus && cockpitProjectionLastFocus.focus) cockpitProjectionLastFocus.focus(); });
+  el.querySelectorAll('.cockpit-crash-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      el.querySelectorAll('.cockpit-crash-btn').forEach(b => b.classList.toggle('active', b === btn));
+      computeCockpitProjectionResults();
+    });
+  });
+  computeCockpitProjectionResults();
 }
 
 // ============================================================
@@ -960,12 +1185,11 @@ function initCockpitThemeSync(){
       setCockpitView(savedView);
       cockpitAccountsFilter = savedFilter;
       renderCockpitSide('cockpitSide');
-      renderCockpitPanelsRow('cockpitPanelsRow');
+      renderCockpitPatrimoineTab('cockpitPatrimoineBody');
     }, 0);
   });
 }
 
-initCockpitProjectionModal();
 initCockpitThemeSync();
 initOnboardingDrawer();
 initParcoursHero();

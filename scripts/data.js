@@ -1152,6 +1152,16 @@ function getDashboardLayout(){
 }
 function saveDashboardLayout(layout){ safeSetJSON(DASHBOARD_LAYOUT_KEY, layout); }
 
+// Actuellement non rendue nulle part (09/09/2026, sprint de consolidation) :
+// parcours.js en était l'unique appelant ("Suite de l'apprentissage",
+// retirée de Mon Univers Financier — ses widgets sont de l'apprentissage,
+// jamais de la donnée financière, et le Tableau de bord/index.html a déjà
+// son propre bandeau gamification + onglet "Apprendre"). Fonction et
+// DASHBOARD_WIDGETS laissés intacts (rien de cassé, juste non branché) :
+// candidate à une réintégration sur le Tableau de bord si une future passe
+// veut y ramener une grille de widgets personnalisable, hors du scope de ce
+// sprint (section 58 du prompt d'origine : "ne pas transformer la homepage
+// maintenant").
 function renderDashboardShell(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -1299,64 +1309,15 @@ function computeDashboardPriorityQueue(){
   return candidates;
 }
 
-// Bandeau "À faire maintenant" : 1 action primaire + jusqu'à 2 alternatives,
-// calculées en direct par computeDashboardPriorityQueue ci-dessus — les 6
-// widgets d'origine restent visibles et personnalisables tels quels dans la
-// grille de renderDashboardShell (shellElId), ce bandeau n'en supprime ni
-// n'en masque aucun. Les 3 actions avec un lien direct réel (continue/
-// mistakes/next-step) naviguent directement ; les 3 sans lien direct
-// (spaced-review/missions-daily/missions-weekly, qui s'exécutent en ligne
-// dans leur propre widget) déplient la section repliée puis défilent
-// jusqu'au bon widget plutôt que de dupliquer leur logique ici.
-function renderDashboardPriorityBanner(elId, shellElId){
-  const el = document.getElementById(elId);
-  if(!el) return;
-  const queue = computeDashboardPriorityQueue();
-
-  function scrollToShellTile(id){
-    const detailsEl = document.querySelector('.learning-suite-collapse');
-    if(detailsEl && !detailsEl.open) detailsEl.open = true;
-    const tile = document.getElementById(`${shellElId}-tile-${id}`);
-    if(tile && tile.scrollIntoView) tile.scrollIntoView({behavior:'smooth', block:'center'});
-  }
-
-  function ctaHtml(c, primary){
-    const label = primary ? 'Continuer →' : 'Ouvrir →';
-    return c.href
-      ? `<a href="${c.href}" class="btn btn-sm${primary ? ' btn-gold' : ''}">${label}</a>`
-      : `<button type="button" class="btn btn-sm${primary ? ' btn-gold' : ''}" data-priority-scroll="${c.id}">${label}</button>`;
-  }
-
-  if(queue.length === 0){
-    el.innerHTML = `<div class="card">
-      <span class="smallcaps">🎯 À faire maintenant</span>
-      <p style="font-size:13px;color:var(--text-dim);margin-top:10px;">Tout est à jour — rien d'urgent à faire pour le moment. 🎉</p>
-    </div>`;
-    return;
-  }
-
-  const [primary, ...rest] = queue;
-  const alternates = rest.slice(0, 2);
-  el.innerHTML = `
-    <div class="card" style="border-color:var(--gold);">
-      <span class="smallcaps">🎯 À faire maintenant</span>
-      <h3 style="margin:8px 0 4px;">${primary.label}</h3>
-      <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">${primary.reason}</p>
-      ${ctaHtml(primary, true)}
-    </div>
-    ${alternates.length ? `<div style="display:flex;flex-direction:column;gap:2px;margin-top:10px;">
-      ${alternates.map(c => `
-        <div class="cockpit-account-row" style="border:none;padding:6px 0;">
-          <span>${c.label}<span class="cockpit-account-cat">${c.reason}</span></span>
-          ${ctaHtml(c, false)}
-        </div>`).join('')}
-    </div>` : ''}`;
-
-  el.querySelectorAll('[data-priority-scroll]').forEach(btn => {
-    btn.addEventListener('click', () => scrollToShellTile(btn.dataset.priorityScroll));
-  });
-}
-
+// renderDashboardPriorityBanner (bandeau "À faire maintenant") a été retiré
+// le 09/09/2026 (sprint de consolidation Mon Univers Financier) : ses 6
+// candidats possibles (continue/spaced-review/mistakes/next-step/missions-
+// daily/missions-weekly) sont TOUS des items d'apprentissage, jamais
+// financiers — il n'avait plus de page d'accueil réelle une fois retiré de
+// parcours.html (dont il était l'unique appelant), le Tableau de bord
+// (index.html) ayant déjà son propre bandeau gamification/missions. Cette
+// fonction pure de calcul reste disponible si une future passe sur le
+// Tableau de bord veut réintroduire un tel bandeau là-bas.
 function renderDomainDashboard(elId){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -9265,6 +9226,43 @@ function currencyFmt(v, currency){
   const cur = currency || 'EUR';
   const symbol = cur === 'EUR' ? '€' : cur; // pas de conversion, seulement le vrai symbole/code connu
   return v.toLocaleString('fr-FR', {minimumFractionDigits: 2, maximumFractionDigits: 2}) + ' ' + symbol;
+}
+// ---------- Concentration du portefeuille réel (Mon Univers Financier, onglet
+// Risques, sprint de consolidation 09/09/2026) : jamais un score de risque
+// opaque — seulement des ratios de concentration réels (par position, par
+// secteur, par pays), calculés uniquement sur les positions dont la valeur
+// actuelle est réellement connue (jamais un mélange coût d'achat/valeur
+// actuelle dans un même ratio). secteur/pays viennent de resolveFollowedAsset
+// (réel pour les 8 valeurs STOCKS_DEMO) ou d'un enrichissement par
+// fondamentales réelles (loadCompanyFundamentals) fait par l'appelant AVANT
+// cet appel — cette fonction ne fait elle-même aucun appel réseau. Une
+// position sans secteur/pays connu n'est jamais comptée dans un secteur
+// "Autre" fabriqué : secteurCoveragePct/paysCoveragePct disent honnêtement
+// quelle part du portefeuille reste non classifiée. ----------
+function computeRealPortfolioConcentration(positions){
+  const known = (positions || []).filter(p => typeof p.currentValue === 'number' && p.currentValue > 0);
+  if(known.length === 0) return null;
+  const total = known.reduce((s, p) => s + p.currentValue, 0);
+  if(total <= 0) return null;
+
+  function groupBy(field){
+    const sums = {};
+    known.forEach(p => { if(p[field]){ sums[p[field]] = (sums[p[field]] || 0) + p.currentValue; } });
+    const arr = Object.entries(sums).map(([label, value]) => ({label, value, pct: (value / total) * 100})).sort((a, b) => b.pct - a.pct);
+    const coveragePct = (arr.reduce((s, g) => s + g.value, 0) / total) * 100;
+    return {groups: arr, coveragePct};
+  }
+
+  const byPosition = known.map(p => ({label: p.name || p.ticker, value: p.currentValue, pct: (p.currentValue / total) * 100})).sort((a, b) => b.pct - a.pct);
+  const secteur = groupBy('secteur');
+  const pays = groupBy('pays');
+
+  return {
+    total,
+    byPosition, topPositionPct: byPosition[0].pct,
+    bySecteur: secteur.groups, secteurCoveragePct: secteur.coveragePct,
+    byPays: pays.groups, paysCoveragePct: pays.coveragePct
+  };
 }
 function renderRealPortfolioHTML(positions, totals){
   if(!Array.isArray(positions) || positions.length === 0){
