@@ -10166,12 +10166,223 @@ function computeCockpitKPIs(assetsOverride, debtsOverride, budgetEntriesOverride
   const budgetSummary = computeBudgetSummary(budgetEntriesOverride || getBudgetEntries(), currentMonthKey());
   return {
     patrimoineNet: net.patrimoineNet,
+    totalActifs: net.totalActifs,
+    totalPassifs: net.totalPassifs,
     liquidites: net.parCategorie.cash || 0,
     epargne: (net.parCategorie.epargne || 0) + (net.parCategorie.assurancevie || 0),
     investissements: (net.parCategorie.pea || 0) + (net.parCategorie.cto || 0) + (net.parCategorie.crypto || 0) + (net.parCategorie.actions || 0),
+    revenusMensuel: budgetSummary.revenus || 0,
+    depensesMensuel: budgetSummary.depenses || 0,
+    investiMensuel: budgetSummary.investi || 0,
     soldeMensuel: budgetSummary.solde || 0,
+    tresorerieMensuelle: budgetSummary.tresorerie || 0,
     tauxEpargnePct: budgetSummary.tauxEpargnePct || 0
   };
+}
+
+// ---------- Variation mensuelle du patrimoine (refonte "cockpit personnel"
+// du 10/09/2026, section 5 : "+540 € ce mois-ci / +1,8 %", jamais inventée
+// sans donnée historique réelle). Compare le dernier point RÉEL d'historique
+// à celui d'il y a environ un mois — jamais un delta entre le patrimoine
+// actuel (live) et un point d'historique déjà périmé du mois en cours (le
+// point du mois en cours est mis à jour à chaque visite, voir
+// recordNetWorthSnapshot) : on compare donc le point du mois précédent au
+// point du mois en cours, jamais deux points du même mois. Retourne null
+// s'il n'existe pas au moins 2 mois réels d'historique. ----------
+function computeNetWorthVariation(historyOverride){
+  const history = historyOverride || getNetWorthHistory();
+  if(history.length < 2) return null;
+  const sorted = history.slice().sort((a, b) => a.mois.localeCompare(b.mois));
+  const current = sorted[sorted.length - 1];
+  const previous = sorted[sorted.length - 2];
+  const deltaAbs = current.patrimoineNet - previous.patrimoineNet;
+  const deltaPct = previous.patrimoineNet !== 0 ? (deltaAbs / Math.abs(previous.patrimoineNet)) * 100 : null;
+  return {deltaAbs, deltaPct, currentMois: current.mois, previousMois: previous.mois};
+}
+
+// ---------- Estimation de fin d'un crédit (section 20, "Date de fin
+// estimée") : réutilise TEL QUEL le moteur d'amortissement déjà réel du
+// Laboratoire (computeDebtPayoffPlan, widget-debt-strategy) sur un seul
+// crédit, sans extra mensuel — jamais un second calcul d'amortissement.
+// Retourne null si les 3 champs réels (solde/taux/mensualité) ne permettent
+// pas un calcul valide (ex. mensualité qui ne couvre même pas les intérêts). ----------
+function computeDebtEstimatedPayoff(debt){
+  const plan = computeDebtPayoffPlan([{balance: debt.balance, rate: debt.rate, minPayment: debt.minPayment, label: debt.label}], 'avalanche', 0);
+  if(!plan || plan.error || !plan.completed) return null;
+  const end = new Date();
+  end.setMonth(end.getMonth() + Math.round(plan.months));
+  return {months: plan.months, dateFin: end};
+}
+
+// ---------- Masquer les montants (section 4, "👁 Masquer les montants") :
+// une préférence d'affichage purement locale, jamais une donnée financière —
+// stockée séparément de likanza-hide-amounts pour ne jamais entrer dans
+// PROGRESS_SYNC_KEYS (aucune raison de synchroniser une préférence d'écran
+// entre appareils). ----------
+const HIDE_AMOUNTS_KEY = 'likanza-hide-amounts';
+function getHideAmounts(){ return localStorage.getItem(HIDE_AMOUNTS_KEY) === '1'; }
+function setHideAmounts(hidden){
+  if(hidden) localStorage.setItem(HIDE_AMOUNTS_KEY, '1');
+  else localStorage.removeItem(HIDE_AMOUNTS_KEY);
+}
+// Remplace fmtEUR partout où l'utilisateur peut vouloir masquer un montant à
+// l'écran (section 4) — jamais un remplacement du VRAI fmtEUR global
+// (utilisé par le reste du site, hors de ce besoin d'affichage), pour ne
+// jamais modifier le comportement d'aucune autre page.
+function cockpitFmtAmount(value){
+  return getHideAmounts() ? '•••••• €' : fmtEUR(value);
+}
+
+// ---------- Insights ("À regarder ce mois-ci", section 15) : maximum 3
+// signaux réels, chacun mathématique et explicable, jamais une
+// recommandation sur un instrument financier (jamais "achète"/"vends") —
+// seulement des observations chiffrées + un lien pédagogique (cours/guide).
+// Chaque règle ne s'active QUE si sa donnée existe réellement ; l'ordre de
+// priorité reflète ce qui est généralement le plus actionnable pour
+// apprendre (sécurité > diversification > budget > objectifs), jamais un
+// tri aléatoire. ----------
+function computeCockpitInsights(){
+  const insights = [];
+  const assets = getNetWorthAssets();
+  const debts = getPersonalDebts();
+  const budgetSummary = computeBudgetSummary(getBudgetEntries(), currentMonthKey());
+  const goals = getFinancialGoals();
+
+  // 1. Épargne de sécurité (mois de dépenses couverts)
+  if(budgetSummary.depenses > 0){
+    const liquidites = assets.filter(a => a.categorie === 'cash' || a.categorie === 'epargne').reduce((s, a) => s + a.valeur, 0);
+    if(liquidites > 0){
+      const mois = liquidites / budgetSummary.depenses;
+      insights.push({
+        texte: `Ton épargne disponible couvre environ ${mois.toFixed(1)} mois de dépenses déclarées.`,
+        lien: 'guide-avalanche-ou-boule-de-neige.html', label: "Comprendre l'épargne de précaution →"
+      });
+    }
+  }
+  // 2. Concentration du portefeuille réel (même moteur que l'onglet Risques,
+  // mais sur le capital investi — totalInvested — plutôt que la valeur de
+  // marché en direct : computeCockpitInsights() reste une fonction pure,
+  // sans appel réseau, jamais bloquante pour un simple insight).
+  const transactions = getRealPortfolio();
+  if(transactions.length > 0){
+    const positions = computeRealPortfolioPositions(transactions, {}).map(p => {
+      const r = resolveFollowedAsset(p.ticker);
+      return {...p, secteur: r.secteur};
+    });
+    const bySecteurMap = {};
+    let totalConnu = 0;
+    positions.forEach(p => {
+      if(!p.secteur) return;
+      bySecteurMap[p.secteur] = (bySecteurMap[p.secteur] || 0) + p.totalInvested;
+      totalConnu += p.totalInvested;
+    });
+    const top = Object.entries(bySecteurMap).sort((a, b) => b[1] - a[1])[0];
+    if(top && totalConnu > 0){
+      const pct = (top[1] / totalConnu) * 100;
+      if(pct >= 40){
+        insights.push({
+          texte: `${pct.toFixed(0)} % de tes investissements suivis (capital investi) sont concentrés sur le secteur ${top[0]}.`,
+          lien: 'cours.html#risque-diversification', label: 'Comprendre la diversification →'
+        });
+      }
+    }
+  }
+  // 3. Catégorie de dépense dominante
+  if(budgetSummary.repartition.length > 0 && budgetSummary.depenses > 0){
+    const top = budgetSummary.repartition[0];
+    if(top.pct >= 25){
+      insights.push({
+        texte: `Tes dépenses "${top.categorie}" représentent ${top.pct.toFixed(0)} % de tes dépenses déclarées ce mois-ci.`,
+        lien: 'laboratoire.html#tab-budget-epargne', label: 'Revoir mon budget →'
+      });
+    }
+  }
+  // 4. Objectif le plus proche de sa cible
+  if(goals.length > 0 && insights.length < 3){
+    const proj = goals.map(g => ({g, pct: g.montantCible > 0 ? (g.montantActuel / g.montantCible) * 100 : 0}))
+      .filter(p => p.pct < 100)
+      .sort((a, b) => b.pct - a.pct)[0];
+    if(proj && proj.pct >= 50){
+      insights.push({
+        texte: `Tu es à ${proj.pct.toFixed(0)} % de ton objectif "${proj.g.nom}".`,
+        lien: null, label: null, action: 'goto-objectifs'
+      });
+    }
+  }
+  // 5. Évolution du patrimoine depuis le premier relevé
+  if(insights.length < 3){
+    const history = getNetWorthHistory();
+    if(history.length >= 2){
+      const sorted = history.slice().sort((a, b) => a.mois.localeCompare(b.mois));
+      const first = sorted[0], last = sorted[sorted.length - 1];
+      if(first.patrimoineNet !== 0){
+        const pct = ((last.patrimoineNet - first.patrimoineNet) / Math.abs(first.patrimoineNet)) * 100;
+        insights.push({
+          texte: `Ton patrimoine déclaré a ${pct >= 0 ? 'augmenté' : 'diminué'} de ${Math.abs(pct).toFixed(1)} % depuis ton premier relevé (${first.mois}).`,
+          lien: null, label: null
+        });
+      }
+    }
+  }
+  return insights.slice(0, 3);
+}
+
+// ---------- Recommandation pédagogique liée à la situation financière
+// (section 16, "Recommandé pour moi") : transforme un signal financier réel
+// en une opportunité d'APPRENDRE — jamais une recommandation sur un
+// instrument financier précis. Une seule recommandation à la fois (la plus
+// pertinente), jamais une liste qui dilue le message. Retourne null si aucun
+// signal réel n'existe (jamais une recommandation par défaut). ----------
+function computeCockpitCourseRecommendation(){
+  const assets = getNetWorthAssets();
+  const debts = getPersonalDebts();
+  const goals = getFinancialGoals();
+  if(assets.length === 0) return null;
+  const total = assets.reduce((s, a) => s + a.valeur, 0);
+  if(total <= 0) return null;
+  const cash = assets.filter(a => a.categorie === 'cash' || a.categorie === 'epargne').reduce((s, a) => s + a.valeur, 0);
+  const invested = assets.filter(a => ['pea', 'cto', 'crypto', 'actions'].includes(a.categorie)).reduce((s, a) => s + a.valeur, 0);
+  const cashPct = (cash / total) * 100;
+
+  // Un objectif immobilier réel déclaré (nom contient "immobilier"/"logement"/
+  // "maison"/"appartement", seule détection possible sans champ dédié dans
+  // FinancialGoal) -> le simulateur acheter/louer, jamais un conseil.
+  const realEstateGoal = goals.find(g => /immobili|logement|maison|appartement/i.test(g.nom));
+  if(realEstateGoal){
+    return {
+      titre: 'Simulateur Acheter vs Louer', type: 'outil',
+      raison: `Tu as un objectif "${realEstateGoal.nom}" — cet outil compare les deux options sur de vrais critères (prix, loyer, taux, durée).`,
+      lien: 'laboratoire.html#tab-logement'
+    };
+  }
+  // Beaucoup de dette réelle -> le coût réel d'un crédit.
+  if(debts.length > 0){
+    return {
+      titre: 'Comprendre le coût réel d\'un crédit', type: 'guide',
+      raison: `Tu as ${debts.length} crédit${debts.length > 1 ? 's' : ''} déclaré${debts.length > 1 ? 's' : ''} — ce guide explique comment lire un tableau d'amortissement et ce que change un remboursement anticipé.`,
+      lien: 'laboratoire.html#tab-dettes'
+    };
+  }
+  // Portefeuille concentré sur une seule enveloppe investie -> diversification.
+  if(invested > 0){
+    const investedCats = ['pea', 'cto', 'crypto', 'actions'].filter(c => assets.some(a => a.categorie === c && a.valeur > 0));
+    if(investedCats.length === 1){
+      return {
+        titre: 'Diversifier son portefeuille', type: 'cours',
+        raison: `Tes investissements sont concentrés sur une seule enveloppe (${NET_WORTH_CATEGORY_LABELS[investedCats[0]] || investedCats[0]}) — ce cours explique pourquoi et comment diversifier.`,
+        lien: 'cours.html#risque-diversification'
+      };
+    }
+  }
+  // Beaucoup de cash peu investi -> inflation.
+  if(cashPct >= 60 && total >= 1000){
+    return {
+      titre: "Comprendre l'inflation", type: 'cours',
+      raison: `${cashPct.toFixed(0)} % de ton patrimoine est en cash ou en épargne peu rémunérée — ce cours explique comment l'inflation érode un capital non investi dans la durée.`,
+      lien: 'cours.html#epargne-interets'
+    };
+  }
+  return null;
 }
 
 // "Revenus de capital" honnête : AUCUN tracker réel de dividendes/intérêts
@@ -10209,9 +10420,18 @@ function computeCapitalIncomeEstimate(assetsOverride, debtsOverride, budgetEntri
 // à l'autre, jamais une liste de libellés disparates impossibles à regrouper.
 // ============================================================
 const BUDGET_ENTRY_KEY = 'likanza-budget-entries';
+// 'investissement' ajouté (refonte "cockpit personnel" du 10/09/2026,
+// section 10 du prompt d'origine — "Où part mon argent ?" a besoin d'un vrai
+// montant investi ce mois-ci, distinct de la valeur totale déjà détenue en
+// PEA/CTO/crypto) : jamais confondu avec computeCockpitKPIs.investissements
+// (un STOCK, la valeur actuelle des enveloppes) — celui-ci est un FLUX (ce
+// qui a été versé ce mois-ci). Catégories par enveloppe, cohérentes avec
+// NET_WORTH_ASSET_CATEGORIES sans le dupliquer littéralement (un versement
+// n'a pas besoin des catégories "immobilier"/"véhicule").
 const BUDGET_CATEGORIES = {
   revenu: ['Salaire', 'Freelance / Business', 'Autre revenu'],
-  depense: ['Logement', 'Alimentation', 'Transport', 'Loisirs & sorties', 'Santé', 'Abonnements', 'Autre']
+  depense: ['Logement', 'Alimentation', 'Transport', 'Loisirs & sorties', 'Santé', 'Abonnements', 'Autre'],
+  investissement: ['PEA', 'CTO', 'Crypto', 'Épargne', 'Autre']
 };
 function getBudgetEntries(){
   try {
@@ -10219,15 +10439,30 @@ function getBudgetEntries(){
     return Array.isArray(raw) ? raw : [];
   } catch(e){ return []; }
 }
+// date/libelle ajoutés (refonte "cockpit personnel" du 10/09/2026, sections
+// 26-27 — un vrai historique des opérations, pas seulement un total par
+// catégorie/mois) : tous deux optionnels et rétrocompatibles — une entrée
+// existante sans `date` continue de fonctionner partout (computeBudgetSummary
+// filtre toujours sur `mois`, jamais recalculé depuis `date`), `mois` reste
+// donc la seule source de vérité pour l'agrégation mensuelle. `date`, quand
+// fournie, doit appartenir au mois déclaré — jamais une incohérence
+// silencieuse entre les deux.
 function saveBudgetEntry(entry){
-  if(!entry || (entry.type !== 'revenu' && entry.type !== 'depense')) return null;
+  if(!entry || !BUDGET_CATEGORIES[entry.type]) return null;
   if(!BUDGET_CATEGORIES[entry.type].includes(entry.categorie)) return null;
   if(!(entry.montant > 0)) return null;
   if(typeof entry.mois !== 'string' || !/^\d{4}-\d{2}$/.test(entry.mois)) return null;
+  let date = null;
+  if(entry.date !== undefined && entry.date !== null && entry.date !== ''){
+    if(typeof entry.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(entry.date) || isNaN(Date.parse(entry.date))) return null;
+    if(entry.date.slice(0, 7) !== entry.mois) return null;
+    date = entry.date;
+  }
   const list = getBudgetEntries();
   const item = {
     id: 'budget-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
     type: entry.type, categorie: entry.categorie, montant: entry.montant, mois: entry.mois,
+    date, libelle: typeof entry.libelle === 'string' ? entry.libelle.trim().slice(0, 80) : '',
     dateAjout: new Date().toISOString()
   };
   list.push(item);
@@ -10237,6 +10472,31 @@ function saveBudgetEntry(entry){
 function removeBudgetEntry(id){
   const list = getBudgetEntries().filter(e => e.id !== id);
   localStorage.setItem(BUDGET_ENTRY_KEY, JSON.stringify(list));
+}
+// Édition d'une opération existante (section 27, "modifier") — jamais une
+// nouvelle validation parallèle : reconstruit un objet complet et le fait
+// passer par les mêmes règles que saveBudgetEntry (même categorie/montant/
+// mois/date valides exigés), en conservant seulement l'id et dateAjout
+// d'origine. Retourne null (et ne modifie rien) si le résultat serait
+// invalide, exactement comme un ajout refusé.
+function updateBudgetEntry(id, patch){
+  const list = getBudgetEntries();
+  const idx = list.findIndex(e => e.id === id);
+  if(idx === -1) return null;
+  const merged = {...list[idx], ...patch};
+  if(!BUDGET_CATEGORIES[merged.type] || !BUDGET_CATEGORIES[merged.type].includes(merged.categorie)) return null;
+  if(!(merged.montant > 0)) return null;
+  if(typeof merged.mois !== 'string' || !/^\d{4}-\d{2}$/.test(merged.mois)) return null;
+  if(merged.date){
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(merged.date) || isNaN(Date.parse(merged.date)) || merged.date.slice(0, 7) !== merged.mois) return null;
+  }
+  list[idx] = {
+    id: list[idx].id, dateAjout: list[idx].dateAjout,
+    type: merged.type, categorie: merged.categorie, montant: merged.montant, mois: merged.mois,
+    date: merged.date || null, libelle: typeof merged.libelle === 'string' ? merged.libelle.trim().slice(0, 80) : ''
+  };
+  localStorage.setItem(BUDGET_ENTRY_KEY, JSON.stringify(list));
+  return list[idx];
 }
 function currentMonthKey(){
   const d = new Date();
@@ -10250,18 +10510,26 @@ function previousMonthKey(mois){
 // Synthèse d'un mois précis — jamais une moyenne ou une estimation : sans
 // entrée saisie pour ce mois, revenus/dépenses valent 0, jamais un chiffre
 // d'un autre mois recopié silencieusement.
+// investi/tresorerie ajoutés (refonte "cockpit personnel" du 10/09/2026,
+// section 10) : `solde` (revenus − dépenses) reste inchangé partout où il
+// est déjà lu (jamais renommé, pour ne rien casser) ; `tresorerie` (solde −
+// investi) est le VRAI reste disponible une fois les versements du mois
+// décomptés — 0 sur toute donnée antérieure à ce champ, jamais une
+// approximation.
 function computeBudgetSummary(entries, mois){
   const monthEntries = (entries || []).filter(e => e.mois === mois);
   const revenus = monthEntries.filter(e => e.type === 'revenu').reduce((s, e) => s + e.montant, 0);
   const depenses = monthEntries.filter(e => e.type === 'depense').reduce((s, e) => s + e.montant, 0);
+  const investi = monthEntries.filter(e => e.type === 'investissement').reduce((s, e) => s + e.montant, 0);
   const solde = revenus - depenses;
+  const tresorerie = solde - investi;
   const tauxEpargnePct = revenus > 0 ? (solde / revenus) * 100 : null;
   const parCategorie = {};
   monthEntries.filter(e => e.type === 'depense').forEach(e => { parCategorie[e.categorie] = (parCategorie[e.categorie] || 0) + e.montant; });
   const repartition = Object.keys(parCategorie)
     .map(c => ({categorie: c, montant: parCategorie[c], pct: depenses > 0 ? (parCategorie[c] / depenses) * 100 : 0}))
     .sort((a, b) => b.montant - a.montant);
-  return {mois, revenus, depenses, solde, tauxEpargnePct, repartition};
+  return {mois, revenus, depenses, investi, solde, tresorerie, tauxEpargnePct, repartition};
 }
 // Détecteur automatique — chaque règle ne s'active QUE si les données
 // nécessaires existent réellement (jamais un statut fabriqué faute de

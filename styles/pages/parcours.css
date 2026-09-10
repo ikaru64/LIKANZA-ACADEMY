@@ -280,9 +280,9 @@
    plus une grille à hauteur fixe sur un seul écran (retiré au sprint de
    consolidation du 09/09/2026, voir le commentaire d'en-tête du fichier).
    ---------- */
-#tab-vue-ensemble{display:flex;flex-direction:column;gap:16px;}
+.cockpit-overview-top{display:flex;flex-direction:column;gap:16px;}
 @media (min-width:900px){
-  #tab-vue-ensemble{display:grid;grid-template-columns:2fr 1fr;align-items:start;gap:16px;}
+  .cockpit-overview-top{display:grid;grid-template-columns:2fr 1fr;align-items:start;gap:16px;}
 }
 
 /* ---------- Tablette (1024-1180px, rail icône) : KPI 2×3, onglets 3×2 ---------- */
@@ -290,6 +290,101 @@
   .cockpit-kpis{grid-template-columns:repeat(2,1fr);}
   .cockpit-tabs-grid.quick-access-grid{grid-template-columns:repeat(3,1fr);}
   .cockpit-panels-row{grid-template-columns:1fr;}
+}
+
+/* ============================================================
+   Refonte "cockpit personnel" (10/09/2026) — Hero patrimoine, masquage des
+   montants, Bilan Likanza (sans score composite), flux mensuel, budget,
+   dettes, historique des opérations. Mêmes tokens de couleur que le reste
+   du fichier (--onyx/--gold/--gold-bright/--emerald/--bordeaux/--hairline),
+   même langage visuel (.cockpit-panel), rien de nouveau côté palette.
+   ============================================================ */
+
+/* ---------- Hero patrimoine (section 5) : le plus gros chiffre de la page,
+   volontairement seul en haut, avant même les KPI (qui restent le
+   sélecteur de vue du graphique, inchangés). ---------- */
+.cockpit-hero{
+  background:var(--bg-alt);
+  border:1px solid var(--hairline);
+  border-radius:var(--radius);
+  padding:22px 24px;
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  flex-wrap:wrap;
+  gap:16px;
+}
+.cockpit-hero-label{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);}
+.cockpit-hero-value{font-family:'Cormorant Garamond',serif;font-size:44px;font-weight:600;color:var(--text);line-height:1.05;margin-top:4px;}
+.cockpit-hero-variation{font-family:'IBM Plex Mono',monospace;font-size:13px;margin-top:8px;}
+.cockpit-hero-variation.positive{color:var(--emerald);}
+.cockpit-hero-variation.negative{color:var(--bordeaux);}
+.cockpit-hero-breakdown{font-size:11.5px;color:var(--text-dim);margin-top:10px;display:flex;flex-direction:column;gap:2px;}
+.cockpit-hero-breakdown .mono{color:var(--text);}
+
+/* ---------- Masquer les montants (section 4) : un simple bouton d'état,
+   jamais une animation qui distrait — le texte change instantanément. ---------- */
+.cockpit-hide-btn{
+  display:inline-flex;align-items:center;gap:6px;
+  background:none;border:1px solid var(--hairline);border-radius:var(--radius);
+  padding:6px 10px;font-size:12px;color:var(--text-dim);cursor:pointer;
+  transition:border-color .15s ease, color .15s ease;
+}
+.cockpit-hide-btn:hover{border-color:var(--gold);color:var(--gold-bright);}
+.cockpit-hide-btn.active{border-color:var(--gold);color:var(--gold-bright);background:rgba(184,151,78,0.08);}
+
+/* ---------- Bilan Likanza (section 14) : des indicateurs indépendants,
+   jamais un score composite en tête. Un point de couleur + texte (jamais
+   uniquement la couleur, section 46 accessibilité). ---------- */
+.cockpit-bilan-axis{display:flex;gap:10px;padding:9px 0;border-bottom:1px solid var(--hairline);}
+.cockpit-bilan-axis:last-child{border-bottom:none;}
+.cockpit-bilan-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;margin-top:4px;}
+.cockpit-bilan-dot.ok{background:var(--emerald);}
+.cockpit-bilan-dot.attention{background:var(--gold-bright);}
+.cockpit-bilan-dot.alerte{background:var(--bordeaux);}
+.cockpit-bilan-dot.insuffisant{background:none;border:1.5px dashed var(--text-dim);}
+.cockpit-bilan-axis-label{font-size:13px;font-weight:600;}
+.cockpit-bilan-axis-status{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--text-dim);}
+.cockpit-bilan-axis-detail{font-size:12px;color:var(--text-dim);margin-top:2px;}
+
+/* ---------- Flux mensuel "Où part mon argent ?" (section 10) : réutilise le
+   motif .guide-diagram-flow (design-system.css) avec des montants annotés
+   sur chaque étape plutôt qu'un simple libellé — jamais un Sankey illisible. ---------- */
+.cockpit-flow-step{
+  display:flex;justify-content:space-between;align-items:center;gap:14px;
+  background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);
+  padding:10px 16px;width:100%;max-width:420px;font-size:13px;
+}
+.cockpit-flow-step .mono{font-weight:600;}
+.cockpit-flow-step.positive .mono{color:var(--emerald);}
+.cockpit-flow-step.negative .mono{color:var(--bordeaux);}
+.cockpit-flow-step.final{border-color:var(--gold);background:rgba(184,151,78,0.06);}
+
+/* ---------- Budget du mois (section 11) ---------- */
+.cockpit-budget-bar{width:100%;height:8px;background:var(--hairline);border-radius:4px;overflow:hidden;margin:8px 0;}
+.cockpit-budget-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--emerald));transition:width .4s ease;}
+.cockpit-budget-fill.over{background:var(--bordeaux);}
+
+/* ---------- Historique des opérations (sections 26-27) : liste de lignes
+   en desktop, cartes empilées en mobile (jamais un tableau large qui
+   force un scroll horizontal). ---------- */
+.cockpit-tx-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;}
+.cockpit-tx-toolbar input, .cockpit-tx-toolbar select{max-width:200px;}
+.cockpit-tx-row{
+  display:grid;grid-template-columns:90px 110px 1fr 100px 70px;gap:10px;align-items:center;
+  padding:8px 4px;border-bottom:1px solid var(--hairline);font-size:12.5px;
+}
+.cockpit-tx-row:last-child{border-bottom:none;}
+.cockpit-tx-row .mono{text-align:right;}
+.cockpit-tx-row.revenu .mono{color:var(--emerald);}
+.cockpit-tx-row.depense .mono{color:var(--bordeaux);}
+.cockpit-tx-row.investissement .mono{color:var(--gold-bright);}
+.cockpit-tx-actions{display:flex;gap:6px;justify-content:flex-end;}
+.cockpit-tx-actions button{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:12px;padding:2px 4px;}
+.cockpit-tx-actions button:hover{color:var(--gold-bright);}
+.cockpit-tx-pagination{display:flex;justify-content:center;gap:10px;margin-top:14px;align-items:center;font-size:12px;}
+@media (max-width:759px){
+  .cockpit-tx-row{grid-template-columns:1fr auto;grid-template-areas:"date montant" "libelle libelle" "cat actions";row-gap:4px;}
 }
 
 /* ---------- Mobile (<760px, mobile-bottom-nav) : empilé, KPI en scroll horizontal ---------- */

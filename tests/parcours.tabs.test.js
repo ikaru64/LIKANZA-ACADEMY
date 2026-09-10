@@ -141,7 +141,13 @@ function seedPersonalUser(window){
     t.ok(riskHtml.includes('100 %') || riskHtml.includes('100&nbsp;%'), "une seule position = 100% de concentration, calculé honnêtement (obtenu : " + riskHtml.slice(0, 300) + ")");
     t.ok(riskHtml.includes('Industrie'), "le vrai secteur (Industrie, Air Liquide) est bien utilisé pour la répartition par secteur");
     t.ok(riskHtml.includes('France'), "le vrai pays (France) est bien utilisé pour la répartition par pays");
-    t.ok(riskHtml.includes('Santé financière'), "la Santé financière (6 axes, déplacée depuis l'ancienne section apprentissage) est bien présente dans l'onglet Risques");
+    // Renommé "Bilan Likanza" (refonte "cockpit personnel" du 10/09/2026,
+    // section 14) : renderCockpitBilanPanel remplace renderHealthScoreDashboardWidget
+    // dans ce contexte précis, sans score composite "/100" en tête — les
+    // mêmes 6 axes réels (computeHealthScore), présentés en indicateurs
+    // indépendants.
+    t.ok(riskHtml.includes('Bilan Likanza'), "le Bilan Likanza (6 axes, déplacé depuis l'ancienne section apprentissage) est bien présent dans l'onglet Risques");
+    t.ok(!/\d+\s*\/\s*100/.test(riskHtml), "aucun score composite \"X/100\" n'est affiché en tête (section 14 : des indicateurs indépendants, jamais une note unique)");
   }
 
   const summary = t.summary();

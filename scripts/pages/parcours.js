@@ -206,12 +206,15 @@ function setCockpitActiveTab(tabId){
 // plutôt qu'un remplissage forcé pour égaler visuellement le personnel).
 function renderCockpitBody(){
   const tabsGridEl = document.getElementById('cockpitTabsGrid');
+  const heroEl = document.getElementById('cockpitHero');
   if(cockpitMode === 'business'){
     // Onglets Patrimoine/Portefeuille/Risques/Objectifs/Projections sont
     // spécifiques aux données financières personnelles — un profil Business
     // Lab réel les masque plutôt que d'afficher 5 onglets vides ou
-    // dupliquant Business Lab (qui a déjà ses propres outils).
+    // dupliquant Business Lab (qui a déjà ses propres outils). Le Hero
+    // patrimoine (personnel) n'a pas de sens ici non plus.
     if(tabsGridEl) tabsGridEl.style.display = 'none';
+    if(heroEl) heroEl.style.display = 'none';
     renderBusinessCockpitHeader('cockpitHeader');
     renderBusinessCockpitKPIs('cockpitKPIs');
     renderBusinessCockpitMain('cockpitChart');
@@ -219,10 +222,14 @@ function renderCockpitBody(){
     return;
   }
   if(tabsGridEl) tabsGridEl.style.display = '';
+  if(heroEl) heroEl.style.display = '';
   renderCockpitHeader('cockpitHeader');
+  renderCockpitHero('cockpitHero');
   renderCockpitKPIs('cockpitKPIs');
   renderCockpitChart('cockpitChart');
   renderCockpitSide('cockpitSide');
+  renderCockpitFlowPanel('cockpitFlow');
+  renderCockpitTransactionsTable('cockpitTransactions');
   renderCockpitPatrimoineTab('cockpitPatrimoineBody');
   renderCockpitPortefeuilleTab('cockpitPortefeuilleBody');
   renderCockpitRisquesTab('cockpitRisquesBody');
@@ -320,17 +327,43 @@ function cockpitLastUpdateLabel(){
   const mostRecent = new Date(Math.max(...dates.map(d => d.getTime())));
   return mostRecent.toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) + ' · ' + mostRecent.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
 }
+// Prénom réel (section 4, "Bonjour Jeremy 👋") : UNIQUEMENT depuis
+// likanza-auth-user.name, écrit par auth-bridge.js au retour d'une vraie
+// connexion Google — jamais un nom inventé ni déduit d'ailleurs (aucun champ
+// "prénom" n'existe nulle part sur le site hors de la connexion). Ne garde
+// que le premier mot du nom complet ("Jeremy Dupont" -> "Jeremy"), jamais le
+// nom de famille affiché sur toute la page. Sans connexion réelle, retombe
+// sur un message neutre plutôt que "Utilisateur" ou un nom fabriqué.
+function cockpitGreeting(){
+  const user = safeGetJSON('likanza-auth-user', null);
+  const firstName = user && typeof user.name === 'string' && user.name.trim() ? user.name.trim().split(/\s+/)[0] : null;
+  return firstName ? `Bonjour ${firstName} 👋` : 'Bonjour 👋';
+}
+function cockpitMonthLabel(){
+  return new Date().toLocaleDateString('fr-FR', {month: 'long', year: 'numeric'});
+}
+// "Masquer les montants" (section 4) : une préférence d'écran locale
+// (getHideAmounts/setHideAmounts, data.js) — reconstruit tout le cockpit au
+// clic (même point d'entrée que rerenderCockpit) pour que CHAQUE montant
+// affiché quelque part sur la page (KPI, hero, panneaux...) soit masqué
+// d'un coup, jamais seulement celui du header.
+function toggleCockpitHideAmounts(){
+  setHideAmounts(!getHideAmounts());
+  renderCockpitBody();
+}
 function renderCockpitHeader(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const lastUpdate = cockpitLastUpdateLabel();
+  const hidden = getHideAmounts();
   el.innerHTML = `
     <div class="cockpit-title">
-      <h2>Mon Univers Financier</h2>
+      <h2>${cockpitDemoMode ? 'Mon Univers Financier' : cockpitGreeting()}</h2>
       ${cockpitDemoMode ? `<span class="cockpit-demo-badge">Mode démo</span>` : ''}
-      <p class="cockpit-subtitle" style="width:100%;">${cockpitDemoMode ? "Aperçu illustratif — renseigne tes finances pour voir TES vraies données." : "Une vision globale de ton capital, aujourd'hui et demain."}</p>
+      <p class="cockpit-subtitle" style="width:100%;">${cockpitDemoMode ? "Aperçu illustratif — renseigne tes finances pour voir TES vraies données." : `Voici où en sont tes finances aujourd'hui · ${cockpitMonthLabel()}`}</p>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
+      <button type="button" class="cockpit-hide-btn ${hidden ? 'active' : ''}" id="cockpitHideBtn" aria-pressed="${hidden}">👁 ${hidden ? 'Afficher' : 'Masquer'} les montants</button>
       ${cockpitDemoMode ? `<button type="button" class="btn btn-sm btn-gold" id="cockpitConfigureBtn">Configurer mes finances</button>` : `<button type="button" class="btn btn-sm" id="cockpitConfigureBtn">+ Ajouter une donnée</button>`}
       <button type="button" class="btn btn-sm btn-gold" id="cockpitProjectBtn">Projeter mon capital</button>
       <div class="cockpit-meta">
@@ -342,6 +375,8 @@ function renderCockpitHeader(elId){
   if(projectBtn) projectBtn.addEventListener('click', () => setCockpitActiveTab('tab-projections'));
   const configureBtn = document.getElementById('cockpitConfigureBtn');
   if(configureBtn) configureBtn.addEventListener('click', openOnboardingDrawer);
+  const hideBtn = document.getElementById('cockpitHideBtn');
+  if(hideBtn) hideBtn.addEventListener('click', toggleCockpitHideAmounts);
 }
 
 // Vue active partagée entre les KPI et les onglets du graphique combiné :
@@ -384,8 +419,14 @@ function renderCockpitKPIs(elId){
       <span class="kpi-value mono" id="${elId}-${c.key}-value">0 €</span>
       ${c.sub ? `<span class="kpi-sub">${c.sub}</span>` : ''}
     </button>`).join('');
+  // Masquage des montants (section 4) : jamais une animation qui compte
+  // jusqu'au vrai chiffre pendant qu'il devrait rester caché — court-circuite
+  // animateNumber (générique, partagé par tout le site, jamais modifié pour
+  // ce seul besoin) et pose directement le texte masqué.
   cards.forEach(c => {
-    animateNumber(document.getElementById(`${elId}-${c.key}-value`), c.value, {format: fmtEUR});
+    const valueEl = document.getElementById(`${elId}-${c.key}-value`);
+    if(getHideAmounts()) valueEl.textContent = '•••••• €';
+    else animateNumber(valueEl, c.value, {format: fmtEUR});
   });
   el.querySelectorAll('.cockpit-kpi').forEach(btn => {
     btn.addEventListener('click', () => setCockpitView(COCKPIT_KPI_VIEWS[btn.dataset.key] || 'global'));
@@ -574,11 +615,30 @@ function renderCockpitSide(elId){
   if(!el) return;
   el.innerHTML = `
     <div class="cockpit-panel" id="${elId}-donut"></div>
+    <div class="cockpit-panel" id="${elId}-budget"></div>
+    <div class="cockpit-panel" id="${elId}-insights"></div>
+    <div class="cockpit-panel" id="${elId}-reco"></div>
+    <div class="cockpit-panel" id="${elId}-calendar"></div>
+    <div class="cockpit-panel" id="${elId}-subs"></div>
     <div class="cockpit-panel" id="${elId}-revenus"></div>
     <div class="cockpit-panel" id="${elId}-actions"></div>`;
   renderCockpitDonut(`${elId}-donut`);
+  renderCockpitBudgetCard(`${elId}-budget`);
+  renderCockpitInsightsPanel(`${elId}-insights`);
+  renderCockpitCourseRecoPanel(`${elId}-reco`);
+  renderCockpitCalendarPanel(`${elId}-calendar`);
+  renderCockpitSubscriptionsPanel(`${elId}-subs`);
   renderCockpitRevenusPassifsPanel(`${elId}-revenus`);
   renderCockpitActionsPanel(`${elId}-actions`);
+  // Les panneaux "Recommandé pour toi"/"À venir"/"Abonnements" restent
+  // vides (chaîne '') tant qu'aucun signal réel n'existe (voir chaque
+  // fonction) — jamais un panneau vide visible pour autant : on masque son
+  // conteneur .cockpit-panel entier dans ce cas précis (bordure/fond vides
+  // seraient sinon visibles sans aucun contenu).
+  [`${elId}-reco`, `${elId}-calendar`, `${elId}-subs`].forEach(id => {
+    const panel = document.getElementById(id);
+    if(panel) panel.style.display = panel.innerHTML.trim() === '' ? 'none' : '';
+  });
 }
 
 // ---------- Onglet Patrimoine (Comptes / Allocation) — les Objectifs ont
@@ -591,9 +651,11 @@ function renderCockpitPatrimoineTab(elId){
   if(!el) return;
   el.innerHTML = `
     <div class="cockpit-panel" id="${elId}-accounts"></div>
-    <div class="cockpit-panel" id="${elId}-allocation"></div>`;
+    <div class="cockpit-panel" id="${elId}-allocation"></div>
+    <div class="cockpit-panel" id="${elId}-debts"></div>`;
   renderCockpitAccounts(`${elId}-accounts`);
   renderCockpitAllocation(`${elId}-allocation`);
+  renderCockpitDebtsPanel(`${elId}-debts`);
 }
 
 // ---------- Donut interactif ----------
@@ -613,7 +675,7 @@ function renderCockpitDonut(elId){
     <div style="position:relative;margin-top:12px;height:200px;">
       <canvas id="${elId}-canvas"></canvas>
       <div class="cockpit-donut-center" id="${elId}-center">
-        <div class="cockpit-donut-total mono">${fmtEUR(net.patrimoineNet)}</div>
+        <div class="cockpit-donut-total mono">${cockpitFmtAmount(net.patrimoineNet)}</div>
         <div class="cockpit-donut-label">Patrimoine total</div>
       </div>
     </div>
@@ -622,7 +684,7 @@ function renderCockpitDonut(elId){
         <button type="button" class="cockpit-donut-legend-row ${s.key === cockpitAccountsFilter ? 'active' : ''}" data-key="${s.key}">
           <span class="cockpit-donut-legend-dot" style="background:${s.color};color:${s.color};"></span>
           <span class="cockpit-donut-legend-label">${s.label}</span>
-          <span class="cockpit-donut-legend-value mono">${fmtEUR(s.value)} · ${Math.round(s.pct)} %</span>
+          <span class="cockpit-donut-legend-value mono">${cockpitFmtAmount(s.value)} · ${Math.round(s.pct)} %</span>
         </button>`).join('')}
     </div>`;
 
@@ -665,10 +727,10 @@ function renderCockpitDonut(elId){
       onHover: (evt, elements) => {
         if(elements.length){
           const seg = segs[elements[0].index];
-          centerTotal.textContent = fmtEUR(seg.value);
+          centerTotal.textContent = cockpitFmtAmount(seg.value);
           centerLabel.textContent = seg.label;
         } else {
-          centerTotal.textContent = fmtEUR(net.patrimoineNet);
+          centerTotal.textContent = cockpitFmtAmount(net.patrimoineNet);
           centerLabel.textContent = 'Patrimoine total';
         }
       },
@@ -703,7 +765,7 @@ function renderCockpitAccounts(elId){
         : sorted.map(a => `
         <a href="laboratoire.html#tab-budget-epargne" class="cockpit-account-row">
           <span>${a.nom}<span class="cockpit-account-cat">${NET_WORTH_CATEGORY_LABELS[a.categorie] || a.categorie}</span></span>
-          <span class="mono">${fmtEUR(a.valeur)}</span>
+          <span class="mono">${cockpitFmtAmount(a.valeur)}</span>
         </a>`).join('')}
     </div>`;
   if(cockpitAccountsFilter){
@@ -723,9 +785,11 @@ function renderCockpitObjectifs(elId){
   el.innerHTML = `
     <span class="panel-title">Mes objectifs${cockpitDemoMode ? '' : ` <a href="laboratoire.html#tab-budget-epargne">Voir tous →</a>`}</span>
     <div id="${elId}-goals" style="margin-top:8px;"></div>
-    <div id="${elId}-projects" style="margin-top:14px;"></div>`;
+    <div id="${elId}-projects" style="margin-top:14px;"></div>
+    <div id="${elId}-scenarios" style="margin-top:18px;border-top:1px solid var(--hairline);padding-top:14px;"></div>`;
   renderGoalsDashboardWidget(`${elId}-goals`, cockpitGoals());
   renderLifeProjectsDashboardWidget(`${elId}-projects`, cockpitLifeProjects());
+  renderCockpitGoalsScenarios(`${elId}-scenarios`);
 }
 
 // ---------- Allocation globale (barres horizontales) ----------
@@ -824,7 +888,11 @@ function renderCockpitRisquesTab(elId){
     <div class="cockpit-panel" id="${elId}-health" style="margin-bottom:16px;"></div>
     <div class="cockpit-panel" id="${elId}-concentration" style="margin-bottom:16px;"></div>
     <div class="cockpit-panel" id="${elId}-exposure"></div>`;
-  renderHealthScoreDashboardWidget(`${elId}-health`);
+  // renderCockpitBilanPanel (pas renderHealthScoreDashboardWidget, partagé
+  // avec le Tableau de bord/Laboratoire) : ici uniquement, sans score "/100"
+  // en tête — voir le commentaire de sa déclaration (section 14 du prompt de
+  // refonte "cockpit personnel", 10/09/2026).
+  renderCockpitBilanPanel(`${elId}-health`);
   renderCockpitConcentrationPanel(`${elId}-concentration`);
   renderCockpitGoalExposurePanel(`${elId}-exposure`);
 }
@@ -1160,6 +1228,483 @@ function initOnboardingDrawer(){
     const drawer = document.getElementById('onboardingDrawer');
     if(e.key === 'Escape' && drawer && !drawer.hidden) closeOnboardingDrawer();
   });
+}
+
+// ============================================================
+// Refonte "cockpit personnel" (10/09/2026) — Hero patrimoine, budget du
+// mois, flux mensuel, insights, recommandation pédagogique, dettes, Bilan
+// Likanza (sans score composite), objectifs avec scénarios, calendrier/
+// abonnements (compacts, la gestion reste dans le Laboratoire — même motif
+// que l'onglet Portefeuille), historique des opérations (ajout/édition/
+// suppression/filtre/recherche/pagination/export CSV). Chaque fonction
+// réutilise un moteur de calcul déjà réel (data.js) — jamais un second
+// calcul parallèle.
+// ============================================================
+
+// ---------- Hero patrimoine (section 5) ----------
+function renderCockpitHero(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const net = computeNetWorth(cockpitAssets(), cockpitDebts());
+  const variation = computeNetWorthVariation(cockpitHistory());
+  const hasAnyData = net.totalActifs > 0 || net.totalPassifs > 0;
+  el.innerHTML = `
+    <div>
+      <span class="cockpit-hero-label">Patrimoine net</span>
+      <div class="cockpit-hero-value mono">${hasAnyData ? cockpitFmtAmount(net.patrimoineNet) : '—'}</div>
+      ${variation
+        ? `<div class="cockpit-hero-variation ${variation.deltaAbs >= 0 ? 'positive' : 'negative'}">${variation.deltaAbs >= 0 ? '+' : ''}${cockpitFmtAmount(variation.deltaAbs)} ce mois-ci${variation.deltaPct !== null ? ` (${variation.deltaAbs >= 0 ? '+' : ''}${variation.deltaPct.toFixed(1)} %)` : ''}</div>`
+        : `<p style="font-size:12px;color:var(--text-dim);margin-top:8px;">${hasAnyData ? "Un second relevé (le mois prochain) permettra de voir l'évolution ici." : "Ajoute ton premier relevé pour suivre l'évolution."}</p>`}
+    </div>
+    ${hasAnyData ? `
+    <div class="cockpit-hero-breakdown">
+      <span>Actifs : <span class="mono">${cockpitFmtAmount(net.totalActifs)}</span></span>
+      <span>− Dettes : <span class="mono">${cockpitFmtAmount(net.totalPassifs)}</span></span>
+      <span>= Patrimoine net : <span class="mono" style="color:var(--gold-bright);">${cockpitFmtAmount(net.patrimoineNet)}</span></span>
+    </div>` : ''}`;
+}
+
+// ---------- Budget du mois (section 11) ----------
+function renderCockpitBudgetCard(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const mois = currentMonthKey();
+  const summary = computeBudgetSummary(cockpitBudgetEntries(), mois);
+  if(summary.revenus === 0 && summary.depenses === 0){
+    el.innerHTML = `<span class="panel-title">Budget ce mois-ci</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Renseigne tes revenus et dépenses pour voir ton budget ici.</p>${cockpitDemoMode ? '' : `<button type="button" class="btn btn-sm btn-gold" style="margin-top:10px;" onclick="openOnboardingDrawer()">Ajouter →</button>`}`;
+    return;
+  }
+  const pct = summary.revenus > 0 ? Math.min(100, (summary.depenses / summary.revenus) * 100) : 0;
+  const reste = summary.revenus - summary.depenses;
+  const prevSummary = cockpitDemoMode ? null : computeBudgetSummary(getBudgetEntries(), previousMonthKey(mois));
+  const depenseDeltaPct = (prevSummary && prevSummary.depenses > 0) ? ((summary.depenses - prevSummary.depenses) / prevSummary.depenses) * 100 : null;
+  el.innerHTML = `
+    <span class="panel-title">Budget ce mois-ci</span>
+    <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-top:10px;">
+      <span>Revenus : <span class="mono" style="color:var(--text);">${cockpitFmtAmount(summary.revenus)}</span></span>
+      <span>Dépensé : <span class="mono" style="color:var(--text);">${cockpitFmtAmount(summary.depenses)}</span></span>
+    </div>
+    <div class="cockpit-budget-bar"><div class="cockpit-budget-fill ${pct >= 100 ? 'over' : ''}" style="width:${pct}%;"></div></div>
+    <p style="font-size:13px;">Reste : <strong class="mono" style="color:${reste >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${cockpitFmtAmount(reste)}</strong> <span style="font-size:11px;color:var(--text-dim);">(budget utilisé : ${pct.toFixed(1)} %)</span></p>
+    ${depenseDeltaPct !== null ? `<p style="font-size:11.5px;color:${depenseDeltaPct <= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};margin-top:2px;">${depenseDeltaPct <= 0 ? '' : '+'}${depenseDeltaPct.toFixed(0)} % de dépenses par rapport au mois dernier</p>` : ''}
+    ${cockpitDemoMode ? '' : `<a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Détail par catégorie →</a>`}`;
+}
+
+// ---------- Flux mensuel "Où part mon argent ?" (section 10) : réutilise
+// .guide-diagram-flow (design-system.css, Guides & Décryptages) plutôt qu'un
+// Sankey — priorité à la lisibilité immédiate (section 10 du prompt : "ne
+// pas faire quelque chose d'illisible"). ----------
+function renderCockpitFlowPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const summary = computeBudgetSummary(cockpitBudgetEntries(), currentMonthKey());
+  if(summary.revenus === 0 && summary.depenses === 0 && summary.investi === 0){
+    el.innerHTML = `<span class="panel-title">Où part mon argent ?</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Renseigne tes revenus et dépenses pour voir ton flux mensuel ici.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="panel-title">Où part mon argent ?</span>
+    <div class="guide-diagram-flow" style="margin-top:16px;">
+      <div class="cockpit-flow-step positive"><span>Revenus</span><span class="mono">+${cockpitFmtAmount(summary.revenus)}</span></div>
+      <div class="guide-diagram-arrow" aria-hidden="true">↓</div>
+      <div class="cockpit-flow-step negative"><span>Dépenses</span><span class="mono">−${cockpitFmtAmount(summary.depenses)}</span></div>
+      <div class="guide-diagram-arrow" aria-hidden="true">↓</div>
+      <div class="cockpit-flow-step ${summary.investi > 0 ? 'negative' : ''}"><span>Investi</span><span class="mono">−${cockpitFmtAmount(summary.investi)}</span></div>
+      <div class="guide-diagram-arrow" aria-hidden="true">↓</div>
+      <div class="cockpit-flow-step final"><span>Trésorerie restante</span><span class="mono" style="color:${summary.tresorerie >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${summary.tresorerie >= 0 ? '+' : ''}${cockpitFmtAmount(summary.tresorerie)}</span></div>
+    </div>`;
+}
+
+// ---------- Insights "À regarder ce mois-ci" (section 15) ----------
+function renderCockpitInsightsPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(cockpitDemoMode){
+    el.innerHTML = `<span class="panel-title">À regarder ce mois-ci</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Non simulé en mode aperçu — renseigne tes vraies données pour voir tes propres observations ici.</p>`;
+    return;
+  }
+  const insights = computeCockpitInsights();
+  if(insights.length === 0){
+    el.innerHTML = `<span class="panel-title">À regarder ce mois-ci</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Rien à signaler pour l'instant.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="panel-title">À regarder ce mois-ci</span>
+    <div style="display:flex;flex-direction:column;gap:12px;margin-top:10px;">
+      ${insights.map((i, idx) => `
+        <div>
+          <p style="font-size:12.5px;">${i.texte}</p>
+          ${i.lien ? `<a href="${i.lien}" style="font-size:11.5px;color:var(--gold-bright);">${i.label}</a>`
+            : (i.action ? `<button type="button" class="cockpit-insight-action" data-idx="${idx}" style="background:none;border:none;padding:0;font-size:11.5px;color:var(--gold-bright);cursor:pointer;text-decoration:underline;">Voir mes objectifs →</button>` : '')}
+        </div>`).join('')}
+    </div>`;
+  // insight.action est une simple étiquette ('goto-objectifs'), jamais du
+  // code exécuté dynamiquement (new Function/eval) — un insight vient de
+  // computeCockpitInsights (data.js), donc toujours interne, mais rien ne
+  // justifie d'introduire ce motif pour un seul cas connu à l'avance.
+  el.querySelectorAll('.cockpit-insight-action').forEach(btn => {
+    const insight = insights[+btn.dataset.idx];
+    if(insight && insight.action === 'goto-objectifs') btn.addEventListener('click', () => setCockpitActiveTab('tab-objectifs'));
+  });
+}
+
+// ---------- Recommandation pédagogique (section 16, "Recommandé pour moi") ----------
+const COCKPIT_RECO_TYPE_LABELS = {cours: '🎓 Cours recommandé pour toi', guide: '💡 Guide recommandé pour toi', outil: '🧪 Outil recommandé pour toi'};
+function renderCockpitCourseRecoPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(cockpitDemoMode){ el.innerHTML = ''; return; }
+  const reco = computeCockpitCourseRecommendation();
+  if(!reco){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <span class="panel-title">${COCKPIT_RECO_TYPE_LABELS[reco.type] || 'Recommandé pour toi'}</span>
+    <h3 style="font-size:15px;margin:8px 0 4px;">${reco.titre}</h3>
+    <p style="font-size:12px;color:var(--text-dim);">${reco.raison}</p>
+    <a href="${reco.lien}" class="btn btn-sm btn-gold" style="margin-top:10px;">Découvrir →</a>`;
+}
+
+// ---------- Calendrier financier compact (section 21) : la gestion des
+// charges récurrentes reste dans le Laboratoire (computeCalendarEvents/
+// getRecurringCharges existent déjà — chantier "Dashboard & diagnostic" du
+// 28/08/2026), Mon Univers ne fait qu'observer — même motif que l'onglet
+// Portefeuille avec Bourse. ----------
+function renderCockpitCalendarPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(cockpitDemoMode){ el.innerHTML = ''; return; }
+  const events = computeCalendarEvents(currentMonthKey());
+  if(events.length === 0){
+    el.innerHTML = `<span class="panel-title">À venir</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Aucune charge récurrente ni échéance d'objectif ce mois-ci.</p><a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Ajouter une opération récurrente →</a>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="panel-title">À venir <a href="laboratoire.html#tab-budget-epargne">Gérer →</a></span>
+    <div style="display:flex;flex-direction:column;gap:6px;margin-top:10px;">
+      ${events.slice(0, 6).map(e => `
+        <div style="display:flex;justify-content:space-between;font-size:12px;">
+          <span>${e.jour ? `Le ${e.jour}` : 'Jour non précisé'} — ${e.label}</span>
+          ${e.montant !== null ? `<span class="mono" style="color:${e.montant < 0 ? 'var(--bordeaux)' : 'var(--emerald)'};">${e.montant < 0 ? '' : '+'}${cockpitFmtAmount(e.montant)}</span>` : ''}
+        </div>`).join('')}
+    </div>`;
+}
+
+// ---------- Abonnements (section 22) : même moteur que le calendrier
+// ci-dessus (getRecurringCharges/computeRecurringChargesTotal). ----------
+function renderCockpitSubscriptionsPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(cockpitDemoMode){ el.innerHTML = ''; return; }
+  const charges = getRecurringCharges().filter(c => c.categorie === 'abonnement');
+  if(charges.length === 0){ el.innerHTML = ''; return; }
+  const total = computeRecurringChargesTotal(charges);
+  el.innerHTML = `
+    <span class="panel-title">Abonnements <a href="laboratoire.html#tab-budget-epargne">Gérer →</a></span>
+    <div style="display:flex;flex-direction:column;gap:4px;margin-top:10px;">
+      ${charges.map(c => `<div style="display:flex;justify-content:space-between;font-size:12px;"><span>${c.nom}</span><span class="mono">${cockpitFmtAmount(c.montant)}</span></div>`).join('')}
+    </div>
+    <p style="font-size:12.5px;margin-top:10px;border-top:1px solid var(--hairline);padding-top:8px;">Total : <strong class="mono">${cockpitFmtAmount(total.mensuelAbonnements)}/mois</strong> (${cockpitFmtAmount(total.mensuelAbonnements * 12)}/an)</p>`;
+}
+
+// ---------- Mes dettes (section 20) : date de fin réutilise TEL QUEL le
+// moteur d'amortissement du Laboratoire (computeDebtEstimatedPayoff, data.js
+// -> computeDebtPayoffPlan), jamais un second calcul. ----------
+function renderCockpitDebtsPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const debts = cockpitDebts();
+  if(debts.length === 0){
+    el.innerHTML = `<span class="panel-title">Mes dettes</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Aucune dette enregistrée pour l'instant.</p>${cockpitDemoMode ? '' : `<a href="laboratoire.html#tab-dettes" class="btn btn-sm" style="margin-top:10px;">Ajouter un crédit →</a>`}`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="panel-title">Mes dettes${cockpitDemoMode ? '' : ` <a href="laboratoire.html#tab-dettes">Gérer →</a>`}</span>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-top:10px;">
+      ${debts.map(d => {
+        const payoff = computeDebtEstimatedPayoff(d);
+        return `<div style="border-bottom:1px solid var(--hairline);padding-bottom:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:13px;"><strong>${d.label}</strong><span class="mono">${cockpitFmtAmount(d.balance)}</span></div>
+          <p style="font-size:11.5px;color:var(--text-dim);margin-top:2px;">${cockpitFmtAmount(d.minPayment)}/mois · ${d.rate} % · ${payoff ? `fin estimée ${payoff.dateFin.toLocaleDateString('fr-FR', {month:'long', year:'numeric'})}` : "échéance non calculable avec ces valeurs (mensualité insuffisante)"}</p>
+        </div>`;
+      }).join('')}
+    </div>
+    ${cockpitDemoMode ? '' : `<a href="laboratoire.html#tab-dettes" class="btn btn-sm btn-gold" style="margin-top:10px;">Simuler un remboursement anticipé →</a>`}`;
+}
+
+// ---------- Bilan Likanza (section 14) : remplace renderHealthScoreDashboardWidget
+// (data.js, partagé avec le Tableau de bord/Laboratoire — jamais modifié ici)
+// dans le contexte spécifique de Mon Univers : jamais un score composite "/100"
+// en tête (l'exact anti-motif que le prompt d'origine interdit), seulement
+// des indicateurs indépendants (🟢/🟠/🔴 + texte, jamais la couleur seule —
+// accessibilité) construits sur les MÊMES axes déjà réels (computeHealthScore). ----------
+const HEALTH_AXIS_STATUS_LABELS = {ok: 'Confortable', attention: 'À surveiller', alerte: 'À corriger'};
+function renderCockpitBilanPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(cockpitDemoMode){
+    el.innerHTML = `<span class="panel-title">Bilan Likanza</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Non simulé en mode aperçu — renseigne tes vraies données pour voir ton bilan ici.</p>`;
+    return;
+  }
+  const health = computeHealthScore();
+  if(health.axesConnues === 0){
+    el.innerHTML = `<span class="panel-title">Bilan Likanza</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Renseigne ton budget, tes objectifs et ton patrimoine pour voir apparaître ton bilan ici.</p><a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm btn-gold" style="margin-top:10px;">Configurer →</a>`;
+    return;
+  }
+  const axesList = Object.values(health.axes);
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="panel-title" style="margin:0;">Bilan Likanza</span>
+      <button type="button" id="${elId}-howto" style="background:none;border:none;color:var(--text-dim);font-size:11px;text-decoration:underline;cursor:pointer;">Comment est calculé ?</button>
+    </div>
+    <p style="font-size:11px;color:var(--text-dim);margin:6px 0 10px;">${health.axesConnues}/${health.axesTotal} axes évalués — des indicateurs indépendants, jamais une note unique.</p>
+    <div id="${elId}-howto-detail" style="display:none;margin-bottom:10px;"></div>
+    ${axesList.map(a => `
+      <div class="cockpit-bilan-axis">
+        <span class="cockpit-bilan-dot ${a.insuffisant ? 'insuffisant' : a.niveau}"></span>
+        <div>
+          <div class="cockpit-bilan-axis-label">${a.label} ${!a.insuffisant ? `<span class="cockpit-bilan-axis-status">${HEALTH_AXIS_STATUS_LABELS[a.niveau] || ''}</span>` : ''}</div>
+          <div class="cockpit-bilan-axis-detail">${a.insuffisant ? 'Pas encore assez de données pour cet axe.' : a.detail}</div>
+        </div>
+      </div>`).join('')}`;
+  const howtoBtn = document.getElementById(`${elId}-howto`);
+  const howtoDetail = document.getElementById(`${elId}-howto-detail`);
+  if(howtoBtn && howtoDetail){
+    howtoBtn.addEventListener('click', () => {
+      const willShow = howtoDetail.style.display === 'none';
+      howtoDetail.style.display = willShow ? '' : 'none';
+      if(willShow && !howtoDetail.innerHTML){
+        howtoDetail.innerHTML = renderMethodologyPanel({
+          calcul: "Chaque axe (Budget/Dette/Sécurité/Trésorerie/Investissement/Objectifs) est évalué indépendamment à partir de tes vraies données, avec un statut Confortable/À surveiller/À corriger — jamais combiné en une seule note globale.",
+          donnees: "Tes revenus/dépenses déclarés, tes crédits, ton patrimoine, tes charges récurrentes et tes objectifs financiers.",
+          limites: "Un axe sans assez de données reste explicitement marqué comme tel, jamais deviné. Ce sont des repères généraux de gestion budgétaire, jamais un conseil personnalisé."
+        });
+      }
+    });
+  }
+}
+
+// ---------- Objectifs : tester un scénario (section 13) — réutilise TEL
+// QUEL computeGoalProjection (data.js) avec un versementMensuel augmenté,
+// jamais un second moteur de calcul. Hypothèses de simulation, jamais une
+// garantie (disclaimer explicite). ----------
+const GOAL_SCENARIO_STEPS = [50, 100, 200];
+function renderCockpitGoalsScenarios(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const goals = (cockpitGoals() || getFinancialGoals()).filter(g => {
+    const p = computeGoalProjection(g);
+    return p && p.statut !== 'atteint';
+  });
+  if(goals.length === 0){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <span class="panel-title">Tester un scénario</span>
+    <p style="font-size:11.5px;color:var(--text-dim);margin:6px 0 12px;">Hypothèses de simulation, pas une garantie — un calcul mathématique à partir des montants déclarés.</p>
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      ${goals.map((g, i) => `
+        <div>
+          <p style="font-size:13px;margin-bottom:6px;">${g.nom}</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            ${GOAL_SCENARIO_STEPS.map(step => `<button type="button" class="pill goal-scenario-btn" data-goal="${i}" data-step="${step}">+${step} €/mois</button>`).join('')}
+          </div>
+          <p style="font-size:12px;color:var(--text-dim);margin-top:6px;" id="${elId}-result-${i}"></p>
+        </div>`).join('')}
+    </div>`;
+  el.querySelectorAll('.goal-scenario-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      el.querySelectorAll(`.goal-scenario-btn[data-goal="${btn.dataset.goal}"]`).forEach(b => b.classList.toggle('active', b === btn));
+      const g = goals[+btn.dataset.goal];
+      const step = +btn.dataset.step;
+      const base = computeGoalProjection(g);
+      const withExtra = computeGoalProjection({...g, versementMensuel: g.versementMensuel + step});
+      const resultEl = document.getElementById(`${elId}-result-${btn.dataset.goal}`);
+      if(!resultEl) return;
+      if(!base || !withExtra || base.moisNecessaires === null || withExtra.moisNecessaires === null){
+        resultEl.textContent = "Calcul impossible avec ces montants (ajoute un versement mensuel de départ).";
+        return;
+      }
+      const gain = base.moisNecessaires - withExtra.moisNecessaires;
+      resultEl.textContent = gain > 0
+        ? `Avec +${step} €/mois, tu atteindrais cet objectif environ ${gain} mois plus tôt (${withExtra.moisNecessaires} mois au lieu de ${base.moisNecessaires}).`
+        : `Avec +${step} €/mois, le délai resterait d'environ ${withExtra.moisNecessaires} mois.`;
+    });
+  });
+}
+
+// ---------- Historique des opérations (sections 26-27) : ajout/édition/
+// suppression (confirmation intégrée à la ligne, pas de <dialog>)/filtre/
+// recherche/pagination/export CSV. Toutes les opérations passent par
+// saveBudgetEntry/updateBudgetEntry/removeBudgetEntry (data.js) — aucun store
+// parallèle. État de la table (page/filtre/recherche/suppression en attente)
+// gardé dans des variables de module : elles survivent aux re-rendus complets
+// du cockpit (rerenderCockpit), jamais réinitialisées à chaque frappe. ----------
+let cockpitTxPage = 1;
+let cockpitTxFilter = 'tous';
+let cockpitTxSearch = '';
+let cockpitTxPendingDelete = null;
+const COCKPIT_TX_PAGE_SIZE = 10;
+const COCKPIT_TX_TYPE_LABELS = {revenu: 'Revenu', depense: 'Dépense', investissement: 'Investissement'};
+
+function exportCockpitTransactionsCSV(){
+  const entries = getBudgetEntries().slice().sort((a, b) => (a.date || a.mois + '-01').localeCompare(b.date || b.mois + '-01'));
+  const header = ['Date', 'Mois', 'Type', 'Catégorie', 'Libellé', 'Montant (EUR)'];
+  const rows = entries.map(e => [e.date || '', e.mois, COCKPIT_TX_TYPE_LABELS[e.type] || e.type, e.categorie, (e.libelle || ''), e.montant]);
+  const csv = [header, ...rows].map(r => r.map(v => `"${String(v).replace(/"/g, '""')}"`).join(';')).join('\r\n');
+  const blob = new Blob(['﻿' + csv], {type: 'text/csv;charset=utf-8;'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `likanza-operations-${currentMonthKey()}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+function renderCockpitTxForm(elId, existing){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.style.display = '';
+  const initialType = existing ? existing.type : 'depense';
+  const catOptions = t => BUDGET_CATEGORIES[t].map(c => `<option value="${c}">${c}</option>`).join('');
+  el.innerHTML = `
+    <div class="card" style="background:var(--bg);">
+      <div class="cockpit-drawer-row">
+        <div class="field"><label for="${elId}-date">Date</label><input type="date" id="${elId}-date" value="${existing && existing.date ? existing.date : new Date().toISOString().slice(0, 10)}"></div>
+        <div class="field"><label for="${elId}-type">Type</label><select id="${elId}-type"><option value="revenu">Revenu</option><option value="depense">Dépense</option><option value="investissement">Investissement</option></select></div>
+      </div>
+      <div class="cockpit-drawer-row">
+        <div class="field"><label for="${elId}-categorie">Catégorie</label><select id="${elId}-categorie"></select></div>
+        <div class="field"><label for="${elId}-montant">Montant (€)</label><input type="number" id="${elId}-montant" min="0" value="${existing ? existing.montant : 50}"></div>
+      </div>
+      <div class="field"><label for="${elId}-libelle">Libellé (optionnel)</label><input type="text" id="${elId}-libelle" maxlength="80" value="${existing ? (existing.libelle || '') : ''}" placeholder="Ex : Courses Carrefour"></div>
+      <p id="${elId}-error" style="font-size:12px;color:var(--bordeaux);display:none;"></p>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button type="button" class="btn btn-sm btn-gold" id="${elId}-save">${existing ? 'Enregistrer' : '+ Ajouter'}</button>
+        <button type="button" class="btn btn-sm" id="${elId}-cancel">Annuler</button>
+      </div>
+    </div>`;
+  document.getElementById(`${elId}-type`).value = initialType;
+  function refreshCats(){
+    const typeNow = document.getElementById(`${elId}-type`).value;
+    document.getElementById(`${elId}-categorie`).innerHTML = catOptions(typeNow);
+    if(existing && existing.type === typeNow) document.getElementById(`${elId}-categorie`).value = existing.categorie;
+  }
+  refreshCats();
+  document.getElementById(`${elId}-type`).addEventListener('change', refreshCats);
+  document.getElementById(`${elId}-cancel`).addEventListener('click', () => { el.style.display = 'none'; el.innerHTML = ''; });
+  document.getElementById(`${elId}-save`).addEventListener('click', () => {
+    const date = document.getElementById(`${elId}-date`).value;
+    const payload = {
+      type: document.getElementById(`${elId}-type`).value,
+      categorie: document.getElementById(`${elId}-categorie`).value,
+      montant: +document.getElementById(`${elId}-montant`).value || 0,
+      mois: date ? date.slice(0, 7) : currentMonthKey(),
+      date: date || null,
+      libelle: document.getElementById(`${elId}-libelle`).value
+    };
+    const result = existing ? updateBudgetEntry(existing.id, payload) : saveBudgetEntry(payload);
+    const errorEl = document.getElementById(`${elId}-error`);
+    if(result){
+      errorEl.style.display = 'none';
+      el.style.display = 'none'; el.innerHTML = '';
+      rerenderCockpit();
+    } else {
+      errorEl.textContent = 'Vérifie la catégorie, le montant (positif) et la date (dans le bon mois).';
+      errorEl.style.display = '';
+    }
+  });
+}
+
+function renderCockpitTxRows(elId, items, parentTableId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = items.map(e => `
+    <div class="cockpit-tx-row ${e.type}">
+      <span>${e.date ? new Date(e.date + 'T00:00:00').toLocaleDateString('fr-FR', {day:'2-digit', month:'2-digit'}) : e.mois}</span>
+      <span>${e.categorie}</span>
+      <span>${e.libelle || '—'}</span>
+      <span class="mono">${e.type === 'depense' ? '−' : '+'}${cockpitFmtAmount(e.montant)}</span>
+      <span class="cockpit-tx-actions">
+        ${cockpitTxPendingDelete === e.id
+          ? `<span style="font-size:11px;color:var(--bordeaux);white-space:nowrap;">Supprimer ?</span><button type="button" data-confirm-delete="${e.id}">Oui</button><button type="button" data-cancel-delete="1">Non</button>`
+          : `<button type="button" data-edit="${e.id}" aria-label="Modifier">✎</button><button type="button" data-delete="${e.id}" aria-label="Supprimer">✕</button>`}
+      </span>
+    </div>`).join('');
+  el.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', () => {
+    const entry = getBudgetEntries().find(x => x.id === btn.dataset.edit);
+    if(entry) renderCockpitTxForm(`${parentTableId}-form`, entry);
+  }));
+  el.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', () => {
+    cockpitTxPendingDelete = btn.dataset.delete;
+    renderCockpitTxRows(elId, items, parentTableId);
+  }));
+  el.querySelectorAll('[data-confirm-delete]').forEach(btn => btn.addEventListener('click', () => {
+    removeBudgetEntry(btn.dataset.confirmDelete);
+    cockpitTxPendingDelete = null;
+    rerenderCockpit();
+  }));
+  el.querySelectorAll('[data-cancel-delete]').forEach(btn => btn.addEventListener('click', () => {
+    cockpitTxPendingDelete = null;
+    renderCockpitTxRows(elId, items, parentTableId);
+  }));
+}
+
+function renderCockpitTransactionsTable(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(cockpitDemoMode){
+    el.innerHTML = `<span class="panel-title">Historique des opérations</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Non simulé en mode aperçu — ajoute tes vraies opérations pour voir ton historique ici.</p>`;
+    return;
+  }
+  const all = getBudgetEntries().slice().sort((a, b) => (b.date || b.mois + '-01').localeCompare(a.date || a.mois + '-01'));
+  let filtered = cockpitTxFilter === 'tous' ? all : all.filter(e => e.type === cockpitTxFilter);
+  if(cockpitTxSearch.trim()){
+    const q = cockpitTxSearch.trim().toLowerCase();
+    filtered = filtered.filter(e => (e.libelle || '').toLowerCase().includes(q) || e.categorie.toLowerCase().includes(q));
+  }
+  const totalPages = Math.max(1, Math.ceil(filtered.length / COCKPIT_TX_PAGE_SIZE));
+  if(cockpitTxPage > totalPages) cockpitTxPage = totalPages;
+  const pageItems = filtered.slice((cockpitTxPage - 1) * COCKPIT_TX_PAGE_SIZE, cockpitTxPage * COCKPIT_TX_PAGE_SIZE);
+
+  el.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:10px;">
+      <span class="panel-title" style="margin:0;">Historique des opérations</span>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button type="button" class="btn btn-sm btn-gold" id="${elId}-add">+ Ajouter une opération</button>
+        ${all.length > 0 ? `<button type="button" class="btn btn-sm" id="${elId}-export">Exporter (CSV) →</button>` : ''}
+      </div>
+    </div>
+    <div id="${elId}-form" style="display:none;margin-bottom:14px;"></div>
+    ${all.length === 0 ? `<p style="font-size:12.5px;color:var(--text-dim);">Aucune opération enregistrée pour l'instant.</p>` : `
+    <div class="cockpit-tx-toolbar">
+      <select id="${elId}-filter">
+        <option value="tous">Tous types</option>
+        <option value="revenu">Revenus</option>
+        <option value="depense">Dépenses</option>
+        <option value="investissement">Investissements</option>
+      </select>
+      <input type="text" id="${elId}-search" placeholder="Rechercher (libellé, catégorie)..." value="${cockpitTxSearch}">
+    </div>
+    ${filtered.length === 0
+      ? `<p style="font-size:12.5px;color:var(--text-dim);">Aucune opération ne correspond à ce filtre.</p>`
+      : `<div id="${elId}-rows"></div>
+         <div class="cockpit-tx-pagination">
+           <button type="button" class="btn btn-sm" id="${elId}-prev" ${cockpitTxPage <= 1 ? 'disabled' : ''}>← Précédent</button>
+           <span>Page ${cockpitTxPage} / ${totalPages}</span>
+           <button type="button" class="btn btn-sm" id="${elId}-next" ${cockpitTxPage >= totalPages ? 'disabled' : ''}>Suivant →</button>
+         </div>`}`}`;
+
+  if(pageItems.length > 0) renderCockpitTxRows(`${elId}-rows`, pageItems, elId);
+  document.getElementById(`${elId}-add`).addEventListener('click', () => renderCockpitTxForm(`${elId}-form`, null));
+  const exportBtn = document.getElementById(`${elId}-export`);
+  if(exportBtn) exportBtn.addEventListener('click', exportCockpitTransactionsCSV);
+  const filterEl = document.getElementById(`${elId}-filter`);
+  if(filterEl){
+    filterEl.value = cockpitTxFilter;
+    filterEl.addEventListener('change', e => { cockpitTxFilter = e.target.value; cockpitTxPage = 1; renderCockpitTransactionsTable(elId); });
+  }
+  const searchEl = document.getElementById(`${elId}-search`);
+  if(searchEl) searchEl.addEventListener('input', e => { cockpitTxSearch = e.target.value; cockpitTxPage = 1; renderCockpitTransactionsTable(elId); });
+  const prevBtn = document.getElementById(`${elId}-prev`);
+  if(prevBtn) prevBtn.addEventListener('click', () => { cockpitTxPage = Math.max(1, cockpitTxPage - 1); renderCockpitTransactionsTable(elId); });
+  const nextBtn = document.getElementById(`${elId}-next`);
+  if(nextBtn) nextBtn.addEventListener('click', () => { cockpitTxPage = Math.min(totalPages, cockpitTxPage + 1); renderCockpitTransactionsTable(elId); });
 }
 
 // ============================================================
