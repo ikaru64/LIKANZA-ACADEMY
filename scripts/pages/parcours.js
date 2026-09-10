@@ -224,12 +224,16 @@ function renderCockpitBody(){
   if(tabsGridEl) tabsGridEl.style.display = '';
   if(heroEl) heroEl.style.display = '';
   renderCockpitHeader('cockpitHeader');
+  if(cockpitWidgetSettingsOpen) renderCockpitWidgetSettingsPanel('cockpitWidgetSettings');
   renderCockpitHero('cockpitHero');
   renderCockpitKPIs('cockpitKPIs');
   renderCockpitChart('cockpitChart');
   renderCockpitSide('cockpitSide');
-  renderCockpitFlowPanel('cockpitFlow');
-  renderCockpitTransactionsTable('cockpitTransactions');
+  const widgetPrefs = getCockpitWidgetPrefs();
+  const flowEl = document.getElementById('cockpitFlow');
+  if(flowEl){ flowEl.style.display = widgetPrefs.flow ? '' : 'none'; if(widgetPrefs.flow) renderCockpitFlowPanel('cockpitFlow'); }
+  const txEl = document.getElementById('cockpitTransactions');
+  if(txEl){ txEl.style.display = widgetPrefs.transactions ? '' : 'none'; if(widgetPrefs.transactions) renderCockpitTransactionsTable('cockpitTransactions'); }
   renderCockpitPatrimoineTab('cockpitPatrimoineBody');
   renderCockpitPortefeuilleTab('cockpitPortefeuilleBody');
   renderCockpitRisquesTab('cockpitRisquesBody');
@@ -364,6 +368,7 @@ function renderCockpitHeader(elId){
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <button type="button" class="cockpit-hide-btn ${hidden ? 'active' : ''}" id="cockpitHideBtn" aria-pressed="${hidden}">👁 ${hidden ? 'Afficher' : 'Masquer'} les montants</button>
+      ${cockpitDemoMode ? '' : `<button type="button" class="cockpit-hide-btn" id="cockpitWidgetsBtn" aria-pressed="${cockpitWidgetSettingsOpen}">⚙️ Mes widgets</button>`}
       ${cockpitDemoMode ? `<button type="button" class="btn btn-sm btn-gold" id="cockpitConfigureBtn">Configurer mes finances</button>` : `<button type="button" class="btn btn-sm" id="cockpitConfigureBtn">+ Ajouter une donnée</button>`}
       <button type="button" class="btn btn-sm btn-gold" id="cockpitProjectBtn">Projeter mon capital</button>
       <div class="cockpit-meta">
@@ -377,6 +382,44 @@ function renderCockpitHeader(elId){
   if(configureBtn) configureBtn.addEventListener('click', openOnboardingDrawer);
   const hideBtn = document.getElementById('cockpitHideBtn');
   if(hideBtn) hideBtn.addEventListener('click', toggleCockpitHideAmounts);
+  const widgetsBtn = document.getElementById('cockpitWidgetsBtn');
+  if(widgetsBtn) widgetsBtn.addEventListener('click', toggleCockpitWidgetSettings);
+}
+
+// ---------- Personnalisation des widgets (section 30) : un panneau simple
+// à cocher/décocher, jamais de drag & drop (demandé explicitement — priorité
+// à la stabilité). Fermé par défaut à chaque chargement de page (l'état
+// ouvert/fermé du PANNEAU lui-même n'a pas besoin d'être mémorisé, seul le
+// choix des widgets l'est, via getCockpitWidgetPrefs/setCockpitWidgetVisibility,
+// data.js). ----------
+let cockpitWidgetSettingsOpen = false;
+function renderCockpitWidgetSettingsPanel(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const prefs = getCockpitWidgetPrefs();
+  el.innerHTML = `
+    <span class="panel-title" style="margin:0;">Mes widgets</span>
+    <p style="font-size:11.5px;color:var(--text-dim);margin:6px 0 10px;">Choisis les modules affichés sur cette page — un choix d'écran, jamais tes données.</p>
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:6px;">
+      ${COCKPIT_WIDGET_DEFS.map(w => `
+        <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;cursor:pointer;">
+          <input type="checkbox" data-widget="${w.key}" ${prefs[w.key] ? 'checked' : ''}>
+          ${w.label}
+        </label>`).join('')}
+    </div>`;
+  el.querySelectorAll('[data-widget]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      setCockpitWidgetVisibility(cb.dataset.widget, cb.checked);
+      rerenderCockpit();
+    });
+  });
+}
+function toggleCockpitWidgetSettings(){
+  cockpitWidgetSettingsOpen = !cockpitWidgetSettingsOpen;
+  const panel = document.getElementById('cockpitWidgetSettings');
+  if(!panel) return;
+  panel.style.display = cockpitWidgetSettingsOpen ? '' : 'none';
+  if(cockpitWidgetSettingsOpen) renderCockpitWidgetSettingsPanel('cockpitWidgetSettings');
 }
 
 // Vue active partagée entre les KPI et les onglets du graphique combiné :
@@ -610,26 +653,30 @@ function renderCockpitChart(elId){
 // la rangée de panneaux sous le graphique — voir renderCockpitPanelsRow —
 // pour se rapprocher de la disposition de l'image de référence.)
 // ============================================================
+// Widgets personnalisables (section 30) : chaque panneau de cette colonne
+// (sauf le donut, jamais proposé au masquage — c'est la seule vraie
+// visualisation de répartition de la page) ne construit même pas son
+// conteneur DOM si l'utilisateur l'a décoché, plutôt que de le rendre puis
+// le masquer en CSS — évite tout calcul/rendu inutile pour un widget
+// explicitement désactivé.
+const COCKPIT_SIDE_WIDGETS = [
+  {key: 'budget', suffix: 'budget', render: renderCockpitBudgetCard},
+  {key: 'insights', suffix: 'insights', render: renderCockpitInsightsPanel},
+  {key: 'reco', suffix: 'reco', render: renderCockpitCourseRecoPanel},
+  {key: 'calendar', suffix: 'calendar', render: renderCockpitCalendarPanel},
+  {key: 'subscriptions', suffix: 'subs', render: renderCockpitSubscriptionsPanel},
+  {key: 'revenus-passifs', suffix: 'revenus', render: renderCockpitRevenusPassifsPanel},
+  {key: 'actions', suffix: 'actions', render: renderCockpitActionsPanel}
+];
 function renderCockpitSide(elId){
   const el = document.getElementById(elId);
   if(!el) return;
-  el.innerHTML = `
-    <div class="cockpit-panel" id="${elId}-donut"></div>
-    <div class="cockpit-panel" id="${elId}-budget"></div>
-    <div class="cockpit-panel" id="${elId}-insights"></div>
-    <div class="cockpit-panel" id="${elId}-reco"></div>
-    <div class="cockpit-panel" id="${elId}-calendar"></div>
-    <div class="cockpit-panel" id="${elId}-subs"></div>
-    <div class="cockpit-panel" id="${elId}-revenus"></div>
-    <div class="cockpit-panel" id="${elId}-actions"></div>`;
-  renderCockpitDonut(`${elId}-donut`);
-  renderCockpitBudgetCard(`${elId}-budget`);
-  renderCockpitInsightsPanel(`${elId}-insights`);
-  renderCockpitCourseRecoPanel(`${elId}-reco`);
-  renderCockpitCalendarPanel(`${elId}-calendar`);
-  renderCockpitSubscriptionsPanel(`${elId}-subs`);
-  renderCockpitRevenusPassifsPanel(`${elId}-revenus`);
-  renderCockpitActionsPanel(`${elId}-actions`);
+  const prefs = getCockpitWidgetPrefs();
+  const donutVisible = prefs.donut !== false;
+  el.innerHTML = (donutVisible ? `<div class="cockpit-panel" id="${elId}-donut"></div>` : '')
+    + COCKPIT_SIDE_WIDGETS.filter(w => prefs[w.key]).map(w => `<div class="cockpit-panel" id="${elId}-${w.suffix}"></div>`).join('');
+  if(donutVisible) renderCockpitDonut(`${elId}-donut`);
+  COCKPIT_SIDE_WIDGETS.filter(w => prefs[w.key]).forEach(w => w.render(`${elId}-${w.suffix}`));
   // Les panneaux "Recommandé pour toi"/"À venir"/"Abonnements" restent
   // vides (chaîne '') tant qu'aucun signal réel n'existe (voir chaque
   // fonction) — jamais un panneau vide visible pour autant : on masque son

@@ -10225,6 +10225,39 @@ function setHideAmounts(hidden){
   if(hidden) localStorage.setItem(HIDE_AMOUNTS_KEY, '1');
   else localStorage.removeItem(HIDE_AMOUNTS_KEY);
 }
+// ---------- Personnalisation des widgets (section 30) : une préférence
+// d'affichage purement locale (même motif que getHideAmounts ci-dessus),
+// jamais synchronisée (PROGRESS_SYNC_KEYS) — un widget masqué est un choix
+// d'écran, pas une donnée financière. Défaut : tout visible (`stored[key]
+// !== false` — un widget jamais explicitement décoché reste affiché, même
+// après l'ajout d'un nouveau widget à COCKPIT_WIDGET_DEFS dans une future
+// mise à jour). Pas de drag & drop (demandé explicitement en dernier —
+// priorité à la stabilité de la V1). ----------
+const COCKPIT_WIDGETS_KEY = 'likanza-cockpit-widgets';
+const COCKPIT_WIDGET_DEFS = [
+  {key: 'donut', label: 'Répartition du patrimoine'},
+  {key: 'budget', label: 'Budget du mois'},
+  {key: 'flow', label: 'Où part mon argent (flux mensuel)'},
+  {key: 'insights', label: 'À regarder ce mois-ci'},
+  {key: 'reco', label: 'Recommandé pour toi'},
+  {key: 'calendar', label: 'À venir (calendrier)'},
+  {key: 'subscriptions', label: 'Abonnements'},
+  {key: 'revenus-passifs', label: 'Revenus passifs estimés'},
+  {key: 'actions', label: 'Prochaines actions'},
+  {key: 'transactions', label: 'Historique des opérations'}
+];
+function getCockpitWidgetPrefs(){
+  const stored = safeGetJSON(COCKPIT_WIDGETS_KEY, {});
+  const prefs = {};
+  COCKPIT_WIDGET_DEFS.forEach(w => { prefs[w.key] = stored[w.key] !== false; });
+  return prefs;
+}
+function setCockpitWidgetVisibility(key, visible){
+  const stored = safeGetJSON(COCKPIT_WIDGETS_KEY, {});
+  stored[key] = !!visible;
+  safeSetJSON(COCKPIT_WIDGETS_KEY, stored);
+}
+
 // Remplace fmtEUR partout où l'utilisateur peut vouloir masquer un montant à
 // l'écran (section 4) — jamais un remplacement du VRAI fmtEUR global
 // (utilisé par le reste du site, hors de ce besoin d'affichage), pour ne
