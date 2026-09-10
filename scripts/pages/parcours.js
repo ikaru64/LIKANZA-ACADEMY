@@ -1250,7 +1250,7 @@ function renderCockpitHero(elId){
   const hasAnyData = net.totalActifs > 0 || net.totalPassifs > 0;
   el.innerHTML = `
     <div>
-      <span class="cockpit-hero-label">Patrimoine net</span>
+      <span class="cockpit-hero-label" title="Valeur totale de tes actifs déclarés moins tes dettes déclarées.">Patrimoine net ⓘ</span>
       <div class="cockpit-hero-value mono">${hasAnyData ? cockpitFmtAmount(net.patrimoineNet) : '—'}</div>
       ${variation
         ? `<div class="cockpit-hero-variation ${variation.deltaAbs >= 0 ? 'positive' : 'negative'}">${variation.deltaAbs >= 0 ? '+' : ''}${cockpitFmtAmount(variation.deltaAbs)} ce mois-ci${variation.deltaPct !== null ? ` (${variation.deltaAbs >= 0 ? '+' : ''}${variation.deltaPct.toFixed(1)} %)` : ''}</div>`
@@ -1264,6 +1264,18 @@ function renderCockpitHero(elId){
     </div>` : ''}`;
 }
 
+// ---------- Mode annuel/mensuel (section 23) : une préférence d'affichage
+// partagée par le budget et le flux — jamais une nouvelle donnée, juste un
+// facteur ×12 appliqué à l'affichage des vrais montants mensuels déjà
+// calculés. rerenderCockpit() (pas un simple re-rendu local) pour que budget
+// ET flux changent ensemble, jamais l'un sans l'autre. ----------
+let cockpitPeriodMode = 'mensuel';
+function toggleCockpitPeriodMode(mode){
+  if(mode !== 'mensuel' && mode !== 'annuel') return;
+  cockpitPeriodMode = mode;
+  rerenderCockpit();
+}
+
 // ---------- Budget du mois (section 11) ----------
 function renderCockpitBudgetCard(elId){
   const el = document.getElementById(elId);
@@ -1274,20 +1286,36 @@ function renderCockpitBudgetCard(elId){
     el.innerHTML = `<span class="panel-title">Budget ce mois-ci</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Renseigne tes revenus et dépenses pour voir ton budget ici.</p>${cockpitDemoMode ? '' : `<button type="button" class="btn btn-sm btn-gold" style="margin-top:10px;" onclick="openOnboardingDrawer()">Ajouter →</button>`}`;
     return;
   }
+  const factor = cockpitPeriodMode === 'annuel' ? 12 : 1;
+  const unite = cockpitPeriodMode === 'annuel' ? '/an' : '/mois';
   const pct = summary.revenus > 0 ? Math.min(100, (summary.depenses / summary.revenus) * 100) : 0;
   const reste = summary.revenus - summary.depenses;
   const prevSummary = cockpitDemoMode ? null : computeBudgetSummary(getBudgetEntries(), previousMonthKey(mois));
   const depenseDeltaPct = (prevSummary && prevSummary.depenses > 0) ? ((summary.depenses - prevSummary.depenses) / prevSummary.depenses) * 100 : null;
   el.innerHTML = `
-    <span class="panel-title">Budget ce mois-ci</span>
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <span class="panel-title" style="margin:0;">Budget ${cockpitPeriodMode === 'annuel' ? '(vue annuelle)' : 'ce mois-ci'}</span>
+      <div class="mode-toggle" style="transform:scale(0.85);transform-origin:right;">
+        <button type="button" class="pill ${cockpitPeriodMode === 'mensuel' ? 'active' : ''}" id="${elId}-monthly">Mensuel</button>
+        <button type="button" class="pill ${cockpitPeriodMode === 'annuel' ? 'active' : ''}" id="${elId}-yearly">Annuel</button>
+      </div>
+    </div>
     <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--text-dim);margin-top:10px;">
-      <span>Revenus : <span class="mono" style="color:var(--text);">${cockpitFmtAmount(summary.revenus)}</span></span>
-      <span>Dépensé : <span class="mono" style="color:var(--text);">${cockpitFmtAmount(summary.depenses)}</span></span>
+      <span>Revenus : <span class="mono" style="color:var(--text);">${cockpitFmtAmount(summary.revenus * factor)}${unite}</span></span>
+      <span>Dépensé : <span class="mono" style="color:var(--text);">${cockpitFmtAmount(summary.depenses * factor)}${unite}</span></span>
     </div>
     <div class="cockpit-budget-bar"><div class="cockpit-budget-fill ${pct >= 100 ? 'over' : ''}" style="width:${pct}%;"></div></div>
-    <p style="font-size:13px;">Reste : <strong class="mono" style="color:${reste >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${cockpitFmtAmount(reste)}</strong> <span style="font-size:11px;color:var(--text-dim);">(budget utilisé : ${pct.toFixed(1)} %)</span></p>
-    ${depenseDeltaPct !== null ? `<p style="font-size:11.5px;color:${depenseDeltaPct <= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};margin-top:2px;">${depenseDeltaPct <= 0 ? '' : '+'}${depenseDeltaPct.toFixed(0)} % de dépenses par rapport au mois dernier</p>` : ''}
+    <p style="font-size:13px;">Reste : <strong class="mono" style="color:${reste >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${cockpitFmtAmount(reste * factor)}${unite}</strong> <span style="font-size:11px;color:var(--text-dim);" title="Part de tes revenus conservée après tes dépenses selon les données renseignées.">(taux d'épargne : ${summary.tauxEpargnePct !== null ? summary.tauxEpargnePct.toFixed(1) + ' %' : '—'} ⓘ)</span></p>
+    <button type="button" id="${elId}-calc-btn" style="background:none;border:none;padding:0;font-size:11px;color:var(--text-dim);text-decoration:underline;cursor:pointer;">Voir le calcul</button>
+    <p id="${elId}-calc-detail" style="display:none;font-size:11.5px;color:var(--text-dim);margin-top:4px;font-family:'IBM Plex Mono',monospace;">(${cockpitFmtAmount(summary.revenus)} − ${cockpitFmtAmount(summary.depenses)}) ÷ ${cockpitFmtAmount(summary.revenus)} = ${summary.tauxEpargnePct !== null ? summary.tauxEpargnePct.toFixed(1) + ' %' : '—'}</p>
+    ${depenseDeltaPct !== null ? `<p style="font-size:11.5px;color:${depenseDeltaPct <= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};margin-top:6px;">${depenseDeltaPct <= 0 ? '' : '+'}${depenseDeltaPct.toFixed(0)} % de dépenses par rapport au mois dernier</p>` : ''}
     ${cockpitDemoMode ? '' : `<a href="laboratoire.html#tab-budget-epargne" class="btn btn-sm" style="margin-top:10px;">Détail par catégorie →</a>`}`;
+  document.getElementById(`${elId}-monthly`).addEventListener('click', () => toggleCockpitPeriodMode('mensuel'));
+  document.getElementById(`${elId}-yearly`).addEventListener('click', () => toggleCockpitPeriodMode('annuel'));
+  document.getElementById(`${elId}-calc-btn`).addEventListener('click', () => {
+    const detail = document.getElementById(`${elId}-calc-detail`);
+    detail.style.display = detail.style.display === 'none' ? '' : 'none';
+  });
 }
 
 // ---------- Flux mensuel "Où part mon argent ?" (section 10) : réutilise
@@ -1302,16 +1330,18 @@ function renderCockpitFlowPanel(elId){
     el.innerHTML = `<span class="panel-title">Où part mon argent ?</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Renseigne tes revenus et dépenses pour voir ton flux mensuel ici.</p>`;
     return;
   }
+  const factor = cockpitPeriodMode === 'annuel' ? 12 : 1;
+  const unite = cockpitPeriodMode === 'annuel' ? '/an' : '/mois';
   el.innerHTML = `
-    <span class="panel-title">Où part mon argent ?</span>
+    <span class="panel-title">Où part mon argent ? <span style="font-size:10.5px;color:var(--text-dim);text-transform:none;font-weight:400;letter-spacing:0;">(${cockpitPeriodMode})</span></span>
     <div class="guide-diagram-flow" style="margin-top:16px;">
-      <div class="cockpit-flow-step positive"><span>Revenus</span><span class="mono">+${cockpitFmtAmount(summary.revenus)}</span></div>
+      <div class="cockpit-flow-step positive"><span>Revenus</span><span class="mono">+${cockpitFmtAmount(summary.revenus * factor)}${unite}</span></div>
       <div class="guide-diagram-arrow" aria-hidden="true">↓</div>
-      <div class="cockpit-flow-step negative"><span>Dépenses</span><span class="mono">−${cockpitFmtAmount(summary.depenses)}</span></div>
+      <div class="cockpit-flow-step negative"><span>Dépenses</span><span class="mono">−${cockpitFmtAmount(summary.depenses * factor)}${unite}</span></div>
       <div class="guide-diagram-arrow" aria-hidden="true">↓</div>
-      <div class="cockpit-flow-step ${summary.investi > 0 ? 'negative' : ''}"><span>Investi</span><span class="mono">−${cockpitFmtAmount(summary.investi)}</span></div>
+      <div class="cockpit-flow-step ${summary.investi > 0 ? 'negative' : ''}"><span>Investi</span><span class="mono">−${cockpitFmtAmount(summary.investi * factor)}${unite}</span></div>
       <div class="guide-diagram-arrow" aria-hidden="true">↓</div>
-      <div class="cockpit-flow-step final"><span>Trésorerie restante</span><span class="mono" style="color:${summary.tresorerie >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${summary.tresorerie >= 0 ? '+' : ''}${cockpitFmtAmount(summary.tresorerie)}</span></div>
+      <div class="cockpit-flow-step final"><span>Trésorerie restante</span><span class="mono" style="color:${summary.tresorerie >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${summary.tresorerie >= 0 ? '+' : ''}${cockpitFmtAmount(summary.tresorerie * factor)}${unite}</span></div>
     </div>`;
 }
 
