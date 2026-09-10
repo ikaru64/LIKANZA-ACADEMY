@@ -6017,6 +6017,21 @@ const GUIDES = [
     freshness: 'evergreen',
     hasSimulation: true,
     concepts: ['Intérêts composés', 'Budget', "Fonds d'urgence"]
+  },
+  {
+    slug: 'action-chere',
+    url: 'guide-action-chere.html',
+    question: 'Comment savoir si une action est chère ?',
+    title: "Comment savoir si une action est chère ? Ce qu'un seul chiffre ne peut jamais te dire",
+    shortAnswer: "Aucun chiffre unique ne permet de trancher. Le PER doit être comparé à celui d'entreprises du même secteur et à la croissance des bénéfices attendue — un PER élevé peut refléter une vraie croissance à venir, un PER faible peut cacher un vrai risque.",
+    category: 'decider',
+    difficulty: 'intermediaire',
+    readingTime: '8 min',
+    publishedAt: '2026-09-10',
+    updatedAt: '2026-09-10',
+    freshness: 'evergreen',
+    hasSimulation: false,
+    concepts: ['PER (Price Earning Ratio)', 'Dividende', 'Rendement du dividende', 'Capitalisation boursière']
   }
 ];
 function getGuideBySlug(slug){
