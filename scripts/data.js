@@ -3168,6 +3168,82 @@ function matchQuizCategorieForTerme(terme){
   }
   return null;
 }
+
+// ============================================================
+// Bibliothèque : pont notion -> maîtrise réelle (refonte visuelle du
+// 11/09/2026, sections 7/9/10 du prompt d'origine) — réutilise
+// matchQuizCategorieForTerme (ci-dessus, déjà réel) pour relier un terme
+// LIBRARY à sa vraie catégorie de quiz, puis les moteurs déjà réels de
+// maîtrise (getConceptMastery)/révision espacée (getDueSpacedReviews)/
+// faiblesse (getSkillMastery). Une notion sans correspondance de catégorie
+// de quiz (la majorité — LIBRARY compte 262 termes, bien plus fins que les
+// ~50 catégories de quiz) renvoie simplement null/false, jamais une valeur
+// devinée à sa place.
+// ============================================================
+function computeLibraryTermMastery(terme){
+  const categorie = matchQuizCategorieForTerme(terme);
+  return categorie ? getConceptMastery(categorie) : null;
+}
+function isLibraryTermDueForReview(terme){
+  const categorie = matchQuizCategorieForTerme(terme);
+  if(!categorie) return false;
+  return getDueSpacedReviews().some(d => d.categorie === categorie);
+}
+function isLibraryTermRecommended(terme){
+  const categorie = matchQuizCategorieForTerme(terme);
+  if(!categorie) return false;
+  return getSkillMastery().some(m => m.categorie === categorie && m.niveau === 'faible');
+}
+// Statistiques réelles de la page (section 7) : chaque chiffre est un vrai
+// comptage sur les 262 termes réels, jamais une valeur hardcodée.
+function computeLibraryStats(){
+  const categories = new Set(LIBRARY.map(l => l.categorie));
+  let maitrisees = 0, aRevoir = 0, recommandees = 0;
+  LIBRARY.forEach(l => {
+    const mastery = computeLibraryTermMastery(l.terme);
+    if(mastery && mastery.stage === 'maitrise') maitrisees++;
+    if(isLibraryTermDueForReview(l.terme)) aRevoir++;
+    if(isLibraryTermRecommended(l.terme)) recommandees++;
+  });
+  return {total: LIBRARY.length, univers: categories.size, maitrisees, aRevoir, recommandees};
+}
+// Progression réelle par univers (section 10, barre de progression + tri
+// "Progression") : moyenne des vrais paliers de maîtrise (CONCEPT_STAGE_ORDER,
+// 0 à 3) des SEULES notions de cet univers ayant une vraie correspondance de
+// catégorie de quiz — jamais une moyenne sur des notions sans donnée réelle.
+// Retourne null (jamais 0 %) si aucune notion mesurable n'existe encore dans
+// cet univers, pour ne jamais afficher une fausse progression nulle là où
+// c'est en fait la donnée qui manque.
+function computeLibraryUniversProgress(categorie){
+  const mesures = LIBRARY.filter(l => l.categorie === categorie)
+    .map(l => computeLibraryTermMastery(l.terme))
+    .filter(Boolean);
+  if(mesures.length === 0) return null;
+  const maxStage = CONCEPT_STAGE_ORDER.maitrise;
+  const avgStage = mesures.reduce((s, m) => s + CONCEPT_STAGE_ORDER[m.stage], 0) / mesures.length;
+  return Math.round((avgStage / maxStage) * 100);
+}
+
+// ---------- Historique de consultation (section 9, "Continuer votre
+// apprentissage") : jamais un système de progression fictif inventé pour
+// l'occasion — un simple horodatage réel de dernière consultation par
+// notion, la plus récente en tête, dédupliquée (revisiter une notion la
+// remonte en tête plutôt que créer un doublon). Plafonné à 20 entrées : un
+// historique de consultation récente, jamais un journal complet à conserver
+// indéfiniment. ----------
+const LIBRARY_VISITS_KEY = 'likanza-library-visits';
+function getLibraryVisits(){
+  const raw = safeGetJSON(LIBRARY_VISITS_KEY, []);
+  return Array.isArray(raw) ? raw : [];
+}
+function recordLibraryVisit(terme){
+  if(!LIBRARY.some(l => l.terme === terme)) return; // jamais un terme fabriqué enregistré
+  let visits = getLibraryVisits().filter(v => v.terme !== terme);
+  visits.unshift({terme, dateAjout: new Date().toISOString()});
+  visits = visits.slice(0, 20);
+  safeSetJSON(LIBRARY_VISITS_KEY, visits);
+}
+
 // Nudge de prérequis (LIBRARY.prerequis) devenu conditionnel (chantier
 // Onboarding intelligent, 31/08/2026, section 26 du prompt d'origine) :
 // jusqu'ici affiché systématiquement, quel que soit ce que l'utilisateur
