@@ -7,6 +7,29 @@
    unique : toujours plusieurs pistes, jamais un "fais ceci".
    ============================================================ */
 
+// Normalise pour une comparaison insensible aux accents/majuscules — jamais
+// une vraie compréhension du texte (aucun service de NLU n'existe sur ce
+// site statique, décision explicite de l'utilisateur du 11/09/2026) : un
+// simple rapprochement de mots-clés contre les VRAIS champs de
+// BUSINESS_PROBLEMS (titre/description/libraryTermes), assumé comme tel dans
+// le texte affiché — jamais présenté comme une analyse intelligente.
+function bizNormalizeText(s){
+  return (s || '').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g, '');
+}
+function matchBusinessProblemsByKeyword(query){
+  const words = bizNormalizeText(query).split(/[^a-z0-9]+/).filter(w => w.length >= 3);
+  if(words.length === 0) return [];
+  return BUSINESS_PROBLEMS
+    .map(p => {
+      const haystack = bizNormalizeText([p.titre, p.description, ...(p.libraryTermes || [])].join(' '));
+      const score = words.reduce((s, w) => s + (haystack.includes(w) ? 1 : 0), 0);
+      return {p, score};
+    })
+    .filter(r => r.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(r => r.p);
+}
+
 function renderBusinessProblemFinder(elId, opts){
   const el = document.getElementById(elId);
   if(!el) return;
@@ -15,14 +38,31 @@ function renderBusinessProblemFinder(elId, opts){
   function renderList(){
     el.innerHTML = `
       <p style="color:var(--text-dim);font-size:13px;line-height:1.6;margin-bottom:16px;">Choisis ce qui te bloque en ce moment. Pas de recette magique : des notions pour comprendre, un cas réel pour voir comment d'autres l'ont affronté, et des questions pour y réfléchir toi-même.</p>
-      <div class="card-grid">
-        ${BUSINESS_PROBLEMS.map(p => `
+      <div class="field" style="max-width:420px;margin-bottom:16px;">
+        <label for="${elId}-search">Ou décris ton problème avec tes mots</label>
+        <input type="text" id="${elId}-search" placeholder="Ex. j'ai du mal à fixer mon prix">
+        <p style="font-size:11px;color:var(--text-dim);margin-top:4px;">Un simple rapprochement de mots-clés avec les problèmes ci-dessous — pas une vraie compréhension de ta situation.</p>
+      </div>
+      <div class="card-grid" id="${elId}-grid"></div>`;
+    renderGrid(BUSINESS_PROBLEMS);
+    const searchInput = document.getElementById(`${elId}-search`);
+    searchInput.addEventListener('input', () => {
+      const q = searchInput.value.trim();
+      renderGrid(q.length >= 3 ? matchBusinessProblemsByKeyword(q) : BUSINESS_PROBLEMS);
+    });
+  }
+
+  function renderGrid(list){
+    const gridEl = document.getElementById(`${elId}-grid`);
+    if(!gridEl) return;
+    gridEl.innerHTML = list.length === 0
+      ? `<p style="font-size:13px;color:var(--text-dim);font-style:italic;">Aucun problème listé ne correspond à ces mots — essaie une autre formulation, ou choisis directement dans la liste ci-dessous en effaçant ta recherche.</p>`
+      : list.map(p => `
           <button type="button" class="card business-problem-card" data-problem="${p.id}" style="text-align:left;cursor:pointer;width:100%;">
             <h4 style="margin:0 0 6px;">${p.icon} ${p.titre}</h4>
             <span style="font-size:12px;color:var(--gold-bright);display:block;margin-top:10px;">Explorer →</span>
-          </button>`).join('')}
-      </div>`;
-    el.querySelectorAll('[data-problem]').forEach(btn => btn.addEventListener('click', () => renderDetail(btn.dataset.problem)));
+          </button>`).join('');
+    gridEl.querySelectorAll('[data-problem]').forEach(btn => btn.addEventListener('click', () => renderDetail(btn.dataset.problem)));
   }
 
   function fieldBlock(title, badgeKind, content){

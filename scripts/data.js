@@ -7030,6 +7030,165 @@ function renderBusinessDiagnostics(elId){
   renderNextStepCard(`${elId}-nextstep`, {domainKey: 'business'});
 }
 
+// ============================================================
+// ---------- « Santé de mon activité » + « Tes priorités » côté Business
+// (refonte "assistant de décision" du 11/09/2026, miroir de
+// computeHealthScore/computeLabPriorities côté personnel) : même échelle de
+// points par niveau (HEALTH_SCORE_NIVEAU_POINTS), mêmes règles déjà réelles
+// (computeBusinessDiagnostics) — jamais un second moteur de diagnostic. Un
+// axe sans donnée réelle est "insuffisant", jamais une valeur neutre
+// inventée à sa place.
+// ============================================================
+function computeBusinessHealthScore(ctx){
+  const diagnostics = (ctx && ctx.diagnostics) || [];
+  const runway = ctx && ctx.runway;
+  const snapshot = ctx && ctx.snapshot;
+  const findDiag = prefixes => diagnostics.find(d => prefixes.some(p => d.id.startsWith(p))) || null;
+  const axes = {};
+
+  const rentaDiag = findDiag(['resultat-negatif', 'marge-nette-']);
+  axes.rentabilite = {label: 'Rentabilité', insuffisant: !rentaDiag};
+  if(rentaDiag) Object.assign(axes.rentabilite, {score: HEALTH_SCORE_NIVEAU_POINTS[rentaDiag.niveau], niveau: rentaDiag.niveau, detail: rentaDiag.message});
+
+  const runwayDiag = findDiag(['runway-']);
+  axes.tresorerie = {label: 'Trésorerie', insuffisant: !runwayDiag};
+  if(runwayDiag) Object.assign(axes.tresorerie, {score: HEALTH_SCORE_NIVEAU_POINTS[runwayDiag.niveau], niveau: runwayDiag.niveau, detail: runwayDiag.message});
+  else if(runway && runway.burnMensuel === 0 && snapshot && snapshot.ca > 0) Object.assign(axes.tresorerie, {insuffisant: false, score: 100, niveau: 'ok', detail: 'Activité profitable, pas de burn mensuel identifié.'});
+
+  const ltvCacDiag = findDiag(['ltv-cac-']);
+  axes.acquisition = {label: 'Acquisition clients', insuffisant: !ltvCacDiag};
+  if(ltvCacDiag) Object.assign(axes.acquisition, {score: HEALTH_SCORE_NIVEAU_POINTS[ltvCacDiag.niveau], niveau: ltvCacDiag.niveau, detail: ltvCacDiag.message});
+
+  const known = Object.values(axes).filter(a => !a.insuffisant);
+  const globalScore = known.length > 0 ? Math.round(known.reduce((s, a) => s + a.score, 0) / known.length) : null;
+  return {axes, globalScore, axesConnues: known.length, axesTotal: Object.keys(axes).length};
+}
+
+const BUSINESS_PRIORITY_SEVERITY = {alerte: 3, attention: 2};
+// title + outil réel du Business Lab par id de diagnostic déjà réel — jamais
+// un calcul de scénario dupliqué ici : chaque priorité renvoie directement
+// vers l'outil déjà réel/testé qui traite ce sujet (Scénarios & stress-test,
+// Runway, Unit Economics), plutôt que de refaire un mini-calcul parallèle
+// qui pourrait diverger des formules déjà en place.
+const BUSINESS_DIAGNOSTIC_PRIORITY_META = {
+  'resultat-negatif': {titre: 'Repasser en résultat positif', outilId: 'scenarios', outilLabel: 'Tester un scénario →'},
+  'marge-nette-faible': {titre: 'Renforcer ta marge nette', outilId: 'scenarios', outilLabel: 'Tester un scénario →'},
+  'runway-court': {titre: 'Sécuriser ta trésorerie', outilId: 'runway', outilLabel: 'Voir mon Runway →'},
+  'runway-moyen': {titre: 'Surveiller ta trésorerie', outilId: 'runway', outilLabel: 'Voir mon Runway →'},
+  'ltv-cac-faible': {titre: 'Revoir ton coût d\'acquisition', outilId: 'unit-economics', outilLabel: 'Revoir Unit Economics →'},
+  'ltv-cac-moyen': {titre: 'Améliorer ton ratio LTV/CAC', outilId: 'unit-economics', outilLabel: 'Revoir Unit Economics →'}
+};
+function buildBusinessPriorityFromDiagnostic(diag){
+  const meta = BUSINESS_DIAGNOSTIC_PRIORITY_META[diag.id] || {titre: 'Point à surveiller', outilId: null, outilLabel: null};
+  return {id: 'bdiag-' + diag.id, niveau: diag.niveau, titre: meta.titre, texte: diag.message, outilId: meta.outilId, outilLabel: meta.outilLabel};
+}
+function computeBusinessPriorities(diagnostics){
+  const candidates = (diagnostics || [])
+    .filter(d => d.niveau === 'alerte' || d.niveau === 'attention')
+    .map(d => ({severity: BUSINESS_PRIORITY_SEVERITY[d.niveau] || 1, card: buildBusinessPriorityFromDiagnostic(d)}));
+  candidates.sort((a, b) => b.severity - a.severity);
+  return candidates.slice(0, 3).map(c => c.card);
+}
+
+const BUSINESS_HEALTH_AXIS_LABELS = {ok: 'Bon', attention: 'À améliorer', alerte: 'Insuffisant'};
+function renderBusinessHealthCard(health){
+  if(health.axesConnues === 0) return '';
+  const axesList = Object.values(health.axes);
+  return `
+    <div class="lab-health-card">
+      <div class="lab-health-score-wrap">
+        <div class="lab-health-score" title="Un indicateur pédagogique calculé à partir de ce que tu as renseigné — jamais une notation scientifique absolue.">${health.globalScore !== null ? health.globalScore : '—'} / 100</div>
+        <div class="lab-health-score-sub">Santé de l'activité ⓘ</div>
+      </div>
+      <div class="lab-health-axes">
+        ${axesList.map(a => `
+          <div class="lab-health-axis">
+            <span class="lab-health-dot ${a.insuffisant ? 'insuffisant' : a.niveau}"></span>
+            <span class="lab-health-axis-label">${a.label} :</span>
+            <span class="lab-health-axis-status">${a.insuffisant ? 'Pas encore assez de données' : BUSINESS_HEALTH_AXIS_LABELS[a.niveau]}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+function renderBusinessPriorities(diagnostics){
+  const priorities = computeBusinessPriorities(diagnostics);
+  if(priorities.length === 0){
+    return `<p style="font-size:13px;color:var(--text-dim);">Rien à signaler pour l'instant sur les données renseignées — reviens quand ta situation aura évolué.</p>`;
+  }
+  return `
+    <div class="lab-priorities-grid">
+      ${priorities.map((p, i) => `
+        <div class="lab-priority-card ${p.niveau}" id="bizPriority-${i}">
+          <div class="lab-priority-head">
+            <span class="lab-priority-num">${i + 1}</span>
+            <div>
+              <div class="lab-priority-title">${p.titre}</div>
+              <p class="lab-priority-text">${p.texte}</p>
+            </div>
+          </div>
+          ${p.outilId ? `<div class="lab-priority-actions"><button type="button" class="btn btn-sm btn-gold" id="bizPriority-${i}-cta" data-outil="${p.outilId}">${p.outilLabel}</button></div>` : ''}
+        </div>`).join('')}
+    </div>`;
+}
+// 4 entrées (section "assistant de décision", même esprit que le prompt
+// d'origine) : chacune pointe vers une section déjà réelle de cette page ou
+// vers l'outil "Construire mon idée" déjà réel — jamais une ancre fabriquée.
+const BUSINESS_HOME_ENTRIES = [
+  {icon: '🏢', titre: 'Comprendre mon entreprise', desc: 'Renseigne ou revois ton profil.', anchor: 'business-profile'},
+  {icon: '🧭', titre: 'Résoudre un problème', desc: 'Choisis ce qui te bloque en ce moment.', anchor: 'business-probleme'},
+  {icon: '🧪', titre: 'Tester une décision', desc: 'Scénarios, pricing, recrutement, valorisation…', anchor: 'business-lab'},
+  {icon: '🚀', titre: 'Préparer un projet', desc: "Structurer une idée avant de te lancer.", href: 'construire-son-projet.html'}
+];
+function renderBusinessHome(elId, businessLabElId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const profile = getBusinessProfile();
+  const snapshot = computeBusinessProfileSnapshot(profile);
+  const runway = computeRunway(profile);
+  const unitEconomics = safeGetJSON('likanza-unit-economics', null) ? computeUnitEconomics(safeGetJSON('likanza-unit-economics', {})) : null;
+
+  const entriesHtml = `
+    <div class="lab-entry-grid">
+      ${BUSINESS_HOME_ENTRIES.map(e => e.href
+        ? `<a href="${e.href}" class="lab-entry-card"><span class="lab-entry-icon">${e.icon}</span><span class="lab-entry-title">${e.titre}</span><span class="lab-entry-desc">${e.desc}</span></a>`
+        : `<button type="button" class="lab-entry-card" data-anchor="${e.anchor}"><span class="lab-entry-icon">${e.icon}</span><span class="lab-entry-title">${e.titre}</span><span class="lab-entry-desc">${e.desc}</span></button>`
+      ).join('')}
+    </div>`;
+
+  if(snapshot.ca === 0){
+    el.innerHTML = `
+      ${entriesHtml}
+      <p style="font-size:13px;color:var(--text-dim);margin-top:18px;">Renseigne d'abord "Mon profil entreprise" pour activer la santé de ton activité et tes priorités.</p>`;
+  } else {
+    const diagnostics = computeBusinessDiagnostics({snapshot, runway, unitEconomics});
+    const health = computeBusinessHealthScore({diagnostics, runway, snapshot});
+    el.innerHTML = `
+      ${entriesHtml}
+      <div style="margin-top:20px;">${renderBusinessHealthCard(health)}</div>
+      <div style="margin-top:4px;">
+        <span class="section-eyebrow" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);">Tes priorités</span>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:2px;margin-bottom:14px;">Sélectionnées automatiquement à partir de ta situation — jamais plus de 3 à la fois.</p>
+        <div class="lab-priorities-section">${renderBusinessPriorities(diagnostics)}</div>
+      </div>`;
+    computeBusinessPriorities(diagnostics).forEach((p, i) => {
+      if(!p.outilId) return;
+      const btn = document.getElementById(`bizPriority-${i}-cta`);
+      if(!btn) return;
+      btn.addEventListener('click', () => {
+        const toolBtn = document.getElementById(`${businessLabElId}-${p.outilId}`);
+        if(toolBtn){ toolBtn.click(); toolBtn.scrollIntoView({behavior:'smooth', block:'start'}); }
+      });
+    });
+  }
+
+  el.querySelectorAll('[data-anchor]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = document.getElementById(btn.dataset.anchor);
+      if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+}
+
 // 30 secondes / 2 minutes / Approfondir — réutilise les champs déjà existants
 // de LIBRARY (simple/detail), zéro contenu dupliqué. "Approfondir" pointe
 // vers la fiche complète de la Bibliothèque (exemple, avantages, erreurs...).
@@ -11118,6 +11277,7 @@ function renderCompanyProfile(elId){
     // section n'existe pas sur la page (getElementById renvoie null),
     // renderBusinessDiagnostics ressort silencieusement sans rien faire.
     if(typeof renderBusinessDiagnostics === 'function') renderBusinessDiagnostics('businessDiagnostics');
+    if(typeof renderBusinessHome === 'function') renderBusinessHome('businessHome', 'businessLab');
   }
 
   document.getElementById(`${elId}-revenueMode`).addEventListener('change', () => { updateModeVisibility(document.getElementById(`${elId}-revenueMode`).value); update(); });

@@ -1,12 +1,17 @@
 /* ============================================================
-   LIKANZA ACADEMY — Laboratoire personnel : refonte "assistant de décision"
-   (11/09/2026). Tous les tokens viennent de design-system.css (--onyx/--bg/
-   --bg-alt/--gold/--gold-bright/--emerald/--bordeaux/--hairline/--text/
-   --text-dim) — aucune nouvelle couleur introduite. Les 8 onglets/19 outils
-   existants ne sont pas touchés visuellement ici (leur CSS reste dans
-   design-system.css) : ce fichier ne couvre que les 3 nouveaux blocs
-   (intake progressif / tableau de bord santé+priorités / comparateur de
-   scénarios) ajoutés AU-DESSUS, jamais en remplacement.
+   LIKANZA ACADEMY — Laboratoire : refonte "assistant de décision"
+   (11/09/2026). Partagé par laboratoire.html (Personnel) ET business-lab.html
+   (Professionnel) — les classes .lab-* sont volontairement génériques
+   ("le Laboratoire", pas "le Laboratoire personnel"), les deux univers
+   réutilisent le même tableau de bord santé+priorités et le même
+   comparateur de scénarios plutôt que d'avoir chacun leur propre feuille de
+   style dupliquée. Tous les tokens viennent de design-system.css (--onyx/
+   --bg/--bg-alt/--gold/--gold-bright/--emerald/--bordeaux/--hairline/--text/
+   --text-dim) — aucune nouvelle couleur introduite. Les outils déjà
+   existants des deux pages ne sont pas touchés visuellement ici (leur CSS
+   reste dans design-system.css) : ce fichier ne couvre que les blocs ajoutés
+   AU-DESSUS (entrées / intake progressif / santé+priorités / comparateur de
+   scénarios), jamais en remplacement.
    ============================================================ */
 
 /* ---------- Intake progressif ("Ma situation financière") ---------- */
@@ -28,6 +33,19 @@
 .lab-goal-pill{background:var(--bg);border:1px solid var(--hairline);border-radius:var(--radius);padding:10px 12px;text-align:left;font-size:12.5px;cursor:pointer;color:var(--text);transition:border-color .15s ease;}
 .lab-goal-pill:hover{border-color:var(--gold);}
 .lab-goal-pill.active{border-color:var(--gold);background:rgba(184,151,78,0.1);color:var(--gold-bright);}
+
+/* ---------- Entrées (Personnel/Business) ---------- */
+.lab-entry-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;}
+.lab-entry-card{
+  display:flex;flex-direction:column;gap:4px;text-align:left;
+  background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);
+  padding:16px 18px;cursor:pointer;color:var(--text);text-decoration:none;
+  font-family:inherit;transition:border-color .15s ease;
+}
+.lab-entry-card:hover{border-color:var(--gold);}
+.lab-entry-icon{font-size:20px;}
+.lab-entry-title{font-family:'Cormorant Garamond',serif;font-size:15.5px;font-weight:600;margin-top:4px;}
+.lab-entry-desc{font-size:12px;color:var(--text-dim);}
 
 /* ---------- Santé financière ---------- */
 .lab-health-card{
