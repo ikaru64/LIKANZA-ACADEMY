@@ -155,6 +155,65 @@ const t = createSuite('laboratoire.assistant');
   t.ok(summaryHtml.includes('piste'), "le résumé cite bien un vrai nombre de pistes identifiées");
 }
 
+// ---------- Comparateur A/B/C + "Mes simulations" (sections 8-9, 16-17) ----------
+{
+  const { window, document } = loadLaboratoirePage({ seed: w => {
+    const dateCible = new Date(); dateCible.setMonth(dateCible.getMonth()+18);
+    w.localStorage.setItem('likanza-financial-goals', JSON.stringify([{id:'g1', nom:'Voiture', montantCible:12000, montantActuel:0, versementMensuel:380, dateCible: dateCible.toISOString().slice(0,10), dateAjout:new Date().toISOString()}]));
+  }});
+  const objectifCard = document.querySelector('.lab-priority-card');
+  t.ok(!!objectifCard, "une priorité objectif est bien générée");
+  const scenarioBtn = document.querySelector('[id$="-cta-scenario-objectif"]');
+  t.ok(!!scenarioBtn, "le bouton \"Tester ce scénario\" de l'objectif est bien présent");
+  scenarioBtn.dispatchEvent(new window.Event('click'));
+
+  const detailId = scenarioBtn.id.replace('-cta-scenario-objectif', '-detail');
+  const detailHtml = document.getElementById(detailId).innerHTML;
+  t.ok(detailHtml.includes('lab-scenario-compare'), "le vrai composant de comparaison A/B/C (réutilisable) est bien rendu");
+  t.ok(detailHtml.includes('Scénario A (+50 €)') && detailHtml.includes('Scénario B (+100 €)') && detailHtml.includes('Scénario C (+200 €)'), "les 3 vraies colonnes de scénario sont bien présentes");
+  t.ok(!detailHtml.includes('class="best"'), "le comparateur ne désigne jamais un \"gagnant\" (même discipline que les tableaux de Guides)");
+
+  // Sauvegarde réelle d'un scénario testé.
+  const saveBtn = document.querySelector(`#${detailId} .lab-save-sim-btn`);
+  t.ok(!!saveBtn, "un bouton \"Sauvegarder ce scénario\" réel est bien présent dans le détail");
+  saveBtn.dispatchEvent(new window.Event('click'));
+  const sims = window.getLabSimulations();
+  t.equal(sims.length, 1, "sauvegarder un scénario le persiste bien réellement via saveLabSimulation");
+  t.ok(sims[0].label.includes('Voiture'), "le libellé sauvegardé référence bien le vrai objectif concerné");
+  t.ok(saveBtn.disabled && saveBtn.textContent.includes('Sauvegardé'), "le bouton se désactive bien après la sauvegarde réelle, jamais un double-enregistrement silencieux");
+
+  // "Mes simulations" reflète bien la vraie sauvegarde.
+  const simsListHtml = document.getElementById('labSimulationsList').innerHTML;
+  t.ok(simsListHtml.includes(sims[0].label), "la simulation réellement sauvegardée apparaît bien dans \"Mes simulations\"");
+
+  // Renommer réellement.
+  const renameBtn = document.querySelector('.lab-sim-rename');
+  renameBtn.dispatchEvent(new window.Event('click'));
+  const renameInput = document.getElementById(`simrename-${sims[0].id}`);
+  renameInput.value = 'Voiture — mon scénario préféré';
+  renameInput.dispatchEvent(new window.Event('blur'));
+  t.equal(window.getLabSimulations()[0].label, 'Voiture — mon scénario préféré', "renommer une simulation la persiste bien réellement (renameLabSimulation)");
+
+  // Dupliquer réellement.
+  const dupBtn = document.querySelector('.lab-sim-duplicate');
+  dupBtn.dispatchEvent(new window.Event('click'));
+  t.equal(window.getLabSimulations().length, 2, "dupliquer une simulation en crée bien réellement une seconde");
+  t.ok(window.getLabSimulations()[0].label.includes('(copie)'), "la copie est bien étiquetée comme telle");
+
+  // Comparer 2 simulations réelles : cocher les 2 cases affiche bien le vrai comparateur.
+  const checks = document.querySelectorAll('.lab-sim-compare-check');
+  t.equal(checks.length, 2, "2 cases à cocher \"Comparer\" sont bien présentes pour les 2 vraies simulations");
+  checks[0].checked = true; checks[0].dispatchEvent(new window.Event('change'));
+  checks[1].checked = true; checks[1].dispatchEvent(new window.Event('change'));
+  const compareHtml = document.getElementById('labSimCompareResult').innerHTML;
+  t.ok(compareHtml.includes('lab-scenario-compare'), "cocher 2 simulations affiche bien une vraie comparaison A/B (réutilise le même composant)");
+
+  // Supprimer réellement.
+  const deleteBtn = document.querySelector('.lab-sim-delete');
+  deleteBtn.dispatchEvent(new window.Event('click'));
+  t.equal(window.getLabSimulations().length, 1, "supprimer une simulation la retire bien réellement du stockage");
+}
+
 const summary = t.summary();
 console.log(`\n${t.name} : ${summary.total - summary.failed}/${summary.total} OK`);
 process.exit(summary.failed > 0 ? 1 : 0);

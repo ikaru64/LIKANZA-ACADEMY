@@ -224,24 +224,42 @@ function renderLabPriorityDetail(p){
     return `
       ${p.savings.lines.map(l => `<div class="lab-savings-row"><span>${l.categorie}</span><span class="mono">${fmtEUR(l.montantActuel)} → piste possible : −${fmtEUR(l.potentiel)}/mois</span></div>`).join('')}
       <p style="font-size:13px;margin-top:10px;">Économie potentielle : <strong class="mono" style="color:var(--emerald);">${fmtEUR(p.savings.total)}/mois</strong></p>
-      <p class="disclaimer-box" style="margin-top:8px;">Une piste possible, pas une obligation : ${LAB_DISCRETIONARY_REDUCTION_PCT}% de réduction sur des postes réellement discrétionnaires (jamais le loyer ou l'alimentation), à tester et adapter à ta vraie situation.</p>`;
+      <p class="disclaimer-box" style="margin-top:8px;">Une piste possible, pas une obligation : ${LAB_DISCRETIONARY_REDUCTION_PCT}% de réduction sur des postes réellement discrétionnaires (jamais le loyer ou l'alimentation), à tester et adapter à ta vraie situation.</p>
+      <button type="button" class="btn btn-sm lab-save-sim-btn" data-sim-type="depenses" data-sim-label="Réduction dépenses discrétionnaires" data-sim-result="Réduire Loisirs/Abonnements/Autre de ${LAB_DISCRETIONARY_REDUCTION_PCT}% libérerait environ ${fmtEUR(p.savings.total)}/mois.">💾 Sauvegarder ce scénario</button>`;
   }
   if(p.type === 'urgence' && p.urgence){
+    const columns = [{key: 'actuel', label: 'Situation actuelle'}, ...p.urgence.scenarios.map((s, i) => ({key: 'abc'[i], label: `Scénario ${'ABC'[i]}`}))];
+    const rows = [
+      {label: 'Versement mensuel', values: {actuel: fmtEUR(0), ...Object.fromEntries(p.urgence.scenarios.map((s, i) => ['abc'[i], fmtEUR(s.versement)]))}},
+      {label: 'Fonds d\'urgence atteint dans', values: {actuel: '—', ...Object.fromEntries(p.urgence.scenarios.map((s, i) => ['abc'[i], `${s.mois} mois`]))}}
+    ];
     return `
       <p style="font-size:13px;">Montant manquant pour atteindre ${fmtEUR(p.urgence.cible)} (≈ 3 mois de dépenses) : <strong class="mono">${fmtEUR(p.urgence.manquant)}</strong></p>
+      ${renderLabScenarioCompareTable(columns, rows)}
+      <p class="disclaimer-box" style="margin-top:8px;">Calcul mécanique (montant manquant ÷ versement mensuel), jamais une prédiction — le rythme réellement tenable dépend de ta situation.</p>
       <div class="lab-scenario-pills">
-        ${p.urgence.scenarios.map(s => `<button type="button" class="pill lab-urgence-scenario-btn" data-versement="${s.versement}">${fmtEUR(s.versement)}/mois → ${s.mois} mois</button>`).join('')}
-      </div>
-      <p style="font-size:12px;color:var(--text-dim);" id="${p.id}-scenario-result"></p>`;
+        ${p.urgence.scenarios.map((s, i) => `<button type="button" class="btn btn-sm lab-save-sim-btn" data-sim-type="urgence" data-sim-label="Fonds d'urgence — ${fmtEUR(s.versement)}/mois" data-sim-result="Avec ${fmtEUR(s.versement)}/mois, fonds d'urgence atteint en ${s.mois} mois (manquant : ${fmtEUR(p.urgence.manquant)}).">💾 Sauvegarder le scénario ${'ABC'[i]}</button>`).join('')}
+      </div>`;
   }
   if(p.type === 'objectif'){
     const g = p.goal;
     const stepsUp = [50, 100, 200];
+    const base = computeGoalProjection(g);
+    const scenarios = stepsUp.map(step => ({step, proj: computeGoalProjection({...g, versementMensuel: g.versementMensuel + step})}));
+    const columns = [{key: 'actuel', label: 'Situation actuelle'}, ...scenarios.map((s, i) => ({key: 'abc'[i], label: `Scénario ${'ABC'[i]} (+${s.step} €)`}))];
+    const rows = [
+      {label: 'Versement mensuel', values: {actuel: fmtEUR(g.versementMensuel), ...Object.fromEntries(scenarios.map((s, i) => ['abc'[i], fmtEUR(g.versementMensuel + s.step)]))}},
+      {label: 'Objectif atteint dans', values: {
+        actuel: base && base.moisNecessaires !== null ? `${base.moisNecessaires} mois` : '—',
+        ...Object.fromEntries(scenarios.map((s, i) => ['abc'[i], (s.proj && s.proj.moisNecessaires !== null) ? `${s.proj.moisNecessaires} mois` : '—']))
+      }}
+    ];
     return `
+      ${renderLabScenarioCompareTable(columns, rows)}
+      <p class="disclaimer-box" style="margin-top:8px;">Calcul mécanique à partir du montant manquant et du versement mensuel — jamais une garantie de rythme d'épargne tenable.</p>
       <div class="lab-scenario-pills">
-        ${stepsUp.map(step => `<button type="button" class="pill lab-goal-scenario-btn" data-goal-id="${g.id}" data-step="${step}">+${step} €/mois</button>`).join('')}
-      </div>
-      <p style="font-size:12px;color:var(--text-dim);" id="${p.id}-scenario-result"></p>`;
+        ${scenarios.map((s, i) => `<button type="button" class="btn btn-sm lab-save-sim-btn" data-sim-type="objectif" data-sim-label="${g.nom} — scénario +${s.step} €/mois" data-sim-result="${(s.proj && s.proj.moisNecessaires !== null) ? `Objectif « ${g.nom} » atteint en ${s.proj.moisNecessaires} mois avec ${fmtEUR(g.versementMensuel + s.step)}/mois.` : 'Calcul impossible avec ces montants.'}">💾 Sauvegarder le scénario ${'ABC'[i]}</button>`).join('')}
+      </div>`;
   }
   return '';
 }
@@ -261,28 +279,24 @@ function wireLabPriorityCard(elId, p){
       if(willOpen && !detailEl.dataset.rendered){
         detailEl.innerHTML = renderLabPriorityDetail(p);
         detailEl.dataset.rendered = '1';
-        if(p.type === 'urgence'){
-          detailEl.querySelectorAll('.lab-urgence-scenario-btn').forEach(b => b.addEventListener('click', () => {
-            const versement = +b.dataset.versement;
-            const mois = Math.ceil(p.urgence.manquant / versement);
-            document.getElementById(`${p.id}-scenario-result`).textContent = `Avec ${fmtEUR(versement)}/mois, tu atteindrais ton fonds d'urgence en environ ${mois} mois.`;
-          }));
-        }
-        if(p.type === 'objectif'){
-          detailEl.querySelectorAll('.lab-goal-scenario-btn').forEach(b => b.addEventListener('click', () => {
-            const goal = getFinancialGoals().find(g => g.id === b.dataset.goalId);
-            if(!goal) return;
-            const step = +b.dataset.step;
-            const base = computeGoalProjection(goal);
-            const withExtra = computeGoalProjection({...goal, versementMensuel: goal.versementMensuel + step});
-            const resEl = document.getElementById(`${p.id}-scenario-result`);
-            if(!base || !withExtra || base.moisNecessaires === null || withExtra.moisNecessaires === null){ resEl.textContent = 'Calcul impossible avec ces montants.'; return; }
-            const gain = base.moisNecessaires - withExtra.moisNecessaires;
-            resEl.textContent = gain > 0
-              ? `Avec +${step} €/mois, tu atteindrais cet objectif environ ${gain} mois plus tôt (${withExtra.moisNecessaires} mois au lieu de ${base.moisNecessaires}).`
-              : `Avec +${step} €/mois, le délai resterait d'environ ${withExtra.moisNecessaires} mois.`;
-          }));
-        }
+        wireLabSaveSimButtons(detailEl);
+      }
+    });
+  });
+}
+
+// Boutons "💾 Sauvegarder ce scénario" (section 17) : partagés par tous les
+// types de détail de priorité — un seul point de câblage, jamais dupliqué
+// par type. label/resultLabel viennent déjà du HTML rendu (data-sim-*),
+// jamais recalculés une 2e fois ici.
+function wireLabSaveSimButtons(root){
+  root.querySelectorAll('.lab-save-sim-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const saved = saveLabSimulation({type: btn.dataset.simType, label: btn.dataset.simLabel, resultLabel: btn.dataset.simResult});
+      if(saved){
+        btn.textContent = '✓ Sauvegardé';
+        btn.disabled = true;
+        renderLabSimulationsList();
       }
     });
   });
@@ -313,6 +327,75 @@ function renderLabPriorities(dash){
   return {html, priorities};
 }
 
+// ---------- Mes simulations (section 17) : liste des scénarios réellement
+// sauvegardés (saveLabSimulation, data.js), avec renommer/dupliquer/
+// supprimer/comparer. La comparaison réutilise le MÊME composant que les
+// scénarios A/B/C (renderLabScenarioCompareTable), jamais un second tableau
+// ad hoc. ----------
+let labCompareSelection = [];
+function renderLabSimCompareResult(){
+  const el = document.getElementById('labSimCompareResult');
+  if(!el) return;
+  if(labCompareSelection.length < 2){ el.innerHTML = ''; return; }
+  const sims = getLabSimulations().filter(s => labCompareSelection.includes(s.id));
+  if(sims.length < 2){ el.innerHTML = ''; return; }
+  const columns = sims.map((s, i) => ({key: 'c' + i, label: s.label}));
+  const rows = [{label: 'Résultat', values: Object.fromEntries(sims.map((s, i) => ['c' + i, s.resultLabel]))}];
+  el.innerHTML = `<span class="smallcaps">Comparaison de tes scénarios sauvegardés</span>${renderLabScenarioCompareTable(columns, rows)}`;
+}
+function renderLabSimulationsList(){
+  const el = document.getElementById('labSimulationsList');
+  if(!el) return;
+  const sims = getLabSimulations();
+  if(sims.length === 0){
+    el.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Aucune simulation sauvegardée pour l'instant — teste un scénario dans une priorité ci-dessus, puis clique "💾 Sauvegarder".</p>`;
+    return;
+  }
+  labCompareSelection = labCompareSelection.filter(id => sims.some(s => s.id === id));
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:8px;">
+      ${sims.map(s => `
+        <div class="card" style="padding:14px 16px;">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;">
+            <div style="flex:1;min-width:180px;">
+              <label style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--text-dim);cursor:pointer;"><input type="checkbox" class="lab-sim-compare-check" data-id="${s.id}" ${labCompareSelection.includes(s.id) ? 'checked' : ''}> Comparer</label>
+              <h4 style="font-size:14px;margin:4px 0 2px;" id="simlabel-${s.id}">${s.label}</h4>
+              <p style="font-size:11.5px;color:var(--text-dim);">${new Date(s.dateAjout).toLocaleDateString('fr-FR', {day:'numeric', month:'long'})} · ${s.resultLabel}</p>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <button type="button" class="btn btn-sm lab-sim-rename" data-id="${s.id}">Renommer</button>
+              <button type="button" class="btn btn-sm lab-sim-duplicate" data-id="${s.id}">Dupliquer</button>
+              <button type="button" class="btn btn-sm lab-sim-delete" data-id="${s.id}">Supprimer</button>
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>
+    <div id="labSimCompareResult" style="margin-top:14px;"></div>`;
+
+  el.querySelectorAll('.lab-sim-compare-check').forEach(cb => cb.addEventListener('change', () => {
+    if(cb.checked) labCompareSelection.push(cb.dataset.id);
+    else labCompareSelection = labCompareSelection.filter(id => id !== cb.dataset.id);
+    renderLabSimCompareResult();
+  }));
+  el.querySelectorAll('.lab-sim-rename').forEach(btn => btn.addEventListener('click', () => {
+    const sim = sims.find(s => s.id === btn.dataset.id);
+    const labelEl = document.getElementById(`simlabel-${sim.id}`);
+    labelEl.innerHTML = `<input type="text" value="${sim.label}" style="font-size:13px;padding:4px 6px;width:100%;" id="simrename-${sim.id}">`;
+    const input = document.getElementById(`simrename-${sim.id}`);
+    input.focus();
+    const commit = () => { renameLabSimulation(sim.id, input.value); renderLabSimulationsList(); };
+    input.addEventListener('blur', commit);
+    input.addEventListener('keydown', e => { if(e.key === 'Enter') input.blur(); });
+  }));
+  el.querySelectorAll('.lab-sim-duplicate').forEach(btn => btn.addEventListener('click', () => { duplicateLabSimulation(btn.dataset.id); renderLabSimulationsList(); }));
+  el.querySelectorAll('.lab-sim-delete').forEach(btn => btn.addEventListener('click', () => {
+    removeLabSimulation(btn.dataset.id);
+    labCompareSelection = labCompareSelection.filter(id => id !== btn.dataset.id);
+    renderLabSimulationsList();
+  }));
+  renderLabSimCompareResult();
+}
+
 function renderLabHome(){
   const el = document.getElementById('labHome');
   if(!el) return;
@@ -333,9 +416,16 @@ function renderLabHome(){
     <div id="labOptimizeSummary" style="display:none;margin-bottom:14px;"></div>
     <div class="lab-priorities-section">${prioritiesHtml}</div>
     <p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">Cette analyse utilise les mêmes données que <a href="parcours.html" style="color:var(--gold-bright);">Mon Univers Financier</a> — les renseigner une fois suffit pour les deux.</p>
-    <button type="button" class="btn btn-sm" id="labEditSituationBtn" style="margin-top:10px;">⚙️ Modifier ma situation</button>`;
+    <button type="button" class="btn btn-sm" id="labEditSituationBtn" style="margin-top:10px;">⚙️ Modifier ma situation</button>
+
+    <div style="margin-top:28px;">
+      <span style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);">Mes simulations</span>
+      <p style="font-size:12px;color:var(--text-dim);margin:2px 0 12px;">Les scénarios que tu as sauvegardés depuis tes priorités — coche-en 2 ou plus pour les comparer.</p>
+      <div id="labSimulationsList"></div>
+    </div>`;
 
   priorities.forEach((p, i) => wireLabPriorityCard(`labPriority-${i}`, p));
+  renderLabSimulationsList();
 
   document.getElementById('labOptimizeBtn').addEventListener('click', () => {
     const summaryEl = document.getElementById('labOptimizeSummary');

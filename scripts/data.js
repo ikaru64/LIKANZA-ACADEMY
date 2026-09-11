@@ -9800,6 +9800,77 @@ function linkLifeProjectSimulation(projectId, simulation){
 function removeLifeProject(id){
   localStorage.setItem(LIFE_PROJECTS_KEY, JSON.stringify(getLifeProjects().filter(p => p.id !== id)));
 }
+
+// ============================================================
+// ---------- « Mes simulations » (refonte "assistant de décision" du
+// 11/09/2026, section 17) : distinct de likanza-life-projects (un projet =
+// un objectif ; une simulation = l'instantané d'UN scénario testé, avec ses
+// vrais paramètres et son vrai résultat, pour pouvoir le retrouver/renommer/
+// dupliquer/comparer plus tard). Volontairement générique (type + params +
+// resultLabel en texte libre déjà calculé par l'appelant) plutôt qu'un
+// schéma par outil : réutilisable par n'importe quel scénario du
+// Laboratoire (priorités personnelles aujourd'hui, Business demain) sans
+// dupliquer cette mécanique de sauvegarde à chaque nouvel outil. Plafonné à
+// 30 : un historique récent, jamais un journal illimité. ----------
+// ============================================================
+const LAB_SIMULATIONS_KEY = 'likanza-lab-simulations';
+function getLabSimulations(){
+  const raw = safeGetJSON(LAB_SIMULATIONS_KEY, []);
+  return Array.isArray(raw) ? raw : [];
+}
+function saveLabSimulation(sim){
+  if(!sim || typeof sim.label !== 'string' || !sim.label.trim() || typeof sim.type !== 'string' || !sim.type) return null;
+  if(typeof sim.resultLabel !== 'string' || !sim.resultLabel.trim()) return null;
+  const list = getLabSimulations();
+  const entry = {
+    id: 'sim-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8),
+    label: sim.label.trim().slice(0, 80),
+    type: sim.type,
+    params: (sim.params && typeof sim.params === 'object') ? sim.params : {},
+    resultLabel: sim.resultLabel.trim().slice(0, 200),
+    dateAjout: new Date().toISOString()
+  };
+  list.unshift(entry);
+  safeSetJSON(LAB_SIMULATIONS_KEY, list.slice(0, 30));
+  return entry;
+}
+function renameLabSimulation(id, newLabel){
+  if(typeof newLabel !== 'string' || !newLabel.trim()) return null;
+  const list = getLabSimulations();
+  const sim = list.find(s => s.id === id);
+  if(!sim) return null;
+  sim.label = newLabel.trim().slice(0, 80);
+  safeSetJSON(LAB_SIMULATIONS_KEY, list);
+  return sim;
+}
+function duplicateLabSimulation(id){
+  const list = getLabSimulations();
+  const sim = list.find(s => s.id === id);
+  if(!sim) return null;
+  const copy = {...sim, id: 'sim-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8), label: sim.label + ' (copie)', dateAjout: new Date().toISOString()};
+  list.unshift(copy);
+  safeSetJSON(LAB_SIMULATIONS_KEY, list.slice(0, 30));
+  return copy;
+}
+function removeLabSimulation(id){
+  safeSetJSON(LAB_SIMULATIONS_KEY, getLabSimulations().filter(s => s.id !== id));
+}
+
+// ---------- Comparateur de scénarios A/B/C (section 9) : composant
+// générique réutilisable — jamais une cellule ".best" qui désignerait un
+// "gagnant" (même discipline que renderGuideComparisonTable) : comparer SES
+// PROPRES scénarios hypothétiques n'a pas de bonne réponse universelle
+// (plus d'effort va presque toujours "gagner" sur le délai, ça ne veut pas
+// dire que c'est le bon choix pour cet utilisateur précis). columns:
+// [{key,label}], rows: [{label, values:{key: 'texte déjà formaté'}}]. ----------
+function renderLabScenarioCompareTable(columns, rows){
+  if(!Array.isArray(columns) || columns.length === 0 || !Array.isArray(rows) || rows.length === 0) return '';
+  return `<div style="overflow-x:auto;"><table class="lab-scenario-compare">
+    <thead><tr><th></th>${columns.map(c => `<th>${c.label}</th>`).join('')}</tr></thead>
+    <tbody>${rows.map(r => `<tr><td>${r.label}</td>${columns.map(c => `<td>${r.values && r.values[c.key] !== undefined ? r.values[c.key] : '—'}</td>`).join('')}</tr>`).join('')}</tbody>
+  </table></div>`;
+}
+
 function saveProjectEtape(projectId, etape){
   if(!etape || typeof etape.nom !== 'string' || !etape.nom.trim()) return null;
   if(etape.dateCible !== null && etape.dateCible !== undefined && (typeof etape.dateCible !== 'string' || isNaN(Date.parse(etape.dateCible)))) return null;
