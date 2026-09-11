@@ -63,6 +63,310 @@ window.addEventListener('hashchange', ()=>{
   if(target && target.classList.contains('home-tab-panel')) setLabTab(tab);
 });
 
+// ============================================================
+// ---------- Refonte "assistant de décision" (11/09/2026) : un intake
+// progressif (4 étapes) puis un tableau de bord (Santé financière + Tes
+// priorités) apparaissent maintenant AU-DESSUS de "Tous les outils" —
+// jamais en remplacement : les 8 onglets/19 outils existants restent
+// exactement où ils étaient, atteignables en un scroll, jamais masqués. Ce
+// bloc n'invente aucun calcul : il orchestre uniquement des fonctions déjà
+// réelles de data.js (computeFinancialDashboard/computeHealthScore/
+// computeLabPriorities/computeDiscretionarySavingsPotential/
+// saveBudgetEntry/saveNetWorthAsset/saveFinancialGoal).
+// ============================================================
+function hasAnyRealLabData(){
+  return getBudgetEntries().length > 0 || getNetWorthAssets().length > 0 || getPersonalDebts().length > 0 || getFinancialGoals().length > 0;
+}
+
+// ---------- Intake progressif ("Ma situation financière", section 4) ----------
+const LAB_INTAKE_GOAL_PRESETS = [
+  'Constituer une épargne de sécurité', 'Acheter une voiture', 'Acheter un logement',
+  'Voyager', 'Investir davantage', 'Rembourser mes dettes',
+  'Préparer ma retraite', 'Atteindre un montant précis', 'Autre objectif'
+];
+let labIntakeStep = 0;
+let labIntakeGoalLabel = null;
+
+function renderLabIntakeStepper(){
+  return `<div class="lab-intake-progress">${[0,1,2,3].map(i => `<span class="${i < labIntakeStep ? 'done' : (i === labIntakeStep ? 'active' : '')}"></span>`).join('')}</div>`;
+}
+function labIntakeNavHtml(isLast){
+  return `<div class="lab-intake-nav">
+    <button type="button" class="lab-intake-skip" id="intakeSkip">Passer cette étape</button>
+    <button type="button" class="btn btn-gold" id="intakeNext">${isLast ? 'Voir mon analyse →' : 'Suivant →'}</button>
+  </div>`;
+}
+function renderLabIntake(){
+  const el = document.getElementById('labIntakeGate');
+  if(!el) return;
+  const mois = currentMonthKey();
+  if(labIntakeStep === 0){
+    el.innerHTML = `<div class="lab-intake-card">${renderLabIntakeStepper()}
+      <span class="lab-intake-eyebrow">Étape 1 / 4</span>
+      <h3>Tes revenus</h3>
+      <p class="lab-intake-sub">Juste de quoi démarrer l'analyse — tu pourras ajouter le détail plus tard, dans "Tous les outils".</p>
+      <div class="lab-intake-fields">
+        <div class="field"><label for="intakeRevenuNet">Revenu net mensuel (€)</label><input type="number" id="intakeRevenuNet" min="0" placeholder="Ex : 1800"></div>
+        <div class="field"><label for="intakeRevenuAutre">Autres revenus réguliers (€, optionnel)</label><input type="number" id="intakeRevenuAutre" min="0" placeholder="0"></div>
+      </div>
+      ${labIntakeNavHtml(false)}</div>`;
+    document.getElementById('intakeNext').addEventListener('click', () => {
+      const net = +document.getElementById('intakeRevenuNet').value || 0;
+      const autre = +document.getElementById('intakeRevenuAutre').value || 0;
+      if(net > 0) saveBudgetEntry({type:'revenu', categorie:'Salaire', montant: net, mois});
+      if(autre > 0) saveBudgetEntry({type:'revenu', categorie:'Autre revenu', montant: autre, mois});
+      labIntakeStep = 1; renderLabIntake();
+    });
+    document.getElementById('intakeSkip').addEventListener('click', () => { labIntakeStep = 1; renderLabIntake(); });
+    return;
+  }
+  if(labIntakeStep === 1){
+    const fields = [['Logement','intakeLogement'], ['Alimentation','intakeAlim'], ['Transport','intakeTransport'], ['Loisirs & sorties','intakeLoisirs'], ['Abonnements','intakeAbos'], ['Autre','intakeAutreDep']];
+    el.innerHTML = `<div class="lab-intake-card">${renderLabIntakeStepper()}
+      <span class="lab-intake-eyebrow">Étape 2 / 4</span>
+      <h3>Tes dépenses</h3>
+      <p class="lab-intake-sub">Des montants approximatifs suffisent pour démarrer — laisse à 0 ce que tu ne connais pas encore.</p>
+      <div class="lab-intake-fields">
+        ${fields.map(([label, id]) => `<div class="field"><label for="${id}">${label} (€/mois)</label><input type="number" id="${id}" min="0" placeholder="0"></div>`).join('')}
+      </div>
+      ${labIntakeNavHtml(false)}</div>`;
+    document.getElementById('intakeNext').addEventListener('click', () => {
+      fields.forEach(([label, id]) => {
+        const v = +document.getElementById(id).value || 0;
+        if(v > 0) saveBudgetEntry({type:'depense', categorie: label, montant: v, mois});
+      });
+      labIntakeStep = 2; renderLabIntake();
+    });
+    document.getElementById('intakeSkip').addEventListener('click', () => { labIntakeStep = 2; renderLabIntake(); });
+    return;
+  }
+  if(labIntakeStep === 2){
+    el.innerHTML = `<div class="lab-intake-card">${renderLabIntakeStepper()}
+      <span class="lab-intake-eyebrow">Étape 3 / 4</span>
+      <h3>Ta situation financière</h3>
+      <p class="lab-intake-sub">Épargne disponible (compte courant, livrets) et investissements déjà en place.</p>
+      <div class="lab-intake-fields">
+        <div class="field"><label for="intakeEpargne">Épargne disponible (€)</label><input type="number" id="intakeEpargne" min="0" placeholder="Ex : 3000"></div>
+        <div class="field"><label for="intakeInvest">Investissements (€, PEA/CTO/crypto...)</label><input type="number" id="intakeInvest" min="0" placeholder="0"></div>
+      </div>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">Des crédits en cours ? Ajoute-les précisément (capital, taux, mensualité) dans <a href="#tab-dettes" style="color:var(--gold-bright);">Dettes &amp; crédits</a> pour un diagnostic complet — une seule mensualité approximative ne suffirait pas à calculer leur vrai coût.</p>
+      ${labIntakeNavHtml(false)}</div>`;
+    document.getElementById('intakeNext').addEventListener('click', () => {
+      const epargne = +document.getElementById('intakeEpargne').value || 0;
+      const invest = +document.getElementById('intakeInvest').value || 0;
+      if(epargne > 0) saveNetWorthAsset({nom:'Épargne disponible', categorie:'epargne', valeur: epargne});
+      if(invest > 0) saveNetWorthAsset({nom:'Investissements', categorie:'actions', valeur: invest});
+      labIntakeStep = 3; renderLabIntake();
+    });
+    document.getElementById('intakeSkip').addEventListener('click', () => { labIntakeStep = 3; renderLabIntake(); });
+    return;
+  }
+  // Étape 4 : Objectifs
+  el.innerHTML = `<div class="lab-intake-card">${renderLabIntakeStepper()}
+    <span class="lab-intake-eyebrow">Étape 4 / 4</span>
+    <h3>Ton objectif principal</h3>
+    <p class="lab-intake-sub">Un seul pour commencer — tu pourras en ajouter d'autres ensuite.</p>
+    <div class="lab-goal-pill-grid">
+      ${LAB_INTAKE_GOAL_PRESETS.map(g => `<button type="button" class="lab-goal-pill ${labIntakeGoalLabel === g ? 'active' : ''}" data-goal="${g}">${g}</button>`).join('')}
+    </div>
+    <div id="intakeGoalDetail" style="display:${labIntakeGoalLabel ? '' : 'none'};">
+      <div class="lab-intake-fields">
+        <div class="field"><label for="intakeGoalMontant">Montant cible (€)</label><input type="number" id="intakeGoalMontant" min="0" placeholder="Ex : 12000"></div>
+        <div class="field"><label for="intakeGoalDate">Date cible (optionnel)</label><input type="date" id="intakeGoalDate"></div>
+      </div>
+    </div>
+    ${labIntakeNavHtml(true)}</div>`;
+  el.querySelectorAll('[data-goal]').forEach(btn => btn.addEventListener('click', () => {
+    labIntakeGoalLabel = btn.dataset.goal;
+    renderLabIntake();
+  }));
+  document.getElementById('intakeNext').addEventListener('click', () => {
+    if(labIntakeGoalLabel){
+      const montant = +document.getElementById('intakeGoalMontant').value || 0;
+      const date = document.getElementById('intakeGoalDate').value || null;
+      if(montant > 0) saveFinancialGoal({nom: labIntakeGoalLabel, montantCible: montant, montantActuel: 0, versementMensuel: 0, dateCible: date});
+    }
+    labIntakeStep = 0; labIntakeGoalLabel = null;
+    initLabEntryFlow();
+  });
+  document.getElementById('intakeSkip').addEventListener('click', () => {
+    labIntakeStep = 0; labIntakeGoalLabel = null;
+    initLabEntryFlow();
+  });
+}
+
+// ---------- Tableau de bord (Santé financière + Tes priorités, sections 5-7) ----------
+const LAB_HEALTH_AXIS_LABELS = {ok: 'Bon', attention: 'À améliorer', alerte: 'Insuffisant'};
+function renderLabHealthCard(){
+  const health = computeHealthScore();
+  if(health.axesConnues === 0) return '';
+  const axesList = Object.values(health.axes);
+  return `
+    <div class="lab-health-card">
+      <div class="lab-health-score-wrap">
+        <div class="lab-health-score" title="Un indicateur pédagogique calculé à partir de ce que tu as renseigné — jamais une notation scientifique absolue.">${health.globalScore !== null ? health.globalScore : '—'} / 100</div>
+        <div class="lab-health-score-sub">Santé financière ⓘ</div>
+      </div>
+      <div class="lab-health-axes">
+        ${axesList.map(a => `
+          <div class="lab-health-axis">
+            <span class="lab-health-dot ${a.insuffisant ? 'insuffisant' : a.niveau}"></span>
+            <span class="lab-health-axis-label">${a.label} :</span>
+            <span class="lab-health-axis-status">${a.insuffisant ? 'Pas encore assez de données' : LAB_HEALTH_AXIS_LABELS[a.niveau]}</span>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function renderLabPriorityDetail(p){
+  if(p.type === 'depenses' && p.savings){
+    if(p.savings.total === 0) return '<p style="font-size:12.5px;color:var(--text-dim);">Pas assez de dépenses réellement discrétionnaires (loisirs, abonnements) pour proposer une piste chiffrée ici.</p>';
+    return `
+      ${p.savings.lines.map(l => `<div class="lab-savings-row"><span>${l.categorie}</span><span class="mono">${fmtEUR(l.montantActuel)} → piste possible : −${fmtEUR(l.potentiel)}/mois</span></div>`).join('')}
+      <p style="font-size:13px;margin-top:10px;">Économie potentielle : <strong class="mono" style="color:var(--emerald);">${fmtEUR(p.savings.total)}/mois</strong></p>
+      <p class="disclaimer-box" style="margin-top:8px;">Une piste possible, pas une obligation : ${LAB_DISCRETIONARY_REDUCTION_PCT}% de réduction sur des postes réellement discrétionnaires (jamais le loyer ou l'alimentation), à tester et adapter à ta vraie situation.</p>`;
+  }
+  if(p.type === 'urgence' && p.urgence){
+    return `
+      <p style="font-size:13px;">Montant manquant pour atteindre ${fmtEUR(p.urgence.cible)} (≈ 3 mois de dépenses) : <strong class="mono">${fmtEUR(p.urgence.manquant)}</strong></p>
+      <div class="lab-scenario-pills">
+        ${p.urgence.scenarios.map(s => `<button type="button" class="pill lab-urgence-scenario-btn" data-versement="${s.versement}">${fmtEUR(s.versement)}/mois → ${s.mois} mois</button>`).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--text-dim);" id="${p.id}-scenario-result"></p>`;
+  }
+  if(p.type === 'objectif'){
+    const g = p.goal;
+    const stepsUp = [50, 100, 200];
+    return `
+      <div class="lab-scenario-pills">
+        ${stepsUp.map(step => `<button type="button" class="pill lab-goal-scenario-btn" data-goal-id="${g.id}" data-step="${step}">+${step} €/mois</button>`).join('')}
+      </div>
+      <p style="font-size:12px;color:var(--text-dim);" id="${p.id}-scenario-result"></p>`;
+  }
+  return '';
+}
+
+function wireLabPriorityCard(elId, p){
+  const detailEl = document.getElementById(`${elId}-detail`);
+  (p.cta || []).forEach(cta => {
+    const btn = document.getElementById(`${elId}-cta-${cta.key}`);
+    if(!btn) return;
+    if(cta.href){
+      btn.addEventListener('click', () => { location.hash = cta.href.split('#')[1] || ''; });
+      return;
+    }
+    btn.addEventListener('click', () => {
+      const willOpen = !detailEl.classList.contains('open');
+      detailEl.classList.toggle('open', willOpen);
+      if(willOpen && !detailEl.dataset.rendered){
+        detailEl.innerHTML = renderLabPriorityDetail(p);
+        detailEl.dataset.rendered = '1';
+        if(p.type === 'urgence'){
+          detailEl.querySelectorAll('.lab-urgence-scenario-btn').forEach(b => b.addEventListener('click', () => {
+            const versement = +b.dataset.versement;
+            const mois = Math.ceil(p.urgence.manquant / versement);
+            document.getElementById(`${p.id}-scenario-result`).textContent = `Avec ${fmtEUR(versement)}/mois, tu atteindrais ton fonds d'urgence en environ ${mois} mois.`;
+          }));
+        }
+        if(p.type === 'objectif'){
+          detailEl.querySelectorAll('.lab-goal-scenario-btn').forEach(b => b.addEventListener('click', () => {
+            const goal = getFinancialGoals().find(g => g.id === b.dataset.goalId);
+            if(!goal) return;
+            const step = +b.dataset.step;
+            const base = computeGoalProjection(goal);
+            const withExtra = computeGoalProjection({...goal, versementMensuel: goal.versementMensuel + step});
+            const resEl = document.getElementById(`${p.id}-scenario-result`);
+            if(!base || !withExtra || base.moisNecessaires === null || withExtra.moisNecessaires === null){ resEl.textContent = 'Calcul impossible avec ces montants.'; return; }
+            const gain = base.moisNecessaires - withExtra.moisNecessaires;
+            resEl.textContent = gain > 0
+              ? `Avec +${step} €/mois, tu atteindrais cet objectif environ ${gain} mois plus tôt (${withExtra.moisNecessaires} mois au lieu de ${base.moisNecessaires}).`
+              : `Avec +${step} €/mois, le délai resterait d'environ ${withExtra.moisNecessaires} mois.`;
+          }));
+        }
+      }
+    });
+  });
+}
+
+function renderLabPriorities(dash){
+  const priorities = computeLabPriorities(dash);
+  if(priorities.length === 0){
+    return {html: `<p style="font-size:13px;color:var(--text-dim);">Rien à signaler pour l'instant sur les données renseignées — reviens quand ta situation aura évolué.</p>`, priorities};
+  }
+  const html = `
+    <div class="lab-priorities-grid">
+      ${priorities.map((p, i) => `
+        <div class="lab-priority-card ${p.niveau}" id="labPriority-${i}">
+          <div class="lab-priority-head">
+            <span class="lab-priority-num">${i + 1}</span>
+            <div>
+              <div class="lab-priority-title">${p.titre}</div>
+              <p class="lab-priority-text">${p.texte}</p>
+            </div>
+          </div>
+          <div class="lab-priority-actions">
+            ${(p.cta || []).map(c => `<button type="button" class="btn btn-sm ${c.key.startsWith('scenario') || c.key === 'breakdown' ? 'btn-gold' : ''}" id="labPriority-${i}-cta-${c.key}">${c.label}</button>`).join('')}
+          </div>
+          <div class="lab-priority-detail" id="labPriority-${i}-detail"></div>
+        </div>`).join('')}
+    </div>`;
+  return {html, priorities};
+}
+
+function renderLabHome(){
+  const el = document.getElementById('labHome');
+  if(!el) return;
+  const mois = currentMonthKey();
+  const dash = computeFinancialDashboard(mois);
+  const {html: prioritiesHtml, priorities} = renderLabPriorities(dash);
+  const totalPotentiel = priorities.filter(p => p.type === 'depenses' && p.savings).reduce((s, p) => s + p.savings.total, 0);
+
+  el.innerHTML = `
+    ${renderLabHealthCard()}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:16px;">
+      <div>
+        <span class="section-eyebrow" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);">Tes priorités</span>
+        <p style="font-size:12px;color:var(--text-dim);margin-top:2px;">Sélectionnées automatiquement à partir de ta situation — jamais plus de 3 à la fois.</p>
+      </div>
+      <button type="button" class="lab-optimize-btn" id="labOptimizeBtn">⚡ Optimiser ma situation</button>
+    </div>
+    <div id="labOptimizeSummary" style="display:none;margin-bottom:14px;"></div>
+    <div class="lab-priorities-section">${prioritiesHtml}</div>
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;">Cette analyse utilise les mêmes données que <a href="parcours.html" style="color:var(--gold-bright);">Mon Univers Financier</a> — les renseigner une fois suffit pour les deux.</p>
+    <button type="button" class="btn btn-sm" id="labEditSituationBtn" style="margin-top:10px;">⚙️ Modifier ma situation</button>`;
+
+  priorities.forEach((p, i) => wireLabPriorityCard(`labPriority-${i}`, p));
+
+  document.getElementById('labOptimizeBtn').addEventListener('click', () => {
+    const summaryEl = document.getElementById('labOptimizeSummary');
+    summaryEl.style.display = '';
+    summaryEl.innerHTML = priorities.length === 0
+      ? `<div class="card" style="border-color:var(--gold);"><p style="font-size:13px;">Rien à optimiser pour l'instant sur ce que tu as renseigné.</p></div>`
+      : `<div class="card" style="border-color:var(--gold);">
+          <span class="smallcaps">Nous avons identifié ${priorities.length} piste${priorities.length > 1 ? 's' : ''}</span>
+          ${totalPotentiel > 0 ? `<p style="font-size:13px;margin-top:8px;">Ces changements pourraient libérer environ <strong class="mono" style="color:var(--emerald);">${fmtEUR(totalPotentiel)}/mois</strong> dans le scénario simulé.</p>` : `<p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Regarde le détail de chaque priorité ci-dessous pour tester un scénario.</p>`}
+        </div>`;
+    document.getElementById('labPriority-0') && document.getElementById('labPriority-0').scrollIntoView({behavior:'smooth', block:'start'});
+  });
+  document.getElementById('labEditSituationBtn').addEventListener('click', () => { setLabTab('tab-budget-epargne'); document.getElementById('tab-budget-epargne').scrollIntoView({behavior:'smooth', block:'start'}); });
+}
+
+function initLabEntryFlow(){
+  const gateEl = document.getElementById('labIntakeGate');
+  const homeEl = document.getElementById('labHome');
+  if(!gateEl || !homeEl) return;
+  if(hasAnyRealLabData()){
+    gateEl.style.display = 'none';
+    homeEl.style.display = '';
+    renderLabHome();
+  } else {
+    homeEl.style.display = 'none';
+    gateEl.style.display = '';
+    renderLabIntake();
+  }
+}
+initLabEntryFlow();
+
 // ---------- Widgets individuels à l'intérieur de chaque catégorie (2e niveau
 // de la même logique de hub) : chaque simulateur est une carte cachée par
 // défaut (display:none dans le HTML), révélée uniquement au clic sur sa

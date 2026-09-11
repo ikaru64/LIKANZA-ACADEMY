@@ -1,0 +1,97 @@
+/* ============================================================
+   LIKANZA ACADEMY — Laboratoire personnel : refonte "assistant de décision"
+   (11/09/2026). Tous les tokens viennent de design-system.css (--onyx/--bg/
+   --bg-alt/--gold/--gold-bright/--emerald/--bordeaux/--hairline/--text/
+   --text-dim) — aucune nouvelle couleur introduite. Les 8 onglets/19 outils
+   existants ne sont pas touchés visuellement ici (leur CSS reste dans
+   design-system.css) : ce fichier ne couvre que les 3 nouveaux blocs
+   (intake progressif / tableau de bord santé+priorités / comparateur de
+   scénarios) ajoutés AU-DESSUS, jamais en remplacement.
+   ============================================================ */
+
+/* ---------- Intake progressif ("Ma situation financière") ---------- */
+.lab-intake-card{
+  background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);
+  padding:24px 26px;
+}
+.lab-intake-progress{display:flex;gap:6px;margin-bottom:18px;}
+.lab-intake-progress span{flex:1;height:3px;background:var(--hairline);border-radius:2px;}
+.lab-intake-progress span.done{background:var(--gold);}
+.lab-intake-progress span.active{background:var(--gold-bright);}
+.lab-intake-eyebrow{font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--gold-bright);}
+.lab-intake-card h3{font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;margin:6px 0 4px;}
+.lab-intake-card p.lab-intake-sub{font-size:12.5px;color:var(--text-dim);margin-bottom:18px;}
+.lab-intake-fields{display:flex;flex-direction:column;gap:12px;}
+.lab-intake-nav{display:flex;justify-content:space-between;align-items:center;margin-top:22px;gap:10px;flex-wrap:wrap;}
+.lab-intake-skip{background:none;border:none;color:var(--text-dim);font-size:12px;text-decoration:underline;cursor:pointer;}
+.lab-goal-pill-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:14px;}
+.lab-goal-pill{background:var(--bg);border:1px solid var(--hairline);border-radius:var(--radius);padding:10px 12px;text-align:left;font-size:12.5px;cursor:pointer;color:var(--text);transition:border-color .15s ease;}
+.lab-goal-pill:hover{border-color:var(--gold);}
+.lab-goal-pill.active{border-color:var(--gold);background:rgba(184,151,78,0.1);color:var(--gold-bright);}
+
+/* ---------- Santé financière ---------- */
+.lab-health-card{
+  display:flex;align-items:center;gap:24px;flex-wrap:wrap;
+  background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);
+  padding:20px 24px;margin-bottom:18px;
+}
+.lab-health-score-wrap{text-align:center;flex-shrink:0;}
+.lab-health-score{font-family:'Cormorant Garamond',serif;font-size:46px;font-weight:600;line-height:1;}
+.lab-health-score-sub{font-size:10.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;margin-top:4px;}
+.lab-health-axes{flex:1;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;min-width:260px;}
+.lab-health-axis{display:flex;align-items:center;gap:8px;font-size:12.5px;}
+.lab-health-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.lab-health-dot.ok{background:var(--emerald);}
+.lab-health-dot.attention{background:var(--gold-bright);}
+.lab-health-dot.alerte{background:var(--bordeaux);}
+.lab-health-dot.insuffisant{background:none;border:1.5px dashed var(--text-dim);}
+.lab-health-axis-label{color:var(--text-dim);}
+.lab-health-axis-status{font-weight:600;}
+
+/* ---------- Tes priorités ---------- */
+.lab-priorities-section{margin-bottom:24px;}
+.lab-priorities-grid{display:flex;flex-direction:column;gap:12px;}
+.lab-priority-card{
+  background:var(--bg-alt);border:1px solid var(--hairline);border-left:3px solid var(--hairline);border-radius:var(--radius);
+  padding:18px 20px;
+}
+.lab-priority-card.alerte{border-left-color:var(--bordeaux);}
+.lab-priority-card.attention{border-left-color:var(--gold-bright);}
+.lab-priority-head{display:flex;gap:12px;align-items:flex-start;}
+.lab-priority-num{
+  font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:600;color:var(--gold-bright);
+  flex-shrink:0;width:30px;
+}
+.lab-priority-title{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:600;margin-bottom:4px;}
+.lab-priority-text{font-size:13px;color:var(--text-dim);line-height:1.55;}
+.lab-priority-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;margin-left:42px;}
+.lab-priority-detail{margin-top:14px;margin-left:42px;padding-top:14px;border-top:1px solid var(--hairline);display:none;}
+.lab-priority-detail.open{display:block;}
+.lab-savings-row{display:flex;justify-content:space-between;font-size:12.5px;padding:5px 0;border-bottom:1px solid var(--hairline);}
+.lab-savings-row:last-of-type{border-bottom:none;}
+.lab-scenario-pills{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0;}
+
+/* ---------- Optimiser ma situation ---------- */
+.lab-optimize-btn{
+  display:inline-flex;align-items:center;gap:8px;
+  background:linear-gradient(135deg, var(--gold), var(--gold-bright));
+  color:#0B0B0D;font-weight:600;font-size:13.5px;
+  border:none;border-radius:var(--radius);padding:12px 22px;cursor:pointer;
+  box-shadow:0 12px 26px -16px rgba(212,175,55,0.7);
+  transition:transform .15s ease, box-shadow .15s ease;
+}
+.lab-optimize-btn:hover{transform:translateY(-2px);box-shadow:0 16px 30px -14px rgba(212,175,55,0.8);}
+
+/* ---------- Comparateur de scénarios (A/B/C) ---------- */
+.lab-scenario-compare{width:100%;border-collapse:collapse;font-size:12.5px;}
+.lab-scenario-compare th, .lab-scenario-compare td{padding:9px 10px;text-align:right;border-bottom:1px solid var(--hairline);}
+.lab-scenario-compare th:first-child, .lab-scenario-compare td:first-child{text-align:left;color:var(--text-dim);}
+.lab-scenario-compare thead th{font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--gold-bright);font-weight:600;}
+.lab-scenario-compare tbody tr:last-child td{border-bottom:none;}
+.lab-scenario-compare td.best{color:var(--emerald);font-weight:600;}
+
+@media (max-width:640px){
+  .lab-health-card{flex-direction:column;align-items:flex-start;}
+  .lab-priority-actions, .lab-priority-detail{margin-left:0;}
+  .lab-scenario-compare{display:block;overflow-x:auto;}
+}

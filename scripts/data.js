@@ -10721,6 +10721,119 @@ function computeFinancialDashboard(mois){
 }
 
 // ============================================================
+// ---------- « Tes priorités » (refonte "assistant de décision" du
+// 11/09/2026, Laboratoire personnel) : sélectionne jusqu'à 3 priorités
+// réelles à partir du MÊME diagnostic déjà réel (computeFinancialDashboard/
+// computeFinancialDiagnostics/computeGoalProjection) — jamais un second
+// moteur de diagnostic parallèle qui pourrait diverger. Ordre : alerte >
+// attention > objectif à risque/impossible, jamais aléatoire ni par ordre
+// de saisie. Chaque priorité expose un texte hedgé ("piste possible",
+// "scénario", jamais une injonction) et au moins un scénario chiffré
+// mécanique, jamais une prédiction.
+// ============================================================
+
+// Catégories de dépenses jugées compressibles à court terme — même
+// distinction que le disclaimer déjà réel de "Sauver mon budget"
+// (scripts/pages/laboratoire.js, updateSaveSimulation) : Logement/
+// Alimentation/Transport/Santé sont peu compressibles à court terme,
+// contrairement aux loisirs/abonnements/autres — jamais une seule règle
+// dupliquée avec un texte différent ailleurs.
+const LAB_DISCRETIONARY_CATEGORIES = ['Loisirs & sorties', 'Abonnements', 'Autre'];
+// Fraction de réduction proposée à titre d'illustration (jamais présentée
+// comme un objectif atteignable à coup sûr) — 25 %, cohérente avec le
+// curseur "Sauver mon budget" existant (plage 0-50 %, valeur par défaut
+// 10 %) : ici on part d'une hypothèse un peu plus ambitieuse mais réaliste
+// sur des postes réellement discrétionnaires seulement, jamais sur le loyer.
+const LAB_DISCRETIONARY_REDUCTION_PCT = 25;
+function computeDiscretionarySavingsPotential(repartition){
+  const items = (repartition || []).filter(r => LAB_DISCRETIONARY_CATEGORIES.includes(r.categorie) && r.montant > 0);
+  const lines = items.map(r => ({categorie: r.categorie, montantActuel: r.montant, potentiel: Math.round(r.montant * LAB_DISCRETIONARY_REDUCTION_PCT / 100)}));
+  const total = lines.reduce((s, l) => s + l.potentiel, 0);
+  return {lines, total};
+}
+
+const LAB_PRIORITY_SEVERITY = {alerte: 3, attention: 2};
+// title/actionLabel par id de diagnostic — un texte pédagogique dédié à
+// chaque vrai diagnostic déjà réel (jamais un libellé générique "Alerte
+// budgétaire" qui ne dirait rien de concret).
+const LAB_DIAGNOSTIC_PRIORITY_META = {
+  'solde-negatif': {titre: 'Repasser dans le positif ce mois-ci', type: 'depenses'},
+  'epargne-faible': {titre: 'Augmenter ta capacité d\'épargne', type: 'depenses'},
+  'endettement-eleve': {titre: 'Alléger le poids de tes crédits', type: 'dette'},
+  'endettement-moyen': {titre: 'Surveiller le poids de tes crédits', type: 'dette'},
+  'charges-elevees': {titre: 'Réduire tes charges récurrentes', type: 'charges'},
+  'urgence-faible': {titre: 'Constituer ton fonds d\'urgence', type: 'urgence'},
+  'urgence-moyenne': {titre: 'Renforcer ton fonds d\'urgence', type: 'urgence'}
+};
+// Paliers de versement mensuel testés pour le fonds d'urgence (section 6 du
+// prompt d'origine) — 3 scénarios simples, jamais une infinité de curseurs.
+const LAB_URGENCE_STEPS_EUR = [150, 250, 350];
+
+function buildLabPriorityFromDiagnostic(diag, dash){
+  const meta = LAB_DIAGNOSTIC_PRIORITY_META[diag.id] || {titre: 'Point à surveiller', type: 'autre'};
+  const card = {id: 'diag-' + diag.id, niveau: diag.niveau, titre: meta.titre, texte: diag.message, type: meta.type};
+
+  if(meta.type === 'depenses'){
+    const savings = computeDiscretionarySavingsPotential(dash.budgetSummary.repartition);
+    card.savings = savings;
+    card.cta = savings.total > 0
+      ? [{key: 'breakdown', label: 'Voir où économiser'}]
+      : [];
+  } else if(meta.type === 'urgence'){
+    const cash = dash.netWorth.parCategorie ? (dash.netWorth.parCategorie.cash || 0) + (dash.netWorth.parCategorie.epargne || 0) : 0;
+    const cible = dash.budgetSummary.depenses * 3; // même repère (3 mois) que le diagnostic lui-même
+    const manquant = Math.max(0, cible - cash);
+    card.urgence = {
+      cash, cible, manquant,
+      scenarios: manquant > 0 ? LAB_URGENCE_STEPS_EUR.map(step => ({versement: step, mois: Math.ceil(manquant / step)})) : []
+    };
+    card.cta = manquant > 0 ? [{key: 'scenario-urgence', label: 'Choisir un scénario'}] : [];
+  } else if(meta.type === 'dette'){
+    const totalMensualites = dash.debts.reduce((s, d) => s + (typeof d.minPayment === 'number' ? d.minPayment : 0), 0);
+    card.dette = {totalMensualites, nbDettes: dash.debts.length};
+    card.cta = [{key: 'goto-dettes', label: 'Voir mes crédits →', href: 'laboratoire.html#tab-dettes'}];
+  } else if(meta.type === 'charges'){
+    card.cta = [{key: 'goto-charges', label: 'Gérer mes abonnements →', href: 'laboratoire.html#tab-budget-epargne'}];
+  }
+  return card;
+}
+
+// Objectif à risque/impossible (section 6, exemple voiture 12 000 € / 18
+// mois) : réutilise TEL QUEL computeGoalProjection, jamais un second calcul
+// de délai. "manquant"/"moisNecessaires" viennent déjà de là.
+function buildLabPriorityFromGoal(goal){
+  const p = goal.projection;
+  const card = {
+    id: 'goal-' + goal.id, niveau: p.statut === 'impossible' ? 'alerte' : 'attention',
+    titre: `Atteindre ton objectif « ${goal.nom} »`, type: 'objectif', goal
+  };
+  if(goal.dateCible && p.moisRestants !== null && p.moisRestants > 0){
+    const versementRequis = Math.ceil(goal.montantCible - goal.montantActuel > 0 ? (goal.montantCible - goal.montantActuel) / p.moisRestants : 0);
+    const delta = versementRequis - goal.versementMensuel;
+    card.texte = `Pour atteindre ton objectif « ${goal.nom} » (${fmtEUR(goal.montantCible)}) dans ${p.moisRestants} mois, ta capacité d'épargne pour ce projet devrait passer d'environ ${fmtEUR(goal.versementMensuel)} à environ ${fmtEUR(versementRequis)}/mois.`;
+    card.delta = delta;
+  } else {
+    card.texte = `Au rythme actuel (${fmtEUR(goal.versementMensuel)}/mois), il manque encore ${fmtEUR(p.manquant)} pour atteindre ton objectif « ${goal.nom} », soit environ ${p.moisNecessaires} mois.`;
+  }
+  card.cta = [{key: 'scenario-objectif', label: 'Tester ce scénario'}];
+  return card;
+}
+
+function computeLabPriorities(dash){
+  const candidates = [];
+  dash.diagnostics.filter(d => d.niveau === 'alerte' || d.niveau === 'attention').forEach(d => {
+    candidates.push({severity: LAB_PRIORITY_SEVERITY[d.niveau] || 1, card: buildLabPriorityFromDiagnostic(d, dash)});
+  });
+  dash.goals.forEach(g => {
+    if(g.projection && (g.projection.statut === 'atrisk' || g.projection.statut === 'impossible')){
+      candidates.push({severity: g.projection.statut === 'impossible' ? 3 : 2, card: buildLabPriorityFromGoal(g)});
+    }
+  });
+  candidates.sort((a, b) => b.severity - a.severity);
+  return candidates.slice(0, 3).map(c => c.card);
+}
+
+// ============================================================
 // ---------- PROFIL ENTREPRISE PERSISTANT (Financial Lab, Phase 0 côté
 // Professionnel — l'audit du 26/08/2026 a confirmé qu'aucun profil
 // d'entreprise central n'existe : Unit Economics et "Construire mon projet"
