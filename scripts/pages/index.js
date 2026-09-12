@@ -10,6 +10,12 @@ const I18N = {
     universePreviewEyebrow: "MY FINANCIAL UNIVERSE",
     universePreviewEmpty: "Add your accounts and budget to see your net worth and financial health here.",
     universePreviewCta: "Open My Financial Universe →",
+    marketsPreviewEyebrow: "MARKETS",
+    marketsPreviewCta: "Open Markets →",
+    challengePreviewEyebrow: "QUICK CHALLENGE",
+    challengePreviewCta: "Start a quick challenge →",
+    compoundDemoToggle: "See the interactive compound-interest demo →",
+    moreToggle: "More: Premium & newsletter →",
     learnPreviewLabel: "YOUR MISSIONS",
     learnCta: "Open my missions",
     libraryEyebrow: "LEARN A CONCEPT",
@@ -67,6 +73,12 @@ const I18N = {
     universePreviewEyebrow: "MON UNIVERS FINANCIER",
     universePreviewEmpty: "Ajoute tes comptes et ton budget pour voir ton patrimoine et ta santé financière ici.",
     universePreviewCta: "Ouvrir Mon Univers Financier →",
+    marketsPreviewEyebrow: "MARCHÉS",
+    marketsPreviewCta: "Ouvrir Marchés →",
+    challengePreviewEyebrow: "DÉFI RAPIDE",
+    challengePreviewCta: "Commencer un défi rapide →",
+    compoundDemoToggle: "Voir la démo interactive d'intérêts composés →",
+    moreToggle: "Plus : Premium & newsletter →",
     learnPreviewLabel: "TES MISSIONS",
     learnCta: "Ouvrir mes missions",
     libraryEyebrow: "APPRENDRE UNE NOTION",
@@ -140,6 +152,8 @@ function setLang(lang){
   safeRun("aujourd'hui (langue)", renderTodayCard);
   safeRun('actualité importante (langue)', renderImportantNews);
   safeRun('aperçu Mon Univers (langue)', renderUniversePreview);
+  safeRun('aperçu Marchés (langue)', renderMarketsPreview);
+  safeRun('aperçu Défi rapide (langue)', renderChallengePreview);
 }
 
 const langToggleBtn = document.getElementById('langToggle');
@@ -229,6 +243,33 @@ function renderUniversePreview(){
     <p style="font-size:12px;color:var(--text-dim);margin:4px 0 10px;">${LANG==='en'?'Financial health':'Santé financière'} : ${health.globalScore !== null ? health.globalScore + '/100' : (LANG==='en'?'not enough data yet':'pas encore assez de données')}</p>
     ${topAlert ? `<p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${topAlert.message}</p>` : ''}
     <a href="parcours.html" class="btn btn-sm">${t('universePreviewCta')}</a>`;
+}
+
+// ================= Marchés (aperçu compact, Chantier J refonte continuité UX 12/09/2026) =================
+// Réutilise EXACTEMENT les mêmes données déjà réelles que le mini-ticker de
+// l'onglet Actualités (MARKET_DATA) — jamais un second calcul, juste
+// promu en aperçu toujours visible plutôt que caché derrière un onglet.
+function renderMarketsPreview(){
+  const el = document.getElementById('homeMarketsPreview');
+  if(!el) return;
+  el.innerHTML = `
+    <span class="eyebrow">${t('marketsPreviewEyebrow')}</span>
+    <div style="font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--text-dim);display:flex;gap:16px;flex-wrap:wrap;margin:8px 0 10px;">
+      ${MARKET_DATA.slice(0,4).map(m=>`<span>${m.nom} <span class="${m.sens}">${m.variation}</span></span>`).join('')}
+    </div>
+    <a href="bourse.html" class="btn btn-sm">${t('marketsPreviewCta')}</a>`;
+}
+
+// ================= Défi rapide (aperçu compact, Chantier J) =================
+// Même contenu que la teaser existante de l'onglet S'entraîner
+// (#homeDefisTeaser) — le même texte est affiché aux deux endroits (aperçu
+// toujours visible + onglet approfondi), jamais deux formulations
+// différentes de la même chose.
+function renderChallengePreview(){
+  const previewEl = document.getElementById('homeChallengePreview');
+  if(previewEl) previewEl.innerHTML = `<span class="eyebrow">${t('challengePreviewEyebrow')}</span><p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions sur 23 thèmes, à ton rythme.</p><a href="defis.html" class="btn btn-sm btn-gold">${t('challengePreviewCta')}</a>`;
+  const tabEl = document.getElementById('homeDefisTeaser');
+  if(tabEl) tabEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions sur 23 thèmes, à ton rythme.</p><a href="defis.html" class="btn btn-sm btn-gold">${t('challengePreviewCta')}</a>`;
 }
 
 // ================= Accès rapides / déclencheurs d'onglets =================
@@ -405,13 +446,10 @@ safeRun('carte du jour (init)', renderTodayCard);
 safeRun('carte du jour - à apprendre (init)', () => renderTodayWeakness('todayWeakness'));
 safeRun('actualité importante (init)', renderImportantNews);
 safeRun('aperçu Mon Univers (init)', renderUniversePreview);
+safeRun('aperçu Marchés (init)', renderMarketsPreview);
+safeRun('aperçu Défi rapide (init)', renderChallengePreview);
 safeRun('onglet apprendre (init)', renderLearnTab);
 safeRun('professeur IA mini (init)', renderTeacherMini);
-safeRun('défis (aperçu)', ()=>{
-  const el = document.getElementById('homeDefisTeaser');
-  if(!el) return;
-  el.innerHTML = `<p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions sur 23 thèmes, à ton rythme.</p><a href="defis.html" class="btn btn-sm btn-gold">Ouvrir les Défis →</a>`;
-});
 safeRun('laboratoire simulateur (init)', initHomeSim);
 safeRun('aperçus simulateurs (init)', renderSimPreviews);
 safeRun('onglet actualités (init)', renderNewsTab);
