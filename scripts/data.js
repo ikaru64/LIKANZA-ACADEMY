@@ -4292,18 +4292,38 @@ function pickRecommendedCategorie(candidateCategories){
   const categorie = allCats[dayOfYear() % allCats.length];
   return {categorie, reason: "Un thème à découvrir pour varier tes révisions.", signals: [], personalized: false};
 }
+// ---------- Carte "Recommandé pour toi" partagée (Chantier D, refonte
+// continuité UX du 12/09/2026) : Défis (renderRecommandePourToi), Formations
+// (renderCoursRecommandePourToi) et Business (renderBusinessCasRecommande)
+// réutilisaient chacun leur propre HTML pour EXACTEMENT la même structure
+// visuelle (badge + raison + "pourquoi" + titre + CTA) — jamais leur
+// SÉLECTION elle-même, qui reste volontairement propre à chaque contexte
+// (pickRecommendedCategorie déjà partagé entre Défis/Formations ; sélection
+// dédiée pour Business, périmètre de catégories différent). Le widget
+// "Recommandé pour toi" de Mon Univers Financier
+// (renderCockpitCourseRecoPanel, parcours.js) n'est PAS concerné ici : sa
+// structure de données (type/titre/raison/lien, recommandation financière
+// contextuelle, pas une catégorie de quiz) et son contexte visuel (panneau
+// cockpit, sans "pourquoi") sont réellement différents — l'y forcer aurait
+// fabriqué une fausse équivalence, pas supprimé un doublon réel.
+function renderRecommendationCardHtml({personalized, badgeLabel, reason, pourquoiId, title, ctaHtml}){
+  return `
+    <span class="smallcaps">${personalized ? `🎯 ${badgeLabel}` : '🔎 À découvrir'}</span>
+    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 6px;">${reason}</p>
+    <div id="${pourquoiId}" style="margin-bottom:10px;"></div>
+    <h3 style="margin-bottom:10px;font-size:17px;">${title}</h3>
+    ${ctaHtml}`;
+}
 function renderRecommandePourToi(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const pick = pickRecommendedCategorie();
   if(!pick){ el.innerHTML = ''; return; }
   const {categorie, reason, signals, personalized} = pick;
-  el.innerHTML = `
-    <span class="smallcaps">${personalized ? '🎯 Recommandé pour toi' : '🔎 À découvrir'}</span>
-    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 6px;">${reason}</p>
-    <div id="${elId}-pourquoi" style="margin-bottom:10px;"></div>
-    <h3 style="margin-bottom:10px;font-size:17px;">${categorie}</h3>
-    <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
+  el.innerHTML = renderRecommendationCardHtml({
+    personalized, badgeLabel: 'Recommandé pour toi', reason, pourquoiId: `${elId}-pourquoi`, title: categorie,
+    ctaHtml: `<button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`
+  });
   renderPourquoiToggle(`${elId}-pourquoi`, signals);
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const pool = defisFullPool().filter(i => i.categorie === categorie);
@@ -4329,12 +4349,10 @@ function renderCoursRecommandePourToi(elId){
   const cours = matches.find(c => !progress[c.id]) || matches[0];
   if(!cours){ el.innerHTML = ''; return; }
   const done = !!progress[cours.id];
-  el.innerHTML = `
-    <span class="smallcaps">${personalized ? '🎯 Recommandé pour toi' : '🔎 À découvrir'}</span>
-    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 6px;">${reason}</p>
-    <div id="${elId}-pourquoi" style="margin-bottom:10px;"></div>
-    <h3 style="margin-bottom:10px;font-size:17px;">${cours.titre}</h3>
-    <a href="cours.html#${encodeURIComponent(cours.id)}" class="btn btn-sm btn-gold">${done ? 'Revoir le cours' : 'Suivre ce cours'} →</a>`;
+  el.innerHTML = renderRecommendationCardHtml({
+    personalized, badgeLabel: 'Recommandé pour toi', reason, pourquoiId: `${elId}-pourquoi`, title: cours.titre,
+    ctaHtml: `<a href="cours.html#${encodeURIComponent(cours.id)}" class="btn btn-sm btn-gold">${done ? 'Revoir le cours' : 'Suivre ce cours'} →</a>`
+  });
   renderPourquoiToggle(`${elId}-pourquoi`, signals);
 }
 
@@ -5944,12 +5962,10 @@ function renderBusinessCasRecommande(elId){
     signals = [];
     personalized = false;
   }
-  el.innerHTML = `
-    <span class="smallcaps">${personalized ? '🎯 Cas recommandé pour toi' : '🔎 À découvrir'}</span>
-    <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 6px;">${reason}</p>
-    <div id="${elId}-pourquoi" style="margin-bottom:10px;"></div>
-    <h3 style="margin-bottom:10px;font-size:17px;">${categorie}</h3>
-    <button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`;
+  el.innerHTML = renderRecommendationCardHtml({
+    personalized, badgeLabel: 'Cas recommandé pour toi', reason, pourquoiId: `${elId}-pourquoi`, title: categorie,
+    ctaHtml: `<button class="btn btn-sm btn-gold" id="${elId}-start">S'entraîner sur ce thème →</button>`
+  });
   renderPourquoiToggle(`${elId}-pourquoi`, signals);
   document.getElementById(`${elId}-start`).addEventListener('click', () => {
     const catPool = pool.filter(i => i.categorie === categorie);
