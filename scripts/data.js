@@ -105,6 +105,21 @@ function initNav(){
       toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
     });
   }
+  // "Plus" du menu mobile bas de page (Chantier E2, refonte continuité UX du
+  // 12/09/2026) : réutilise EXACTEMENT le même mécanisme d'ouverture que le
+  // bouton hamburger de l'en-tête (#mobileToggle/#mainNav), jamais un second
+  // système de menu — Formations/Guides/Bibliothèque/Bourse/Crypto/
+  // Entreprendre/Économie/Compte/Profil restent tous atteignables en 2 taps
+  // depuis n'importe quelle page, sans dupliquer les 4 raccourcis directs
+  // (Accueil/Univers/Défis/Labo) déjà présents dans la barre du bas.
+  const bottomMore = document.getElementById('mobileBottomMore');
+  if(bottomMore && toggle && nav){
+    bottomMore.addEventListener('click', ()=>{
+      window.scrollTo({top:0, behavior:'smooth'});
+      toggle.click();
+      bottomMore.setAttribute('aria-expanded', toggle.getAttribute('aria-expanded'));
+    });
+  }
   const current = location.pathname.split('/').pop() || 'index.html';
   document.querySelectorAll('nav.main-nav > a').forEach(a=>{
     if(a.getAttribute('href') === current) a.classList.add('active');
