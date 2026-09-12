@@ -61,7 +61,7 @@ const MARKETING_FUNNEL = [
     definition: "La personne devient officiellement cliente — mais l'acquérir a un coût réel, qu'il faut connaître pour juger si le modèle tient.",
     metrique: 'CAC (coût d\'acquisition client)',
     formule: 'CAC = Dépenses marketing et commerciales ÷ Nouveaux clients acquis',
-    exemple: "Un CAC élevé n'est pas un problème en soi s'il reste inférieur à ce que rapporte ce client sur la durée (voir LTV, testable dans Business Lab).",
+    exemple: "Un CAC élevé n'est pas un problème en soi s'il reste inférieur à ce que rapporte ce client sur la durée (voir LTV, testable dans le Laboratoire professionnel).",
     exerciceQuestion: "Est-ce que tu connais précisément combien te coûte l'acquisition d'un client, canal par canal ?",
     caseTag: null
   },

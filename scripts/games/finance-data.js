@@ -33,7 +33,7 @@ const FINANCE_CONSEILS = [
       'Calcule ta marge brute (prix − coût direct) sur une vente type.',
       'Additionne tes charges fixes mensuelles (loyer, abonnements, salaires fixes).',
       'Calcule ton seuil de rentabilité : charges fixes ÷ marge brute par vente.',
-      'Compare ce seuil à tes ventes réelles — c\'est calculable directement dans Unit Economics (Business Lab).'
+      'Compare ce seuil à tes ventes réelles — c\'est calculable directement dans Unit Economics (Laboratoire professionnel).'
     ]
   },
   {

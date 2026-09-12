@@ -31,7 +31,7 @@ const STRATEGIE_CONSEILS = [
   {
     titre: 'Avant de baisser ton prix face à un concurrent',
     etapes: [
-      'Vérifie que ta marge actuelle supporte vraiment une baisse (calcul dans Business Lab).',
+      'Vérifie que ta marge actuelle supporte vraiment une baisse (calcul dans le Laboratoire professionnel).',
       "Demande-toi si le client compare vraiment sur le prix, ou sur autre chose que tu ignores.",
       'Envisage une différenciation plutôt qu\'une guerre des prix, rarement gagnable pour le plus petit acteur.'
     ]

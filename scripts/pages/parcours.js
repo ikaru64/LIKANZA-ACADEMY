@@ -258,7 +258,7 @@ function renderBusinessCockpitHeader(elId){
     <div class="cockpit-title">
       <h2>Mon Univers Financier</h2>
       <span class="cockpit-demo-badge" style="background:var(--emerald);color:#0B0B0D;">Vue entreprise</span>
-      <p class="cockpit-subtitle" style="width:100%;">Aucune donnée financière personnelle enregistrée — voici un aperçu de ton entreprise, à partir de ton profil Business Lab.</p>
+      <p class="cockpit-subtitle" style="width:100%;">Aucune donnée financière personnelle enregistrée — voici un aperçu de ton entreprise, à partir de ton profil du Laboratoire professionnel.</p>
     </div>
     <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;">
       <a href="business-lab.html#companyProfile" class="btn btn-sm btn-gold">Gérer mon profil entreprise →</a>
@@ -310,9 +310,9 @@ function renderBusinessCockpitSide(elId){
     const decisions = businessLabDecisionsPool().length;
     const cases = businessLabCasesPool().length;
     labEl.innerHTML = `
-      <span class="panel-title">Business Lab</span>
+      <span class="panel-title">Laboratoire professionnel</span>
       <p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">${decisions} décisions rapides et ${cases} business cases réels à explorer pour progresser.</p>
-      <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;align-self:flex-start;">Ouvrir le Business Lab →</a>`;
+      <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;align-self:flex-start;">Ouvrir le Laboratoire professionnel →</a>`;
   }
 }
 

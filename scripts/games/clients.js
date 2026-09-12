@@ -44,7 +44,7 @@ function renderClientsGuide(elId){
       <a href="business-lab.html" class="card play-tile">
         <span class="icon" style="color:var(--gold-bright);">🧪</span>
         <h4 style="margin:8px 0 4px;">Teste tes connaissances</h4>
-        <p style="font-size:12.5px;">Le Business Lab propose des mises en situation réelles, pas un quiz de définitions.</p>
+        <p style="font-size:12.5px;">Le Laboratoire professionnel propose des mises en situation réelles, pas un quiz de définitions.</p>
       </a>
       <a href="bibliotheque.html#theme:Business" class="card play-tile">
         <span class="icon" style="color:var(--gold-bright);">📚</span>

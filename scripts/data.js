@@ -650,7 +650,7 @@ function renderBusinessSnapshotDashboardWidget(elId){
       <div class="card"><span class="smallcaps">Résultat mensuel</span><div class="result-big" style="font-size:16px;margin-top:4px;color:${snapshot.resultatMensuelApproximatif >= 0 ? 'var(--emerald)' : 'var(--bordeaux)'};">${fmtEUR(snapshot.resultatMensuelApproximatif)}</div></div>
       <div class="card"><span class="smallcaps">Trésorerie</span><div class="result-big" style="font-size:16px;margin-top:4px;">${fmtEUR(profile.tresorerieActuelle)}</div></div>
     </div>
-    <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;">Voir le Business Lab →</a>`;
+    <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;">Voir le Laboratoire professionnel →</a>`;
 }
 // Le disclaimer déclaré-vs-évalué vivait auparavant dans le HTML de
 // parcours.html autour de renderDomainDashboard — préservé ici pour que le
@@ -1015,7 +1015,7 @@ function renderBusinessAlertsDashboardWidget(elId){
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
       ${alerts.map(a => `<div style="font-size:12.5px;">${EMOJI[a.niveau]} ${a.message}</div>`).join('')}
     </div>
-    <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;">Voir le Business Lab →</a>`;
+    <a href="business-lab.html" class="btn btn-sm" style="margin-top:10px;">Voir le Laboratoire professionnel →</a>`;
 }
 // projectsOverride optionnel (cockpit v2, 05/09/2026) : mode Aperçu/Démo,
 // même motif que ci-dessus.
@@ -1075,7 +1075,7 @@ function renderCombinedWealthDashboardWidget(elId){
     return;
   }
   if(!wealth.hasBusiness){
-    el.innerHTML = `<span class="smallcaps">💰 Patrimoine total</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Renseigne aussi ton profil entreprise (Business Lab) pour voir ton patrimoine personnel + professionnel combiné.</p>`;
+    el.innerHTML = `<span class="smallcaps">💰 Patrimoine total</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Renseigne aussi ton profil entreprise (Laboratoire professionnel) pour voir ton patrimoine personnel + professionnel combiné.</p>`;
     return;
   }
   if(!wealth.hasPersonal){
@@ -1089,7 +1089,7 @@ function renderCombinedWealthDashboardWidget(elId){
       <div style="display:flex;justify-content:space-between;"><span>👤 Personnel</span><span class="mono">${fmtEUR(wealth.personalNet)}</span></div>
       <div style="display:flex;justify-content:space-between;"><span>🏢 Professionnel (trésorerie nette)</span><span class="mono">${fmtEUR(wealth.businessNet)}</span></div>
     </div>
-    <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">Côté professionnel : trésorerie − dette totale, jamais une valorisation d'entreprise (voir "Valorisation par multiples" dans le Business Lab pour ça).</p>`;
+    <p style="font-size:11px;color:var(--text-dim);margin-top:8px;">Côté professionnel : trésorerie − dette totale, jamais une valorisation d'entreprise (voir "Valorisation par multiples" dans le Laboratoire professionnel pour ça).</p>`;
 }
 
 // ---------- Coquille du Dashboard "Mon Univers Financier" : registre de
@@ -7326,7 +7326,7 @@ function renderBusinessProfile(elId){
   if(avgDecisions > 0 && avgDecisions < 6){
     recommendations.push({title:'Business Strategy', desc:"Tes parties se terminent souvent tôt — l'outil d'analyse de projet peut t'aider à préparer un budget et une stratégie avant de rejouer.", href:'construire-son-projet.html'});
   }
-  recommendations.push({title:'Business Cases', desc:"Continue à t'entraîner sur des mises en situation courtes dans le Business Lab.", href:'business-lab.html'});
+  recommendations.push({title:'Business Cases', desc:"Continue à t'entraîner sur des mises en situation courtes dans le Laboratoire professionnel.", href:'business-lab.html'});
 
   el.innerHTML = `
     <p style="font-size:13px;color:var(--text-dim);margin-bottom:12px;">Basé sur tes ${history.length} dernières parties du Business Game — jamais sur une seule partie isolée.</p>
@@ -11216,7 +11216,7 @@ function renderCompanyProfile(elId){
   const stored = getBusinessProfile();
 
   el.innerHTML = `
-    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Une seule fiche pour ton entreprise, réutilisée par les autres outils du Business Lab — jamais une donnée à ressaisir à deux endroits.</p>
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:14px;">${renderDataBadge('calcul')} Une seule fiche pour ton entreprise, réutilisée par les autres outils du Laboratoire professionnel — jamais une donnée à ressaisir à deux endroits.</p>
     <div class="field"><label for="${elId}-nom">Nom de l'entreprise</label><input type="text" id="${elId}-nom" value="${stored.nom || ''}" placeholder="Ma Startup"></div>
     <div class="field" style="max-width:340px;"><label for="${elId}-revenueMode">Comment calculer ton chiffre d'affaires ?</label>
       <select id="${elId}-revenueMode">
