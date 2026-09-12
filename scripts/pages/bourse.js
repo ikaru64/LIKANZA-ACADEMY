@@ -1,27 +1,40 @@
 // ================= Navigation par onglets (même pattern que index.html) =================
+// "group" (Chantier G, refonte continuité UX du 12/09/2026) : couche de
+// regroupement VISUEL uniquement, ajoutée au-dessus des 11 onglets déjà
+// réels — aucun id, libellé d'onglet, routage par hash ou logique de
+// renderBourseTabs/setBourseTab n'est renommé ni supprimé. Un débutant lit
+// d'abord les 6 groupes (Aujourd'hui/Mes actions/Analyser/Comparer/
+// Simuler/Portefeuille) plutôt que 11 cartes de poids égal.
 const BOURSE_TABS = [
-  {id:'tab-marche-jour', title:'Marché du jour', desc:'Hausses, baisses, sélection', icon:'star'},
-  {id:'tab-fiches', title:'Fiches actions', desc:'liste modifiable, 20 max', icon:'list'},
-  {id:'tab-screener', title:'Filtrer', desc:'Parmi tes titres suivis', icon:'search'},
-  {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale'},
-  {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target'},
-  {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote'},
-  {id:'tab-portefeuille', title:'Portefeuille', desc:'Déclaratif, tes transactions', icon:'wallet'},
-  {id:'tab-marches', title:'Autres marchés', desc:'ETF, Forex, matières premières, taux', icon:'landmark'},
-  {id:'tab-options', title:'Options', desc:'Call/Put, payoff à l\'échéance', icon:'swords'},
-  {id:'tab-paper-trading', title:'Paper Trading', desc:'Argent fictif, vrais cours', icon:'flame'},
-  {id:'tab-watchlist', title:'Ma liste de surveillance', desc:'Seuils d\'alerte, en local', icon:'triangle-alert'}
+  {id:'tab-marche-jour', title:'Marché du jour', desc:'Hausses, baisses, sélection', icon:'star', group:'Aujourd\'hui'},
+  {id:'tab-marches', title:'Autres marchés', desc:'ETF, Forex, matières premières, taux', icon:'landmark', group:'Aujourd\'hui'},
+  {id:'tab-watchlist', title:'Ma liste de surveillance', desc:'Seuils d\'alerte, en local', icon:'triangle-alert', group:'Mes actions'},
+  {id:'tab-fiches', title:'Fiches actions', desc:'liste modifiable, 20 max', icon:'list', group:'Mes actions'},
+  {id:'tab-scenarios', title:'Scénarios', desc:'Estimation, pas une prédiction', icon:'target', group:'Analyser'},
+  {id:'tab-comparateur', title:'Comparateur', desc:'2 à 5 titres', icon:'scale', group:'Comparer'},
+  {id:'tab-screener', title:'Filtrer', desc:'Parmi tes titres suivis', icon:'search', group:'Comparer'},
+  {id:'tab-dca', title:'DCA vs unique', desc:'Impact du timing', icon:'banknote', group:'Simuler'},
+  {id:'tab-options', title:'Options', desc:'Call/Put, payoff à l\'échéance', icon:'swords', group:'Simuler'},
+  {id:'tab-paper-trading', title:'Paper Trading', desc:'Argent fictif, vrais cours', icon:'flame', group:'Simuler'},
+  {id:'tab-portefeuille', title:'Portefeuille', desc:'Déclaratif, tes transactions', icon:'wallet', group:'Portefeuille'}
 ];
 let bourseActiveTab = (location.hash && document.getElementById(location.hash.slice(1))) ? location.hash.slice(1) : 'tab-marche-jour';
 function renderBourseTabs(){
   const el = document.getElementById('bourseTabsGrid');
   if(!el) return;
-  el.innerHTML = BOURSE_TABS.map(t=>`
+  let lastGroup = null;
+  el.innerHTML = BOURSE_TABS.map(t => {
+    const groupHeader = t.group !== lastGroup
+      ? `<span class="bourse-tab-group-label" style="grid-column:1/-1;display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--term-text-dim);margin:${lastGroup === null ? '0' : '10px'} 0 -6px;">${t.group}</span>`
+      : '';
+    lastGroup = t.group;
+    return `${groupHeader}
     <button class="quick-access-card ${t.id===bourseActiveTab?'active':''}" data-tab="${t.id}" title="${t.desc}">
       <div class="icon">${ICONS[t.icon] || ''}</div>
       <h3>${t.title}</h3>
       <p style="font-size:12px;color:var(--text-dim);margin-top:4px;">${t.desc}</p>
-    </button>`).join('');
+    </button>`;
+  }).join('');
   el.querySelectorAll('.quick-access-card').forEach(btn=>{
     btn.addEventListener('click', ()=>setBourseTab(btn.dataset.tab));
   });
