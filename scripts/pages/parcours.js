@@ -845,7 +845,9 @@ function renderCockpitAllocation(elId){
   if(!el) return;
   const segs = getWealthAllocationSegments(cockpitAssets(), cockpitDebts());
   if(segs.length === 0){
-    el.innerHTML = `<span class="panel-title">Allocation globale</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:10px;">Aucune donnée pour l'instant.</p>`;
+    el.innerHTML = `<span class="panel-title">Allocation globale</span><div style="margin-top:10px;">${renderEmptyState("Aucun actif enregistré pour l'instant.", {label: 'Ajouter un actif →'})}</div>`;
+    const ctaBtn = el.querySelector('.empty-state-cta');
+    if(ctaBtn) ctaBtn.addEventListener('click', () => setCockpitActiveTab('tab-patrimoine'));
     return;
   }
   const sorted = segs.slice().sort((a, b) => b.pct - a.pct);

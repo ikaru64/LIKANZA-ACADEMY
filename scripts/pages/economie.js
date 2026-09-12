@@ -446,7 +446,7 @@ async function renderMapMain(){
   const values = mapData.values || {};
   const nums = Object.values(values).map(v => v.value);
   if(nums.length === 0){
-    mainEl.innerHTML = `<p class="eco-panel-note">Aucune donnée réelle disponible pour "${meta.label}" pour le moment.</p>`;
+    mainEl.innerHTML = `<div class="eco-panel-note">${renderEmptyState(`Aucune donnée réelle disponible pour "${meta.label}" pour le moment — choisis un autre indicateur ci-dessus.`)}</div>`;
     return;
   }
   const min = Math.min(...nums), max = Math.max(...nums);
@@ -1353,7 +1353,7 @@ async function renderDebtView(){
   const hasDeficit = ECO_COUNTRIES[country].kpis.includes('gov-deficit');
 
   kpisEl.innerHTML = ['gov-debt', 'gov-deficit'].filter(k => ECO_COUNTRIES[country].kpis.includes(k)).map(k => `<div class="eco-kpi is-loading" id="ecoDebtKpi-${k}"><span class="eco-kpi-label">${ICONS[ECO_KPI_META[k].icon] || ''} ${ECO_KPI_META[k].label}</span><span class="eco-kpi-value">Chargement…</span></div>`).join('')
-    || `<p class="eco-panel-note" style="padding:14px;">Aucune donnée de dette/déficit pour ${ECO_COUNTRIES[country].label} pour le moment.</p>`;
+    || `<div class="eco-panel-note" style="padding:14px;">${renderEmptyState(`Aucune donnée de dette/déficit pour ${ECO_COUNTRIES[country].label} pour le moment — choisis un autre pays dans la navigation ci-dessus.`)}</div>`;
 
   await Promise.all(['gov-debt', 'gov-deficit'].filter(k => ECO_COUNTRIES[country].kpis.includes(k)).map(async k => {
     const cardEl = document.getElementById(`ecoDebtKpi-${k}`);

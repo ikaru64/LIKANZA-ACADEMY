@@ -145,6 +145,26 @@ function renderDataQualityBadge(level){
   return `<span class="data-quality-badge data-quality-${level}" title="${meta.desc}"><span aria-hidden="true">${meta.emoji}</span> Qualité des données : ${meta.label}</span>`;
 }
 
+// ---------- État vide orienté action (Chantier B, refonte continuité UX du
+// 12/09/2026) : remplace un texte plat "Aucune donnée" par un message +,
+// quand une vraie prochaine action existe, un bouton pour la déclencher —
+// jamais un bouton fabriqué qui ferait doublon avec un contrôle déjà
+// visible juste au-dessus (ex. un sélecteur de pays/indicateur déjà à
+// l'écran) : dans ce cas, `cta` est omis et le message guide simplement
+// vers ce contrôle existant. `cta.href` support un ancrage réel (lien
+// cross-page) ; pour une action in-page (changer d'onglet, etc.), omettre
+// `href` et câbler un `click` sur `.empty-state-cta` après insertion
+// (même discipline que renderLabIntake/wireLabPriorityCard). ----------
+function renderEmptyState(message, cta){
+  let button = '';
+  if(cta && cta.href){
+    button = `<a href="${cta.href}" class="btn btn-sm btn-gold empty-state-cta" style="margin-top:8px;display:inline-block;">${cta.label}</a>`;
+  } else if(cta){
+    button = `<button type="button" class="btn btn-sm btn-gold empty-state-cta" style="margin-top:8px;">${cta.label}</button>`;
+  }
+  return `<p style="font-size:12.5px;color:var(--text-dim);">${message}</p>${button}`;
+}
+
 // ---------- Note de source (panneau "Voir les sources", section 46) ----------
 function renderSourceNote(seriesKey, extra){
   const s = HISTORICAL_SERIES[seriesKey];
