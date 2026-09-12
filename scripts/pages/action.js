@@ -498,7 +498,8 @@ async function renderActionDetail(){
                 ? `<ul style="font-size:12.5px;color:var(--text-dim);margin:6px 0 0 16px;">${editorial.risques.map(r=>`<li>${r}</li>`).join('')}</ul>`
                 : `${sw.weaknesses.length ? `<ul style="font-size:12.5px;color:var(--text-dim);margin:6px 0 0 16px;">${sw.weaknesses.map(w=>`<li>${w}</li>`).join('')}</ul>` : ''}<p style="font-size:11.5px;color:var(--text-dim);margin-top:6px;font-style:italic;">Analyse éditoriale non disponible pour cette valeur — seuls les points calculables à partir des vrais fondamentaux sont listés ici.</p>`}
             </div>
-            <p style="font-size:11px;color:var(--text-dim);margin-top:12px;font-style:italic;">${renderDataBadge('avis')} Deux lectures possibles des mêmes faits — ni l'une ni l'autre n'est "la vérité" sur cette entreprise.</p>`;
+            <p style="font-size:11px;color:var(--text-dim);margin-top:12px;font-style:italic;">${renderDataBadge('avis')} Deux lectures possibles des mêmes faits — ni l'une ni l'autre n'est "la vérité" sur cette entreprise.</p>
+            ${renderMethodologyPanel(ACTION_METHODOLOGY.theses)}`;
         }
 
         // ---------- Consensus analystes : même primitive que l'onglet Scénarios

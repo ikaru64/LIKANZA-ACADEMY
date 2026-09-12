@@ -11476,6 +11476,23 @@ function bucketLeverage(totalDebt, totalCash){
   return {level: 'eleve', label: 'endettement net élevé'};
 }
 
+// Chantier C (refonte continuité UX, 12/09/2026) : la fiche action (thèse
+// favorable/prudente) n'avait jusqu'ici aucun panneau "ⓘ Comment ce
+// résultat est calculé ?" au niveau de la page — seul un "Pourquoi ?" par
+// champ isolé existait déjà (renderWhyDrawer). Ce spec explique la
+// méthodologie de la synthèse forces/faiblesses elle-même (les 3 bandes de
+// seuils ci-dessous), jamais dupliquée avec renderWhyDrawer qui reste
+// scopé à un seul champ à la fois.
+const ACTION_METHODOLOGY = {
+  theses: {
+    calcul: "Croissance du chiffre d'affaires, marge nette et endettement net sont comparés à des seuils fixes (croissance ≥10% = forte, ≥3% = modérée ; marge ≥20% = élevée, ≥8% = modérée ; dette nette/trésorerie ≤3× = endettement modéré) pour classer chaque axe en force ou en faiblesse.",
+    donnees: "Les 3 mêmes fondamentaux réels (Yahoo Finance) que le reste de la fiche — jamais une 3e source différente pour cette synthèse.",
+    hypotheses: "Les seuils sont génériques, identiques pour tous les secteurs — une marge de 8% peut être excellente dans la distribution et faible dans le logiciel.",
+    limites: "Seuls 3 axes chiffrables sont couverts : qualité du management, avantage concurrentiel réel ou position sur un marché n'entrent jamais dans ce calcul.",
+    comprendre: "La thèse prudente, quand une analyse éditoriale existe pour cette valeur, n'est pas dérivée des mêmes seuils — c'est un jugement humain distinct, jamais recalculé automatiquement."
+  }
+};
+
 // Synthèse forces/faiblesses dérivée des vraies bandes ci-dessus — aucune
 // nouvelle rédaction par entreprise, purement calculé.
 function deriveStrengthsWeaknesses(fields){

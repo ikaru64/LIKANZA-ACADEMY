@@ -118,11 +118,25 @@ const HISTORICAL_SERIES = {
 // ---------- Likanza Truth Framework : les 6 catégories d'information ----------
 // Toute affirmation importante appartient à l'une de ces 6 catégories,
 // jamais mélangées dans un même chiffre affiché. Distinction volontaire
-// entre FAIT (vérifiable, daté, sourcé) et CALCUL (résultat dérivé d'une
-// formule + d'hypothèses) : un ratio ou une projection calculée à partir
-// d'une vraie donnée n'est pas elle-même un fait.
+// entre DONNÉE RÉELLE (vérifiable, datée, sourcée) et CALCUL (résultat
+// dérivé d'une formule + d'hypothèses) : un ratio ou une projection
+// calculée à partir d'une vraie donnée n'est pas elle-même une donnée réelle.
+//
+// Chantier C (refonte continuité UX, 12/09/2026) a audité ces 6 catégories
+// contre les 4 demandées par le brief (Donnée réelle/Calcul/Scénario/
+// Simulation) : "fait" est renommé "Donnée réelle" (même concept, libellé
+// plus clair) et calcul/scénario/simulation correspondaient déjà. "analyse"
+// et "avis" sont volontairement CONSERVÉS comme 2 catégories de plus,
+// jamais fusionnées dans l'une des 4 : elles encodent une distinction
+// épistémique réelle que le brief n'avait pas anticipée — "analyse" est une
+// lecture/explication d'une donnée déjà réelle ou calculée (ex. "pourquoi
+// cette variation", un classement basé sur des seuils réels), "avis" est un
+// jugement éditorial explicitement subjectif (ex. "deux lectures possibles
+// des mêmes faits", "un repère indicatif, jamais une garantie") — les
+// confondre avec CALCUL ferait perdre exactement la distinction que ce
+// framework existe pour préserver.
 const DATA_BADGE_META = {
-  fait:       {emoji: '📊', label: 'Fait', className: 'data-badge-fait'},
+  fait:       {emoji: '📊', label: 'Donnée réelle', className: 'data-badge-fait'},
   calcul:     {emoji: '🧮', label: 'Calcul', className: 'data-badge-calcul'},
   analyse:    {emoji: '🔍', label: 'Analyse', className: 'data-badge-analyse'},
   scenario:   {emoji: '🔮', label: 'Scénario', className: 'data-badge-scenario'},
