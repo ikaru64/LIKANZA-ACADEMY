@@ -4,7 +4,7 @@
    différence du Bilan Likanza de Mon Univers Financier — demande explicite
    de ce chantier), "Tes priorités" (jusqu'à 3, réutilise computeFinancialDashboard/
    computeHealthScore/computeLabPriorities, jamais un second moteur de
-   diagnostic), scénarios par priorité. Les 8 onglets/19 outils existants ne
+   diagnostic), scénarios par priorité. Les 7 onglets/19 outils existants ne
    sont jamais retirés — voir laboratoire.tabs (test pré-existant) pour leur
    couverture, non dupliquée ici.
    ============================================================ */
@@ -22,9 +22,12 @@ const t = createSuite('laboratoire.assistant');
   t.ok(html.includes('Étape 1 / 4') && html.includes('Tes revenus'), "l'étape 1 (revenus) est bien affichée en premier");
   t.ok(!html.includes('Étape 2') , "les autres étapes ne sont pas affichées simultanément (progressif, jamais 30 champs à la fois)");
 
-  // Les 8 onglets/19 outils existants restent bien présents, inchangés, sous "Tous les outils".
+  // Les outils existants restent bien présents, inchangés, sous "Tous les outils". 7 onglets
+  // depuis le Chantier E (refonte continuité UX, 12/09/2026) : "Économie" a été extraite vers
+  // sa propre page (laboratoire-economie.html) — n'était plus, comme onglet ici, cohérente avec
+  // labo-financier.html qui présente déjà Personnel/Professionnel/Économie comme 3 univers frères.
   t.ok(document.getElementById('labToolsHead').textContent.includes('Tous les outils'), "la section des outils existants est bien libellée \"Tous les outils\", jamais supprimée");
-  t.equal(document.querySelectorAll('#labTabsGrid .quick-access-card').length, 8, "les 8 onglets existants sont bien tous présents, inchangés");
+  t.equal(document.querySelectorAll('#labTabsGrid .quick-access-card').length, 7, "les 7 onglets existants (hors Économie, extraite en page séparée) sont bien tous présents, inchangés");
 }
 
 // ---------- Parcours complet de l'intake (4 étapes réelles, avec de vraies valeurs saisies) ----------

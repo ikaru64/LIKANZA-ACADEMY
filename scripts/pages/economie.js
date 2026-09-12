@@ -2118,9 +2118,11 @@ function renderEcoHomeMarkets(){
 
 // ============================================================
 // CTA Laboratoire + pont Actualités. Une seule vraie destination existe
-// pour les scénarios macro (laboratoire.html#tab-economie, "Gouverneur de
-// banque centrale" + scénarios) — les 5 exemples illustrent le contenu
-// sans fabriquer 5 ancres différentes qui n'existent pas.
+// pour les scénarios macro (laboratoire-economie.html, "Gouverneur de
+// banque centrale" + scénarios — page dédiée depuis le Chantier E de la
+// refonte continuité UX du 12/09/2026, auparavant un onglet niché dans
+// laboratoire.html) — les 5 exemples illustrent le contenu sans fabriquer
+// 5 ancres différentes qui n'existent pas.
 // ============================================================
 function renderEcoHomeCtas(){
   const el = document.getElementById('ecoHomeCtas');
@@ -2130,7 +2132,7 @@ function renderEcoHomeCtas(){
       <div class="eco-panel">
         <span class="eco-panel-title">🧪 Tester un scénario économique</span>
         <p class="eco-panel-note" style="margin-top:6px;">Hausse des taux, baisse des taux, inflation élevée, récession, choc pétrolier — des scénarios qualitatifs, avec le mécanisme expliqué, jamais une prédiction.</p>
-        <a href="laboratoire.html#tab-economie" class="btn btn-sm btn-gold" style="margin-top:10px;">Explorer les scénarios →</a>
+        <a href="laboratoire-economie.html" class="btn btn-sm btn-gold" style="margin-top:10px;">Explorer les scénarios →</a>
       </div>
       <div class="eco-panel">
         <span class="eco-panel-title">📰 Ce qui change actuellement</span>

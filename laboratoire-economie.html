@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Laboratoire financier · Likanza Academy</title>
-<meta name="description" content="Deux univers séparés : simule et optimise tes finances personnelles, ou modélise ton entreprise et teste tes décisions avant d'agir.">
-<meta property="og:title" content="Laboratoire financier · Likanza Academy">
-<meta property="og:description" content="Deux univers séparés : simule et optimise tes finances personnelles, ou modélise ton entreprise et teste tes décisions avant d'agir.">
+<title>Laboratoire économie · Likanza Academy</title>
+<meta name="description" content="Teste des scénarios macroéconomiques qualitatifs (taux, inflation, chômage, droits de douane) et pilote une banque centrale — jamais une prédiction chiffrée.">
+<meta property="og:title" content="Laboratoire économie · Likanza Academy">
+<meta property="og:description" content="Teste des scénarios macroéconomiques qualitatifs (taux, inflation, chômage, droits de douane) et pilote une banque centrale — jamais une prédiction chiffrée.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://likanza-academy.vercel.app/labo-financier.html">
-<link rel="canonical" href="https://likanza-academy.vercel.app/labo-financier.html">
+<meta property="og:url" content="https://likanza-academy.vercel.app/laboratoire-economie.html">
+<link rel="canonical" href="https://likanza-academy.vercel.app/laboratoire-economie.html">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
@@ -81,41 +81,25 @@
     </div>
   </div>
 </header>
-<div class="breadcrumb"><a href="index.html">Accueil</a> / Laboratoire financier</div>
-<h1 class="visually-hidden">Laboratoire financier</h1>
+<div class="breadcrumb"><a href="index.html">Accueil</a> / <a href="labo-financier.html">Laboratoire financier</a> / Économie</div>
+<h1 class="visually-hidden">Laboratoire économie</h1>
 
-<section class="section" style="padding-bottom:0;">
-  <div class="section-head"><h2>🧪 Laboratoire financier</h2><span class="meta-line">Teste une décision avant de la prendre.</span></div>
-  <p style="font-size:13px;color:var(--text-dim);max-width:70ch;">Likanza analyse ta situation, détecte les points à améliorer et te permet de tester plusieurs scénarios avant de prendre une décision. Personnel et Business reposent sur des questions différentes, jamais mélangées dans la même expérience.</p>
-</section>
+<section class="section" style="padding-bottom:20px;">
+  <div class="section-head"><h2>🌍 Laboratoire économique</h2><span class="meta-line">scénarios qualitatifs, jamais une prédiction</span></div>
+  <p style="color:var(--text-dim);font-size:13.5px;margin-bottom:16px;max-width:70ch;">Un choc macroéconomique n'a jamais un seul effet isolé : il se propage à travers plusieurs marchés, avec un mécanisme différent à chaque étape. Chaque scénario explique le "pourquoi", ses hypothèses et ses limites — <a href="economie.html" style="color:var(--gold-bright);">voir les vrais indicateurs actuels</a>.</p>
+  <div id="ecoLabScenarios"></div>
 
-<section class="section">
-  <div class="lab-picker-grid">
-    <a href="laboratoire.html" class="lab-picker-card">
-      <span class="lab-picker-icon">👤</span>
-      <h3>Personnel</h3>
-      <p>Analyse ton budget, tes projets et ton avenir financier.</p>
-      <span class="btn btn-gold lab-picker-cta">Analyser ma situation</span>
-    </a>
-    <a href="business-lab.html" class="lab-picker-card">
-      <span class="lab-picker-icon">🏢</span>
-      <h3>Professionnel</h3>
-      <p>Analyse ton entreprise et teste tes décisions avant de les appliquer.</p>
-      <span class="btn btn-gold lab-picker-cta">Analyser mon entreprise</span>
-    </a>
-    <a href="laboratoire-economie.html" class="lab-picker-card">
-      <span class="lab-picker-icon">🌐</span>
-      <h3>Économie</h3>
-      <p>Teste des scénarios macro : hausse des taux, inflation, récession, choc pétrolier.</p>
-      <span class="btn btn-gold lab-picker-cta">Entrer</span>
-    </a>
+  <div class="card" style="margin-top:16px;">
+    <h3>🏦 Gouverneur de banque centrale <span class="data-badge data-badge-simulation" style="margin-left:6px;">🎮 Simulation</span></h3>
+    <p style="color:var(--text-dim);font-size:13px;margin:6px 0 14px;max-width:70ch;">Pilote le taux directeur pendant 6 trimestres et vise le double mandat : une inflation proche de sa cible, un chômage proche de son niveau naturel.</p>
+    <div id="governorSim"></div>
   </div>
 </section>
 
 <footer class="site-footer">
   <div class="footer-inner">
     <div><div class="logo-row" style="margin-bottom:10px;"><span class="logo-mark"><svg viewBox="0 0 50 28" fill="none" aria-hidden="true"><defs><linearGradient id="lkaTextGrad" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="var(--gold)"/><stop offset="45%" stop-color="var(--gold-bright)"/><stop offset="53%" stop-color="#F5EBD6"/><stop offset="62%" stop-color="var(--gold-bright)"/><stop offset="100%" stop-color="var(--gold)"/></linearGradient></defs><text x="25" y="21" text-anchor="middle" font-family="'Cormorant Garamond', serif" font-weight="600" font-size="22" letter-spacing="0.5" fill="url(#lkaTextGrad)">LKA</text></svg></span><span class="logo-text">Likanza <span class="zr">Academy</span></span></div><p style="color:var(--text-dim);font-size:13px;max-width:32ch;">Apprends à maîtriser ton argent, à ton niveau.</p></div>
-    <div><h4>Explorer</h4><ul><li><a href="laboratoire.html">Laboratoire personnel</a></li><li><a href="business-lab.html">Laboratoire professionnel</a></li><li><a href="laboratoire-economie.html">Laboratoire économie</a></li></ul></div>
+    <div><h4>Explorer</h4><ul><li><a href="labo-financier.html">Retour au Laboratoire</a></li><li><a href="economie.html">Économie (indicateurs réels)</a></li><li><a href="bourse.html">Bourse</a></li></ul></div>
     <div><h4>Apprendre</h4><ul><li><a href="bibliotheque.html">Bibliothèque</a></li><li><a href="formations.html">Formations</a></li></ul></div>
     <div><h4>Likanza Academy</h4><ul><li><a href="legal.html#risques">Avertissement risques</a></li></ul></div>
   </div>
@@ -125,6 +109,8 @@
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
+<script src="scripts/historical-data.js"></script>
+<script src="scripts/pages/laboratoire-economie-page.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>

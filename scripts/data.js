@@ -7701,7 +7701,7 @@ function computeCrashDecisionOutcome(monthlyPoints, capital, extraAtTrough){
   };
 }
 
-// ---------- Simulateur "Gouverneur de banque centrale" (laboratoire.html, tab-economie) ----------
+// ---------- Simulateur "Gouverneur de banque centrale" (laboratoire-economie.html) ----------
 // Modèle pédagogique volontairement simplifié, jamais une prédiction ni des
 // données réelles (contrairement au reste du Laboratoire) — même esprit que
 // les scénarios qualitatifs ECO_LAB_SCENARIOS (scripts/pages/laboratoire.js) :
