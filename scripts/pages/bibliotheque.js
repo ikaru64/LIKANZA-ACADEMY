@@ -309,6 +309,7 @@ function renderLeafCards(container, items){
         ${l.inconvenients && l.inconvenients.length ? `<p class="kt-leaf-con"><strong>Limites :</strong> ${l.inconvenients.join(' · ')}</p>` : ''}
         ${l.erreurs && l.erreurs.length ? `<p class="kt-leaf-err"><strong>Erreurs fréquentes :</strong> ${l.erreurs.join(' · ')}</p>` : ''}
         ${renderTermeRecommendationsRow(l.terme)}
+        <div id="nextstep-${i}" style="margin-top:10px;"></div>
       </div>
     </div>`).join('') || `
     <div class="lib-empty-state">
@@ -328,6 +329,11 @@ function renderLeafCards(container, items){
   items.forEach((l,i) => {
     const conseil = pickConseilMessage(l.niveau, {weakCategory: getWeakCategoryLabel(l.categorie), categorie: l.categorie});
     renderConseilBadge(`ktConseil-${i}`, conseil);
+    // Chantier K (refonte continuité UX, 12/09/2026) : une fiche de terme ne
+    // proposait jusqu'ici aucune action de suite (contrairement aux
+    // Formations/Simulations, qui appellent déjà renderNextStepCard) —
+    // pure réutilisation, aucune nouvelle logique de recommandation.
+    renderNextStepCard(`nextstep-${i}`, {domainKey: categorieDomainKey(l.categorie)});
   });
 }
 

@@ -121,6 +121,17 @@ function loadBibliothequePage(options){ return loadPage('bibliotheque.html', BIB
   t.ok(crumbHtml.includes('Crypto'), "le fil d'ariane confirme bien le vrai univers ouvert par le lien profond");
 }
 
+// ---------- Chantier K (refonte continuité UX, 12/09/2026) : une fiche de terme propose bien une action de suite ----------
+{
+  const { document } = loadBibliothequePage({ seed: w => { w.location.hash = '#theme:Crypto'; } });
+  const leafCards = document.querySelectorAll('#ktLeaves .kt-leaf-card');
+  t.ok(leafCards.length > 0, "au moins une fiche de terme est bien rendue pour cet univers");
+  const firstNextStep = leafCards[0].querySelector('[id^="nextstep-"]');
+  t.ok(!!firstNextStep, "chaque fiche de terme a bien un conteneur de prochaine étape (renderNextStepCard)");
+  t.ok(firstNextStep.innerHTML.length > 0, "renderNextStepCard produit bien un contenu réel, jamais un conteneur resté vide");
+  t.ok(firstNextStep.innerHTML.includes('Prochaine étape') || firstNextStep.innerHTML.includes('parcours'), "le contenu ressemble bien à une vraie proposition d'action de suite (même composant que Formations/Simulations)");
+}
+
 const summary = t.summary();
 console.log(`\n${t.name} : ${summary.total - summary.failed}/${summary.total} OK`);
 process.exit(summary.failed > 0 ? 1 : 0);
