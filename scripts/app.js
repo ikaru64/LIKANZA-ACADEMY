@@ -1477,14 +1477,33 @@ const LEARNING_PATHS = [
     coursIds:['budget-securite','epargne-interets','bourse-actions','risque-diversification','fiscalite-pea']}
 ];
 
+// Libellés canoniques partagés avec PROFILE_OBJECTIFS (scripts/data.js,
+// "objectif" du profil de simulation financière sur Mon Univers Financier) —
+// Chantier A de la refonte continuité UX du 12/09/2026 : les 2 champs
+// (p.primaryGoal ici, p.objectif là-bas) restent des concepts VOLONTAIREMENT
+// distincts (l'un route vers un domaine pédagogique, l'autre alimente une
+// simulation financière) et ne sont jamais fusionnés — mais quand le MÊME
+// concept apparaît dans les deux listes (gérer son argent, investir, la
+// Bourse), il n'existe plus qu'un seul texte, jamais deux formulations
+// différentes pour la même chose. "Préparer un achat immobilier"/"Comprendre
+// l'immobilier" et les 2 libellés crypto restent volontairement distincts
+// dans les 2 listes : ce sont deux angles réellement différents (un projet
+// financier concret vs un centre d'intérêt pédagogique), pas une même idée
+// mal orthographiée deux fois.
+const SHARED_GOAL_LABELS = {
+  gererArgent: 'Mieux gérer mon argent',
+  investir: 'Commencer à investir',
+  bourse: 'Mieux comprendre la Bourse'
+};
+
 // ---------- Premier quiz de profil (100% déclaratif, aucune question notée) ----------
 // « Pourquoi es-tu sur Likanza ? » — objectifs multiples, réutilisés pour la
 // personnalisation immédiate (accueil, recommandations) — jamais pour calculer
 // un niveau, ce champ n'a pas de bonne réponse.
 const POSITIONING_GOALS = [
-  {key:'personalFinance', label:'Mieux gérer mon argent'},
-  {key:'stockMarket', label:'Commencer à investir'},
-  {key:'stockMarket', label:'Mieux comprendre la Bourse'},
+  {key:'personalFinance', label:SHARED_GOAL_LABELS.gererArgent},
+  {key:'stockMarket', label:SHARED_GOAL_LABELS.investir},
+  {key:'stockMarket', label:SHARED_GOAL_LABELS.bourse},
   {key:'economics', label:"Comprendre l'économie"},
   {key:'business', label:'Créer ou développer un business'},
   {key:'realEstate', label:"Comprendre l'immobilier"},

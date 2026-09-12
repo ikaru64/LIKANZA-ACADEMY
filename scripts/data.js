@@ -12096,15 +12096,24 @@ function getProfile(){
 }
 function saveProfile(p){ safeSetJSON('likanza-profile', p); }
 
+// Labels 'gerer'/'investir'/'bourse' partagés avec POSITIONING_GOALS
+// (scripts/app.js, SHARED_GOAL_LABELS) — Chantier A de la refonte continuité
+// UX du 12/09/2026 : même concept, un seul texte, jamais deux formulations
+// (auparavant "Mieux comprendre la bourse" ici vs "...la Bourse" côté
+// onboarding). 'immobilier'/'crypto' restent volontairement des libellés
+// distincts de leurs équivalents POSITIONING_GOALS — un projet financier
+// concret ("Préparer un achat immobilier") n'est pas la même chose qu'un
+// centre d'intérêt pédagogique ("Comprendre l'immobilier"), voir le
+// commentaire de SHARED_GOAL_LABELS pour le détail de cette distinction.
 const PROFILE_OBJECTIFS = [
-  {value:'gerer', label:'Mieux gérer mon argent'},
+  {value:'gerer', label:SHARED_GOAL_LABELS.gererArgent},
   {value:'decouvert', label:'Sortir du découvert'},
   {value:'economiser', label:'Économiser chaque mois'},
   {value:'securite', label:"Créer une épargne de sécurité"},
   {value:'comprendre', label:'Comprendre la finance'},
-  {value:'investir', label:'Commencer à investir'},
+  {value:'investir', label:SHARED_GOAL_LABELS.investir},
   {value:'immobilier', label:'Préparer un achat immobilier'},
-  {value:'bourse', label:'Mieux comprendre la bourse'},
+  {value:'bourse', label:SHARED_GOAL_LABELS.bourse},
   {value:'crypto', label:'Comprendre la crypto et ses risques'},
   {value:'arnaques', label:'Éviter les erreurs et les arnaques'}
 ];
