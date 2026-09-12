@@ -551,6 +551,60 @@ Object.keys(LAB_WIDGETS).forEach(categoryId => {
   if(backBtn) backBtn.addEventListener('click', () => closeLabWidget(categoryId));
 });
 
+// ============================================================
+// ---------- Entrée "orientée problème" (Chantier F, refonte continuité UX
+// du 12/09/2026) : "Que veux-tu résoudre ?" — miroir direct du Laboratoire
+// Business ("J'ai un problème", scripts/games/business-problems.js), mais
+// ici chaque carte pointe DIRECTEMENT vers l'onglet+widget réel concerné
+// (LAB_WIDGETS/openLabWidget déjà réels ci-dessus), jamais une fiche de
+// détail intermédiaire — le Laboratoire Personnel a déjà un vrai widget
+// dédié pour chacun des 8 exemples du brief, contrairement au Business Lab
+// où une fiche pédagogique (notions/cas/questions) avait plus de sens.
+// Affiché AU-DESSUS de l'intake/du tableau de bord (jamais en
+// remplacement) — un visiteur qui sait déjà ce qu'il veut faire n'a pas à
+// passer par l'intake ou le diagnostic pour y arriver.
+// ============================================================
+const LAB_PROBLEMS = [
+  {icon:'💰', titre:'Gérer mon argent', desc:'Comprendre où part mon argent.', tab:'tab-budget-epargne', widget:'widget-budget-calc'},
+  {icon:'🎯', titre:'Atteindre un objectif', desc:'Combien dois-je mettre de côté ?', tab:'tab-budget-epargne', widget:'widget-goals-manager'},
+  {icon:'🚗', titre:'Acheter une voiture', desc:'Combien va réellement me coûter ce projet ?', tab:'tab-transport', widget:'widget-transport-tco'},
+  {icon:'🏠', titre:'Acheter ou louer', desc:'Comparer les deux scénarios.', tab:'tab-logement', widget:'labBuyRentCard'},
+  {icon:'📈', titre:'Investir', desc:'Tester différentes stratégies.', tab:'tab-investissement', widget:null},
+  {icon:'💳', titre:'Gérer mes crédits', desc:'Comprendre le coût de mes dettes.', tab:'tab-dettes', widget:null},
+  {icon:'🧯', titre:'Préparer les imprévus', desc:"Calculer mon fonds d'urgence.", tab:'tab-planification', widget:'widget-urgence-choc'},
+  {icon:'🔮', titre:'Simuler mon futur', desc:'Voir ma situation dans 5, 10 ou 20 ans.', tab:'tab-planification', widget:'widget-mon-futur'}
+];
+function renderLabProblemPicker(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <span class="section-eyebrow" style="display:block;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px;">Que veux-tu résoudre ?</span>
+    <div class="lab-entry-grid">
+      ${LAB_PROBLEMS.map((p, i) => `
+        <button type="button" class="lab-entry-card" data-problem-idx="${i}">
+          <span class="lab-entry-icon">${p.icon}</span>
+          <span class="lab-entry-title">${p.titre}</span>
+          <span class="lab-entry-desc">${p.desc}</span>
+        </button>`).join('')}
+    </div>
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:12px;">Tu préfères une analyse complète de ta situation ? <button type="button" id="${elId}-diag-link" class="btn btn-sm" style="margin-left:4px;">Faire le diagnostic complet →</button></p>`;
+  el.querySelectorAll('[data-problem-idx]').forEach(btn => {
+    const p = LAB_PROBLEMS[+btn.dataset.problemIdx];
+    btn.addEventListener('click', () => {
+      setLabTab(p.tab);
+      if(p.widget) openLabWidget(p.tab, p.widget);
+      const target = document.getElementById(p.tab);
+      if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  });
+  document.getElementById(`${elId}-diag-link`).addEventListener('click', () => {
+    const homeEl = document.getElementById('labHome');
+    const target = (homeEl && homeEl.style.display !== 'none') ? homeEl : document.getElementById('labIntakeGate');
+    if(target) target.scrollIntoView({behavior:'smooth', block:'start'});
+  });
+}
+renderLabProblemPicker('labProblemPicker');
+
 // ---------- Template méthodologie universel (section 18 du plan) : même
 // panneau « ⓘ Comment ce résultat est calculé ? » sur chaque simulateur,
 // contenu réel propre à chaque calcul — renderMethodologyPanel (dans
