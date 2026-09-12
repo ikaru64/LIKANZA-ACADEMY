@@ -6840,7 +6840,22 @@ function renderBusinessScenarios(elId){
   document.getElementById(`${elId}-scenarioSave`).addEventListener('click', () => {
     const deltas = currentDeltas();
     const entry = saveBusinessScenarioEntry({nom: document.getElementById(`${elId}-scenarioNom`).value, ...deltas});
-    if(entry) renderComparatif();
+    if(entry){
+      renderComparatif();
+      // Rejoint aussi "Mes simulations" (store partagé avec le Laboratoire
+      // personnel, polish du 12/09/2026) : un instantané figé du résultat,
+      // en complément — jamais en remplacement — du comparatif ci-dessus qui
+      // recalcule ce même scénario en direct contre le profil courant.
+      const profile = getBusinessProfile();
+      const base = computeBusinessProfileSnapshot(profile);
+      const scenario = computeBusinessScenario(profile, deltas.caDeltaPct, deltas.coutsDeltaPct, deltas.perteClients);
+      saveLabSimulation({
+        type: 'business-scenario',
+        label: entry.nom,
+        resultLabel: `Résultat mensuel : ${fmtEUR(scenario.resultatMensuelAjuste)} (contre ${fmtEUR(base.resultatMensuelApproximatif)} actuellement).`
+      });
+      if(typeof renderBizSimulationsList === 'function') renderBizSimulationsList();
+    }
   });
 
   update();
