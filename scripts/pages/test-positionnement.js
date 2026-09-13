@@ -155,10 +155,12 @@ document.getElementById('posSubGoalNext').addEventListener('click', () => {
 // 31/08/2026, sections 6-7 du prompt d'origine) : comprendre l'INTENTION
 // seulement — jamais un montant demandé ici (voir LIFE_PROJECT_HORIZONS,
 // data.js, pour la raison). Toujours skippable ("Pas de projet pour
-// l'instant"), toujours restreinte aux 7 vraies catégories de
-// LIFE_PROJECT_CATEGORIES — jamais une catégorie fabriquée (ex. "voiture",
-// suggérée par le prompt d'origine, n'a pas de vraie catégorie dédiée dans
-// le modèle de données réel et tombe donc honnêtement sous "Autre"). ----------
+// l'instant"), toujours restreinte aux vraies catégories de
+// LIFE_PROJECT_CATEGORIES — jamais une catégorie fabriquée. "voiture" a
+// rejoint cette liste le 12/09/2026 (réouverture d'une limite disclosed du
+// chantier continuité UX) une fois qu'un vrai pont existait (le
+// calculateur "Coût total de possession" du Laboratoire) — jusque-là elle
+// tombait honnêtement sous "Autre", faute de catégorie dédiée réelle. ----------
 function startProject(){
   document.getElementById('posProject').style.display = 'block';
   setStepBadge('posProjectBadge', 'ton projet');

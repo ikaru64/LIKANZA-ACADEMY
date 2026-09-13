@@ -8525,7 +8525,9 @@ function renderVehicleTCOResult(result){
       <p>Entretien : ${fmtEUR(result.maintenanceCost)}</p>
       ${result.financingDetail ? `<p>Dont intérêts du crédit : ${fmtEUR(result.financingDetail.totalInterest)}</p>` : ''}
     </div>
-    <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">La valeur de revente est une estimation basée sur le taux de décote annuel que tu as choisi — la vraie décote dépend du modèle, de l'état et du marché de l'occasion au moment de la revente, jamais une donnée officielle.</p>`;
+    <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">La valeur de revente est une estimation basée sur le taux de décote annuel que tu as choisi — la vraie décote dépend du modèle, de l'état et du marché de l'occasion au moment de la revente, jamais une donnée officielle.</p>
+    <button type="button" class="btn btn-sm btn-gold" id="tcoAddProjectBtn" style="margin-top:12px;">➕ Créer un projet "Voiture" avec ce budget</button>
+    <div id="tcoAddProjectMsg" style="margin-top:8px;"></div>`;
 }
 
 // ---------- Transport : comptant, crédit, LOA ou LLD ? ----------
@@ -9888,9 +9890,19 @@ function computeGoalsPriorityAllocation(goals, capacity, priorityGoalId){
 // conflit, computeGoalsConflict) pour un besoin structurellement différent.
 // Jamais une progression fabriquée : sans étape ajoutée, progressionPct est
 // null (jamais 0 %, qui laisserait croire à un vrai calcul).
-const LIFE_PROJECT_CATEGORIES = ['immobilier', 'entreprise', 'mariage', 'voyage', 'etudes', 'famille', 'autre'];
+// "voiture" ajoutée le 12/09/2026 (réouverture d'une limite explicitement
+// documentée par le chantier Onboarding intelligent, voir
+// scripts/pages/test-positionnement.js) : le prompt d'origine de ce
+// chantier suggérait déjà "voiture" mais elle n'avait alors AUCUNE vraie
+// catégorie dédiée dans le modèle de données — l'ajouter aurait été une
+// catégorie fabriquée. Elle devient réelle ici parce qu'un vrai pont existe
+// désormais (le calculateur "Coût total de possession" du Laboratoire,
+// scripts/pages/laboratoire.js, peut créer un projet de cette catégorie
+// avec un budget réellement calculé) — pas une catégorie ajoutée pour
+// elle-même.
+const LIFE_PROJECT_CATEGORIES = ['immobilier', 'voiture', 'entreprise', 'mariage', 'voyage', 'etudes', 'famille', 'autre'];
 const LIFE_PROJECT_CATEGORY_META = {
-  immobilier: {emoji: '🏠', label: 'Immobilier'}, entreprise: {emoji: '💼', label: 'Entreprise'},
+  immobilier: {emoji: '🏠', label: 'Immobilier'}, voiture: {emoji: '🚗', label: 'Voiture'}, entreprise: {emoji: '💼', label: 'Entreprise'},
   mariage: {emoji: '💍', label: 'Mariage'}, voyage: {emoji: '✈️', label: 'Voyage'},
   etudes: {emoji: '🎓', label: 'Études'}, famille: {emoji: '👶', label: 'Famille'}, autre: {emoji: '📌', label: 'Autre'}
 };
@@ -10130,9 +10142,12 @@ function computeProjectProgress(project){
 // likanza-financial-goals, un registre séparé, voir le commentaire au-dessus de
 // LIFE_PROJECT_CATEGORIES). "etudes"/"autre" restent volontairement vides :
 // aucune catégorie de quiz réelle ne correspond à un vrai écart de
-// compétence pour ces types de projet, jamais un lien forcé.
+// compétence pour ces types de projet, jamais un lien forcé. "voiture"
+// (ajoutée le 12/09/2026, voir LIFE_PROJECT_CATEGORIES) reprend "Crédit" —
+// même catégorie réelle qu'immobilier, pour la même raison (financement).
 const PROJECT_REQUIRED_CATEGORIES = {
   immobilier: ['Crédit', 'Immobilier'],
+  voiture: ['Crédit'],
   entreprise: ['Startup', "Chiffre d'affaires", 'Marge nette', 'Bilan comptable'],
   mariage: ['Budget', 'Épargne'],
   voyage: ['Budget', 'Épargne'],

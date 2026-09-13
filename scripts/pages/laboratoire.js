@@ -1904,6 +1904,23 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       depreciationRatePct: +document.getElementById('tcoDepreciation').value || 0
     });
     tcoOutputEl.innerHTML = renderVehicleTCOResult(result);
+    // Pont "Ajouter à mon plan" (réouverture d'une limite disclosed du
+    // chantier continuité UX du 12/09/2026) : "voiture" est désormais une
+    // vraie catégorie de projet (data.js, LIFE_PROJECT_CATEGORIES) — ce
+    // bouton crée un projet réel avec le vrai coût net calculé ci-dessus
+    // comme budget, jamais un montant inventé.
+    const addProjectBtn = document.getElementById('tcoAddProjectBtn');
+    if(addProjectBtn && result){
+      addProjectBtn.addEventListener('click', () => {
+        const saved = saveLifeProject({nom: 'Voiture', categorie: 'voiture', budgetTotal: Math.round(result.netCost)});
+        const msgEl = document.getElementById('tcoAddProjectMsg');
+        if(saved){
+          addProjectBtn.textContent = '✓ Projet ajouté';
+          addProjectBtn.disabled = true;
+          if(msgEl) msgEl.innerHTML = `<p style="font-size:12.5px;color:var(--emerald);">Projet "Voiture" créé avec un budget de ${fmtEUR(saved.budgetTotal)}. <a href="parcours.html" style="color:var(--gold-bright);">Voir dans Mon Univers Financier →</a></p>`;
+        }
+      });
+    }
   }
   ['tcoPrice','tcoFinancing','tcoYears','tcoDownPayment','tcoCreditRate','tcoConsumption','tcoFuelPrice','tcoKm','tcoInsurance','tcoMaintenance','tcoDepreciation'].forEach(id => {
     const el = document.getElementById(id);
