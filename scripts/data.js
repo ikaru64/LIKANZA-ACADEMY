@@ -4919,20 +4919,14 @@ function markChapterVisited(coursId, chapitreTitre){
 const LAST_POSITION_KEY = 'likanza-last-position';
 function getLastPosition(){ return safeGetJSON(LAST_POSITION_KEY, null); }
 function saveLastPosition(position){ safeSetJSON(LAST_POSITION_KEY, position); }
-// Widget "Continuer" (sections 30-32, 59) : une seule action, jamais une
-// liste. Jamais une position périmée : si le cours a été terminé ou
-// supprimé du catalogue depuis, l'état honnête "rien à reprendre" s'affiche
-// à la place plutôt qu'un lien mort ou trompeur.
-// Retourne désormais un booléen (a du contenu réel à reprendre ou non) —
-// ajouté au moment de son branchement réel sur formations.html (sprint de
-// consolidation 09/09/2026, section 32 du prompt d'origine, "Continuer") :
-// jusqu'ici cette fonction n'était appelée par aucune page (voir git log —
-// construite lors du chantier Continuité du 30/08/2026 mais jamais reliée à
-// un conteneur réel). Un appelant peut ignorer la valeur de retour sans
-// risque (comportement inchangé pour un futur appel qui l'ignorerait), mais
-// formations.html l'utilise pour masquer entièrement sa section "Continuer"
-// plutôt que d'afficher en haut de page un bandeau dès l'arrivée "Aucune
-// activité récente à reprendre" à un nouvel utilisateur qui n'a encore rien commencé.
+// Widget "Continuer" compact — formations.html utilise désormais le hero
+// enrichi renderApprendreHero (ci-dessous, refonte "Apprendre" du
+// 14/09/2026), mais cette version reste le `render` réel de l'entrée
+// 'continue' de DASHBOARD_WIDGETS (mode dashboard de parcours.html,
+// "Suite de l'apprentissage") — jamais supprimée tant qu'un appelant réel
+// existe. Une seule action, jamais une liste. Jamais une position périmée :
+// si le cours a été terminé ou supprimé du catalogue depuis, l'état honnête
+// "rien à reprendre" s'affiche à la place plutôt qu'un lien mort ou trompeur.
 function renderContinueWidget(elId){
   const el = document.getElementById(elId);
   if(!el) return false;
@@ -4943,14 +4937,85 @@ function renderContinueWidget(elId){
     el.innerHTML = `<span class="smallcaps">▶ Continuer</span><p style="font-size:13px;color:var(--text-dim);margin-top:8px;">Aucune activité récente à reprendre.</p>`;
     return false;
   }
-  // Cible directement le bon chapitre (adressage par chapitre, réouverture
-  // du 30/08/2026) : "Reprendre" ramène désormais exactement où l'utilisateur
-  // s'était arrêté, sans passer par l'écran d'introduction ni un second clic.
   el.innerHTML = `
     <span class="smallcaps">▶ Continuer</span>
     <p style="font-size:12.5px;color:var(--text-dim);margin:6px 0 10px;">${cours.titre} — Chapitre ${pos.chapitreIndex + 1} : ${pos.chapitreTitre}</p>
     <a href="cours.html#${encodeURIComponent(pos.id)}:${encodeURIComponent(pos.chapitreTitre.replace(/\s+/g, '-'))}" class="btn btn-sm btn-gold">Reprendre →</a>`;
   return true;
+}
+
+// ---------- Estimation de durée de lecture (refonte "Apprendre", Chantier 1,
+// 14/09/2026) : aucun cours/chapitre ne porte de champ de durée saisi à la
+// main (aucun `duree`/`dureeMinutes` n'existe dans COURS_CATALOG — vérifié,
+// jamais ajouté volontairement : un chiffre inventé serait pire que pas de
+// chiffre du tout). Ici, une VRAIE estimation calculée à partir du texte
+// réel des blocs du chapitre (comptage de mots ÷ 200 mots/minute, vitesse de
+// lecture silencieuse standard), jamais une valeur choisie à la main.
+// Arrondie, minimum 1 minute pour un chapitre non vide.
+const READING_WORDS_PER_MINUTE = 200;
+function estimateReadingMinutes(chapitre){
+  if(!chapitre || !Array.isArray(chapitre.blocs)) return 0;
+  const text = chapitre.blocs.map(b => [b.texte, b.schema, b.affirmation, b.pourquoi].filter(Boolean).join(' ')).join(' ');
+  const stripped = text.replace(/<[^>]+>/g, ' ');
+  const wordCount = (stripped.match(/\S+/g) || []).length;
+  if(wordCount === 0) return 0;
+  return Math.max(1, Math.round(wordCount / READING_WORDS_PER_MINUTE));
+}
+function estimateCourseMinutes(cours){
+  if(!cours || !Array.isArray(cours.chapitres)) return 0;
+  return cours.chapitres.reduce((sum, ch) => sum + estimateReadingMinutes(ch), 0);
+}
+
+// ---------- Hero "Continuer ta mission" (refonte "Apprendre", Chantier 1,
+// 14/09/2026) : remplace le sélecteur de niveau comme premier élément
+// visuel de la page. Réutilise EXACTEMENT les mêmes signaux que
+// renderContinueWidget (getLastPosition/getCoursProgress/getVisitedChapters)
+// — jamais un second calcul de "où en est l'utilisateur". Les paliers
+// affichés sont les vrais cours du parcours objectif réel qui contient ce
+// cours (LEARNING_PATHS), jamais une liste de jalons inventée : un cours qui
+// n'appartiendrait à aucun parcours objectif (n'arrive pas aujourd'hui, les
+// 17 cours en ont tous un, mais pourrait arriver pour un futur cours ajouté
+// sans être rattaché) affiche sa progression sans rangée de paliers plutôt
+// que d'en fabriquer une.
+function renderApprendreHero(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const pos = getLastPosition();
+  const cours = pos && pos.type === 'cours' ? COURS_CATALOG.find(c => c.id === pos.id) : null;
+  const progress = getCoursProgress();
+  const stillRelevant = cours && !progress[pos.id];
+  if(!stillRelevant){
+    el.innerHTML = `
+      <span class="smallcaps">🎯 Ta mission</span>
+      <h2 class="display" style="font-size:24px;font-weight:600;margin:8px 0 6px;">Aucune mission en cours</h2>
+      <p style="font-size:13.5px;color:var(--text-dim);margin-bottom:14px;max-width:60ch;">Choisis un objectif ci-dessous, ou lance-toi directement dans un cours : ta progression sera reprise automatiquement à chaque retour.</p>
+      <a href="#formationTabsGrid" class="btn btn-sm btn-gold">Voir les cours →</a>`;
+    return;
+  }
+  const chapitres = cours.chapitres || [];
+  const visited = getVisitedChapters(cours.id);
+  const doneChapCount = chapitres.filter(ch => visited.includes(ch.titre)).length;
+  const pct = chapitres.length ? Math.round((doneChapCount / chapitres.length) * 100) : 0;
+  const path = LEARNING_PATHS.find(p => p.type === 'objectif' && p.coursIds.includes(cours.id));
+  const pillsHtml = path ? `
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;">
+      ${path.coursIds.map(id => {
+        const c = COURS_CATALOG.find(x => x.id === id);
+        if(!c) return '';
+        const isCurrent = id === cours.id;
+        const isDone = !!progress[id];
+        const state = isDone ? '✓' : (isCurrent ? '●' : '○');
+        return `<span class="pill ${isCurrent ? 'active' : ''}" style="pointer-events:none;">${state} ${c.titre.length > 28 ? c.titre.slice(0, 26) + '…' : c.titre}</span>`;
+      }).join('')}
+    </div>` : '';
+  el.innerHTML = `
+    <span class="smallcaps">🎯 Ta mission en cours</span>
+    <h2 class="display" style="font-size:24px;font-weight:600;margin:8px 0 6px;">${cours.titre}</h2>
+    <p style="font-size:12.5px;color:var(--text-dim);margin-bottom:10px;">Chapitre ${pos.chapitreIndex + 1} / ${chapitres.length} — ${pos.chapitreTitre}</p>
+    <div class="dash-weekbar" style="width:100%;max-width:420px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+    <p style="font-size:11px;color:var(--text-dim);margin-top:5px;">${doneChapCount} / ${chapitres.length} chapitres ouverts</p>
+    ${pillsHtml}
+    <a href="cours.html#${encodeURIComponent(pos.id)}:${encodeURIComponent(pos.chapitreTitre.replace(/\s+/g, '-'))}" class="btn btn-sm btn-gold" style="margin-top:14px;">Reprendre →</a>`;
 }
 
 // Rattache chaque cours à son domaine réel (DOMAINS, app.js) en comptant le

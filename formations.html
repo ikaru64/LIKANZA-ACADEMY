@@ -88,23 +88,26 @@
 <div class="breadcrumb"><a href="index.html">Accueil</a> / Formations</div>
 <h1 class="visually-hidden">Formations</h1>
 
-<section class="section" id="continueSection" style="padding-bottom:0;display:none;">
-  <div class="card" id="continueWidget" style="max-width:640px;border:1px solid var(--gold);background:var(--bg-alt);"></div>
+<section class="section" style="padding-bottom:0;">
+  <div class="card" id="apprendreHero" style="border:1px solid var(--gold);background:var(--bg-alt);"></div>
 </section>
 
 <section class="section" style="padding-bottom:0;">
-  <div class="level-box">
-    <div>
-      <h3 class="display" style="font-size:22px;font-weight:600;margin-bottom:4px;">Quel est ton niveau ?</h3>
-      <p style="font-size:13.5px;color:var(--text-dim);">Choisis directement, ou lance le test rapide ci-dessous. Mémorisé sur cet appareil.</p>
+  <details id="levelDetails">
+    <summary class="smallcaps" style="cursor:pointer;color:var(--text-dim);">Changer de niveau</summary>
+    <div class="level-box" style="margin-top:14px;">
+      <div>
+        <h3 class="display" style="font-size:22px;font-weight:600;margin-bottom:4px;">Quel est ton niveau ?</h3>
+        <p style="font-size:13.5px;color:var(--text-dim);">Choisis directement, ou lance le test rapide ci-dessous. Mémorisé sur cet appareil.</p>
+      </div>
+      <div class="level-pills" style="display:flex;gap:8px;flex-wrap:wrap;">
+        <button class="pill" data-lvl="debutant">Débutant</button>
+        <button class="pill" data-lvl="intermediaire">Intermédiaire</button>
+        <button class="pill" data-lvl="avance">Avancé</button>
+        <button class="pill" data-lvl="expert">Expert</button>
+      </div>
     </div>
-    <div class="level-pills" style="display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="pill" data-lvl="debutant">Débutant</button>
-      <button class="pill" data-lvl="intermediaire">Intermédiaire</button>
-      <button class="pill" data-lvl="avance">Avancé</button>
-      <button class="pill" data-lvl="expert">Expert</button>
-    </div>
-  </div>
+  </details>
 </section>
 
 <section class="section">

@@ -38,6 +38,7 @@ const LABORATOIRE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/labor
 const LABORATOIRE_ECONOMIE_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/laboratoire-economie-page.js'];
 const BUSINESS_LAB_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/games/business-cases-data.js', 'scripts/games/business-problems-data.js', 'scripts/games/business-problems.js', 'scripts/pages/business-lab-page.js'];
 const PARCOURS_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/parcours.js'];
+const FORMATIONS_LOCAL_SCRIPTS = [...COMMON_LOCAL_SCRIPTS, 'scripts/pages/formations.js'];
 
 function stripScriptTags(html){
   return html.replace(/<script\b[^>]*><\/script>/gi, '');
@@ -162,5 +163,6 @@ function loadLaboratoirePage(options){ return loadPage('laboratoire.html', LABOR
 function loadLaboratoireEconomiePage(options){ return loadPage('laboratoire-economie.html', LABORATOIRE_ECONOMIE_LOCAL_SCRIPTS, options); }
 function loadBusinessLabPage(options){ return loadPage('business-lab.html', BUSINESS_LAB_LOCAL_SCRIPTS, options); }
 function loadParcoursPage(options){ return loadPage('parcours.html', PARCOURS_LOCAL_SCRIPTS, options); }
+function loadFormationsPage(options){ return loadPage('formations.html', FORMATIONS_LOCAL_SCRIPTS, options); }
 
-module.exports = { loadPage, loadBoursePage, loadEconomiePage, loadLaboratoirePage, loadLaboratoireEconomiePage, loadBusinessLabPage, loadParcoursPage, flush, ROOT };
+module.exports = { loadPage, loadBoursePage, loadEconomiePage, loadLaboratoirePage, loadLaboratoireEconomiePage, loadBusinessLabPage, loadParcoursPage, loadFormationsPage, flush, ROOT };

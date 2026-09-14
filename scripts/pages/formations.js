@@ -73,8 +73,7 @@ document.querySelectorAll('.level-pills .pill').forEach(btn=>{
 // catégorie faible) par 4 vrais blocs adaptatifs, chacun masqué proprement
 // s'il n'a aucun signal réel (voir data.js pour la discipline de chaque
 // fonction). ----------
-const hasContinue = renderContinueWidget('continueWidget');
-document.getElementById('continueSection').style.display = hasContinue ? '' : 'none';
+renderApprendreHero('apprendreHero');
 renderCoursRecommandePourToi('coursRecommandePourToi');
 renderFormationDomainMastery('formationDomainMastery');
 renderFormationsARenforcer('aRenforcerSection');
