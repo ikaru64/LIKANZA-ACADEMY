@@ -77,6 +77,10 @@ renderApprendreHero('apprendreHero');
 renderCoursRecommandePourToi('coursRecommandePourToi');
 renderFormationDomainMastery('formationDomainMastery');
 renderFormationsARenforcer('aRenforcerSection');
+renderApprendreMissionDuJour('missionDuJourWidget');
+renderApprendreARevoir('apprendreARevoirWidget');
+renderApprendreCompetencesMaitrisees('competencesMaitriseesWidget');
+renderApprendreProjetFinal('projetFinalWidget');
 
 refreshLevelUI();
 

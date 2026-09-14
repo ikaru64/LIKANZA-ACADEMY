@@ -1,0 +1,13 @@
+/* ============================================================
+   Refonte "Apprendre" (formations.html), Chantier 4 : layout contenu +
+   colonne latérale. Mobile-first (empilé), grille 1fr/320px (~75/25) à
+   partir de 1100px — même motif que .lib-layout (styles/pages/bibliotheque.css),
+   jamais un composant de mise en page inventé pour cette seule page.
+   ============================================================ */
+.apprendre-layout{display:flex;flex-direction:column;gap:32px;}
+@media (min-width:1100px){
+  .apprendre-layout{display:grid;grid-template-columns:1fr 320px;align-items:start;gap:28px;}
+}
+.apprendre-main{display:flex;flex-direction:column;gap:40px;min-width:0;}
+.apprendre-side{display:flex;flex-direction:column;gap:16px;}
+.apprendre-side-panel{background:var(--bg-alt);border:1px solid var(--hairline);border-radius:var(--radius);padding:16px 18px;}

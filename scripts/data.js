@@ -4529,6 +4529,109 @@ function renderFormationDomainMastery(elId){
     </div>`;
 }
 
+// ---------- Colonne latérale "Apprendre" (refonte, Chantier 4, 14/09/2026) ----------
+
+// "Mission du jour" : jusqu'à 3 signaux déjà réels et déjà calculés ailleurs
+// sur le site (reprise de position, révision espacée due, 1 recommandation) —
+// jamais un nouveau moteur de tâches, jamais un item fabriqué pour remplir
+// la liste. Vide -> message honnête invitant à choisir un objectif plutôt
+// qu'une liste vide silencieuse.
+function renderApprendreMissionDuJour(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const items = [];
+  const progress = getCoursProgress();
+  const pos = getLastPosition();
+  if(pos && pos.type === 'cours' && !progress[pos.id]){
+    const cours = COURS_CATALOG.find(c => c.id === pos.id);
+    if(cours){
+      items.push({
+        label: `Reprendre « ${cours.titre} » — ${pos.chapitreTitre}`,
+        href: `cours.html#${encodeURIComponent(pos.id)}:${encodeURIComponent(pos.chapitreTitre.replace(/\s+/g, '-'))}`
+      });
+    }
+  }
+  const due = getDueSpacedReviews();
+  if(due.length){
+    items.push({label: `Réviser ${due[0].categorie} (maîtrisé, à confirmer)`, href: `defis.html?cat=${encodeURIComponent(due[0].categorie)}`});
+  }
+  const coursCategories = [...new Set(COURS_CATALOG.flatMap(c => c.quizCategories || []))];
+  const recoPick = pickRecommendedCategories(coursCategories, 1)[0];
+  if(recoPick){
+    const matches = COURS_CATALOG.filter(c => Array.isArray(c.quizCategories) && c.quizCategories.includes(recoPick.categorie));
+    const cours = matches.find(c => !progress[c.id]) || matches[0];
+    if(cours && !items.some(i => i.href.startsWith(`cours.html#${encodeURIComponent(cours.id)}`))){
+      items.push({label: `Découvrir « ${cours.titre} »`, href: `cours.html#${encodeURIComponent(cours.id)}`});
+    }
+  }
+  const top3 = items.slice(0, 3);
+  if(!top3.length){
+    el.innerHTML = `<span class="smallcaps">📋 Mission du jour</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Rien de précis pour l'instant : choisis un objectif ci-dessous pour démarrer.</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps">📋 Mission du jour</span>
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">
+      ${top3.map(i => `<a href="${i.href}" style="font-size:12px;color:var(--text);text-decoration:none;border:1px solid var(--hairline);border-radius:var(--radius);padding:8px 10px;display:block;">${i.label} →</a>`).join('')}
+    </div>`;
+}
+
+// "À revoir" priorisé : un seul point (le plus prioritaire — le plus de
+// vraies erreurs non résolues, pickTopUnresolvedMistakeCategory, déjà réel
+// et déjà utilisé par Défis), vers un vrai cours si un existe pour cette
+// catégorie, sinon vers les Défis. La liste complète (toutes les catégories
+// faibles) reste disponible dans renderFormationsARenforcer, dans le
+// contenu principal — jamais dupliquée ici.
+function renderApprendreARevoir(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const top = pickTopUnresolvedMistakeCategory();
+  if(!top){
+    el.innerHTML = `<span class="smallcaps">🧠 À revoir</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Aucune notion en attente de révision : continue comme ça !</p>`;
+    return;
+  }
+  const cours = COURS_CATALOG.find(c => Array.isArray(c.quizCategories) && c.quizCategories.includes(top.categorie));
+  const href = cours ? `cours.html#${encodeURIComponent(cours.id)}` : `defis.html?cat=${encodeURIComponent(top.categorie)}`;
+  const label = cours ? `Revoir « ${cours.titre} »` : `S'entraîner sur ${top.categorie}`;
+  el.innerHTML = `
+    <span class="smallcaps">🧠 À revoir</span>
+    <p style="font-size:12px;color:var(--text-dim);margin:6px 0 10px;">${top.total} notion${top.total > 1 ? 's' : ''} à revoir, surtout en ${top.categorie} (${top.count} erreur${top.count > 1 ? 's' : ''}).</p>
+    <a href="${href}" class="btn btn-sm btn-gold">${label} →</a>`;
+}
+
+// "Compétences maîtrisées" : badges à partir des vraies catégories déjà au
+// stade "maîtrisé" de getSkillMastery() — même seuil (75%) que partout
+// ailleurs sur le site, jamais un second seuil inventé.
+function renderApprendreCompetencesMaitrisees(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const mastered = getSkillMastery().filter(m => m.niveau === 'maîtrisé');
+  if(!mastered.length){
+    el.innerHTML = `<span class="smallcaps">🏅 Compétences maîtrisées</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Aucune compétence maîtrisée pour l'instant (75% de bonnes réponses minimum).</p>`;
+    return;
+  }
+  el.innerHTML = `
+    <span class="smallcaps">🏅 Compétences maîtrisées</span>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:10px;">
+      ${mastered.map(m => `<span class="pill active" style="pointer-events:none;">${m.categorie}</span>`).join('')}
+    </div>`;
+}
+
+// "Projet final" : réutilise le vrai assistant existant (analyser-entreprise.html,
+// Formations Phase 5, 8 étapes, données Yahoo réelles), jamais lié depuis
+// Formations jusqu'ici (uniquement business.html). Cette page ne conservant
+// aucune progression persistée (vérifié : aucune clé likanza-* dans
+// scripts/pages/analyser-entreprise.js), jamais de barre de progression
+// fabriquée ici — juste un vrai lien.
+function renderApprendreProjetFinal(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `
+    <span class="smallcaps">🏆 Projet final</span>
+    <p style="font-size:12px;color:var(--text-dim);margin:6px 0 10px;">Analyse une vraie entreprise cotée, avec ses vraies données financières, en 8 étapes.</p>
+    <a href="analyser-entreprise.html" class="btn btn-sm btn-gold">Commencer →</a>`;
+}
+
 // ---------- À revoir : widget compact (comme sur Mon parcours), lance
 // directement une session ciblée sur la catégorie la plus en échec ----------
 function renderDefisARevoir(elId){

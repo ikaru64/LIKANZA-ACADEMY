@@ -14,6 +14,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="styles/design-system.css">
+<link rel="stylesheet" href="styles/pages/formations.css">
 </head>
 <body class="has-bottom-nav">
 <aside class="app-sidebar" aria-label="Navigation principale">
@@ -110,40 +111,46 @@
   </details>
 </section>
 
-<section class="section" id="coursRecommandePourToi"></section>
-
-<section class="section" id="formationDomainMastery"></section>
-
-<section class="section" id="aRenforcerSection"></section>
-
-<section class="section">
-  <div class="section-head"><h2>Parcours actuel · <span id="levelLabel"></span></h2><span class="meta-line" id="progressLabel"></span></div>
-  <div id="levelCompleteBanner" style="margin-bottom:14px;"></div>
-  <div id="courseList"></div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Parcours guidés</h2><span class="meta-line">une séquence de cours pensée pour un objectif ou un métier</span></div>
-  <div class="mode-toggle" id="parcoursTypeToggle" style="margin-bottom:14px;">
-    <button class="pill active" data-type="objectif" type="button">Par objectif</button>
-    <button class="pill" data-type="metier" type="button">Par métier</button>
-  </div>
-  <div id="parcoursGuidesGrid"></div>
-</section>
-
-<section class="section">
-  <div class="section-head"><h2>Cours</h2><span class="meta-line">lecture + quiz de validation</span></div>
-  <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;max-width:70ch;">Lis un cours, puis valide-le avec son quiz : les points ne sont attribués qu'une fois le quiz réussi (60% de bonnes réponses minimum).</p>
-  <div class="quick-access-grid" id="formationTabsGrid"></div>
-  <div id="formationTabPanels"></div>
-</section>
-
 <section class="section" style="padding-top:0;">
-  <div class="card" style="max-width:640px;background:var(--bg-alt);border:1px solid var(--hairline);">
-    <span class="smallcaps">Envie de tester tes connaissances ?</span>
-    <h3 style="margin:8px 0 10px;">Rejoins les Défis</h3>
-    <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions réparties sur 23 thèmes.</p>
-    <a href="defis.html" class="btn btn-sm btn-gold">Ouvrir les Défis →</a>
+  <div class="apprendre-layout">
+    <div class="apprendre-main">
+      <div id="coursRecommandePourToi"></div>
+      <div id="formationDomainMastery"></div>
+      <div id="aRenforcerSection"></div>
+      <div>
+        <div class="section-head"><h2>Parcours actuel · <span id="levelLabel"></span></h2><span class="meta-line" id="progressLabel"></span></div>
+        <div id="levelCompleteBanner" style="margin-bottom:14px;"></div>
+        <div id="courseList"></div>
+      </div>
+      <div>
+        <div class="section-head"><h2>Parcours guidés</h2><span class="meta-line">une séquence de cours pensée pour un objectif ou un métier</span></div>
+        <div class="mode-toggle" id="parcoursTypeToggle" style="margin-bottom:14px;">
+          <button class="pill active" data-type="objectif" type="button">Par objectif</button>
+          <button class="pill" data-type="metier" type="button">Par métier</button>
+        </div>
+        <div id="parcoursGuidesGrid"></div>
+      </div>
+      <div>
+        <div class="section-head"><h2>Cours</h2><span class="meta-line">lecture + quiz de validation</span></div>
+        <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;max-width:70ch;">Lis un cours, puis valide-le avec son quiz : les points ne sont attribués qu'une fois le quiz réussi (60% de bonnes réponses minimum).</p>
+        <div class="quick-access-grid" id="formationTabsGrid"></div>
+        <div id="formationTabPanels"></div>
+      </div>
+      <div>
+        <div class="card" style="max-width:640px;background:var(--bg-alt);border:1px solid var(--hairline);">
+          <span class="smallcaps">Envie de tester tes connaissances ?</span>
+          <h3 style="margin:8px 0 10px;">Rejoins les Défis</h3>
+          <p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions réparties sur 23 thèmes.</p>
+          <a href="defis.html" class="btn btn-sm btn-gold">Ouvrir les Défis →</a>
+        </div>
+      </div>
+    </div>
+    <aside class="apprendre-side">
+      <div class="apprendre-side-panel" id="missionDuJourWidget"></div>
+      <div class="apprendre-side-panel" id="apprendreARevoirWidget"></div>
+      <div class="apprendre-side-panel" id="competencesMaitriseesWidget"></div>
+      <div class="apprendre-side-panel" id="projetFinalWidget"></div>
+    </aside>
   </div>
 </section>
 
