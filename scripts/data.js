@@ -4481,31 +4481,51 @@ function renderFormationsARenforcer(elId){
     }).join('')}</div>`;
 }
 
-// ---------- Maîtrise par domaine (Formations, section 33 du prompt de
-// consolidation : "un état par domaine plutôt qu'un seul niveau global").
-// Réutilise computeDomainMastery() — même source que Financial IQ et les
-// badges de maîtrise, jamais un second calcul — mais présenté ici sans le
-// cadrage "Financial IQ" propre aux Défis, juste une barre par domaine
-// réellement pratiqué. Domaine absent tant qu'il n'a aucune vraie réponse
+// ---------- "Explorer les compétences" (refonte "Apprendre", Chantier 3,
+// 14/09/2026, remplace l'ancienne section "Ta maîtrise par domaine" à
+// simples barres empilées) : un anneau réel par domaine (computeDomainMastery,
+// même source que Financial IQ et les badges de maîtrise — jamais un second
+// calcul), dépliable pour lister les vraies sous-catégories de quiz du
+// domaine (DOMAINS[].quizCategories, app.js) avec leur pourcentage individuel
+// réel (getSkillMastery). Domaine absent tant qu'il n'a aucune vraie réponse
 // (déjà filtré par computeDomainMastery) ; section entière masquée si aucun
-// domaine n'a encore de données (nouvel utilisateur) — jamais une barre à 0%
-// pour un domaine jamais touché.
+// domaine n'a encore de données (nouvel utilisateur) — jamais un anneau à 0%
+// pour un domaine jamais touché. Une sous-catégorie sans échantillon
+// suffisant (< 2 réponses, seuil de getSkillMastery) n'est simplement pas
+// listée plutôt que montrée à 0%.
 function renderFormationDomainMastery(elId){
   const el = document.getElementById(elId);
   if(!el) return;
   const domains = computeDomainMastery();
   if(!domains.length){ el.innerHTML = ''; return; }
+  const mastery = getSkillMastery();
   el.innerHTML = `
-    <div class="section-head" style="margin-bottom:10px;"><h2 style="font-size:19px;">Ta maîtrise par domaine</h2><span class="meta-line">basée sur tes vraies réponses (cours, défis)</span></div>
-    <div class="card" style="display:flex;flex-direction:column;gap:10px;">
-      ${domains.map(d => `
-        <div>
-          <div style="display:flex;justify-content:space-between;font-size:12.5px;margin-bottom:3px;">
-            <span>${d.icon} ${d.label}</span>
-            <span class="mono" style="color:var(--text-dim);">${d.pct} % (${d.correct}/${d.total})</span>
+    <div class="section-head" style="margin-bottom:10px;"><h2 style="font-size:19px;">Explorer les compétences</h2><span class="meta-line">basé sur tes vraies réponses (cours, défis)</span></div>
+    <div class="card-grid">
+      ${domains.map(d => {
+        const domainDef = DOMAINS.find(x => x.key === d.key);
+        const subskills = mastery.filter(m => (domainDef && domainDef.quizCategories || []).includes(m.categorie));
+        return `
+        <details class="card">
+          <summary style="list-style:none;cursor:pointer;display:flex;align-items:center;gap:14px;">
+            <div class="mastery-ring" style="--pct:${d.pct};"><span>${d.pct}%</span></div>
+            <div>
+              <span class="smallcaps">${d.icon} ${d.label}</span>
+              <p style="font-size:11.5px;color:var(--text-dim);margin-top:3px;">${d.total} réponse${d.total > 1 ? 's' : ''} réelle${d.total > 1 ? 's' : ''}</p>
+            </div>
+          </summary>
+          <div style="margin-top:16px;display:flex;flex-direction:column;gap:10px;">
+            ${subskills.length ? subskills.map(s => `
+              <div>
+                <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+                  <span>${s.categorie}</span>
+                  <span class="mono" style="color:var(--text-dim);">${s.pct}% (${s.correct}/${s.total})</span>
+                </div>
+                <div class="dash-weekbar" style="width:100%;"><div class="dash-weekfill" style="width:${s.pct}%;"></div></div>
+              </div>`).join('') : `<p style="font-size:12px;color:var(--text-dim);">Pas encore assez de réponses pour détailler ce domaine par sous-compétence.</p>`}
           </div>
-          <div class="dash-weekbar" style="width:100%;"><div class="dash-weekfill" style="width:${d.pct}%;"></div></div>
-        </div>`).join('')}
+        </details>`;
+      }).join('')}
     </div>`;
 }
 

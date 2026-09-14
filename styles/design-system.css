@@ -474,6 +474,13 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
 .dash-weekbar{height:4px;background:var(--hairline);border-radius:2px;overflow:hidden;margin-top:5px;width:90px;}
 .dash-weekfill{height:100%;background:linear-gradient(90deg,var(--gold),var(--emerald));transition:width .7s ease;}
 
+/* ---------- Anneau de maîtrise par domaine ("Explorer les compétences",
+   refonte Apprendre) : --pct fixé en inline par l'appelant (0-100), jamais
+   une valeur par défaut visible (un domaine sans donnée n'est pas rendu). */
+.mastery-ring{--pct:0;width:56px;height:56px;border-radius:50%;flex-shrink:0;position:relative;background:conic-gradient(var(--gold) calc(var(--pct) * 1%), var(--hairline) 0);}
+.mastery-ring::before{content:'';position:absolute;inset:5px;border-radius:50%;background:var(--bg);}
+.mastery-ring span{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--text);}
+
 /* ---------- Carte "Pour toi aujourd'hui" ---------- */
 .today-card{background:linear-gradient(120deg, var(--bg-alt), var(--bg));border:1px solid var(--hairline);border-left:3px solid var(--gold);border-radius:var(--radius);padding:14px 18px;box-shadow:0 24px 48px -28px rgba(0,0,0,0.7);}
 .today-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;margin-top:8px;}
