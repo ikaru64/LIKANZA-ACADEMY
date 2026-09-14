@@ -5499,10 +5499,33 @@ function renderCourseBlock(bloc){
     ${textHtml}${schemaHtml}
   </div>`;
 }
-function renderCourseChapter(chapitre){
+// ---------- Pont cours -> Bibliothèque au fil du chapitre (refonte
+// "Apprendre", Chantier 6, 14/09/2026) : jusqu'ici, un terme LIBRARY n'était
+// lié qu'en fin de cours (renderCourseLibraryLinks, réservé au dernier
+// chapitre). Réutilise le même mécanisme de détection que le pont
+// Actualités -> Bibliothèque (findArticleConcepts) — restreint aux termes du
+// COURS (libraryTermes), jamais toute la Bibliothèque, pour ne jamais
+// détecter un terme sans rapport par pure coïncidence textuelle. Un seul
+// terme par chapitre (le premier réellement mentionné), pour rester un lien
+// discret plutôt qu'une liste.
+function findChapterConcept(chapitre, libraryTermes){
+  if(!chapitre || !Array.isArray(libraryTermes) || !libraryTermes.length) return null;
+  const haystack = (chapitre.blocs || []).map(b => [b.texte, b.affirmation, b.pourquoi].filter(Boolean).join(' ')).join(' ');
+  if(!haystack) return null;
+  const escapeRegex = s => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const terme = libraryTermes.find(t => {
+    const core = t.replace(/\s*\([^)]*\)\s*$/, '').trim();
+    if(core.length < 3) return false;
+    return new RegExp('\\b' + escapeRegex(core) + '\\b', 'i').test(haystack);
+  });
+  return terme && LIBRARY.some(l => l.terme === terme) ? terme : null;
+}
+function renderCourseChapter(chapitre, libraryTermes){
   if(!chapitre) return '';
   const blocsHtml = (chapitre.blocs || []).map(renderCourseBlock).join('');
-  return `<h4 style="margin-top:4px;">${chapitre.titre}</h4>${blocsHtml}`;
+  const terme = findChapterConcept(chapitre, libraryTermes);
+  const termeHtml = terme ? `<p style="font-size:12px;color:var(--text-dim);margin-top:14px;">📚 <a href="bibliotheque.html#${encodeURIComponent(terme.replace(/\s+/g, '-'))}" style="color:var(--gold-bright);">Voir la fiche « ${terme} »</a></p>` : '';
+  return `<h4 style="margin-top:4px;">${chapitre.titre}</h4>${blocsHtml}${termeHtml}`;
 }
 // Lien réel vers la Bibliothèque pour chaque notion citée (section 17 : la
 // Formation et la Bibliothèque doivent être liées) — même format de hash que
@@ -5685,7 +5708,7 @@ function renderCoursRich(elId, cours, onComplete, targetChapterSlug){
       ${formatSelectorHtml()}
       <div class="mono" style="font-size:11px;color:var(--text-dim);margin-bottom:6px;">Chapitre ${chapIndex+1} / ${chapitres.length}</div>
       <div class="dash-weekbar" style="width:100%;margin-bottom:16px;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
-      ${renderCourseChapter(chapitres[chapIndex])}
+      ${renderCourseChapter(chapitres[chapIndex], cours.libraryTermes)}
       ${isLast ? renderCourseLibraryLinks(cours.libraryTermes) : ''}
       ${isLast ? `<div id="${elId}-clarity" style="margin-top:16px;"></div>` : ''}
       <div style="display:flex;gap:8px;margin-top:18px;">
