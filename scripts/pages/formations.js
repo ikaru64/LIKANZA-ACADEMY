@@ -74,6 +74,8 @@ document.querySelectorAll('.level-pills .pill').forEach(btn=>{
 // s'il n'a aucun signal réel (voir data.js pour la discipline de chaque
 // fonction). ----------
 renderApprendreHero('apprendreHero');
+renderApprendreGoalPicker('objectifSection');
+renderApprendreQuickSession('quickSessionWidget');
 renderCoursRecommandePourToi('coursRecommandePourToi');
 renderFormationDomainMastery('formationDomainMastery');
 renderFormationsARenforcer('aRenforcerSection');

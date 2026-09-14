@@ -5193,7 +5193,7 @@ function renderApprendreHero(elId){
       <span class="smallcaps">🎯 Ta mission</span>
       <h2 class="display" style="font-size:24px;font-weight:600;margin:8px 0 6px;">Aucune mission en cours</h2>
       <p style="font-size:13.5px;color:var(--text-dim);margin-bottom:14px;max-width:60ch;">Choisis un objectif ci-dessous, ou lance-toi directement dans un cours : ta progression sera reprise automatiquement à chaque retour.</p>
-      <a href="#formationTabsGrid" class="btn btn-sm btn-gold">Voir les cours →</a>`;
+      <a href="#objectifSection" class="btn btn-sm btn-gold">Choisir un objectif →</a>`;
     return;
   }
   const chapitres = cours.chapitres || [];
@@ -5220,6 +5220,75 @@ function renderApprendreHero(elId){
     <p style="font-size:11px;color:var(--text-dim);margin-top:5px;">${doneChapCount} / ${chapitres.length} chapitres ouverts</p>
     ${pillsHtml}
     <a href="cours.html#${encodeURIComponent(pos.id)}:${encodeURIComponent(pos.chapitreTitre.replace(/\s+/g, '-'))}" class="btn btn-sm btn-gold" style="margin-top:14px;">Reprendre →</a>`;
+}
+
+// ---------- Sélecteur d'objectif "Que veux-tu savoir faire ?" (refonte
+// "Apprendre", Chantier 5, 14/09/2026) : chaque micro-objectif pointe vers
+// une VRAIE cible existante (un cours précis de COURS_CATALOG, ou un
+// LEARNING_PATHS pour un objectif plus large couvrant plusieurs cours) —
+// jamais un nouveau contenu créé pour l'occasion. Simple table de
+// correspondance, pas un moteur : ajouter un objectif = ajouter une ligne.
+const LEARNING_GOALS = [
+  {id: 'premiers-pas-bourse', label: 'Investir mes premiers 100€', icon: '📈', target: {type: 'cours', id: 'bourse-actions'}},
+  {id: 'poser-budget', label: 'Poser les bases de mon budget', icon: '💰', target: {type: 'cours', id: 'budget-securite'}},
+  {id: 'analyser-entreprise', label: 'Savoir analyser une entreprise', icon: '🔍', target: {type: 'cours', id: 'lire-une-entreprise'}},
+  {id: 'comprendre-entreprise', label: "Comprendre une entreprise de l'intérieur", icon: '💼', target: {type: 'parcours', id: 'business'}},
+  {id: 'comprendre-economie', label: "Comprendre les mécanismes macro", icon: '🌍', target: {type: 'parcours', id: 'economics'}},
+  {id: 'decouvrir-crypto', label: 'Découvrir la crypto sereinement', icon: '₿', target: {type: 'cours', id: 'crypto-blockchain'}}
+];
+function renderApprendreGoalPicker(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const goals = LEARNING_GOALS.filter(g => g.target.type === 'cours' ? COURS_CATALOG.some(c => c.id === g.target.id) : LEARNING_PATHS.some(p => p.id === g.target.id));
+  if(!goals.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="section-head" style="margin-bottom:14px;"><h2 style="font-size:19px;">Que veux-tu savoir faire ?</h2><span class="meta-line">chaque objectif ouvre un vrai cours ou parcours</span></div>
+    <div class="card-grid">
+      ${goals.map(g => {
+        const href = g.target.type === 'cours' ? `cours.html#${encodeURIComponent(g.target.id)}` : `formations.html?parcours=${encodeURIComponent(g.target.id)}#parcoursGuidesGrid`;
+        return `<a href="${href}" class="card" style="text-decoration:none;">
+          <span class="icon">${g.icon}</span>
+          <h3 style="margin:10px 0 0;font-size:17px;">${g.label}</h3>
+        </a>`;
+      }).join('')}
+    </div>`;
+}
+
+// ---------- "Tu as 5 minutes ?" (refonte "Apprendre", Chantier 5) : propose
+// le chapitre le plus court (estimateReadingMinutes, Chantier 1) parmi les
+// chapitres pas encore ouverts du cours en cours (reprise de position) ou,
+// à défaut, du cours actuellement recommandé — jamais un chapitre déjà
+// marqué terminé, jamais un contenu fabriqué pour l'occasion.
+function pickQuickChapter(){
+  const progress = getCoursProgress();
+  const pos = getLastPosition();
+  let cours = pos && pos.type === 'cours' && !progress[pos.id] ? COURS_CATALOG.find(c => c.id === pos.id) : null;
+  if(!cours){
+    const coursCategories = [...new Set(COURS_CATALOG.flatMap(c => c.quizCategories || []))];
+    const pick = pickRecommendedCategories(coursCategories, 1)[0];
+    if(pick){
+      const matches = COURS_CATALOG.filter(c => Array.isArray(c.quizCategories) && c.quizCategories.includes(pick.categorie));
+      cours = matches.find(c => !progress[c.id]) || matches[0] || null;
+    }
+  }
+  if(!cours) return null;
+  const visited = getVisitedChapters(cours.id);
+  const candidates = (cours.chapitres || []).filter(ch => !visited.includes(ch.titre));
+  const withMinutes = candidates.map(ch => ({chapitre: ch, minutes: estimateReadingMinutes(ch)})).filter(x => x.minutes > 0);
+  if(!withMinutes.length) return null;
+  withMinutes.sort((a, b) => a.minutes - b.minutes);
+  return {cours, chapitre: withMinutes[0].chapitre, minutes: withMinutes[0].minutes};
+}
+function renderApprendreQuickSession(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const pick = pickQuickChapter();
+  if(!pick){ el.innerHTML = ''; return; }
+  const {cours, chapitre, minutes} = pick;
+  el.innerHTML = `
+    <span class="smallcaps">⏱ Tu as ${minutes} minute${minutes > 1 ? 's' : ''} ?</span>
+    <p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">${cours.titre} — ${chapitre.titre}</p>
+    <a href="cours.html#${encodeURIComponent(cours.id)}:${encodeURIComponent(chapitre.titre.replace(/\s+/g, '-'))}" class="btn btn-sm btn-gold">Lire maintenant →</a>`;
 }
 
 // Rattache chaque cours à son domaine réel (DOMAINS, app.js) en comptant le

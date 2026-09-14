@@ -15,7 +15,7 @@ const t = createSuite('formations.apprendre-hero');
   const { document } = loadFormationsPage();
   const hero = document.getElementById('apprendreHero');
   t.ok(hero.innerHTML.includes('Aucune mission en cours'), 'un utilisateur neuf voit un état vide honnête, jamais un hero cassé');
-  t.ok(hero.innerHTML.includes('Voir les cours'), "l'état vide propose bien une vraie action de suite");
+  t.ok(hero.innerHTML.includes('Choisir un objectif'), "l'état vide propose bien une vraie action de suite");
 }
 
 // ---------- Position réelle sur un cours non terminé -> hero rempli ----------
