@@ -4307,6 +4307,62 @@ function pickRecommendedCategorie(candidateCategories){
   const categorie = allCats[dayOfYear() % allCats.length];
   return {categorie, reason: "Un thème à découvrir pour varier tes révisions.", signals: [], personalized: false};
 }
+// ---------- Jusqu'à N recommandations distinctes (refonte "Apprendre",
+// Chantier 2, 14/09/2026) : pickRecommendedCategorie() ci-dessus n'en
+// retournait qu'une seule (repris tel quel pour Défis/Business, où un seul
+// widget compact suffit) — Formations affiche désormais jusqu'à 3 cartes
+// ("Likanza te recommande"). Même ordre de priorité (faiblesse mesurée >
+// intérêt inexploré > découverte), jamais une catégorie dupliquée entre les
+// N cartes, jamais plus de cartes qu'il n'existe de vraies catégories
+// distinctes.
+function pickRecommendedCategories(candidateCategories, n){
+  const picks = [];
+  const used = new Set();
+  const mastery = candidateCategories ? getSkillMastery().filter(m => candidateCategories.includes(m.categorie)) : getSkillMastery();
+
+  mastery.filter(m => m.niveau === 'faible').forEach(m => {
+    if(picks.length >= n || used.has(m.categorie)) return;
+    used.add(m.categorie);
+    picks.push({
+      categorie: m.categorie,
+      reason: `Tu as récemment eu du mal avec ${m.categorie} (${m.pct}% de bonnes réponses).`,
+      signals: [`${m.pct}% de bonnes réponses récemment sur « ${m.categorie} » (sous le seuil de 50%).`],
+      personalized: true
+    });
+  });
+
+  if(picks.length < n){
+    const profile = getProfile();
+    const knownInterests = Object.keys(profile.interests || {}).filter(k => profile.interests[k]);
+    let candidateCats = knownInterests.flatMap(k => INTEREST_QUIZ_CATEGORIES[k] || []);
+    if(candidateCategories) candidateCats = candidateCats.filter(c => candidateCategories.includes(c));
+    const exploredCats = new Set(mastery.map(m => m.categorie));
+    candidateCats.filter(c => !exploredCats.has(c) && !used.has(c)).forEach(categorie => {
+      if(picks.length >= n) return;
+      used.add(categorie);
+      picks.push({
+        categorie,
+        reason: "Ça correspond à l'un de tes centres d'intérêt, et tu ne l'as pas encore beaucoup exploré.",
+        signals: [`Tu as déclaré un centre d'intérêt lié à « ${categorie} ».`, `Tu n'as pas encore été évalué sur cette catégorie.`],
+        personalized: true
+      });
+    });
+  }
+
+  if(picks.length < n){
+    let allCats = [...new Set(defisFullPool().map(i => i.categorie))];
+    if(candidateCategories) allCats = allCats.filter(c => candidateCategories.includes(c));
+    const start = allCats.length ? dayOfYear() % allCats.length : 0;
+    for(let i = 0; i < allCats.length && picks.length < n; i++){
+      const categorie = allCats[(start + i) % allCats.length];
+      if(used.has(categorie)) continue;
+      used.add(categorie);
+      picks.push({categorie, reason: "Un thème à découvrir pour varier tes révisions.", signals: [], personalized: false});
+    }
+  }
+
+  return picks;
+}
 // ---------- Carte "Recommandé pour toi" partagée (Chantier D, refonte
 // continuité UX du 12/09/2026) : Défis (renderRecommandePourToi), Formations
 // (renderCoursRecommandePourToi) et Business (renderBusinessCasRecommande)
@@ -4352,23 +4408,48 @@ function renderRecommandePourToi(elId){
 // cours fabriqué. Préfère un cours pas encore fait ; s'il est déjà validé
 // (utilisateur déjà fort partout sur cette catégorie), propose quand même de
 // le revoir plutôt que de masquer la section. ----------
+// Jusqu'à 3 cartes distinctes (refonte "Apprendre", Chantier 2, 14/09/2026 —
+// remplace l'ancienne version à 1 seule carte). Réutilise
+// pickRecommendedCategories (ci-dessus) restreint aux catégories réellement
+// couvertes par un vrai cours — jamais un lien de cours fabriqué. Chaque
+// carte préfère un cours pas encore fait ; s'il est déjà validé, propose
+// quand même de le revoir plutôt que de masquer la carte.
 function renderCoursRecommandePourToi(elId){
   const el = document.getElementById(elId);
   if(!el) return;
+  const MAX_CARDS = 3;
   const coursCategories = [...new Set(COURS_CATALOG.flatMap(c => c.quizCategories || []))];
-  const pick = pickRecommendedCategorie(coursCategories);
-  if(!pick){ el.innerHTML = ''; return; }
-  const {categorie, reason, signals, personalized} = pick;
+  // Demande plus de candidats que de cartes voulues : plusieurs catégories
+  // distinctes (ex. "Bourse"/"Actions") peuvent pointer vers le MÊME cours —
+  // le dédoublonnage ci-dessous se fait donc sur le cours réellement choisi,
+  // jamais seulement sur la catégorie source, pour ne jamais afficher deux
+  // fois la même carte.
+  const picks = pickRecommendedCategories(coursCategories, coursCategories.length);
   const progress = getCoursProgress();
-  const matches = COURS_CATALOG.filter(c => Array.isArray(c.quizCategories) && c.quizCategories.includes(categorie));
-  const cours = matches.find(c => !progress[c.id]) || matches[0];
-  if(!cours){ el.innerHTML = ''; return; }
-  const done = !!progress[cours.id];
-  el.innerHTML = renderRecommendationCardHtml({
-    personalized, badgeLabel: 'Recommandé pour toi', reason, pourquoiId: `${elId}-pourquoi`, title: cours.titre,
-    ctaHtml: `<a href="cours.html#${encodeURIComponent(cours.id)}" class="btn btn-sm btn-gold">${done ? 'Revoir le cours' : 'Suivre ce cours'} →</a>`
-  });
-  renderPourquoiToggle(`${elId}-pourquoi`, signals);
+  const usedCoursIds = new Set();
+  const cards = [];
+  for(const pick of picks){
+    if(cards.length >= MAX_CARDS) break;
+    const {categorie, reason, signals, personalized} = pick;
+    const matches = COURS_CATALOG.filter(c => Array.isArray(c.quizCategories) && c.quizCategories.includes(categorie));
+    const cours = matches.find(c => !progress[c.id] && !usedCoursIds.has(c.id)) || matches.find(c => !usedCoursIds.has(c.id));
+    if(!cours) continue;
+    usedCoursIds.add(cours.id);
+    const done = !!progress[cours.id];
+    const pourquoiId = `${elId}-pourquoi-${cards.length}`;
+    cards.push({
+      pourquoiId, signals,
+      html: `<div class="card">${renderRecommendationCardHtml({
+        personalized, badgeLabel: 'Recommandé pour toi', reason, pourquoiId, title: cours.titre,
+        ctaHtml: `<a href="cours.html#${encodeURIComponent(cours.id)}" class="btn btn-sm btn-gold">${done ? 'Revoir le cours' : 'Suivre ce cours'} →</a>`
+      })}</div>`
+    });
+  }
+  if(!cards.length){ el.innerHTML = ''; return; }
+  el.innerHTML = `
+    <div class="section-head" style="margin-bottom:10px;"><h2 style="font-size:19px;">Likanza te recommande</h2><span class="meta-line">basé sur tes vrais résultats et centres d'intérêt</span></div>
+    <div class="card-grid">${cards.map(c => c.html).join('')}</div>`;
+  cards.forEach(c => renderPourquoiToggle(c.pourquoiId, c.signals));
 }
 
 // ---------- À renforcer (Formations, section 36 du prompt de consolidation) :
