@@ -2943,14 +2943,22 @@ function pickTopUnresolvedMistakeCategory(){
   return {categorie, count, total: unresolved.length};
 }
 
-function recordMistake(item){
+// `pickedIndex` (réouverture "idée reçue" du 2026-09-18) : optionnel,
+// l'index du distracteur réellement cliqué. Tous les appels existants sans
+// ce 2e argument gardent un comportement strictement identique — seule une
+// question portant un `item.misconceptions[pickedIndex]` réel (rédigé à la
+// main, voir scripts/app.js) enregistre un `misconceptionId`/`misconceptionLabel`;
+// sinon, jamais un texte générique fabriqué en repli.
+function recordMistake(item, pickedIndex){
   const list = getMistakes();
   const existing = list.find(m => m.questionId === item.id);
   const now = new Date().toISOString();
+  const misconception = item.misconceptions && typeof pickedIndex === 'number' ? item.misconceptions[pickedIndex] : null;
   if(existing){
     existing.misses++;
     existing.lastMissedAt = now;
     existing.resolved = false;
+    if(misconception){ existing.misconceptionId = misconception.id; existing.misconceptionLabel = misconception.label; }
   } else {
     list.push({
       questionId: item.id,
@@ -2961,10 +2969,39 @@ function recordMistake(item){
       firstMissedAt: now,
       lastMissedAt: now,
       misses: 1,
-      resolved: false
+      resolved: false,
+      ...(misconception ? {misconceptionId: misconception.id, misconceptionLabel: misconception.label} : {})
     });
   }
   saveMistakes(list);
+}
+
+// ---------- Idée reçue détectée (carte de feedback immédiat, réouverture du
+// 2026-09-18) : ne rend RIEN pour une question non taguée (couverture
+// partielle assumée, ~25-30 questions sur 320) — jamais un texte générique
+// substitué. `pickedIndex` = l'index du distracteur cliqué, déjà connu par
+// chaque moteur de clic au moment de l'appel.
+function renderMisconceptionCallout(item, pickedIndex){
+  const m = item.misconceptions && item.misconceptions[pickedIndex];
+  if(!m) return '';
+  return `<div class="card" style="margin-top:10px;border-color:var(--gold);background:var(--bg-alt);">
+    <span class="smallcaps">🧠 Idée reçue détectée</span>
+    <p style="font-size:13px;font-weight:500;margin:8px 0 0;">${m.label}</p>
+    <p style="font-size:12.5px;color:var(--text-dim);margin-top:6px;">${m.fix}</p>
+  </div>`;
+}
+
+// Idée reçue la plus prioritaire (même discipline que
+// pickTopUnresolvedMistakeCategory ci-dessus) : parmi les erreurs non
+// résolues portant un vrai `misconceptionId` (question taguée), la plus
+// récente. `null` si aucune erreur non résolue n'est taguée — l'appelant
+// retombe alors sur pickTopUnresolvedMistakeCategory, jamais une idée reçue
+// générique inventée.
+function pickTopMisconception(){
+  const tagged = getMistakes().filter(m => !m.resolved && m.misconceptionId);
+  if(!tagged.length) return null;
+  tagged.sort((a, b) => new Date(b.lastMissedAt) - new Date(a.lastMissedAt));
+  return tagged[0];
 }
 
 function resolveMistake(questionId){
@@ -3496,9 +3533,9 @@ function renderChoiceItem(elId, introHtml, item, onAnswered){
         if(got) xpMsg = `+${got} XP · +${got} Finance Points`;
         resolveMistake(item.id);
       } else {
-        recordMistake(item);
+        recordMistake(item, i);
       }
-      document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg, item.categorie);
+      document.getElementById(`${elId}-feedback`).innerHTML = renderFeedbackHtml(correct, item.explication, xpMsg, item.categorie) + (correct ? '' : renderMisconceptionCallout(item, i));
       onAnswered(correct, correct ? xp : 0);
     }, {once:true});
     opts.appendChild(btn);
@@ -4585,6 +4622,20 @@ function renderApprendreMissionDuJour(elId){
 function renderApprendreARevoir(elId){
   const el = document.getElementById(elId);
   if(!el) return;
+  // Préfère une vraie idée reçue taguée (réouverture du 2026-09-18) quand une
+  // existe — la carte visée par le brief d'origine. Couverture partielle par
+  // construction (~25-30 questions sur 320) : retombe sur le cadrage par
+  // catégorie déjà réel (pickTopUnresolvedMistakeCategory) pour toutes les
+  // autres, jamais une idée reçue générique inventée en repli.
+  const misconception = pickTopMisconception();
+  if(misconception){
+    el.innerHTML = `
+      <span class="smallcaps">🧠 À revoir</span>
+      <p style="font-size:13px;font-weight:500;margin:8px 0 0;">${misconception.misconceptionLabel}</p>
+      <p style="font-size:12px;color:var(--text-dim);margin:6px 0 10px;">Repéré sur : « ${misconception.question} »</p>
+      <a href="defis.html?cat=${encodeURIComponent(misconception.categorie)}" class="btn btn-sm btn-gold">Revoir →</a>`;
+    return;
+  }
   const top = pickTopUnresolvedMistakeCategory();
   if(!top){
     el.innerHTML = `<span class="smallcaps">🧠 À revoir</span><p style="font-size:12.5px;color:var(--text-dim);margin-top:8px;">Aucune notion en attente de révision : continue comme ça !</p>`;
@@ -5971,8 +6022,8 @@ function renderCoursQuiz(elId, cours, onComplete){
         const correct = i===item.bonneReponse;
         recordAnswer(item.categorie, correct, isAppliedItem(item), item.niveau);
         if(correct){ score++; resolveMistake(item.id); }
-        else recordMistake(item);
-        document.getElementById(`${elId}-feedback`).textContent = item.explication;
+        else recordMistake(item, i);
+        document.getElementById(`${elId}-feedback`).innerHTML = `<p>${item.explication}</p>` + (correct ? '' : renderMisconceptionCallout(item, i));
         setTimeout(()=>{ qIndex++; renderQuestion(); }, 1400);
       }, {once:true});
       opts.appendChild(optBtn);
@@ -6205,9 +6256,9 @@ function renderBusinessQuestionDuJour(elId){
         btn.classList.add('vf-wrong');
         const rightBtn = el.querySelector(`[data-choice="${item.bonneReponse}"]`);
         if(rightBtn) rightBtn.classList.add('vf-correct');
-        recordMistake(item);
+        recordMistake(item, choice);
       }
-      document.getElementById(`${elId}-feedback`).textContent = item.explication;
+      document.getElementById(`${elId}-feedback`).innerHTML = `<p>${item.explication}</p>` + (correct ? '' : renderMisconceptionCallout(item, choice));
     }, {once:true});
   });
 }
