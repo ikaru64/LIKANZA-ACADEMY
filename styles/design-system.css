@@ -712,3 +712,8 @@ footer.site-footer{border-top:1px solid var(--hairline);margin-top:40px;}
   .home-univers-grid{grid-template-columns:1fr 1fr;}
 }
 @media (prefers-reduced-motion:reduce){.home-univers-card{transition:none;}}
+
+/* ---------- Mobile : un tableau plus large que l'écran défile, la page jamais ---------- */
+@media (max-width:640px){
+  .card table, .section table, table.compare-table, table.lab-scenario-compare, table.eco-home-world-table{display:block;max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+}

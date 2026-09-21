@@ -7896,7 +7896,8 @@ function computeRealInflationRate(points){
 }
 
 // ---------- Fonctions financières partagées ----------
-const fmtEUR = n => Math.round(n).toLocaleString('fr-FR') + ' €';
+// Jamais "NaN €" ni "undefined €" dans l'interface : une valeur non numérique s'affiche "—".
+const fmtEUR = n => (typeof n === 'number' && isFinite(n)) ? Math.round(n).toLocaleString('fr-FR') + ' €' : '—';
 function compoundSeries(P, PMT, rAnnual, years){
   const r = rAnnual/100;
   const series = [];
@@ -8855,7 +8856,7 @@ function renderDebtPayoffComparison(debts, extraMonthly){
   const avalanche = computeDebtPayoffPlan(debts, 'avalanche', extraMonthly);
   const snowball = computeDebtPayoffPlan(debts, 'snowball', extraMonthly);
 
-  const fmtEUR = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+  const fmtEUR = v => (typeof v === 'number' && isFinite(v)) ? Math.round(v).toLocaleString('fr-FR') + ' €' : '—';
   const fmtDuree = months => months >= 12 ? `${Math.floor(months / 12)} an(s) et ${months % 12} mois` : `${months} mois`;
   const rows = [
     {label: 'Taux le plus élevé d\'abord (avalanche)', plan: avalanche},
@@ -8905,7 +8906,7 @@ function renderDebtConsolidationComparison(debts, newLoan){
   if(!result){
     return `<p style="color:var(--text-dim);font-size:13px;">Renseigne des valeurs réelles (soldes, taux, mensualités, et les paramètres du nouveau prêt) pour comparer.</p>`;
   }
-  const fmtEUR = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+  const fmtEUR = v => (typeof v === 'number' && isFinite(v)) ? Math.round(v).toLocaleString('fr-FR') + ' €' : '—';
   const fmtDuree = months => months >= 12 ? `${Math.floor(months / 12)} an(s) et ${months % 12} mois` : `${months} mois`;
   const monthlyLower = result.monthlyDiff < 0;
   const totalCostHigher = result.totalCostDiff > 0;
@@ -8963,7 +8964,7 @@ function computeVehicleTCO(inputs){
 }
 function renderVehicleTCOResult(result){
   if(!result) return `<p style="color:var(--text-dim);font-size:13px;">Renseigne des valeurs réelles (prix, consommation, kilométrage annuel, assurance, entretien) pour calculer le coût total de possession.</p>`;
-  const fmtEUR = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+  const fmtEUR = v => (typeof v === 'number' && isFinite(v)) ? Math.round(v).toLocaleString('fr-FR') + ' €' : '—';
   return `
     <p style="font-size:12px;color:var(--text-dim);margin-bottom:10px;">${renderDataBadge('calcul')} Calculé à partir des valeurs saisies (achat, carburant ou électricité, assurance, entretien) et d'une décote annuelle constante que tu choisis.</p>
     <div class="result-label">Coût net de possession</div>
@@ -9006,7 +9007,7 @@ function computeVehicleFinancingComparison(inputs){
 }
 function renderVehicleFinancingComparison(result){
   if(!result) return `<p style="color:var(--text-dim);font-size:13px;">Renseigne au moins le prix du véhicule et la durée de comparaison.</p>`;
-  const fmtEUR = v => Math.round(v).toLocaleString('fr-FR') + ' €';
+  const fmtEUR = v => (typeof v === 'number' && isFinite(v)) ? Math.round(v).toLocaleString('fr-FR') + ' €' : '—';
   const rows = [{label: 'Comptant', totalCost: result.cash.totalCost, owns: true, extra: result.cash.opportunityCost > 0 ? `Coût d'opportunité si ce capital avait été investi : ${fmtEUR(result.cash.opportunityCost)}` : null}];
   if(result.credit) rows.push({label: 'Crédit', totalCost: result.credit.totalCost, owns: true, extra: `Mensualité : ${fmtEUR(result.credit.monthlyPayment)}`});
   if(result.loa) rows.push({label: "LOA (avec option d'achat)", totalCost: result.loa.totalCost, owns: result.loa.owns, extra: null});
