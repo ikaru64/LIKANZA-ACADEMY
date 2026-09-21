@@ -49,6 +49,17 @@ data.js). Whitelist explicite `PROGRESS_SYNC_KEYS` — toute nouvelle clé de
 vraie progression doit y être ajoutée manuellement (voir §7). Règle stricte :
 **aucune clé `likanza-context-*` n'y est jamais ajoutée** (voir §5).
 
+**Fraîcheur (pré-lancement, 21/09/2026)** : la décision push/pull compare
+l'horodatage de dernière modification locale (`likanza-progress-updated-at`,
+alimenté par un hook unique sur `Storage.prototype` pour toutes les clés de
+`PROGRESS_SYNC_KEYS`) à `__meta.updatedAt` du compte — voir `decideSyncAction`
+(data.js), testée sans réseau dans `tests/sync-freshness.test.js`. La version la
+plus récente gagne ; toute progression locale remplacée est d'abord copiée
+(`likanza-progress-backup`, récupérable depuis Mon compte) ; la relance
+périodique ne pousse plus aveuglément. Limite : le backend `/api/progress` vit
+dans un dépôt séparé (likanza-auth) — s'il ne renvoie pas `__meta`, la décision
+retombe sur l'ancien comportement (un appareil déjà synchronisé pousse).
+
 ## 2. Knowledge Graph
 
 `LIBRARY` (app.js, ~262 entrées) **est** le concept graph — pas une nouvelle
