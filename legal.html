@@ -105,20 +105,21 @@
 
   <div class="legal-section" id="mentions">
     <h3>Mentions légales</h3>
-    <p>Likanza Academy est un projet éditorial et pédagogique indépendant, sans lien avec un établissement financier régulé. Cette version est une démonstration technique ; l'identité complète de l'éditeur (raison sociale, hébergeur, directeur de publication) sera précisée avant toute mise en ligne publique définitive.</p>
+    <p>Likanza Academy est un projet éditorial et pédagogique indépendant, sans lien avec un établissement financier régulé. Le site est actuellement proposé en version bêta : il évolue régulièrement, sans jamais bloquer ce qui fonctionne déjà.</p>
+    <div id="legalIdentity"></div>
   </div>
 
   <div class="legal-section" id="confidentialite">
     <h3>Politique de confidentialité</h3>
     <p>Tant que tu ne connectes pas de compte, Likanza Academy ne transmet aucune donnée personnelle à un serveur : ton niveau, ta progression, tes favoris et toutes tes données financières restent uniquement dans le stockage local de ton navigateur, sur cet appareil.</p>
-    <p>Si tu choisis de te connecter avec un compte Google, la connexion passe par une application d'authentification séparée (likanza-auth.vercel.app). Une fois connecté, ton nom, ton adresse e-mail et ta photo de profil transmis par Google sont conservés dans ton navigateur, et un instantané de ta progression est envoyé à cette application pour que tu puisses la retrouver sur un autre appareil : niveau et objectifs, quiz et compétences, projets de vie, données financières que tu as renseignées (budget, patrimoine, dettes, portefeuille suivi) et ta liste de suivi. Cette synchronisation ne fusionne jamais tes données champ par champ, et ne compare jamais les dates pour décider laquelle est "la plus récente" : le PREMIER appareil qui se connecte à un compte restaure l'instantané déjà présent sur ce compte (s'il existe) ; tout appareil qui s'est déjà connecté au moins une fois à ce compte pousse ensuite systématiquement son propre état à chaque visite, qu'il soit ou non plus ancien que ce qui est déjà enregistré. Utiliser Likanza sur plusieurs appareils avec le même compte peut donc faire perdre une progression faite sur un appareil si un autre appareil, déjà connecté, écrase l'instantané ensuite — un bouton "Restaurer depuis mon compte" (page Mon compte) permet de forcer manuellement l'opération inverse si besoin.</p>
-    <p>Aucune donnée n'est partagée avec un tiers autre que cette application d'authentification, strictement nécessaire au fonctionnement de la connexion. Sans compte connecté, cette section ne s'applique pas : le site fonctionne alors entièrement en local, comme décrit au premier paragraphe.</p>
-    <p><span class="smallcaps">Tes droits sur tes données</span><br>Tant que tu n'es pas connecté, tu contrôles déjà entièrement tes données : elles ne quittent jamais ton appareil, et les effacer revient à vider le stockage local de ton navigateur pour ce site (ou à utiliser la navigation privée). Une fois connecté, tu disposes d'un droit d'accès, de rectification et de suppression sur les données synchronisées avec ton compte (nom, e-mail, photo, instantané de progression) — le bouton "Se déconnecter" (page Mon compte) met fin à la session sur cet appareil ; pour une suppression complète de ce qui est conservé côté compte, ou toute autre question sur l'exercice de ces droits, passe par la rubrique Contact ci-dessous. Un moyen de contact dédié à ces demandes sera précisé avant toute mise en ligne publique définitive, au même titre que l'identité complète de l'éditeur (voir Mentions légales).</p>
+    <p>Si tu choisis de te connecter avec un compte Google, la connexion passe par une application d'authentification séparée (likanza-auth.vercel.app). Une fois connecté, ton nom, ton adresse e-mail et ta photo de profil transmis par Google sont conservés dans ton navigateur, et un instantané de ta progression est envoyé à cette application pour que tu puisses la retrouver sur un autre appareil : niveau et objectifs, quiz et compétences, projets de vie, données financières que tu as renseignées (budget, patrimoine, dettes, portefeuille suivi) et ta liste de suivi. Cette synchronisation ne fusionne jamais tes données champ par champ : elle compare la date de dernière modification de ta progression sur cet appareil et sur ton compte, et c'est la version la plus récente qui est conservée. Une progression plus ancienne n'écrase donc jamais une progression plus récente. Avant tout remplacement de la progression d'un appareil par celle de ton compte, une copie de la progression de cet appareil est conservée sur cet appareil et peut être récupérée depuis la page Mon compte ; un bouton "Restaurer depuis mon compte" permet aussi de forcer manuellement la restauration. Si la sauvegarde échoue (hors ligne, session expirée), le site te l'indique : ta progression reste alors uniquement sur l'appareil.</p>
+    <p>Aucune donnée personnelle n'est partagée avec un tiers autre que cette application d'authentification, strictement nécessaire au fonctionnement de la connexion. Sans compte connecté, cette section ne s'applique pas : le site fonctionne alors entièrement en local, comme décrit au premier paragraphe. Pour s'afficher, les pages chargent des polices depuis Google Fonts et une bibliothèque de graphiques depuis cdnjs (Cloudflare) : comme pour toute ressource externe, ces services reçoivent l'adresse IP et les informations techniques de ton navigateur, sans qu'aucune donnée de ta progression ne leur soit transmise. Les données de marché sont demandées à travers les fonctions serveur de Likanza Academy, qui n'y transmettent aucune information personnelle.</p>
+    <p><span class="smallcaps">Tes droits sur tes données</span><br>Tant que tu n'es pas connecté, tu contrôles déjà entièrement tes données : elles ne quittent jamais ton appareil, et les effacer revient à vider le stockage local de ton navigateur pour ce site (ou à utiliser la navigation privée). Une fois connecté, tu disposes d'un droit d'accès, de rectification et de suppression sur les données synchronisées avec ton compte (nom, e-mail, photo, instantané de progression) — le bouton "Se déconnecter" (page Mon compte) met fin à la session sur cet appareil ; pour une suppression complète de ce qui est conservé côté compte, ou toute autre question sur l'exercice de ces droits, passe par la rubrique Contact ci-dessous. Les coordonnées figurent dans la rubrique Contact ci-dessous.</p>
   </div>
 
   <div class="legal-section" id="cookies">
     <h3>Politique relative aux cookies</h3>
-    <p>Cette version n'utilise pas de cookies de suivi publicitaire. Le stockage local du navigateur sert uniquement au fonctionnement des fonctionnalités (niveau, favoris, progression), pas au suivi marketing.</p>
+    <p>Likanza Academy n'utilise ni cookie de suivi publicitaire, ni outil de mesure d'audience. Le stockage local du navigateur sert uniquement au fonctionnement des fonctionnalités (niveau, favoris, progression, préférences d'affichage), jamais au suivi marketing.</p>
   </div>
 
   <div class="legal-section" id="cgu">
@@ -139,7 +140,7 @@
     <p><span class="smallcaps">Actualités</span><br>Les résumés d'actualité sont rédigés avec des mots originaux à partir de sources identifiées, elles-mêmes citées avec un lien vers l'article d'origine, puis stockés et rafraîchis périodiquement.</p>
     <p><span class="smallcaps">Macro (Économie)</span><br>Les indicateurs de la section Économie (taux directeur, inflation, chômage, croissance, dette publique) proviennent de la Banque centrale européenne et d'Eurostat. En cas d'échec de récupération, le site affiche une erreur explicite plutôt qu'une valeur approchée.</p>
     <p><span class="smallcaps">Business</span><br>Les outils de la section Business (profils d'entreprise, analyse guidée) réutilisent les mêmes données réelles que la section Actions lorsqu'ils affichent des chiffres d'une entreprise cotée. Les jeux de simulation (Business Game, cas d'entreprise) restent des exercices pédagogiques.</p>
-    <p><span class="smallcaps">Crypto</span><br>Les cours affichés sur la page Crypto viennent du même bandeau de marché que ci-dessus (CoinGecko, différé) ; le glossaire et les outils pédagogiques de la page restent des contenus de démonstration.</p>
+    <p><span class="smallcaps">Crypto</span><br>Les cours affichés sur la page Crypto viennent du même bandeau de marché que ci-dessus (CoinGecko, différé) ; le glossaire et les outils pédagogiques de la page sont des contenus éducatifs, sans lien avec un quelconque conseil d'investissement.</p>
     <p><span class="smallcaps">Simulations &amp; Paper Trading</span><br>Les calculateurs du Laboratoire, le Business Game et le Portfolio Game sont des exercices pédagogiques : leurs résultats sont mécaniques (calculés à partir de ce que tu saisis), jamais un conseil réel. Le Paper Trading utilise un capital entièrement fictif, mais exécute chaque ordre au vrai cours du moment fourni par Yahoo Finance — jamais un carnet d'ordres ni un spread modélisé.</p>
     <p><span class="smallcaps">Données utilisateur</span><br>Voir la section Confidentialité ci-dessus pour le détail de ce qui reste local et de ce qui est synchronisé lorsqu'un compte est connecté.</p>
   </div>
@@ -162,7 +163,8 @@
 
   <div class="legal-section" id="contact">
     <h3>Contact</h3>
-    <p>Aucun formulaire ni adresse de contact public n'existe encore pour Likanza Academy — un moyen de nous contacter sera ajouté avant toute mise en ligne publique définitive, au même titre que l'identité complète de l'éditeur (voir Mentions légales ci-dessus).</p>
+    <div id="legalContact"></div>
+    <p style="margin-top:10px;"><a href="contact.html">Ouvrir la page Contact</a></p>
   </div>
 </section>
 
@@ -177,6 +179,7 @@
 <script src="scripts/icons.js"></script>
 <script src="scripts/app.js"></script>
 <script src="scripts/data.js"></script>
+<script src="scripts/pages/legal.js"></script>
 
 <nav class="mobile-bottom-nav" aria-label="Navigation principale mobile">
   <a href="index.html"><span class="icon" data-icon="house"></span>Accueil</a>

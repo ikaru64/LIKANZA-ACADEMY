@@ -439,7 +439,7 @@ async function renderMapMain(){
       })
     ]);
   } catch(err){
-    mainEl.innerHTML = `<p class="eco-panel-note">Carte indisponible pour le moment (${err.message}).</p>`;
+    mainEl.innerHTML = `<p class="eco-panel-note">Carte indisponible pour le moment${friendlyErrorSuffix(err)}.</p>`;
     return;
   }
   ecoMapData = mapData;
@@ -823,7 +823,7 @@ async function renderEcoKpis(elId){
       cardEl.innerHTML = `
         <span class="eco-kpi-label">${ICONS[meta.icon] || ''} ${meta.label}</span>
         <span class="eco-kpi-value" style="font-size:12px;font-weight:400;color:var(--term-text-dim);">Donnée indisponible</span>
-        <span class="eco-kpi-asof">${err.message}</span>`;
+        <span class="eco-kpi-asof">${friendlyErrorDetail(err) || 'Réessaie dans quelques instants'}</span>`;
     }
   }));
 }
@@ -945,7 +945,7 @@ async function renderEcoMainChart(elId){
     noteEl.textContent = `${data.source} · ${data.instrument}`;
   } catch(err){
     if(ecoChartInstance){ ecoChartInstance.destroy(); ecoChartInstance = null; }
-    document.getElementById(`${elId}-canvas-wrap`).innerHTML = `<p class="eco-panel-note">Donnée indisponible (${err.message}).</p>`;
+    document.getElementById(`${elId}-canvas-wrap`).innerHTML = `<p class="eco-panel-note">Donnée indisponible${friendlyErrorSuffix(err)}.</p>`;
     noteEl.textContent = '';
   }
 }
@@ -1276,7 +1276,7 @@ async function renderCentralBanksView(){
     } catch(err){
       cardEl.classList.remove('is-loading');
       cardEl.classList.add('is-unavailable');
-      cardEl.innerHTML = `<span class="eco-kpi-label">${ICONS.landmark || ''} Taux ${b.label}</span><span class="eco-kpi-value" style="font-size:12px;font-weight:400;color:var(--term-text-dim);">Donnée indisponible</span><span class="eco-kpi-asof">${err.message}</span>`;
+      cardEl.innerHTML = `<span class="eco-kpi-label">${ICONS.landmark || ''} Taux ${b.label}</span><span class="eco-kpi-value" style="font-size:12px;font-weight:400;color:var(--term-text-dim);">Donnée indisponible</span><span class="eco-kpi-asof">${friendlyErrorDetail(err) || 'Réessaie dans quelques instants'}</span>`;
     }
   }));
 
@@ -1410,7 +1410,7 @@ async function renderDebtView(){
         });
       }
     } catch(err){
-      document.getElementById('ecoDebtChartWrap').innerHTML = `<p class="eco-panel-note">Donnée indisponible (${err.message}).</p>`;
+      document.getElementById('ecoDebtChartWrap').innerHTML = `<p class="eco-panel-note">Donnée indisponible${friendlyErrorSuffix(err)}.</p>`;
     }
   }
 

@@ -1,0 +1,2 @@
+renderSiteIdentity('legalIdentity');
+renderContactBlock('legalContact');

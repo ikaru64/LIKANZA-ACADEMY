@@ -112,7 +112,7 @@ function renderEtfFundamentals(elId, symbol){
       renderEtfFundamentalsHtml(el, symbol, f);
     })
     .catch(err => {
-      el.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Fondamentaux du fonds indisponibles pour le moment (${err.message}).</p>`;
+      el.innerHTML = `<p style="font-size:12.5px;color:var(--text-dim);">Fondamentaux du fonds indisponibles pour le moment${friendlyErrorSuffix(err)}.</p>`;
     });
 }
 function renderEtfFundamentalsHtml(el, symbol, f){

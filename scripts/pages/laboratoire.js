@@ -1195,7 +1195,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       applyQtyIfSet();
       renderOutput();
     } catch(err){
-      outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : historique temporairement indisponible (${err.message}).</p>`;
+      outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : historique temporairement indisponible${friendlyErrorSuffix(err)}.</p>`;
       console.info('Likanza Academy — Laboratoire, historique investissement indisponible :', err.message);
     }
   }
@@ -1297,7 +1297,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
       badgeEl.innerHTML = renderDataBadge('fait');
       renderOutput();
     } catch(err){
-      outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : historique temporairement indisponible (${err.message}).</p>`;
+      outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : historique temporairement indisponible${friendlyErrorSuffix(err)}.</p>`;
       console.info('Likanza Academy — Laboratoire, historique DCA indisponible :', err.message);
     }
   }
@@ -1438,7 +1438,7 @@ function populatePeriodSelect(selectEl, periods, defaultValue){
         if(typeof updateSim === 'function') updateSim();
       }
     } catch(err){
-      outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : série d'inflation temporairement indisponible (${err.message}).</p>`;
+      outputEl.innerHTML = `<p style="color:var(--text-dim);font-size:13px;">⚠️ Donnée manquante : série d'inflation temporairement indisponible${friendlyErrorSuffix(err)}.</p>`;
       console.info('Likanza Academy — Laboratoire, inflation indisponible :', err.message);
     }
   }

@@ -1609,7 +1609,7 @@ function renderRatesAndBondsExtra(elId){
         </div>`;
     })
     .catch(err=>{
-      el.innerHTML = `<div class="card"><p style="font-size:12.5px;color:var(--text-dim);">Taux BCE indisponible pour le moment (${err.message}).</p></div>`;
+      el.innerHTML = `<div class="card"><p style="font-size:12.5px;color:var(--text-dim);">Taux BCE indisponible pour le moment${friendlyErrorSuffix(err)}.</p></div>`;
     });
 }
 

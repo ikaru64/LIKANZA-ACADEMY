@@ -1422,6 +1422,22 @@ const MENTAL_CHALLENGES = [
 // deepQuizHook : accroche du quiz approfondi (quiz-approfondi.html), pensée
 // pour ne jamais se présenter comme "un devoir de 8 minutes" — une question
 // concrète plutôt qu'une durée en avant.
+// ---------- Informations éditeur & contact (pré-lancement, 2026-09-21) ----------
+// Renseignées par le propriétaire du site AVANT la mise en ligne publique —
+// jamais inventées. Tant qu'un champ est vide, il n'est simplement pas affiché
+// (aucun marqueur visible dans l'interface publique) ; la liste des champs
+// encore vides est disponible via getSiteConfigMissing() (data.js).
+const SITE_CONFIG = {
+  contactEmail: '',          // [À RENSEIGNER AVANT PRODUCTION] adresse e-mail de contact publique
+  publisherName: '',         // [À RENSEIGNER AVANT PRODUCTION] directeur de publication (personne physique) ou raison sociale
+  publisherStatus: '',       // [À RENSEIGNER AVANT PRODUCTION] statut juridique (ex. entrepreneur individuel, SAS…)
+  publisherAddress: '',      // [À RENSEIGNER AVANT PRODUCTION] adresse postale (ou de domiciliation)
+  publisherRegistration: '', // [À RENSEIGNER AVANT PRODUCTION] SIRET / RCS si applicable
+  hostName: 'Vercel Inc.',
+  hostAddress: '440 N Barranca Ave #4133, Covina, CA 91723, États-Unis', // à vérifier auprès de l'hébergeur avant production
+  hostUrl: 'https://vercel.com'
+};
+
 const DOMAINS = [
   {key:'personalFinance', label:'Finances personnelles', displayLabel:'les finances personnelles', icon:'💰',
     mentalChallengeDomain:'Finance personnelle',

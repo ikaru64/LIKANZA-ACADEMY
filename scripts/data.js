@@ -95,6 +95,49 @@ function escapeHtml(str){
   return String(str ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 
+// ---------- Éditeur, hébergeur & contact (pages légales/contact) ----------
+// Lit SITE_CONFIG (app.js). Un champ vide n'est jamais affiché ni remplacé par
+// une valeur inventée : voir getSiteConfigMissing() pour ce qu'il reste à
+// renseigner avant la mise en ligne.
+function getSiteConfigMissing(){
+  const required = ['contactEmail', 'publisherName', 'publisherStatus', 'publisherAddress'];
+  return required.filter(k => !String(SITE_CONFIG[k] || '').trim());
+}
+// Jamais de message technique brut (HTTP 502, Failed to fetch, TypeError,
+// undefined...) dans l'interface : seuls les messages déjà rédigés en français
+// par le site sont conservés comme précision, le reste retombe sur un texte
+// générique.
+function friendlyErrorDetail(err){
+  const m = err && err.message ? String(err.message).trim() : '';
+  if(!m || /^HTTP\s*\d+|failed to fetch|networkerror|load failed|undefined|\[object|abort|typeerror|referenceerror|json|unexpected token/i.test(m)) return '';
+  return m;
+}
+function friendlyErrorSuffix(err){ const d = friendlyErrorDetail(err); return d ? ' (' + d + ')' : ''; }
+function isValidContactEmail(v){ return /^[^\s@<>"']+@[^\s@<>"']+\.[^\s@<>"']+$/.test(String(v || '').trim()); }
+function renderSiteIdentity(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  const rows = [];
+  if(SITE_CONFIG.publisherName) rows.push(['Éditeur et directeur de la publication', SITE_CONFIG.publisherName]);
+  if(SITE_CONFIG.publisherStatus) rows.push(['Statut', SITE_CONFIG.publisherStatus]);
+  if(SITE_CONFIG.publisherAddress) rows.push(['Adresse', SITE_CONFIG.publisherAddress]);
+  if(SITE_CONFIG.publisherRegistration) rows.push(['Immatriculation', SITE_CONFIG.publisherRegistration]);
+  if(isValidContactEmail(SITE_CONFIG.contactEmail)) rows.push(['Contact', '<a href="mailto:' + escapeHtml(SITE_CONFIG.contactEmail) + '">' + escapeHtml(SITE_CONFIG.contactEmail) + '</a>']);
+  rows.push(['Hébergeur', escapeHtml(SITE_CONFIG.hostName) + (SITE_CONFIG.hostAddress ? ', ' + escapeHtml(SITE_CONFIG.hostAddress) : '')]);
+  el.innerHTML = '<dl class="legal-identity">' + rows.map(r => '<dt>' + r[0] + '</dt><dd>' + (r[0] === 'Contact' || r[0] === 'Hébergeur' ? r[1] : escapeHtml(r[1])) + '</dd>').join('') + '</dl>';
+}
+function renderContactBlock(elId){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  if(isValidContactEmail(SITE_CONFIG.contactEmail)){
+    const mail = escapeHtml(SITE_CONFIG.contactEmail.trim());
+    el.innerHTML = '<p style="font-size:15px;line-height:1.7;">Une question, une erreur à signaler, une suggestion ou une demande concernant tes données ?</p>' +
+      '<p style="margin-top:14px;"><a class="btn btn-gold" href="mailto:' + mail + '">Écrire à ' + mail + '</a></p>';
+  } else {
+    el.innerHTML = '<p style="font-size:15px;line-height:1.7;color:var(--text-dim);">Le formulaire de contact ouvre prochainement. En attendant, tu peux retrouver les informations utiles dans la <a href="legal.html">page mentions légales</a> et la <a href="avenir.html">roadmap</a>.</p>';
+  }
+}
+
 // ---------- Navigation : menu mobile + menu déroulant Explorer + lien actif ----------
 function initNav(){
   const toggle = document.getElementById('mobileToggle');
