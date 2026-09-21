@@ -15,7 +15,6 @@ const I18N = {
     challengePreviewEyebrow: "QUICK CHALLENGE",
     challengePreviewCta: "Start a quick challenge →",
     compoundDemoToggle: "See the interactive compound-interest demo →",
-    moreToggle: "More: Premium & newsletter →",
     learnPreviewLabel: "YOUR MISSIONS",
     learnCta: "Open my missions",
     libraryEyebrow: "LEARN A CONCEPT",
@@ -41,13 +40,6 @@ const I18N = {
     labToolCta: "Open all simulators",
     simLabNote: "This preview uses a fixed central hypothesis (6%/year), the same one used across the site — not a prediction. Open the full simulator for prudent/optimistic/real-historical scenarios and a plain-language warning on extreme assumptions. Below: quick links to the other simulators (wealth projection, savings goal, budget, credit and scenario comparison), all kept fully working on their own pages.",
     seeAllLink: "see all →",
-    freeLabel: "FREE, FOREVER",
-    premiumTeaserTitle: "Premium (planned)",
-    premiumTeaserDesc: "A more advanced AI Teacher, an ultra-personalised path and detailed statistics: Premium will add comfort, never lock the essentials. Not billed yet.",
-    premiumTeaserCta: "Learn more",
-    newsletterEyebrow: "Newsletter",
-    newsletterTitle: "Finance, explained simply, every week.",
-    newsletterCta: "Subscribe",
     langButtonLabel: "FR",
     quickAccess: [
       {tab:"tab-apprendre", title:"Learn", desc:"Missions & library", icon:"graduation-cap"},
@@ -78,7 +70,6 @@ const I18N = {
     challengePreviewEyebrow: "DÉFI RAPIDE",
     challengePreviewCta: "Commencer un défi rapide →",
     compoundDemoToggle: "Voir la démo interactive d'intérêts composés →",
-    moreToggle: "Plus : Premium & newsletter →",
     learnPreviewLabel: "TES MISSIONS",
     learnCta: "Ouvrir mes missions",
     libraryEyebrow: "APPRENDRE UNE NOTION",
@@ -104,13 +95,6 @@ const I18N = {
     labToolCta: "Ouvrir tous les simulateurs",
     simLabNote: "Cet aperçu utilise une hypothèse centrale fixe (6%/an), la même que celle utilisée partout ailleurs sur le site — pas une prédiction. Ouvre le simulateur complet pour les scénarios prudent/optimiste/historique réel et un avertissement en langage clair sur les hypothèses extrêmes. Ci-dessous : accès rapide aux autres simulateurs (projection de patrimoine, objectif d'épargne, budget, crédit et comparaison de scénarios), tous pleinement fonctionnels sur leur page dédiée.",
     seeAllLink: "tout voir →",
-    freeLabel: "GRATUIT, TOUJOURS",
-    premiumTeaserTitle: "Premium (à venir)",
-    premiumTeaserDesc: "Un professeur IA plus avancé, un parcours ultra-personnalisé et des statistiques détaillées : le Premium ajoutera du confort, sans jamais bloquer l'essentiel. Rien n'est facturé pour l'instant.",
-    premiumTeaserCta: "En savoir plus",
-    newsletterEyebrow: "Newsletter",
-    newsletterTitle: "L'essentiel de la finance, expliqué simplement, chaque semaine.",
-    newsletterCta: "S'inscrire",
     langButtonLabel: "EN",
     quickAccess: [
       {tab:"tab-apprendre", title:"Apprendre", desc:"Missions & bibliothèque", icon:"graduation-cap"},
@@ -139,8 +123,6 @@ function applyStaticI18n(){
   });
   const langBtn = document.getElementById('langToggle');
   if(langBtn) langBtn.textContent = t('langButtonLabel');
-  const emailInput = document.getElementById('newsletterEmail');
-  if(emailInput) emailInput.placeholder = LANG === 'en' ? 'you@email.com' : 'ton@email.fr';
 }
 
 function setLang(lang){
@@ -419,23 +401,6 @@ async function renderNewsTab(){
     el.innerHTML = MARKET_DATA.slice(0,4).map(m=>`<span>${m.nom} <span class="${m.sens}">${m.variation}</span></span>`).join('');
   });
 }
-
-// ================= Premium teaser =================
-const premiumBtn = document.getElementById('premiumTeaserBtn');
-if(premiumBtn) premiumBtn.addEventListener('click', (e)=>{
-  e.preventDefault();
-  alert(LANG==='en' ? "Premium is a planned evolution: nothing to buy yet." : "Le Premium est une évolution prévue : rien à acheter pour l'instant.");
-});
-
-// ================= Newsletter =================
-const newsletterFormEl = document.getElementById('newsletterForm');
-if(newsletterFormEl) newsletterFormEl.addEventListener('submit', e=>{
-  e.preventDefault();
-  const msgEl = document.getElementById('newsletterMsg');
-  if(msgEl) msgEl.textContent = LANG==='en'
-    ? "Demo form: real delivery needs a server-side email integration, not active yet."
-    : "Formulaire de démonstration : l'envoi réel nécessite une intégration e-mail côté serveur, pas encore active.";
-});
 
 // ================= Initialisation =================
 safeRun('en-tête tableau de bord (init)', ()=>renderDashboardHeader('dashboardHeader'));

@@ -49,13 +49,13 @@ const { window, document, runInPage } = loadPage('index.html', ['scripts/icons.j
   t.ok(!!document.getElementById('homeSimCapital') && !!document.getElementById('homeSimResult'), 'les champs réels de la démo existent toujours dans le DOM, juste repliés — jamais retirés');
 }
 
-// ---------- Premium/Newsletter : démotés derrière un <details>, jamais supprimés ----------
+// ---------- Premium/Newsletter : formulaire factice retiré avant le lancement ----------
+// (pré-lancement 2026-09-21) : un formulaire qui n'envoie aucun e-mail et un
+// teaser Premium non commercialisé donnaient une impression de prototype ;
+// la roadmap (roadmap/avenir.html) décrit honnêtement ce qui est prévu.
 {
-  const detailsList = Array.from(document.querySelectorAll('section details'));
-  const moreDetails = detailsList.find(d => d.innerHTML.includes('newsletterForm'));
-  t.ok(!!moreDetails, 'le bloc Premium/Newsletter est bien encapsulé dans un <details>');
-  t.ok(!moreDetails.hasAttribute('open'), 'le <details> Premium/Newsletter est bien replié par défaut');
-  t.ok(!!document.getElementById('newsletterForm') && !!document.getElementById('premiumTeaserBtn'), 'le formulaire newsletter et le bouton Premium existent toujours dans le DOM, juste repliés — jamais retirés');
+  t.ok(!document.getElementById('newsletterForm'), "le formulaire newsletter factice (aucun envoi réel) a bien été retiré de l'accueil");
+  t.ok(!document.getElementById('premiumTeaserBtn'), "le teaser Premium non commercialisé a bien été retiré de l'accueil");
 }
 
 // ---------- i18n toujours fonctionnel (la découverte qui a fait pivoter le scope de ce chantier) ----------
