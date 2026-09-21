@@ -3,6 +3,18 @@ const I18N = {
   en: {
     todayEyebrow: "FOR YOU TODAY",
     todayTitle: "Your daily dashboard",
+    heroEyebrow: "LIKANZA ACADEMY · BETA",
+    heroTitle: "Learn to manage your money better, invest and understand finance.",
+    heroSub: "Interactive courses • Simulators • Challenges • Financial tools",
+    heroCta: "Get started",
+    heroCtaSecondary: "Explore Likanza",
+    heroNote: "Free to use, no sign-up needed — your progress stays on your device unless you connect an account.",
+    heroPageTitle: "Likanza Academy",
+    heroUniLearnTitle: "LEARN", heroUniLearnDesc: "Courses, guides, library.",
+    heroUniInvestTitle: "INVEST", heroUniInvestDesc: "Stocks, crypto, markets, simulators.",
+    heroUniMoneyTitle: "MANAGE MY MONEY", heroUniMoneyDesc: "Financial universe + personal lab.",
+    heroUniBusinessTitle: "START A BUSINESS", heroUniBusinessDesc: "Business + professional lab.",
+    heroUniPracticeTitle: "PRACTISE", heroUniPracticeDesc: "Challenges, games and simulations.",
     importantNewsEyebrow: "IMPORTANT TODAY",
     importantNewsCta: "See all news →",
     importantNewsEmpty: "No news generated yet — check back soon.",
@@ -58,6 +70,18 @@ const I18N = {
   fr: {
     todayEyebrow: "POUR TOI AUJOURD'HUI",
     todayTitle: "Ton tableau de bord du jour",
+    heroEyebrow: "LIKANZA ACADEMY · BETA",
+    heroTitle: "Apprends à mieux gérer ton argent, investir et comprendre la finance.",
+    heroSub: "Cours interactifs • Simulateurs • Défis • Outils financiers",
+    heroCta: "Commencer",
+    heroCtaSecondary: "Explorer Likanza",
+    heroNote: "Gratuit, sans inscription : ta progression reste sur ton appareil tant que tu ne connectes pas de compte.",
+    heroPageTitle: "Likanza Academy",
+    heroUniLearnTitle: "APPRENDRE", heroUniLearnDesc: "Cours, guides, bibliothèque.",
+    heroUniInvestTitle: "INVESTIR", heroUniInvestDesc: "Bourse, crypto, marchés, simulateurs.",
+    heroUniMoneyTitle: "GÉRER MON ARGENT", heroUniMoneyDesc: "Univers financier + laboratoire personnel.",
+    heroUniBusinessTitle: "ENTREPRENDRE", heroUniBusinessDesc: "Business + laboratoire professionnel.",
+    heroUniPracticeTitle: "PRATIQUER", heroUniPracticeDesc: "Défis, jeux et simulations.",
     importantNewsEyebrow: "IMPORTANT AUJOURD'HUI",
     importantNewsCta: "Voir toute l'actualité →",
     importantNewsEmpty: "Aucune actualité générée pour l'instant — reviens bientôt.",
@@ -132,6 +156,7 @@ function setLang(lang){
   safeRun('accès rapides (langue)', renderQuickAccess);
   safeRun('simulateurs (langue)', renderSimPreviews);
   safeRun("aujourd'hui (langue)", renderTodayCard);
+  safeRun('hero de découverte (langue)', renderHomeHero);
   safeRun('actualité importante (langue)', renderImportantNews);
   safeRun('aperçu Mon Univers (langue)', renderUniversePreview);
   safeRun('aperçu Marchés (langue)', renderMarketsPreview);
@@ -142,6 +167,60 @@ const langToggleBtn = document.getElementById('langToggle');
 if(langToggleBtn) langToggleBtn.addEventListener('click', ()=>{
   safeRun('changement de langue', ()=>setLang(LANG === 'en' ? 'fr' : 'en'));
 });
+
+// ================= Hero de découverte (pré-lancement) =================
+// Un visiteur qui découvre Likanza doit comprendre en 5 secondes : ce que
+// c'est, ce qu'il peut y faire, par où commencer. Le hero n'est montré qu'à
+// quelqu'un qui n'a encore AUCUNE activité réelle (jamais à un utilisateur
+// qui revient : lui veut son tableau de bord) — le tableau de bord existant
+// reste dessous, inchangé. Un <h1> existe dans les deux cas (visible pour un
+// nouveau visiteur, masqué visuellement sinon).
+function isNewVisitor(){
+  const g = getGamification();
+  return !(g.xp > 0)
+    && !getPositioningResult()
+    && !getLastPosition()
+    && Object.keys(getCoursProgress()).length === 0
+    && getMistakes().length === 0
+    && (getQuizStats().history || []).length === 0;
+}
+function renderHomeHero(){
+  const el = document.getElementById('homeHero');
+  if(!el) return;
+  if(!isNewVisitor()){
+    el.innerHTML = '<h1 class="visually-hidden">' + t('heroPageTitle') + '</h1>';
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = '';
+  const universes = [
+    ['Learn', 'formations.html', 'book-open'],
+    ['Invest', 'bourse.html', 'trending-up'],
+    ['Money', 'parcours.html', 'compass'],
+    ['Business', 'business.html', 'briefcase'],
+    ['Practice', 'defis.html', 'target']
+  ];
+  el.innerHTML = `
+    <div class="home-hero">
+      <span class="eyebrow">${t('heroEyebrow')}</span>
+      <h1 class="display home-hero-title">${t('heroTitle')}</h1>
+      <p class="home-hero-sub">${t('heroSub')}</p>
+      <div class="home-hero-cta">
+        <a href="test-positionnement.html" class="btn btn-gold" id="homeHeroStart">${t('heroCta')}</a>
+        <a href="#homeUniverses" class="btn" id="homeHeroExplore">${t('heroCtaSecondary')}</a>
+      </div>
+      <p class="home-hero-note">${t('heroNote')}</p>
+    </div>
+    <div class="home-univers-grid" id="homeUniverses">
+      ${universes.map(([key, href, icon]) => `
+        <a href="${href}" class="home-univers-card">
+          <span class="icon" data-icon="${icon}"></span>
+          <h3>${t('heroUni' + key + 'Title')}</h3>
+          <p>${t('heroUni' + key + 'Desc')}</p>
+        </a>`).join('')}
+    </div>`;
+  if(typeof initIcons === 'function') initIcons(el);
+}
 
 // ================= Carte "Pour toi aujourd'hui" =================
 function renderTodayCard(){
@@ -407,6 +486,7 @@ safeRun('en-tête tableau de bord (init)', ()=>renderDashboardHeader('dashboardH
 safeRun('textes traduits (init)', applyStaticI18n);
 safeRun('accès rapides (init)', renderQuickAccess);
 setActiveTab(activeTab);
+safeRun('hero de découverte (init)', renderHomeHero);
 safeRun('carte du jour (init)', renderTodayCard);
 safeRun('carte du jour - à apprendre (init)', () => renderTodayWeakness('todayWeakness'));
 safeRun('actualité importante (init)', renderImportantNews);

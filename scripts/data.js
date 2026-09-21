@@ -2443,7 +2443,7 @@ function buildGamificationHeaderHTML(){
     <div class="dash-header">
       <div class="dash-greeting">
         <span class="smallcaps">${BRAND_SLOGAN}</span>
-        <h1 class="display" style="font-size:26px;font-weight:600;margin-top:4px;">${lvl.title}</h1>
+        <h2 class="display" style="font-size:26px;font-weight:600;margin-top:4px;">${lvl.title}</h2>
         <p style="font-size:12px;color:var(--text);font-style:italic;margin-top:2px;" id="dashGreeting">${greeting}</p>
       </div>
       <div class="dash-stats">
