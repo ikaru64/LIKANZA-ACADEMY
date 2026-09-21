@@ -30,12 +30,15 @@
       <p id="progressSyncStatus" style="font-size:11.5px;color:var(--text-dim);border-left:2px solid var(--hairline);padding-left:10px;margin-bottom:12px;">Vérification de la synchronisation…</p>
       <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
         <button type="button" class="btn btn-sm" id="restoreProgressBtn" style="display:none;">Restaurer depuis mon compte</button>
+        <button type="button" class="btn btn-sm" id="restoreBackupBtn" style="display:none;">Récupérer la copie de cet appareil</button>
       </div>
-      <p id="restoreProgressWarning" style="display:none;font-size:11px;color:var(--text-dim);margin-bottom:12px;">Remplace entièrement la progression de cet appareil par celle de ton compte — jamais une fusion des deux, ce qui est déjà en local et non encore synchronisé sera perdu.</p>
+      <p id="restoreProgressWarning" style="display:none;font-size:11px;color:var(--text-dim);margin-bottom:12px;">Remplace la progression de cet appareil par celle de ton compte — jamais une fusion des deux. Une copie de la progression de cet appareil est conservée avant le remplacement et peut être récupérée ci-dessus.</p>
       <a class="btn btn-sm" href="${AUTH_BASE}/?action=signout&callbackUrl=${encodeURIComponent(location.origin + location.pathname)}">Se déconnecter</a>
     `;
     const restoreBtn = document.getElementById('restoreProgressBtn');
     if (restoreBtn && window.forceRestoreProgress) restoreBtn.addEventListener('click', window.forceRestoreProgress);
+    const backupBtn = document.getElementById('restoreBackupBtn');
+    if (backupBtn && window.restoreLocalProgressBackup) backupBtn.addEventListener('click', window.restoreLocalProgressBackup);
     if (window.refreshProgressSyncStatus) window.refreshProgressSyncStatus();
   }
 
@@ -86,6 +89,7 @@
     // honnêtement push/pull au prochain login — un vrai risque d'écraser
     // silencieusement une progression plus récente faite ailleurs.
     safeStorageRemove('likanza-sync-last-at');
+    safeStorageRemove('likanza-sync-synced-ts');
     const cleanSearch = location.search.replace(/[?&]la_signedout=1/, '').replace(/^&/, '?');
     history.replaceState(null, '', location.pathname + (cleanSearch === '?' ? '' : cleanSearch));
     renderDisconnected();

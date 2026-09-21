@@ -9405,10 +9405,23 @@ const PROGRESS_SYNC_KEYS = [
   // likanza-context-* du Context Engine, phase 5, volontairement exclues).
   'likanza-life-projects', 'likanza-headcount-sim', 'likanza-pricing-sim', 'likanza-sales-funnel', 'likanza-valorisation-sim'
 ];
-// Métadonnée purement locale (jamais transmise) : distingue "cet appareil n'a
-// jamais synchronisé" (première visite -> on restaure depuis le compte) de
-// "cet appareil synchronise déjà" (il devient la source de vérité).
+// Métadonnées purement locales (jamais des clés de progression, jamais dans
+// PROGRESS_SYNC_KEYS) :
+// - PROGRESS_SYNC_MARKER : cet appareil a-t-il déjà synchronisé au moins une
+//   fois (première visite -> on restaure depuis le compte).
+// - PROGRESS_UPDATED_AT_KEY : horodatage (ms) de la dernière MODIFICATION
+//   locale réelle d'une clé de PROGRESS_SYNC_KEYS (voir
+//   installProgressChangeTracking ci-dessous).
+// - PROGRESS_SYNCED_TS_KEY : horodatage du dernier instantané réellement
+//   échangé avec le compte (poussé ou restauré).
+// - PROGRESS_BACKUP_KEY : copie locale de la progression de cet appareil,
+//   conservée AVANT tout remplacement par la version du compte — jamais de
+//   perte silencieuse de données valides.
 const PROGRESS_SYNC_MARKER = 'likanza-sync-last-at';
+const PROGRESS_UPDATED_AT_KEY = 'likanza-progress-updated-at';
+const PROGRESS_SYNCED_TS_KEY = 'likanza-sync-synced-ts';
+const PROGRESS_BACKUP_KEY = 'likanza-progress-backup';
+let progressSyncApplying = false;
 
 function getSyncToken(){
   const cached = safeGetJSON('likanza-auth-user', null);
@@ -9426,14 +9439,98 @@ function snapshotProgress(){
   return snap;
 }
 
+function getLocalProgressTs(){
+  const v = safeGetJSON(PROGRESS_UPDATED_AT_KEY, 0);
+  return typeof v === 'number' && isFinite(v) ? v : 0;
+}
+function touchProgressUpdatedAt(){
+  if(progressSyncApplying) return;
+  safeSetJSON(PROGRESS_UPDATED_AT_KEY, Date.now());
+}
+
+// Une seule prise en charge pour TOUS les sites d'écriture (safeSetJSON, mais
+// aussi la trentaine d'appels directs à localStorage.setItem des projets de
+// vie, dettes, objectifs, budget, patrimoine...) : toute écriture/suppression
+// d'une clé de PROGRESS_SYNC_KEYS met à jour l'horodatage de dernière
+// modification locale, jamais besoin de modifier chaque site d'appel.
+function installProgressChangeTracking(){
+  if(typeof Storage === 'undefined' || Storage.prototype.__likanzaTracked) return;
+  const origSet = Storage.prototype.setItem;
+  const origRemove = Storage.prototype.removeItem;
+  Storage.prototype.setItem = function(key){
+    const result = origSet.apply(this, arguments);
+    try{ if(this === window.localStorage && PROGRESS_SYNC_KEYS.indexOf(key) !== -1) touchProgressUpdatedAt(); }catch(e){}
+    return result;
+  };
+  Storage.prototype.removeItem = function(key){
+    const result = origRemove.apply(this, arguments);
+    try{ if(this === window.localStorage && PROGRESS_SYNC_KEYS.indexOf(key) !== -1) touchProgressUpdatedAt(); }catch(e){}
+    return result;
+  };
+  Storage.prototype.__likanzaTracked = true;
+}
+installProgressChangeTracking();
+
+// Charge utile poussée : l'instantané de progression + `__meta.updatedAt`
+// (horodatage de la dernière modification locale réelle). `__meta` n'est
+// jamais une clé de PROGRESS_SYNC_KEYS : applyProgressSnapshot l'ignore
+// toujours, et un serveur qui ne le renverrait pas fait simplement retomber
+// la décision sur l'ancien comportement (voir decideSyncAction).
+function buildSyncPayload(){
+  const updatedAt = getLocalProgressTs() || Date.now();
+  return {...snapshotProgress(), __meta: {updatedAt}};
+}
+function extractCloudTs(data){
+  const ts = data && data.__meta && data.__meta.updatedAt;
+  return typeof ts === 'number' && isFinite(ts) ? ts : 0;
+}
+
+// Décision pure (testable sans réseau) : que faire de cette synchronisation ?
+//  'push' -> l'état local est le plus récent (ou le compte n'a rien)
+//  'pull' -> le compte est plus récent que ce que cet appareil a vu (une
+//            copie locale est TOUJOURS conservée avant remplacement)
+//  'noop' -> déjà à jour des deux côtés
+// Règle de fond : la version la plus récente l'emporte, jamais un ancien
+// appareil qui écrase silencieusement un compte plus récent.
+function decideSyncAction({hasCloudData, cloudTs, localTs, lastSyncedTs, hasSyncedBefore}){
+  if(!hasCloudData) return 'push';
+  if(!hasSyncedBefore) return 'pull'; // premier appareil connecté : il hérite du compte (copie locale conservée)
+  if(!cloudTs) return 'push'; // compte antérieur à l'horodatage : comportement historique
+  const seen = lastSyncedTs || 0;
+  const cloudChangedSinceLastSync = cloudTs > seen;
+  const localChangedSinceLastSync = localTs > seen;
+  if(!cloudChangedSinceLastSync) return localChangedSinceLastSync ? 'push' : 'noop';
+  if(!localChangedSinceLastSync) return 'pull';
+  return localTs > cloudTs ? 'push' : 'pull'; // vrai conflit : la plus récente des deux
+}
+
+function makeLocalProgressBackup(){
+  const data = snapshotProgress();
+  if(Object.keys(data).length === 0) return false;
+  return safeSetJSON(PROGRESS_BACKUP_KEY, {savedAt: new Date().toISOString(), updatedAt: getLocalProgressTs(), data});
+}
+function hasLocalProgressBackup(){
+  const b = safeGetJSON(PROGRESS_BACKUP_KEY, null);
+  return !!(b && b.data && typeof b.data === 'object');
+}
+
 // N'écrase que les clés présentes dans le snapshot reçu — une clé absente du
 // compte (ex. ajoutée à la whitelist après coup) ne supprime jamais une
-// donnée locale existante.
+// donnée locale existante. `progressSyncApplying` empêche cette écriture
+// d'être comptée comme une modification locale de l'utilisateur.
 function applyProgressSnapshot(data){
   if(!data || typeof data !== 'object') return;
-  PROGRESS_SYNC_KEYS.forEach(key => {
-    if(Object.prototype.hasOwnProperty.call(data, key)) safeSetJSON(key, data[key]);
-  });
+  progressSyncApplying = true;
+  try{
+    PROGRESS_SYNC_KEYS.forEach(key => {
+      if(Object.prototype.hasOwnProperty.call(data, key)) safeSetJSON(key, data[key]);
+    });
+  } finally {
+    progressSyncApplying = false;
+  }
+  const cloudTs = extractCloudTs(data);
+  safeSetJSON(PROGRESS_UPDATED_AT_KEY, cloudTs || Date.now());
+  safeSetJSON(PROGRESS_SYNCED_TS_KEY, cloudTs || 0);
 }
 
 function setProgressSyncStatus(text){
@@ -9448,16 +9545,34 @@ function setProgressSyncStatus(text){
   // entre le code et sa propre documentation.
   const warning = document.getElementById('restoreProgressWarning');
   if(warning) warning.style.display = hasToken ? '' : 'none';
+  const backupBtn = document.getElementById('restoreBackupBtn');
+  if(backupBtn) backupBtn.style.display = hasLocalProgressBackup() ? '' : 'none';
+}
+
+async function fetchCloudProgress(token){
+  let resp;
+  try{
+    resp = await fetch(progressSyncApiUrl(), {headers: {'Authorization': 'Bearer ' + token}});
+  } catch(e){
+    return {error: 'Synchronisation momentanément indisponible (hors ligne ?). Tes données restent sur cet appareil.'};
+  }
+  if(resp.status === 401) return {error: 'Session de synchronisation expirée — reconnecte-toi pour reprendre la synchronisation.'};
+  if(!resp.ok) return {error: 'Synchronisation momentanément indisponible. Tes données restent sur cet appareil.'};
+  const payload = await resp.json().catch(() => null);
+  if(!payload) return {error: 'Synchronisation momentanément indisponible. Tes données restent sur cet appareil.'};
+  return {payload};
 }
 
 async function pushProgressSnapshot(token){
+  const body = buildSyncPayload();
   try{
     const resp = await fetch(progressSyncApiUrl(), {
       method: 'POST',
       headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token},
-      body: JSON.stringify(snapshotProgress())
+      body: JSON.stringify(body)
     });
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
+    safeSetJSON(PROGRESS_SYNCED_TS_KEY, body.__meta.updatedAt);
     return true;
   } catch(e){
     console.info('Likanza Academy — sauvegarde de la progression momentanément indisponible :', e.message);
@@ -9465,48 +9580,56 @@ async function pushProgressSnapshot(token){
   }
 }
 
+function syncStatusTime(){
+  return new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+}
+const SYNC_PUSH_FAILED_TEXT = "Sauvegarde momentanément impossible — ta progression reste uniquement sur cet appareil pour l'instant.";
+
+// Décision commune au chargement de page et à la relance périodique.
+function decideFromCloudPayload(payload){
+  const hasCloudData = !!(payload.data && typeof payload.data === 'object' && Object.keys(payload.data).length);
+  return decideSyncAction({
+    hasCloudData,
+    cloudTs: hasCloudData ? extractCloudTs(payload.data) : 0,
+    localTs: getLocalProgressTs(),
+    lastSyncedTs: safeGetJSON(PROGRESS_SYNCED_TS_KEY, 0),
+    hasSyncedBefore: !!safeGetJSON(PROGRESS_SYNC_MARKER, null)
+  });
+}
+
 // Point d'entrée principal, appelé une fois par chargement de page (voir le
-// bloc DOMContentLoaded en fin de fichier) : décide s'il faut RESTAURER
-// depuis le compte (premier appareil à se connecter après une inscription
-// sur un autre appareil) ou POUSSER l'état local (cet appareil a déjà
-// synchronisé au moins une fois, il devient la source de vérité). Jamais de
-// fusion champ par champ — voir le disclaimer affiché dans compte.html.
+// bloc DOMContentLoaded en fin de fichier). Compare la fraîcheur des deux
+// côtés (decideSyncAction) : la version la plus récente l'emporte, jamais un
+// ancien appareil qui écrase un compte plus récent. Toute progression locale
+// remplacée par celle du compte est d'abord copiée (PROGRESS_BACKUP_KEY).
+// Jamais de fusion champ par champ — voir le disclaimer affiché dans compte.html.
 async function syncProgressWithAccount(){
   const token = getSyncToken();
   if(!token){ setProgressSyncStatus('Connecte-toi pour synchroniser ta progression.'); return; }
 
   setProgressSyncStatus('Synchronisation…');
-  let resp;
-  try{
-    resp = await fetch(progressSyncApiUrl(), {headers: {'Authorization': 'Bearer ' + token}});
-  } catch(e){
-    setProgressSyncStatus('Synchronisation momentanément indisponible (hors ligne ?).');
-    return;
-  }
-  if(resp.status === 401){
-    setProgressSyncStatus('Session de synchronisation expirée — reconnecte-toi pour reprendre la synchronisation.');
-    return;
-  }
-  if(!resp.ok){
-    setProgressSyncStatus('Synchronisation momentanément indisponible.');
-    return;
-  }
-  const payload = await resp.json().catch(() => null);
-  if(!payload){ setProgressSyncStatus('Synchronisation momentanément indisponible.'); return; }
+  const {payload, error} = await fetchCloudProgress(token);
+  if(error){ setProgressSyncStatus(error); return; }
 
-  const hasSyncedBefore = !!safeGetJSON(PROGRESS_SYNC_MARKER, null);
-  if(payload.data && !hasSyncedBefore){
+  const action = decideFromCloudPayload(payload);
+  if(action === 'pull'){
+    const backedUp = makeLocalProgressBackup();
     applyProgressSnapshot(payload.data);
-  } else {
-    await pushProgressSnapshot(token);
+    safeSetJSON(PROGRESS_SYNC_MARKER, new Date().toISOString());
+    setProgressSyncStatus('Synchronisé à ' + syncStatusTime() + ' — ta progression du compte (plus récente) a été chargée' + (backedUp ? ' ; une copie de celle de cet appareil a été conservée.' : '.') + ' Recharge la page pour la voir.');
+    return;
+  }
+  if(action === 'push'){
+    const ok = await pushProgressSnapshot(token);
+    if(!ok){ setProgressSyncStatus(SYNC_PUSH_FAILED_TEXT); return; }
   }
   safeSetJSON(PROGRESS_SYNC_MARKER, new Date().toISOString());
-  setProgressSyncStatus('Synchronisé à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) + '.');
+  setProgressSyncStatus('Synchronisé à ' + syncStatusTime() + '.');
 }
 
 // Bouton de secours (compte.html) : force une restauration depuis le compte,
-// même si cet appareil a déjà synchronisé — le garde-fou explicite face à
-// l'absence de fusion fine (voir le disclaimer affiché à côté du bouton).
+// même si cet appareil a déjà synchronisé. La progression locale est d'abord
+// copiée, jamais perdue.
 async function forceRestoreProgress(){
   const token = getSyncToken();
   if(!token) return;
@@ -9515,31 +9638,66 @@ async function forceRestoreProgress(){
     const resp = await fetch(progressSyncApiUrl(), {headers: {'Authorization': 'Bearer ' + token}});
     if(!resp.ok) throw new Error('HTTP ' + resp.status);
     const payload = await resp.json();
-    if(payload.data) applyProgressSnapshot(payload.data);
+    if(payload.data){
+      makeLocalProgressBackup();
+      applyProgressSnapshot(payload.data);
+    }
     safeSetJSON(PROGRESS_SYNC_MARKER, new Date().toISOString());
-    setProgressSyncStatus('Restauré à ' + new Date().toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'}) + ' — recharge la page pour voir les changements.');
+    setProgressSyncStatus('Restauré à ' + syncStatusTime() + ' — recharge la page pour voir les changements.');
   } catch(e){
     setProgressSyncStatus('Restauration impossible pour le moment.');
   }
 }
-window.refreshProgressSyncStatus = syncProgressWithAccount;
 
-// Repousse l'état local pendant que l'onglet reste ouvert, sans attendre un
-// rechargement de page — jamais de nouvelle décision pull-vs-push ici
-// (seulement au chargement, voir syncProgressWithAccount) pour ne jamais
-// écraser une modification en cours par une donnée serveur plus ancienne.
-// pagehide/beforeunload ne sont volontairement pas utilisés : un fetch()
-// déclenché à ce moment est fréquemment annulé avant d'aboutir.
+// Récupère la copie locale conservée avant un remplacement par le compte
+// (elle redevient la progression de cet appareil, qui sera ensuite poussée
+// comme n'importe quelle modification locale plus récente).
+function restoreLocalProgressBackup(){
+  const backup = safeGetJSON(PROGRESS_BACKUP_KEY, null);
+  if(!backup || !backup.data) return false;
+  progressSyncApplying = true;
+  try{
+    PROGRESS_SYNC_KEYS.forEach(key => {
+      if(Object.prototype.hasOwnProperty.call(backup.data, key)) safeSetJSON(key, backup.data[key]);
+    });
+  } finally {
+    progressSyncApplying = false;
+  }
+  safeSetJSON(PROGRESS_UPDATED_AT_KEY, Date.now()); // devient la modification locale la plus récente
+  setProgressSyncStatus('Copie locale restaurée — elle sera synchronisée avec ton compte. Recharge la page pour la voir.');
+  return true;
+}
+window.refreshProgressSyncStatus = syncProgressWithAccount;
+window.restoreLocalProgressBackup = restoreLocalProgressBackup;
+
+// Relance périodique pendant que l'onglet reste ouvert. Ne pousse JAMAIS
+// aveuglément : refait la même comparaison de fraîcheur (decideSyncAction).
+// Si le compte est plus récent, rien n'est écrasé ni remplacé en cours de
+// session (la mise à jour se fera au prochain chargement) — l'utilisateur en
+// est simplement informé. pagehide/beforeunload ne sont volontairement pas
+// utilisés : un fetch() déclenché à ce moment est fréquemment annulé.
+async function runProgressSyncHeartbeat(){
+  const token = getSyncToken();
+  if(!token) return;
+  const {payload, error} = await fetchCloudProgress(token);
+  if(error){ setProgressSyncStatus(error); return; }
+  const action = decideFromCloudPayload(payload);
+  if(action === 'pull'){
+    setProgressSyncStatus("Une version plus récente de ta progression existe sur ton compte — recharge la page pour la charger. Rien n'a été écrasé.");
+    return;
+  }
+  if(action === 'noop') return;
+  const ok = await pushProgressSnapshot(token);
+  setProgressSyncStatus(ok ? 'Synchronisé à ' + syncStatusTime() + '.' : SYNC_PUSH_FAILED_TEXT);
+}
 function initProgressSyncHeartbeat(){
   setInterval(() => {
     if(document.visibilityState !== 'visible') return;
-    const token = getSyncToken();
-    if(token) pushProgressSnapshot(token);
+    runProgressSyncHeartbeat();
   }, 2 * 60 * 1000);
   document.addEventListener('visibilitychange', () => {
     if(document.visibilityState !== 'hidden') return;
-    const token = getSyncToken();
-    if(token) pushProgressSnapshot(token);
+    runProgressSyncHeartbeat();
   });
 }
 
