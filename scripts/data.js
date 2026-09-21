@@ -1935,7 +1935,10 @@ const BADGES = [
   {id:'paper_gain', name:'Premier gain réalisé', desc:"Réaliser un gain sur une vente en Paper Trading.", check:(g,ctx)=> !!(ctx && ctx.paperRealizedGain > 0)}
 ];
 
-// ---------- Ligues (classement de démonstration, pas de vrais autres joueurs) ----------
+// ---------- Ligues (palier d'XP réel : aucun faux concurrent) ----------
+// Les ligues reflètent uniquement l'XP réellement gagné. Un classement entre
+// vrais joueurs n'existe pas encore (voir la Roadmap) : aucun profil fictif
+// n'est jamais présenté comme un concurrent.
 const LEAGUES = [
   {id:'bronze', name:'Bronze', min:0},
   {id:'argent', name:'Argent', min:150},
@@ -1943,11 +1946,6 @@ const LEAGUES = [
   {id:'platine', name:'Platine', min:800},
   {id:'diamant', name:'Diamant', min:1500},
   {id:'legende', name:'Légende', min:3000}
-];
-const DEMO_PLAYERS = [
-  {name:'Léa M.', fp:2140}, {name:'Yanis B.', fp:1620}, {name:'Chloé R.', fp:980},
-  {name:'Nathan P.', fp:710}, {name:'Sofia K.', fp:540}, {name:'Hugo D.', fp:310},
-  {name:'Emma L.', fp:190}, {name:'Adam T.', fp:95}, {name:'Camille V.', fp:40}
 ];
 function currentLeague(fp){
   let league = LEAGUES[0];
@@ -1959,19 +1957,18 @@ function renderLeagueBoard(elId){
   if(!el) return;
   const g = getGamification();
   const league = currentLeague(g.xp);
-  const board = [...DEMO_PLAYERS, {name:'Toi', fp:g.xp, isUser:true}]
-    .filter(p=>currentLeague(p.fp).id === league.id)
-    .sort((a,b)=>b.fp-a.fp);
+  const next = LEAGUES[LEAGUES.findIndex(l => l.id === league.id) + 1] || null;
+  const pct = next ? Math.max(0, Math.min(100, Math.round(((g.xp - league.min) / (next.min - league.min)) * 100))) : 100;
   el.innerHTML = `
     <div class="gami-widget">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
         <span class="smallcaps">Ligue ${league.name}</span>
-        <span class="demo-flag" style="margin:0;">Classement de démo</span>
+        <span class="mono" style="font-size:12px;color:var(--text-dim);">${g.xp} XP</span>
       </div>
-      <p style="font-size:11.5px;color:var(--text-dim);margin-bottom:14px;">Classement basé sur l'XP, comparé à des profils fictifs : le vrai classement entre joueurs nécessite un compte et un serveur, pas encore disponible.</p>
-      <div class="league-list">
-        ${board.map((p,i)=>`<div class="league-row ${p.isUser?'is-user':''}"><span>${i+1}. ${p.name}</span><span class="mono">${p.fp} XP</span></div>`).join('')}
-      </div>
+      <div class="dash-weekbar" style="width:100%;"><div class="dash-weekfill" style="width:${pct}%;"></div></div>
+      <p style="font-size:11.5px;color:var(--text-dim);margin-top:10px;">${next
+        ? 'Encore ' + (next.min - g.xp) + ' XP pour atteindre la ligue ' + next.name + '.'
+        : 'Tu as atteint la ligue la plus haute.'} Ta ligue dépend uniquement de l\'XP que tu gagnes en apprenant et en t\'entraînant.</p>
     </div>`;
 }
 
@@ -4775,7 +4772,6 @@ function renderDefisParcours(elId){
           <button type="button" class="defi-parcours-step ${progress[`${p.id}-${c}`] ? 'is-done' : ''}" style="background:none;border:none;text-align:left;width:100%;cursor:pointer;" data-parcours="${p.id}" data-cat="${c}">
             ${progress[`${p.id}-${c}`] ? ICONS.check + ' ' : (i + 1) + '. '}${c}
           </button>`).join('')}
-        <div class="defi-parcours-step is-boss">Boss — bientôt</div>
       </div>
     </div>`;
   }).join('') + `<div id="${elId}-session"></div>`;

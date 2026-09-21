@@ -39,10 +39,6 @@ const I18N = {
     teacherAskCta: "Explain simply",
     teacherNote: "Pulls the existing Library definition instantly — not an AI teacher. A connected AI explainer is planned (see What's next).",
     challengeTitle: "Interactive challenge",
-    arenaTitle: "Arena: coming soon",
-    leaguePreviewTitle: "See your league",
-    arenaDesc: "Leagues already rank your XP against demo profiles on your account page. A real multiplayer Arena is planned but needs user accounts and a server, not yet available.",
-    arenaCta: "See my league",
     labToolEyebrow: "SIMULATE",
     labToolTitle: "Compound interest lab",
     simCapitalLabel: "Starting capital",
@@ -106,10 +102,6 @@ const I18N = {
     teacherAskCta: "Explique-moi simplement",
     teacherNote: "Affiche instantanément la définition déjà présente dans la Bibliothèque — pas un professeur IA. Un vrai assistant IA connecté est prévu (voir À venir).",
     challengeTitle: "Défi interactif",
-    arenaTitle: "Arène : bientôt disponible",
-    leaguePreviewTitle: "Voir ma ligue",
-    arenaDesc: "Les ligues classent déjà ton XP face à des profils de démonstration, sur ta page compte. Une vraie Arène multijoueur est prévue, mais nécessite des comptes utilisateurs et un serveur : pas encore disponible.",
-    arenaCta: "Voir ma ligue",
     labToolEyebrow: "SIMULER",
     labToolTitle: "Laboratoire d'intérêts composés",
     simCapitalLabel: "Capital de départ",
@@ -328,9 +320,9 @@ function renderMarketsPreview(){
 // différentes de la même chose.
 function renderChallengePreview(){
   const previewEl = document.getElementById('homeChallengePreview');
-  if(previewEl) previewEl.innerHTML = `<span class="eyebrow">${t('challengePreviewEyebrow')}</span><p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions sur 23 thèmes, à ton rythme.</p><a href="defis.html" class="btn btn-sm btn-gold">${t('challengePreviewCta')}</a>`;
+  if(previewEl) previewEl.innerHTML = `<span class="eyebrow">${t('challengePreviewEyebrow')}</span><p style="font-size:13px;color:var(--text-dim);margin:8px 0 14px;">Quiz, vrai ou faux, calculs mentaux et mises en situation : plus de 300 questions sur une cinquantaine de thèmes, à ton rythme.</p><a href="defis.html" class="btn btn-sm btn-gold">${t('challengePreviewCta')}</a>`;
   const tabEl = document.getElementById('homeDefisTeaser');
-  if(tabEl) tabEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Quiz express, Vrai ou faux et bientôt d'autres formats — 82 questions sur 23 thèmes, à ton rythme.</p><a href="defis.html" class="btn btn-sm btn-gold">${t('challengePreviewCta')}</a>`;
+  if(tabEl) tabEl.innerHTML = `<p style="font-size:13px;color:var(--text-dim);margin-bottom:14px;">Quiz, vrai ou faux, calculs mentaux et mises en situation : plus de 300 questions sur une cinquantaine de thèmes, à ton rythme.</p><a href="defis.html" class="btn btn-sm btn-gold">${t('challengePreviewCta')}</a>`;
 }
 
 // ================= Accès rapides / déclencheurs d'onglets =================
